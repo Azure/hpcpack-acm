@@ -1,0 +1,9 @@
+{
+    "abc" :
+    {
+        "def" : 5
+    },
+    "CloudOption" : {
+        "StorageKeyOrSas" : "storage"
+    }
+}
