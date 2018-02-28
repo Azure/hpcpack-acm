@@ -4,6 +4,6 @@ namespace Microsoft.HpcAcm.Common.Dto
 
     public class DiagnosticsJob : Job
     {
-        public IList<string> DiagnosticTests { get; private set; }
+        public IList<DiagnosticsTest> DiagnosticTests { get; private set; }
     }
 }

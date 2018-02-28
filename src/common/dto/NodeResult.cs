@@ -1,9 +1,11 @@
 namespace Microsoft.HpcAcm.Common.Dto
 {
+    using System.Collections.Generic;
+
     public class NodeResult
     {
-        public string Output { get; private set; } 
-        public int ExitCode { get; private set; } 
-        public string NodeName { get; private set; }
+        public int JobId { get; set; }
+
+        public IList<CommandResult> Results { get; set; }
     }
 }

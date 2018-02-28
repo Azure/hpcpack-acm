@@ -1,32 +1,50 @@
 ﻿namespace Microsoft.HpcAcm.Services.JobDispatcher
 {
     using System;
+    using System.IO;
+    using System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
+    using Microsoft.HpcAcm.Common.Dto;
+    using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
+    using Microsoft.WindowsAzure.Storage;
+    using Microsoft.WindowsAzure.Storage.Queue;
+    using Microsoft.WindowsAzure.Storage.Table;
 
     class Program
     {
-        public static IConfigurationRoot Configuration;
-        public static ILogger Logger;
-
         static void Main(string[] args)
         {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(@"E:\GitHub\hpc-acm\src\services\JobDispatcher")
-                .AddJsonFile("appconfig.json", optional: false, reloadOnChange: true)
-                .AddEnvironmentVariables();
+            using (ServerBuilder builder = new ServerBuilder())
+            {
+                builder.ConfigureAppConfiguration(config =>
+                {
+                    config.SetBasePath(Directory.GetCurrentDirectory())
+                        .AddJsonFile("appconfig.json", false, true)
+                        .AddEnvironmentVariables();
+                })
+                .ConfigureLogging(l =>
+                {
+                    l.AddConsole().AddDebug();
+                })
+                .ConfigureCloudOptions(c => c.GetSection("CloudOption").Get<CloudOption>())
+                .AddTaskItemSource(async (u, token) => new TaskItemSource(
+                    await u.GetOrCreateJobDispatchQueueAsync(token),
+                    TimeSpan.FromSeconds(u.Option.VisibleTimeoutSeconds)))
+                .AddWorker(async (u, l, token) => new JobDispatcherWorker(
+                    l,
+                    await u.GetOrCreateDiagnosticsJobTableAsync(token),
+                    u));
 
-            Program.Configuration = builder.Build(); 
+                builder.BuildAndStart();
 
-            Program.Logger = new LoggerFactory().AddConsole().AddDebug().CreateLogger<Program>();
+                while (!Console.KeyAvailable) { Task.Delay(1000).Wait(); }
+                var logger = builder.LoggerFactory.CreateLogger<Program>();
+                logger.LogInformation("Stop message received, stopping");
 
-            Logger.LogInformation("test");
-            var cloudOption = Configuration.GetSection("CloudOption").Get<CloudOption>();
-
-            Console.WriteLine(cloudOption.StorageKeyOrSas);
-
-            Console.WriteLine("Hello World!");
+                builder.Stop();
+            }
         }
     }
 }

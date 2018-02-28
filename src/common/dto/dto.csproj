@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>Microsoft.HpcAcm.Common.Dto</RootNamespace>
+    <AssemblyName>Microsoft.HpcAcm.Common.Dto</AssemblyName>
   </PropertyGroup>
 
 </Project>

@@ -6,5 +6,7 @@ namespace Microsoft.HpcAcm.Common.Dto
     {
         public string Name { get; private set; }
         public string Category { get; private set; }
+
+        public string CommandLine { get; private set; }
     }
 }
