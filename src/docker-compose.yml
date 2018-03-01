@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  frontend:
+    image: frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+
+  jobdispatcher:
+    image: jobdispatcher
+    build:
+      context: .
+      dockerfile: services/JobDispatcher/Dockerfile
+
