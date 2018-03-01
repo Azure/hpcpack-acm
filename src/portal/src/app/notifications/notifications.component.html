@@ -1,0 +1,12 @@
+<mat-list>
+  <mat-list-item *ngFor="let item of items">
+    <i matListIcon class="material-icons">{{icon(item)}}</i>
+    <p matLine>
+      {{item.ts | date:'yyyy-MM-dd HH:mm:ss' }}
+    </p>
+    <p matLine>
+      <a [href]="item.link">{{item.message}}</a>
+    </p>
+    <button mat-icon-button (click)="removeItem(item)"><i class="material-icons">highlight_off</i></button>
+  </mat-list-item>
+</mat-list>

@@ -1,0 +1,18 @@
+<app-back-button></app-back-button>
+
+<div class="title main" [ngClass]="result.state">
+  <i class="material-icons">{{stateIcon(result.state)}}</i>
+  <h2 class="name">{{title(result.testName, result.state)}}</h2>
+</div>
+<div class="time">started at {{result.startedAt | date:'yyyy-MM-dd HH:mm:ss'}} updated at {{result.updatedAt | date:'yyyy-MM-dd HH:mm:ss'}}</div>
+
+<div class="overview">
+  <h3>Overview</h3>
+  <chart type="doughnut" [data]="overviewData" [options]="overviewOption"></chart>
+</div>
+
+<div class="nodes">
+  <h3>Nodes</h3>
+  <ng-container *ngTemplateOutlet="nodesTemplate; context: result"></ng-container>
+</div>
+

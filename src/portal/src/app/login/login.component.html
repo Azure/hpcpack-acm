@@ -1,0 +1,7 @@
+<h2>LOGIN</h2>
+<p><em>This mocks the AAD/OAuth login. For now just click the login button and you'll be in.</em></p>
+<p>{{message}}</p>
+<p>
+	<button mat-raised-button (click)="login()"  *ngIf="!authService.isLoggedIn">Login</button>
+	<button mat-raised-button (click)="logout()" *ngIf="authService.isLoggedIn">Logout</button>
+</p>

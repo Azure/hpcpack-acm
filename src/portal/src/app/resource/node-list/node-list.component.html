@@ -1,0 +1,58 @@
+<mat-table #table [dataSource]="dataSource">
+  <!--
+   Note that these columns can be defined in any order. The actual rendered
+   columns are set as a property on the row definition, that is displayedColumns."
+  -->
+
+  <ng-container matColumnDef="select">
+    <mat-header-cell *matHeaderCellDef>
+      <mat-checkbox (change)="$event ? masterToggle() : null"
+                    [checked]="selection.hasValue() && isAllSelected()"
+                    [indeterminate]="false">
+      </mat-checkbox>
+    </mat-header-cell>
+    <mat-cell *matCellDef="let node">
+      <mat-checkbox (click)="$event.stopPropagation()"
+                    (change)="$event ? selection.toggle(node) : null"
+                    [checked]="selection.isSelected(node)">
+      </mat-checkbox>
+    </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="name">
+    <mat-header-cell *matHeaderCellDef> Name </mat-header-cell>
+    <mat-cell *matCellDef="let node"><a [routerLink]="node.id">{{node.name}}</a></mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="state">
+    <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
+    <mat-cell *matCellDef="let node"> {{node.state | titlecase }} </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="health">
+    <mat-header-cell *matHeaderCellDef> Health </mat-header-cell>
+    <mat-cell *matCellDef="let node"> {{node.health | titlecase }} </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="runningJobs">
+    <mat-header-cell *matHeaderCellDef> Running Jobs </mat-header-cell>
+    <mat-cell *matCellDef="let node"> {{node.runningJobs}} </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="actions">
+    <mat-header-cell *matHeaderCellDef></mat-header-cell>
+    <mat-cell *matCellDef="let node">
+      <button mat-icon-button [matMenuTriggerFor]="appMenu" (click)="$event.stopPropagation(); select(node)">
+        <i class="material-icons">more_horiz</i>
+      </button>
+    </mat-cell>
+  </ng-container>
+
+  <mat-menu #appMenu="matMenu">
+    <button mat-menu-item (click)="runDiagnostics()">Run Diagnostics...</button>
+    <button mat-menu-item (click)="runCommand()">Run Command...</button>
+  </mat-menu>
+
+  <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+  <mat-row *matRowDef="let node; columns: displayedColumns;" (click)="selection.toggle(node)"></mat-row>
+</mat-table>

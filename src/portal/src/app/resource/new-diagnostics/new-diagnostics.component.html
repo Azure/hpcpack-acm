@@ -1,0 +1,48 @@
+<h2 mat-dialog-title>Run Diagnostics</h2>
+<mat-dialog-content>
+  <mat-vertical-stepper linear="true">
+    <mat-step label="Select tests to run">
+      <tree-root [nodes]="tests">
+        <ng-template #treeNodeTemplate let-node let-index="index">
+          <mat-checkbox (change)="check(node, $event.checked)" [checked]="node.data.checked">
+            <span [matTooltip]="node.data.description" matTooltipPosition="right">{{node.data.name}}</span>
+          </mat-checkbox>
+        </ng-template>
+      </tree-root>
+      <div>
+        <button mat-raised-button matStepperNext (click)="selectTests()">Next</button>
+      </div>
+    </mat-step>
+    <mat-step label="Set test parameters" optional>
+      <div *ngIf="selectedTestsWithParameters.length == 0; else testsWithParameters" class="no-params">
+        No parameters for the selected tests.
+      </div>
+      <ng-template #testsWithParameters>
+        <div *ngFor="let test of selectedTestsWithParameters" class="test">
+          <div class="name"><span>{{test.name}}</span></div>
+          <div class="parameters" *ngFor="let parameter of test.parameters">
+            <mat-form-field>
+              <div *ngIf="parameter.options; else noOptions">
+                <mat-select [placeholder]="parameter.name" [value]="parameter.defaultValue">
+                  <mat-option *ngFor="let option of parameter.options" [value]="option">
+                    {{option}}
+                  </mat-option>
+                </mat-select>
+              </div>
+              <ng-template #noOptions>
+                <input matInput [placeholder]="parameter.name" [value]="parameter.defaultValue">
+              </ng-template>
+            </mat-form-field>
+          </div>
+        </div>
+      </ng-template>
+      <div>
+        <button mat-raised-button matStepperPrevious>Back</button>
+      </div>
+    </mat-step>
+  </mat-vertical-stepper>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+  <button mat-raised-button [mat-dialog-close]="true">Run</button>
+</mat-dialog-actions>

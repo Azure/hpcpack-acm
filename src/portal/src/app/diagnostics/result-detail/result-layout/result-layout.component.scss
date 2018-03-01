@@ -1,0 +1,46 @@
+app-back-button {
+  float: right;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  padding: 1em;
+
+  .name {
+    margin-left: 0.3em;
+  }
+
+}
+
+.title.failure {
+  color: red;
+  background-color: #ffdada;
+}
+
+.title.success {
+  color: green;
+  background-color: #d5ffd4;
+}
+
+.title.main {
+  clear: both;
+}
+
+.time {
+  margin-top: 8px;
+  font-size: small;
+}
+
+.nodes {
+  margin-top: 1em;
+}
+
+.overview {
+  margin: 1em 0;
+
+  chart {
+    height: 200px;
+    max-width: 400px;
+  }
+}

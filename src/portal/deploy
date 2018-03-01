@@ -1,0 +1,6 @@
+#!/bin/bash
+
+if ng build --environment prod; then
+  sudo rm -rf /var/www/html/*
+  sudo cp -r dist/* /var/www/html/
+fi

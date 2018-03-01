@@ -1,0 +1,19 @@
+<div class="actions">
+  <button mat-raised-button [disabled]="hasNoSelection()" (click)="list.runDiagnostics()">Run Diagnostics...</button>
+  <button mat-raised-button [disabled]="hasNoSelection()" (click)="list.runCommand()">Run Command...</button>
+</div>
+<div class="filter">
+  <mat-form-field>
+    <input matInput (keyup)="updateUrl()" [(ngModel)]="query.filter" placeholder="Filter">
+    <mat-hint>Filter results by node name, health or state</mat-hint>
+    <mat-hint align="end">{{dataSource.filteredData.length}} results</mat-hint>
+  </mat-form-field>
+</div>
+<mat-tab-group (selectedTabChange)="onTabChanged($event)">
+  <mat-tab label="List" >
+    <resource-node-list [dataSource]="dataSource"></resource-node-list>
+  </mat-tab>
+  <mat-tab label="Heatmap">
+    <resource-node-heatmap [nodes]="dataSource.filteredData" (clickNode)="viewNodeDetail($event)"></resource-node-heatmap>
+  </mat-tab>
+</mat-tab-group>

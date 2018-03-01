@@ -1,0 +1,69 @@
+<div class="actions">
+  <button mat-raised-button [disabled]="hasNoSelection()">Rerun</button>
+  <button mat-raised-button [disabled]="hasNoSelection()">Cancel</button>
+</div>
+
+<mat-table #table [dataSource]="dataSource">
+
+  <!--
+   Note that these columns can be defined in any order. The actual rendered
+   columns are set as a property on the row definition, displayedColumns."
+  -->
+
+  <ng-container matColumnDef="select">
+    <mat-header-cell *matHeaderCellDef>
+      <mat-checkbox (change)="$event ? masterToggle() : null"
+                    [checked]="selection.hasValue() && isAllSelected()"
+                    [indeterminate]="false">
+      </mat-checkbox>
+    </mat-header-cell>
+    <mat-cell *matCellDef="let node">
+      <mat-checkbox (click)="$event.stopPropagation()"
+                    (change)="$event ? selection.toggle(node) : null"
+                    [checked]="selection.isSelected(node)">
+      </mat-checkbox>
+    </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="command">
+    <mat-header-cell *matHeaderCellDef> Command </mat-header-cell>
+    <mat-cell *matCellDef="let result"><a [routerLink]="result.id">{{result.command}}</a></mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="state">
+    <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
+    <mat-cell *matCellDef="let result"> {{result.state | titlecase }} </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="progress">
+    <mat-header-cell *matHeaderCellDef> Progress </mat-header-cell>
+    <mat-cell *matCellDef="let result"> {{result.progress | percent}} </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="startedAt">
+    <mat-header-cell *matHeaderCellDef> Started At </mat-header-cell>
+    <mat-cell *matCellDef="let result"> {{result.startedAt | date:'yyyy-MM-dd HH:mm:ss'}} </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="updatedAt">
+    <mat-header-cell *matHeaderCellDef> Updated At </mat-header-cell>
+    <mat-cell *matCellDef="let result"> {{result.updatedAt | date:'yyyy-MM-dd HH:mm:ss'}} </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="actions">
+    <mat-header-cell *matHeaderCellDef></mat-header-cell>
+    <mat-cell *matCellDef="let node">
+      <button mat-icon-button [matMenuTriggerFor]="appMenu" (click)="$event.stopPropagation(); select(node)">
+        <i class="material-icons">more_horiz</i>
+      </button>
+    </mat-cell>
+  </ng-container>
+
+  <mat-menu #appMenu="matMenu">
+    <button mat-menu-item>Rerun</button>
+    <button mat-menu-item>Cancel</button>
+  </mat-menu>
+
+  <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+  <mat-row *matRowDef="let result; columns: displayedColumns;" (click)="selection.toggle(result)"></mat-row>
+</mat-table>

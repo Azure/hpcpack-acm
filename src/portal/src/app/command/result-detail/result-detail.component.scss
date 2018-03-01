@@ -1,0 +1,128 @@
+app-back-button {
+  float: right;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  padding: 1em;
+
+  .name {
+    font-weight: bold;
+    margin-left: 0.3em;
+  }
+}
+
+.title.failure {
+  color: red;
+  background-color: #ffdada;
+}
+
+.title.running {
+  color: blue;
+  background-color: #b3c4ff;
+}
+
+.title.success {
+  color: green;
+  background-color: #d5ffd4;
+}
+
+.title.main {
+  font-size: 150%;
+  clear: both;
+}
+
+.time {
+  margin-top: 8px;
+  font-size: small;
+}
+
+.overview {
+  margin: 1em 0;
+
+  .note {
+    margin: 0.5em 0;
+  }
+
+  chart {
+    height: 200px;
+    max-width: 400px;
+  }
+}
+
+.filter mat-form-field {
+  width: 100%;
+  margin-bottom: 1em;
+}
+
+.nodes {
+  margin-top: 1em;
+}
+
+.node {
+  .state {
+    margin-left: 1em;
+  }
+
+  pre {
+    color: white;
+    background-color: black;
+    padding: 1em;
+  }
+}
+
+.node.failure mat-expansion-panel-header {
+  color: red;
+  background-color: #ffdada;
+
+  * {
+    color: red;
+    background-color: #ffdada;
+  }
+}
+
+.node.failure mat-expansion-panel-header:hover {
+  background-color: #f98484 !important;
+
+  * {
+    background-color: #f98484 !important;
+  }
+}
+
+.node.running mat-expansion-panel-header {
+  color: blue;
+  background-color: #b3c4ff;
+
+  * {
+    color: blue;
+    background-color: #b3c4ff;
+  }
+}
+
+.node.running mat-expansion-panel-header:hover {
+  background-color: #88a1f7 !important;
+
+  * {
+    background-color: #88a1f7 !important;
+  }
+}
+
+.node.success mat-expansion-panel-header {
+  color: green;
+  background-color: #d5ffd4;
+
+  * {
+    color: green;
+    background-color: #d5ffd4;
+  }
+}
+
+.node.success mat-expansion-panel-header:hover {
+  background-color: #a7f3a5 !important;
+
+  * {
+    background-color: #a7f3a5 !important;
+  }
+}
+

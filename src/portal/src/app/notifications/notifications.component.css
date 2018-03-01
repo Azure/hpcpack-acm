@@ -1,0 +1,7 @@
+mat-list {
+  min-width: 20em;
+}
+
+mat-list-item a {
+  color: inherit;
+}

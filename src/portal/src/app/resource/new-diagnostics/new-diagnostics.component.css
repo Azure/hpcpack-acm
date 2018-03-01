@@ -1,0 +1,35 @@
+app-back-button {
+  float: right;
+}
+
+mat-vertical-stepper {
+  clear: both;
+}
+
+mat-radio-group {
+  display: flex;
+  flex-direction: column;
+}
+
+mat-radio-button {
+  margin: 0.2em;
+}
+
+.filter {
+  min-width: 20em;
+}
+
+.name {
+  margin: 16px 0 20px;
+}
+
+.name span {
+  font-size: 110%;
+  background-color: rgb(224, 224, 224);
+  border-radius: 24px;
+  padding: 10px;
+}
+
+.no-params {
+  margin: 1em;
+}

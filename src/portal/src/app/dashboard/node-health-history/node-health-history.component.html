@@ -1,0 +1,7 @@
+<h2>Node Health History</h2>
+<mat-button-toggle-group (change)="changeHistory($event.value)">
+  <mat-button-toggle value="2h" [checked]="true">2 hours</mat-button-toggle>
+  <mat-button-toggle value="24h" >24 hours</mat-button-toggle>
+  <mat-button-toggle value="7d">7 days</mat-button-toggle>
+</mat-button-toggle-group>
+<chart type="bar" [data]="chartData" [options]="chartOption"></chart>

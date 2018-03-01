@@ -1,0 +1,29 @@
+mat-table {
+  margin-top: 1em;
+}
+
+.mat-column-select {
+  overflow: initial;
+  flex: 0.3;
+}
+
+.mat-column-progress {
+  flex: 0.5;
+}
+
+.mat-column-state {
+  flex: 0.5;
+}
+
+.mat-column-actions {
+  flex: 0.3;
+}
+
+.mat-row:hover {
+  background: rgba(0,0,0,.04);
+}
+
+.mat-row a {
+  color: #3b46da;
+}
+

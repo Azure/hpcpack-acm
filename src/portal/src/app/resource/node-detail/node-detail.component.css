@@ -1,0 +1,35 @@
+h2 app-back-button {
+  float: right;
+}
+
+.section {
+  margin-top: 1em;
+  border-top: 1px dashed;
+  padding-top: 1em;
+}
+
+chart {
+  height: 200px;
+}
+
+table {
+  width: 100%;
+}
+
+td {
+  height: 2em;
+  padding: 0 0.5em;
+  background-color: #e8e7e7;
+}
+
+.mat-column-type, .mat-column-status {
+  flex: 0.3;
+}
+
+.mat-column-resourceType {
+  flex: 0.6;
+}
+
+.mat-column-id {
+  padding-right: 0.5em;
+}
