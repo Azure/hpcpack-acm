@@ -39,7 +39,7 @@
 
                 builder.BuildAndStart();
 
-                while (!Console.KeyAvailable) { Task.Delay(1000).Wait(); }
+                while (Console.In.Peek() == -1) { Task.Delay(1000).Wait(); }
                 var logger = builder.LoggerFactory.CreateLogger<Program>();
                 logger.LogInformation("Stop message received, stopping");
 

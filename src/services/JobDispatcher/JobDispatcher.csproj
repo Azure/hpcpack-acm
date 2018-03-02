@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <RootNamespace>Microsoft.HpcAcm.Services.JobDispatcher</RootNamespace>
-    <AssemblyName>Microsoft.HpcAcm.Services.JobDispatcher</AssemblyName>
+    <AssemblyName>JobDispatcher</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\common\dto\dto.csproj" />
-    <ProjectReference Include="..\..\common\Utilities\Utilities.csproj" />
+    <ProjectReference Include="..\..\Common\DTO\DTO.csproj" />
+    <ProjectReference Include="..\..\Common\Utilities\Utilities.csproj" />
     <ProjectReference Include="..\Common\ServicesCommon.csproj" />
   </ItemGroup>
 

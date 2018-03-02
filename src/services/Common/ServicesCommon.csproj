@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Microsoft.HpcAcm.Services.Common</RootNamespace>
+    <AssemblyName>Microsoft.HpcAcm.Services.Common</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\common\dto\dto.csproj" />
-    <ProjectReference Include="..\..\common\Utilities\Utilities.csproj" />
+    <ProjectReference Include="..\..\Common\DTO\DTO.csproj" />
+    <ProjectReference Include="..\..\Common\Utilities\Utilities.csproj" />
   </ItemGroup>
 
 </Project>
