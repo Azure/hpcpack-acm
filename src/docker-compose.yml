@@ -1,22 +1,8 @@
 version: '3'
 
 services:
-  frontend:
-    image: frontend
+  hpcacm:
+    image: hpcacm
     build:
       context: .
-      dockerfile: frontend/Dockerfile
-
-  jobdispatcher:
-    image: jobdispatcher
-    build:
-      context: .
-      dockerfile: services/JobDispatcher/Dockerfile
-
-
-  bootstrap:
-    image: bootstrap
-    build:
-      context: .
-      dockerfile: Bootstrap/Dockerfile
-
+      dockerfile: Docker/Dockerfile
