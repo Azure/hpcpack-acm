@@ -14,8 +14,15 @@
         public CloudUtilities(CloudOption cloudOption)
         {
             this.Option = cloudOption;
-            var account = new CloudStorageAccount(new WindowsAzure.Storage.Auth.StorageCredentials(cloudOption.StorageKeyOrSas), "evanc", "", true);
-       
+
+            var account = string.IsNullOrEmpty(this.Option.ConnectionString) ?
+                new CloudStorageAccount(
+                    new WindowsAzure.Storage.Auth.StorageCredentials(cloudOption.StorageKeyOrSas),
+                    this.Option.AccountName,
+                    null,
+                    true)
+                : CloudStorageAccount.Parse(this.Option.ConnectionString);
+
             //var account = CloudStorageAccount.Parse(cloudOption.StorageKeyOrSas);
             this.queueClient = new CloudQueueClient(account.QueueEndpoint, account.Credentials);
             this.tableClient = new CloudTableClient(account.TableEndpoint, account.Credentials);

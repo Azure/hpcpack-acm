@@ -5,6 +5,8 @@ namespace Microsoft.HpcAcm.Common.Utilities
     public class CloudOption
     {
         public string StorageKeyOrSas { get; set; }
+        public string AccountName { get; set; }
+        public string ConnectionString { get; set; }
 
         public int QueueServerTimeoutSeconds { get; set; } = 30;
         public int TableServerTimeoutSeconds { get; set; } = 30;

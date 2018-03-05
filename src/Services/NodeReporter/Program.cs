@@ -1,4 +1,4 @@
-﻿namespace Microsoft.HpcAcm.Frontend
+﻿namespace Microsoft.HpcAcm.Services.NodeReporter
 {
     using System;
     using System.Collections.Generic;
