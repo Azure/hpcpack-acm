@@ -18,7 +18,20 @@ namespace frontend
         }
 
         public static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
+            WebHost.CreateDefaultBuilder()
+                .ConfigureAppConfiguration(c =>
+                {
+                    c.AddJsonFile("appsettings.json")
+                        .AddEnvironmentVariables()
+                        .AddCommandLine(args);
+                })
+                .ConfigureLogging((c, l) =>
+                {
+                    l.AddConfiguration(c.Configuration.GetSection("Logging"))
+                        .AddConsole()
+                        .AddDebug()
+                        .AddAzureWebAppDiagnostics();
+                })
                 .UseUrls("http://*:80", "http://*:5000")
                 .UseStartup<Startup>()
                 .Build();

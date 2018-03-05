@@ -20,18 +20,25 @@
 
         public async Task BuildAndStartAsync(CancellationToken token)
         {
-            this.loggerFactoryConfigMethod?.Invoke(this.LoggerFactory);
-            this.appConfigMethod?.Invoke(this.configBuilder);
-            this.Configuration = this.configBuilder.Build();
+            try
+            {
+                this.appConfigMethod?.Invoke(this.configBuilder);
+                this.Configuration = this.configBuilder.Build();
+                this.loggerFactoryConfigMethod?.Invoke(this.Configuration, this.LoggerFactory);
 
-            this.CloudOptions = this.cloudOptionMethod?.Invoke(this.Configuration);
-            this.Utilities = new CloudUtilities(this.CloudOptions);
+                this.CloudOptions = this.cloudOptionMethod?.Invoke(this.Configuration);
+                this.Utilities = new CloudUtilities(this.CloudOptions);
 
-            this.source = await this.taskItemSourceMethod?.Invoke(this.Utilities, token);
-            this.worker = await this.workerMethod?.Invoke(this.Utilities, this.LoggerFactory, token);
+                this.source = await this.taskItemSourceMethod?.Invoke(this.Utilities, token);
+                this.worker = await this.workerMethod?.Invoke(this.Utilities, this.LoggerFactory, token);
 
-            this.server = new Server(this.source, this.worker, this.LoggerFactory);
-            await this.server.RunAsync(token);
+                this.server = new Server(this.source, this.worker, this.LoggerFactory, this.serverOptions);
+                await this.server.RunAsync(token);
+            }
+            catch(Exception ex)
+            {
+                this.LoggerFactory?.CreateLogger<ServerBuilder>()?.LogError(ex, $"Error happened in {nameof(BuildAndStartAsync)}");
+            }
         }
 
         private Server server;
@@ -41,12 +48,25 @@
             this.cts.Cancel();
         }
 
+        #region Server options
+
+        public ServerOptions serverOptions { get; set; } = new ServerOptions();
+        private Action<IConfiguration, ServerOptions> serverOptionsConfigMethod;
+
+        public ServerBuilder ConfigServerOptions(Action<IConfiguration, ServerOptions> configMethod)
+        {
+            this.serverOptionsConfigMethod = configMethod;
+            return this;
+        }
+
+        #endregion
+
         #region Logger factory
 
         public ILoggerFactory LoggerFactory { get; set; } = new LoggerFactory();
-        private Action<ILoggerFactory> loggerFactoryConfigMethod;
+        private Action<IConfiguration, ILoggerFactory> loggerFactoryConfigMethod;
 
-        public ServerBuilder ConfigureLogging(Action<ILoggerFactory> configMethod)
+        public ServerBuilder ConfigureLogging(Action<IConfiguration, ILoggerFactory> configMethod)
         {
             this.loggerFactoryConfigMethod = configMethod;
             return this;

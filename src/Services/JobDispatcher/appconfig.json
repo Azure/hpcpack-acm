@@ -1,9 +1,29 @@
 {
-    "abc" :
-    {
-        "def" : 5
+  "CloudOption": {
+    "StorageKeyOrSas": "?sv=2017-07-29&ss=bfqt&srt=sco&sp=rwdlacup&se=2019-04-02T18:35:39Z&st=2018-03-05T10:35:39Z&spr=https&sig=MO2wFOAcvGCQr7h1sasw8SWQAWME%2BfM58XKdJgKkOuY%3D",
+    "QueueServerTimeoutSeconds": "30",
+    "TableServerTimeoutSeconds": "30",
+    "VisibleTimeoutSeconds": 60,
+    "NodesTableName": "nodestable",
+    "IdsTableName": "idstable",
+    "JobsTableName": "jobstable",
+    "JobDispatchQueueName": "jobdispatchqueue",
+    "NodeDispatchQueuePattern": "nodedispatchqueue-{0}",
+    "JobPartitionPattern": "job-{0}",
+    "JobEntryKey": "jobentry",
+    "JobResultPattern": "nodejobresult-{0}"
+  },
+  "Logging": {
+    "IncludeScopes": true,
+    "Debug": {
+      "LogLevel": {
+        "Default": "Information"
+      }
     },
-    "CloudOption" : {
-        "StorageKeyOrSas" : "storage"
+    "Console": {
+      "LogLevel": {
+        "Default": "Information"
+      }
     }
+  }
 }

@@ -22,7 +22,7 @@ namespace Microsoft.HpcAcm.Services.Common
         public async Task<TaskItem> FetchTaskItemAsync(CancellationToken token)
         {
             var message = await this.queue.GetMessageAsync(visibleTimeout, null, null, token);
-            return new TaskItem(message, this);
+            return message == null ? null : new TaskItem(message, this);
         }
 
         public async Task FinishTaskItemAsync(TaskItem item, CancellationToken token)

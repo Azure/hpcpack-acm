@@ -14,7 +14,9 @@
         public CloudUtilities(CloudOption cloudOption)
         {
             this.Option = cloudOption;
-            var account = CloudStorageAccount.Parse(cloudOption.StorageKeyOrSas);
+            var account = new CloudStorageAccount(new WindowsAzure.Storage.Auth.StorageCredentials(cloudOption.StorageKeyOrSas), "evanc", "", true);
+       
+            //var account = CloudStorageAccount.Parse(cloudOption.StorageKeyOrSas);
             this.queueClient = new CloudQueueClient(account.QueueEndpoint, account.Credentials);
             this.tableClient = new CloudTableClient(account.TableEndpoint, account.Credentials);
             queueClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(cloudOption.QueueServerTimeoutSeconds);
@@ -41,9 +43,9 @@
             return await this.GetOrCreateQueueAsync(string.Format(this.Option.NodeDispatchQueuePattern, nodeName), token);
         }
 
-        public async Task<CloudTable> GetOrCreateDiagnosticsJobTableAsync(CancellationToken token)
+        public async Task<CloudTable> GetOrCreateJobsTableAsync(CancellationToken token)
         {
-            return await this.GetOrCreateTableAsync(this.Option.JobDispatchQueueName, token);
+            return await this.GetOrCreateTableAsync(this.Option.JobsTableName, token);
         }
 
         private async Task<CloudQueue> GetOrCreateQueueAsync(string queueName, CancellationToken token)

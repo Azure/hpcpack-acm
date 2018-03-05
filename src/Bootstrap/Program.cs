@@ -5,6 +5,7 @@
     using System.Linq;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.IO;
 
     class Program
     {
@@ -33,9 +34,12 @@
                 {
                     t.OnExecute(() =>
                     {
-                        var p = Process.Start(
-                            "dotnet",
-                            string.Join(" ", s.Value, sasToken.HasValue() ? sasToken.Value() : ""));
+                        var psi = new ProcessStartInfo("dotnet", string.Join(" ", s.Value, $"--sasToken={(sasToken.HasValue() ? sasToken.Value() : "")}"))
+                        {
+                            WorkingDirectory = Path.GetDirectoryName(s.Value)
+                        };
+
+                        var p = Process.Start(psi);
                         p.WaitForExit();
                         return p.ExitCode;
                     });

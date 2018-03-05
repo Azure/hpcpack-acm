@@ -13,10 +13,13 @@ namespace frontend
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, ILoggerFactory loggerFactory)
         {
             Configuration = configuration;
+            this.Logger = loggerFactory.CreateLogger<Startup>();
         }
+
+        public ILogger Logger { get; }
 
         public IConfiguration Configuration { get; }
 
@@ -27,7 +30,7 @@ namespace frontend
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {

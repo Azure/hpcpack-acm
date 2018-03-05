@@ -5,19 +5,19 @@ namespace Microsoft.HpcAcm.Common.Utilities
     public class CloudOption
     {
         public string StorageKeyOrSas { get; set; }
-        public int QueueServerTimeoutSeconds { get; set; }
-        public int TableServerTimeoutSeconds { get; set; }
-        public int QueueCount { get; set; }
-        public string TaskCompletionQueueName { get; set; }
-        public string RegisterTableName { get; set; }
-        public string HeartbeatTableName { get; set; }
 
-        public string JobDispatchQueueName { get; set; }
-        public string NodeDispatchQueuePattern { get; set; }
-        public string DiagnosticsJobTableName { get; set; }
-        public int VisibleTimeoutSeconds { get; set; }
-        public string JobPartitionPattern { get; internal set; } = "Job-{0}";
-        public string JobEntryKey { get; internal set; } = "JobEntry";
-        public string JobResultPattern { get; internal set; } = "Node-{0}";
+        public int QueueServerTimeoutSeconds { get; set; } = 30;
+        public int TableServerTimeoutSeconds { get; set; } = 30;
+        public int VisibleTimeoutSeconds { get; set; } = 60;
+
+        public string NodesTableName { get; set; } = "nodestable";
+        public string JobsTableName { get; set; } = "jobstable";
+
+        public string JobDispatchQueueName { get; set; } = "jobdispatchqueue";
+        public string NodeDispatchQueuePattern { get; set; } = "nodedispatchqueue-{0}";
+
+        public string JobPartitionPattern { get; internal set; } = "job-{0}";
+        public string JobEntryKey { get; internal set; } = "jobentry";
+        public string JobResultPattern { get; internal set; } = "nodejobresult-{0}";
     }
 }

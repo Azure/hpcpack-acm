@@ -22,11 +22,15 @@
                 {
                     config.SetBasePath(Directory.GetCurrentDirectory())
                         .AddJsonFile("appconfig.json", false, true)
-                        .AddEnvironmentVariables();
+                        .AddEnvironmentVariables()
+                        .AddCommandLine(args);
                 })
-                .ConfigureLogging(l =>
+                .ConfigureLogging((config, l) =>
                 {
-                    l.AddConsole().AddDebug();
+                    var debugLevel = config.GetValue<Extensions.Logging.LogLevel>("Logging:Debug:LogLevel:Default", Extensions.Logging.LogLevel.Debug);
+
+                    l.AddConsole(config.GetSection("Logging").GetSection("Console"))
+                        .AddDebug(debugLevel);
                 })
                 .ConfigureCloudOptions(c => c.GetSection("CloudOption").Get<CloudOption>())
                 .AddTaskItemSource(async (u, token) => new TaskItemSource(
@@ -34,7 +38,7 @@
                     TimeSpan.FromSeconds(u.Option.VisibleTimeoutSeconds)))
                 .AddWorker(async (u, l, token) => new JobDispatcherWorker(
                     l,
-                    await u.GetOrCreateDiagnosticsJobTableAsync(token),
+                    await u.GetOrCreateJobsTableAsync(token),
                     u));
 
                 builder.BuildAndStart();

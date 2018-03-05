@@ -1,5 +1,6 @@
 ﻿namespace Microsoft.HpcAcm.Services.Common
 {
+    using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Utilities;
     using System;
@@ -13,11 +14,13 @@
         private WorkerBase worker;
         private TaskItemSource source;
         private ILogger logger;
+        private ServerOptions options;
 
-        public Server(TaskItemSource source, WorkerBase worker, ILoggerFactory loggerFactory)
+        public Server(TaskItemSource source, WorkerBase worker, ILoggerFactory loggerFactory, ServerOptions options)
         {
             this.worker = worker;
             this.source = source;
+            this.options = options;
             this.logger = loggerFactory.CreateLogger<Server>();
         }
 
@@ -28,6 +31,11 @@
                 try
                 {
                     var t = await this.source.FetchTaskItemAsync(token);
+                    if (t == null)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(this.options.FetchIntervalSeconds), token);
+                        continue;
+                    }
 
                     token.ThrowIfCancellationRequested();
 
@@ -40,7 +48,7 @@
                 catch(Exception ex)
                 {
                     logger.LogError(ex, "Exception occurred in {0}", nameof(RunAsync));
-                    await Task.Delay(5000);
+                    await Task.Delay(TimeSpan.FromSeconds(this.options.FetchIntervalOnErrorSeconds), token);
                 }
             }
         }
