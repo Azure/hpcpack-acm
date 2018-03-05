@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
+import { Subscription } from 'rxjs/Subscription';
 import { Result } from '../result';
 import { CommandService } from '../command.service';
 
@@ -34,6 +35,7 @@ export class ResultDetailComponent implements OnInit {
     },
   };
 
+  private subcription: Subscription;
   constructor(
     private route: ActivatedRoute,
     private commandService: CommandService,
@@ -46,7 +48,7 @@ export class ResultDetailComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.route.paramMap.subscribe(map => {
+    this.subcription = this.route.paramMap.subscribe(map => {
       let id = map.get('id');
       this.commandService.getResult(id).subscribe(result => {
         this.result = result;
@@ -54,6 +56,10 @@ export class ResultDetailComponent implements OnInit {
         this.nodeResults.data = result.nodes;
       });
     });
+  }
+
+  ngOnDestroy() {
+    this.subcription.unsubscribe();
   }
 
   makeChartData() {

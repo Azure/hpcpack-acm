@@ -1,6 +1,7 @@
 import { Component, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
+import { Subscription } from 'rxjs/Subscription';
 import { Node } from '../node';
 import { NodeService } from '../node.service';
 
@@ -91,13 +92,15 @@ export class NodeDetailComponent implements AfterViewInit {
 
   eventColumns = ['id', 'type', 'resourceType', 'resources', 'status', 'notBefore'];
 
+  private subcription: Subscription;
+
   constructor(
     private nodeService: NodeService,
     private route: ActivatedRoute,
   ) {}
 
   ngAfterViewInit() {
-    this.route.paramMap.subscribe(map => {
+    this.subcription = this.route.paramMap.subscribe(map => {
       let id = map.get('id');
       this.nodeService.getNode(id).subscribe(node => {
         this.node = node;
@@ -108,6 +111,10 @@ export class NodeDetailComponent implements AfterViewInit {
         this.events.data = node.events;
       });
     });
+  }
+
+  ngOnDestroy() {
+    this.subcription.unsubscribe();
   }
 
   makeLabels(usage): void {

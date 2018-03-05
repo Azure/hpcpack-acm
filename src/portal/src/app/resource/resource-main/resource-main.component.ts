@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatTabGroup } from '@angular/material/tabs'
 import { MatTableDataSource } from '@angular/material';
+import { Subscription } from 'rxjs/Subscription';
 import { NodeService } from '../node.service';
 import { NodeListComponent } from '../node-list/node-list.component';
 import { NodeHeatmapComponent } from '../node-heatmap/node-heatmap.component';
@@ -25,6 +26,8 @@ export class ResourceMainComponent implements OnInit {
   @ViewChild(NodeHeatmapComponent)
   private map: NodeHeatmapComponent;
 
+  private subcription: Subscription;
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -35,11 +38,15 @@ export class ResourceMainComponent implements OnInit {
     this.nodeService.getNodes().subscribe(nodes => {
       this.dataSource.data = nodes;
     });
-    this.route.queryParamMap.subscribe(params => {
+    this.subcription = this.route.queryParamMap.subscribe(params => {
       this.query.view = params.get('view') || 'list';
       this.query.filter = params.get('filter');
       this.updateUI();
     });
+  }
+
+  ngOnDestroy() {
+    this.subcription.unsubscribe();
   }
 
   updateUrl() {

@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ViewContainerRef, ComponentFactoryResolver } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs/Subscription';
 import { Result } from '../result';
 import { DiagnosticsService } from '../diagnostics.service';
 import { ServiceRunningTestComponent } from './service-running-test/service-running-test.component';
@@ -20,6 +21,8 @@ export class ResultDetailComponent implements OnInit {
 
   private result: Result = {} as Result;
 
+  private subcription: Subscription;
+
   constructor(
     private route: ActivatedRoute,
     private diagnosticsService: DiagnosticsService,
@@ -27,13 +30,17 @@ export class ResultDetailComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.route.paramMap.subscribe(map => {
+    this.subcription = this.route.paramMap.subscribe(map => {
       let id = map.get('id');
       this.diagnosticsService.getResult(id).subscribe(result => {
         this.result = result;
         this.loadComponent();
       });
     });
+  }
+
+  ngOnDestroy() {
+    this.subcription.unsubscribe();
   }
 
   loadComponent() {
