@@ -18,8 +18,9 @@ namespace Microsoft.HpcAcm.Common.Utilities
         public string JobDispatchQueueName { get; set; } = "jobdispatchqueue";
         public string NodeDispatchQueuePattern { get; set; } = "nodedispatchqueue-{0}";
 
-        public string JobPartitionPattern { get; internal set; } = "job-{0}";
+        public string JobPartitionPattern { get; internal set; } = "job-{0}-{1}";
+        public string NodePartitionPattern { get; internal set; } = "node-{0}";
         public string JobEntryKey { get; internal set; } = "jobentry";
-        public string JobResultPattern { get; internal set; } = "nodejobresult-{0}";
+        public string JobResultPattern { get; internal set; } = "nodejobresult-{0}-{1}";
     }
 }

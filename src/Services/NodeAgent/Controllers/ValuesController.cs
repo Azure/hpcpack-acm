@@ -1,4 +1,4 @@
-﻿namespace frontend.Controllers
+﻿namespace Microsoft.HpcAcm.Services.NodeAgent
 {
     using System;
     using System.Collections.Generic;

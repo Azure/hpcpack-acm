@@ -7,7 +7,7 @@ namespace Microsoft.HpcAcm.Common.Dto
     {
         public Node NodeInfo { get; private set; }
         public IList<Event> Events { get; private set; }
-        public IList<DiagnosticsJob> Jobs { get; private set; }
+        public IList<Job> Jobs { get; private set; }
         public IDictionary<string, IDictionary<DateTime, double>> MetricHistories { get; private set; }
     }
 }

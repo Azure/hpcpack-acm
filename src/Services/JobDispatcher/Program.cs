@@ -36,7 +36,8 @@
                 .AddTaskItemSource(async (u, token) => new TaskItemSource(
                     await u.GetOrCreateJobDispatchQueueAsync(token),
                     TimeSpan.FromSeconds(u.Option.VisibleTimeoutSeconds)))
-                .AddWorker(async (u, l, token) => new JobDispatcherWorker(
+                .AddWorker(async (config, u, l, token) => new JobDispatcherWorker(
+                    config,
                     l,
                     await u.GetOrCreateJobsTableAsync(token),
                     u));

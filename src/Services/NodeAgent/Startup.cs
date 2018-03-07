@@ -1,4 +1,4 @@
-﻿namespace Microsoft.HpcAcm.Services.NodeReporter
+﻿namespace Microsoft.HpcAcm.Services.NodeAgent
 {
     using System;
     using System.Collections.Generic;

@@ -13,17 +13,20 @@
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
     using System.Linq;
+    using Microsoft.Extensions.Configuration;
 
     internal class JobDispatcherWorker : WorkerBase
     {
         private ILogger logger;
         private CloudUtilities utilities;
         private CloudTable jobTable;
+        private IConfiguration config;
 
         private IDictionary<string, CloudQueue> nodesJobQueue = new Dictionary<string, CloudQueue>();
 
-        public JobDispatcherWorker(ILoggerFactory loggerFactory, CloudTable jobTable, CloudUtilities utilities)
+        public JobDispatcherWorker(IConfiguration config, ILoggerFactory loggerFactory, CloudTable jobTable, CloudUtilities utilities)
         {
+            this.config = config;
             this.logger = loggerFactory.CreateLogger<JobDispatcherWorker>();
             this.utilities = utilities;
             this.jobTable = jobTable;
@@ -35,32 +38,37 @@
             using (this.logger.BeginScope("Do work for JobDispatchMessage {0}", message.Id))
             {
                 var result = await this.jobTable.ExecuteAsync(
-                    TableOperation.Retrieve<DiagnosticsJobTableEntity>(
-                        this.utilities.GetJobPartitionName(message.Id), 
+                    TableOperation.Retrieve<JobTableEntity>(
+                        this.utilities.GetJobPartitionName(message.Id, message.Type.ToString()),
                         this.utilities.JobEntryKey),
                     null,
                     null,
                     token);
 
+                this.logger.LogInformation("Queried job table entity for job id {0}, result {1}", message.Id, result.HttpStatusCode);
 
-                DiagnosticsJob job = null;
-                if (result.Result is DiagnosticsJobTableEntity entity)
+                if (result.Result is JobTableEntity entity)
                 {
-                    job = entity.Job;
+                    var job = entity.Job;
 
                     job.State = JobState.Running;
+                    var internalJob = InternalJob.CreateFrom(job);
 
-                    await Task.WhenAll(job.TargetNodes.Select(async n =>
+                    await Task.WhenAll(internalJob.TargetNodes.Select(async n =>
                     {
                         var q = await this.utilities.GetOrCreateNodeDispatchQueueAsync(n, token);
-                        await q.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(job)), null, null, null, null, token);
+                        await q.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(internalJob)), null, null, null, null, token);
                     }));
 
                     result = await this.jobTable.ExecuteAsync(TableOperation.Merge(entity), null, null, token);
 
                     this.logger.LogInformation("Dispatched job, update job result code {0}", result.HttpStatusCode);
                 }
-            }                
+                else
+                {
+                    this.logger.LogWarning("The entity queried is not of <JobTableEntity> type, {0}", result.Result);
+                }
+            }
         }
     }
 }

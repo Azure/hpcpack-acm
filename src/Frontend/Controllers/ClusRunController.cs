@@ -8,34 +8,34 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using Microsoft.HpcAcm.Common.Dto;
 
     [Route("api/[controller]")]
-    public class ClusRunController: Controller
+    public class ClusRunController : Controller
     {
-        // GET api/clusrun/jobs
-        [HttpGet("jobs")]
-        public async Task<IEnumerable<ClusRunJob>> GetClusRunJobsAsync()
+        // GET api/clusrun
+        [HttpGet()]
+        public async Task<IEnumerable<Job>> GetClusRunJobsAsync()
         {
             await Task.CompletedTask;
-            return new ClusRunJob[] { new ClusRunJob() };
+            return new Job[] { new Job() };
         }
 
-        // GET api/clusrun/jobs/5
-        [HttpGet("jobs/{jobid}")]
+        // GET api/clusrun/5
+        [HttpGet("{jobid}")]
         public async Task<JobResult> GetAsync(int jobId)
         {
             await Task.CompletedTask;
-            return new JobResult(); 
+            return new JobResult();
         }
-        
-        // POST api/clusrun/newjob
-        [HttpPost("newjob")]
-        public async Task<int> NewJob([FromBody] ClusRunJob job)
+
+        // POST api/clusrun
+        [HttpPost()]
+        public async Task<int> NewJob([FromBody] Job job)
         {
             await Task.CompletedTask;
             return 1;
         }
-        
+
         // POST api/clusrun/jobs/5/rerun
-        [HttpPost("jobs/{jobid}/{operation}")]
+        [HttpPost("{jobid}/{operation}")]
         public async Task TakeAction(int jobId, string operation)
         {
             await Task.CompletedTask;

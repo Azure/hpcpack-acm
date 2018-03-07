@@ -20,10 +20,10 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
 
         // GET api/diagnostics/jobs
         [HttpGet("jobs")]
-        public async Task<IEnumerable<DiagnosticsJob>> GetDiagnosticsJobsAsync()
+        public async Task<IEnumerable<Job>> GetDiagnosticsJobsAsync()
         {
             await Task.CompletedTask;
-            return new DiagnosticsJob[] { new DiagnosticsJob() };
+            return new Job[] { new Job() };
         }
 
         // GET api/diagnostics/jobs/5
@@ -42,9 +42,9 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return new Dictionary<JobState, int>();
         }
         
-        // POST api/diagnostics/newjob
-        [HttpPost("newjob")]
-        public async Task<int> NewJob([FromBody] DiagnosticsJob job)
+        // POST api/diagnostics/jobs
+        [HttpPost("jobs")]
+        public async Task<int> NewJob([FromBody] Job job)
         {
             await Task.CompletedTask;
             return 1;

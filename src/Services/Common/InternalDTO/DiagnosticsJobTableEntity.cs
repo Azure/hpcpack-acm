@@ -7,13 +7,13 @@
     using System.Collections.Generic;
     using System.Text;
 
-    public class DiagnosticsJobTableEntity: TableEntity
+    public class JobTableEntity: TableEntity
     {
-        public DiagnosticsJob Job { get; set; }
+        public Job Job { get; set; }
 
-        public DiagnosticsJobTableEntity(DiagnosticsJob job, CloudUtilities utilities) : base(utilities.GetJobPartitionName(job.Id), utilities.JobEntryKey)
+        public JobTableEntity(Job job, CloudUtilities utilities) : base(utilities.GetJobPartitionName(job.Id, $"{job.Type}"), utilities.JobEntryKey)
         {
-
+            this.Job = job;
         }
     }
 }

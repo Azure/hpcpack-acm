@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <RootNamespace>Microsoft.HpcAcm.Services.NodeReporter</RootNamespace>
+    <RootNamespace>Microsoft.HpcAcm.Services.NodeAgent</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,5 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Common\DTO\DTO.csproj" />
+    <ProjectReference Include="..\..\Common\Utilities\Utilities.csproj" />
+    <ProjectReference Include="..\Common\ServicesCommon.csproj" />
   </ItemGroup>
 </Project>

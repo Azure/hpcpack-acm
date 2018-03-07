@@ -35,10 +35,12 @@
         private CloudQueueClient queueClient;
         private CloudTableClient tableClient;
 
-        public string GetJobPartitionName(int jobId) => string.Format(this.Option.JobPartitionPattern, jobId);
+        public string GetJobPartitionName(int jobId, string type) => string.Format(this.Option.JobPartitionPattern, type, jobId);
+        public string GetNodePartitionName(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);
         public string JobEntryKey { get => this.Option.JobEntryKey; }
 
-        public string GetJobResultKey(string nodeKey) => string.Format(this.Option.JobResultPattern, nodeKey);
+        public string GetJobResultKey(string nodeKey, string taskKey) => string.Format(this.Option.JobResultPattern, nodeKey, taskKey);
+        public string GetTaskKey(int jobId, int taskId, int requeueCount) => $"{jobId}:{taskId}:{requeueCount}";
 
         public async Task<CloudQueue> GetOrCreateJobDispatchQueueAsync(CancellationToken token)
         {
@@ -49,6 +51,12 @@
         {
             return await this.GetOrCreateQueueAsync(string.Format(this.Option.NodeDispatchQueuePattern, nodeName), token);
         }
+
+        public async Task<CloudTable> GetOrCreateNodesTableAsync(CancellationToken token)
+        {
+            return await this.GetOrCreateTableAsync(this.Option.NodesTableName, token);
+        }
+
 
         public async Task<CloudTable> GetOrCreateJobsTableAsync(CancellationToken token)
         {

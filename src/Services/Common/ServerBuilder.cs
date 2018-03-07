@@ -30,7 +30,8 @@
                 this.Utilities = new CloudUtilities(this.CloudOptions);
 
                 this.source = await this.taskItemSourceMethod?.Invoke(this.Utilities, token);
-                this.worker = await this.workerMethod?.Invoke(this.Utilities, this.LoggerFactory, token);
+                this.worker = await this.workerMethod?.Invoke(this.Configuration, this.Utilities, this.LoggerFactory, token);
+                this.configWorkerMethod?.Invoke(this.worker);
 
                 this.server = new Server(this.source, this.worker, this.LoggerFactory, this.serverOptions);
                 await this.server.RunAsync(token);
@@ -87,13 +88,24 @@
         #endregion
 
         #region Worker
-        public ServerBuilder AddWorker(Func<CloudUtilities, ILoggerFactory, CancellationToken, Task<WorkerBase>> configMethod)
+        public ServerBuilder ConfigureWorker(Action<WorkerBase> configMethod)
+        {
+            this.configWorkerMethod = configMethod;
+            return this;
+        }
+
+        private Action<WorkerBase> configWorkerMethod;
+
+        #endregion
+
+        #region Worker
+        public ServerBuilder AddWorker(Func<IConfiguration, CloudUtilities, ILoggerFactory, CancellationToken, Task<WorkerBase>> configMethod)
         {
             this.workerMethod = configMethod;
             return this;
         }
 
-        private Func<CloudUtilities, ILoggerFactory, CancellationToken, Task<WorkerBase>> workerMethod;
+        private Func<IConfiguration, CloudUtilities, ILoggerFactory, CancellationToken, Task<WorkerBase>> workerMethod;
         private WorkerBase worker;
 
         #endregion
