@@ -15,8 +15,7 @@
             {
                 { "frontend", "/app/Frontend/Frontend.dll" },
                 { "jobdispatcher", "/app/JobDispatcher/JobDispatcher.dll" },
-                { "jobrunner", "/app/JobRunner/JobRunner.dll" },
-                { "nodereporter", "/app/NodeReporter/NodeReporter.dll" },
+                { "nodeagent", "/app/NodeAgent/NodeAgent.dll" },
             };
 
             var possibleServices = string.Join("|", serviceCollection.Keys);
