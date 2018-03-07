@@ -32,6 +32,7 @@
                 this.logger.LogInformation("Linux ComputeNodeReported. NodeName {0}, JobCount {1}", nodeInfo.Name, nodeInfo.Jobs.Count);
 
                 // TODO: handle heartbeat;
+                return 30000;
             }
             catch (Exception ex)
             {

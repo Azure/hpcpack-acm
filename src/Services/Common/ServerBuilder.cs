@@ -15,13 +15,42 @@
 
         public void BuildAndStart()
         {
-            this.BuildAndStartAsync(this.cts.Token).FireAndForget();
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await this.BuildAsync();
+                    await this.server.RunAsync(this.cts.Token);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine(ex);
+                    Environment.Exit(-1);
+                }
+            });
+
+        }
+        public void Start()
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await this.server.RunAsync(this.cts.Token);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine(ex);
+                    Environment.Exit(-1);
+                }
+            });
         }
 
-        public async Task BuildAndStartAsync(CancellationToken token)
+        public async Task BuildAsync()
         {
             try
             {
+                var token = this.cts.Token;
                 this.appConfigMethod?.Invoke(this.configBuilder);
                 this.Configuration = this.configBuilder.Build();
                 this.loggerFactoryConfigMethod?.Invoke(this.Configuration, this.LoggerFactory);
@@ -34,11 +63,11 @@
                 this.configWorkerMethod?.Invoke(this.worker);
 
                 this.server = new Server(this.source, this.worker, this.LoggerFactory, this.serverOptions);
-                await this.server.RunAsync(token);
             }
             catch(Exception ex)
             {
-                this.LoggerFactory?.CreateLogger<ServerBuilder>()?.LogError(ex, $"Error happened in {nameof(BuildAndStartAsync)}");
+                this.LoggerFactory?.CreateLogger<ServerBuilder>()?.LogError(ex, $"Error happened in {nameof(BuildAsync)}");
+                throw;
             }
         }
 
@@ -130,8 +159,8 @@
             return this;
         }
 
-        protected CloudOption CloudOptions { get; set; }
-        protected CloudUtilities Utilities { get; set; }
+        public CloudOption CloudOptions { get; set; }
+        public CloudUtilities Utilities { get; set; }
         private Func<IConfiguration, CloudOption> cloudOptionMethod;
 
         #endregion

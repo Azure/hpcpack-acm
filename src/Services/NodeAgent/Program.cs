@@ -18,53 +18,56 @@
         {
             var taskMonitor = new TaskMonitor();
 
-
-            Task.Run(() => BuildWebHost(args, taskMonitor).Run());
-            JobRunner(args, taskMonitor);
-        }
-
-        public static void JobRunner(string[] args, TaskMonitor monitor)
-        {
-            var nodeName = Environment.MachineName.ToLowerInvariant();
-
-            using (ServerBuilder builder = new ServerBuilder())
+            using (var serverBuilder = BuildServer(args, taskMonitor))
             {
-                builder.ConfigureAppConfiguration(config =>
-                {
-                    config.SetBasePath(Directory.GetCurrentDirectory())
-                        .AddJsonFile("appsettings.json", false, true)
-                        .AddEnvironmentVariables()
-                        .AddCommandLine(args);
-                })
-                .ConfigureLogging((config, l) =>
-                {
-                    var debugLevel = config.GetValue<Extensions.Logging.LogLevel>("Logging:Debug:LogLevel:Default", Extensions.Logging.LogLevel.Debug);
+                serverBuilder.BuildAsync().GetAwaiter().GetResult();
+                Task.Run(() => BuildWebHost(args, taskMonitor, serverBuilder.Utilities).Run());
 
-                    l.AddConsole(config.GetSection("Logging").GetSection("Console"))
-                        .AddDebug(debugLevel);
-                })
-                .ConfigureCloudOptions(c => c.GetSection("CloudOption").Get<CloudOption>())
-                .AddTaskItemSource(async (u, token) => new TaskItemSource(
-                    await u.GetOrCreateNodeDispatchQueueAsync(nodeName, token),
-                    TimeSpan.FromSeconds(u.Option.VisibleTimeoutSeconds)))
-                .AddWorker(async (config, u, l, token) => new NodeAgentWorker(
-                    config,
-                    l,
-                    await u.GetOrCreateJobsTableAsync(token),
-                    await u.GetOrCreateNodesTableAsync(token),
-                    u))
-                .ConfigureWorker(w => ((NodeAgentWorker)w).Monitor = monitor)
-                .BuildAndStart();
+                serverBuilder.Start();
 
                 while (Console.In.Peek() == -1) { Task.Delay(1000).Wait(); }
-                var logger = builder.LoggerFactory.CreateLogger<Program>();
+                var logger = serverBuilder.LoggerFactory.CreateLogger<Program>();
                 logger.LogInformation("Stop message received, stopping");
 
-                builder.Stop();
+                serverBuilder.Stop();
             }
         }
 
-        public static IWebHost BuildWebHost(string[] args, TaskMonitor taskMonitor) =>
+        public static ServerBuilder BuildServer(string[] args, TaskMonitor monitor)
+        {
+            var nodeName = Environment.MachineName.ToLowerInvariant();
+
+            var builder = new ServerBuilder();
+            builder.ConfigureAppConfiguration(config =>
+            {
+                config.SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json", false, true)
+                    .AddEnvironmentVariables()
+                    .AddCommandLine(args);
+            })
+            .ConfigureLogging((config, l) =>
+            {
+                var debugLevel = config.GetValue<Extensions.Logging.LogLevel>("Logging:Debug:LogLevel:Default", Extensions.Logging.LogLevel.Debug);
+
+                l.AddConsole(config.GetSection("Logging").GetSection("Console"))
+                    .AddDebug(debugLevel);
+            })
+            .ConfigureCloudOptions(c => c.GetSection("CloudOption").Get<CloudOption>())
+            .AddTaskItemSource(async (u, token) => new TaskItemSource(
+                await u.GetOrCreateNodeDispatchQueueAsync(nodeName, token),
+                TimeSpan.FromSeconds(u.Option.VisibleTimeoutSeconds)))
+            .AddWorker(async (config, u, l, token) => new NodeAgentWorker(
+                config,
+                l,
+                await u.GetOrCreateJobsTableAsync(token),
+                await u.GetOrCreateNodesTableAsync(token),
+                u))
+            .ConfigureWorker(w => ((NodeAgentWorker)w).Monitor = monitor);
+
+            return builder;
+        }
+
+        public static IWebHost BuildWebHost(string[] args, TaskMonitor taskMonitor, CloudUtilities utilities) =>
             WebHost.CreateDefaultBuilder()
                 .ConfigureAppConfiguration(c =>
                 {
@@ -82,6 +85,7 @@
                 .ConfigureServices(services =>
                 {
                     services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(TaskMonitor), taskMonitor));
+                    services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(CloudUtilities), utilities));
                 })
                 .UseUrls("http://*:80", "http://*:5000")
                 .UseStartup<Startup>()
