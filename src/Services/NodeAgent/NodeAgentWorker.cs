@@ -41,6 +41,7 @@
         {
             var job = taskItem.GetMessage<InternalJob>();
             var nodeName = Environment.MachineName.ToLowerInvariant();
+            nodeName = "evanclinuxdev";
             using (this.logger.BeginScope("Do work for InternalJob {0} on node {1}", job.Id, nodeName))
             {
                 logger.LogInformation("Executing job {0}", job.Id);

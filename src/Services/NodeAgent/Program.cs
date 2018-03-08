@@ -36,6 +36,7 @@
         public static ServerBuilder BuildServer(string[] args, TaskMonitor monitor)
         {
             var nodeName = Environment.MachineName.ToLowerInvariant();
+            nodeName = "evanclinuxdev";
 
             var builder = new ServerBuilder();
             builder.ConfigureAppConfiguration(config =>

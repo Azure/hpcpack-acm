@@ -45,7 +45,7 @@
                 Name = "testjob",
                 RequeueCount = 0,
                 State = JobState.Queued,
-                TargetNodes = new string[] { Environment.MachineName.ToLower() },
+                TargetNodes = new string[] { "evanclinuxdev" },
                 Type = JobType.ClusRun,
             };
 
