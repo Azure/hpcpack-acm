@@ -66,6 +66,7 @@
             }
             catch (Exception e)
             {
+                this.logger.LogError(e, "Sending out request, action {0}, callback {1}, nodeName {2}", action, callbackUri, nodeName);
                 if (this.CanRetry(e) && retryCount < this.Options.AutoResendLimit)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(this.Options.ResendIntervalSeconds), token);
@@ -110,6 +111,6 @@
             return string.Format("udp://{0}:{1}/api/{2}/metricreported", headNodeName, port, nodeGuid);
         }
 
-        private string GetCallbackUri(string nodeName, string action) => $"{this.Options.AgentUriBase}/{nodeName}/{action}";
+        private string GetCallbackUri(string nodeName, string action) => $"{this.Options.AgentUriBase}/callback/{action}";
     }
 }
