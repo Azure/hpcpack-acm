@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
-import { Result } from '../result';
-import { CommandService } from '../command.service';
+import { CommandResult } from '../../models/command-result';
+import { ApiService } from '../../api.service';
 
 @Component({
   selector: 'app-result-detail',
@@ -11,7 +11,7 @@ import { CommandService } from '../command.service';
   styleUrls: ['./result-detail.component.scss']
 })
 export class ResultDetailComponent implements OnInit {
-  private result: Result = {} as Result;
+  private result: CommandResult = {} as CommandResult;
 
   private nodeResults = new MatTableDataSource();
 
@@ -38,7 +38,7 @@ export class ResultDetailComponent implements OnInit {
   private subcription: Subscription;
   constructor(
     private route: ActivatedRoute,
-    private commandService: CommandService,
+    private api: ApiService,
   ) {
     this.nodeResults.filterPredicate = (data: any, filter: string) => {
       let lwr = filter.trim().toLowerCase();
@@ -50,7 +50,7 @@ export class ResultDetailComponent implements OnInit {
   ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
       let id = map.get('id');
-      this.commandService.getResult(id).subscribe(result => {
+      this.api.command.get(id).subscribe(result => {
         this.result = result;
         this.makeChartData();
         this.nodeResults.data = result.nodes;

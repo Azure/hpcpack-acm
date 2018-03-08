@@ -66,7 +66,7 @@ export class AppComponent {
   ) {}
 
   ngOnInit() {
-    this.api.nodes.getAll().subscribe(nodes => {
+    this.api.node.getAll().subscribe(nodes => {
       console.log(nodes);
     });
   }

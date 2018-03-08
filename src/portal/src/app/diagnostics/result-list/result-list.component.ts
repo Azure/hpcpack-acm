@@ -2,8 +2,7 @@ import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
 import { SelectionModel  } from '@angular/cdk/collections';
-import { Result } from '../result';
-import { DiagnosticsService } from '../diagnostics.service';
+import { ApiService } from '../../api.service';
 
 @Component({
   selector: 'diagnostics-results',
@@ -20,11 +19,11 @@ export class ResultListComponent {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private diagnosticsService: DiagnosticsService
+    private api: ApiService
   ) {}
 
   ngOnInit() {
-    this.diagnosticsService.getResults().subscribe(results => {
+    this.api.test.getAll().subscribe(results => {
       this.dataSource.data = results;
     });
   }

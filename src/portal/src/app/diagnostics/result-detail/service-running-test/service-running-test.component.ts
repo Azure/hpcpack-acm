@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
-import { Result } from '../../result';
+import { TestResult } from '../../../models/test-result';
 
 @Component({
   selector: 'app-service-running-test',
@@ -8,7 +8,7 @@ import { Result } from '../../result';
   styleUrls: ['./service-running-test.component.scss']
 })
 export class ServiceRunningTestComponent implements OnInit {
-  @Input() result: Result;
+  @Input() result: TestResult;
 
   @ViewChild('filter')
   private filterInput;

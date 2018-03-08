@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateRef } from '@angular/core';
-import { Result } from '../../result';
+import { TestResult } from '../../../models/test-result';
 
 @Component({
   selector: 'app-result-layout',
@@ -8,7 +8,7 @@ import { Result } from '../../result';
 })
 export class ResultLayoutComponent implements OnInit {
   @Input()
-  result: Result = {} as Result;
+  result: TestResult = {} as TestResult;
 
   @Output()
   filterNodes: EventEmitter<any> = new EventEmitter();

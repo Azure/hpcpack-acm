@@ -1,9 +1,10 @@
-export class Result {
+export class TestResult {
   id: number;
-  command: string;
+  testName: string;
   state: string;
   startedAt: number;
   updatedAt: number;
   progress: number;
+  summary: any;
   nodes: any;
 }

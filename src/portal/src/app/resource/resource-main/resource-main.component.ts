@@ -3,7 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MatTabGroup } from '@angular/material/tabs'
 import { MatTableDataSource } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
-import { NodeService } from '../node.service';
+import { ApiService } from '../../api.service';
 import { NodeListComponent } from '../node-list/node-list.component';
 import { NodeHeatmapComponent } from '../node-heatmap/node-heatmap.component';
 
@@ -31,11 +31,11 @@ export class ResourceMainComponent implements OnInit {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private nodeService: NodeService,
+    private api: ApiService,
   ) {}
 
   ngOnInit() {
-    this.nodeService.getNodes().subscribe(nodes => {
+    this.api.node.getAll().subscribe(nodes => {
       this.dataSource.data = nodes;
     });
     this.subcription = this.route.queryParamMap.subscribe(params => {
@@ -46,7 +46,8 @@ export class ResourceMainComponent implements OnInit {
   }
 
   ngOnDestroy() {
-    this.subcription.unsubscribe();
+    if (this.subcription)
+      this.subcription.unsubscribe();
   }
 
   updateUrl() {

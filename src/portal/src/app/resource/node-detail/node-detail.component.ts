@@ -2,8 +2,8 @@ import { Component, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
-import { Node } from '../node';
-import { NodeService } from '../node.service';
+import { Node } from '../../models/node';
+import { ApiService } from '../../api.service';
 
 @Component({
   selector: 'app-node-detail',
@@ -95,14 +95,14 @@ export class NodeDetailComponent implements AfterViewInit {
   private subcription: Subscription;
 
   constructor(
-    private nodeService: NodeService,
+    private api: ApiService,
     private route: ActivatedRoute,
   ) {}
 
   ngAfterViewInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
       let id = map.get('id');
-      this.nodeService.getNode(id).subscribe(node => {
+      this.api.node.get(id).subscribe(node => {
         this.node = node;
         this.nodeProperties = node.properties;
         this.makeCpuData(node.cpuUsage);

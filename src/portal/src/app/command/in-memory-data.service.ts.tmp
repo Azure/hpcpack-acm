@@ -1,5 +1,4 @@
 import { InMemoryDbService } from 'angular-in-memory-web-api';
-import { Result } from './result';
 
 const now = new Date().getTime();
 

@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
-import { Result } from '../../result';
+import { TestResult } from '../../../models/test-result';
 import { PingTestNodeResultComponent } from './ping-test-node-result/ping-test-node-result.component';
 
 @Component({
@@ -10,7 +10,7 @@ import { PingTestNodeResultComponent } from './ping-test-node-result/ping-test-n
   styleUrls: ['./ping-test.component.scss']
 })
 export class PingTestComponent implements OnInit {
-  @Input() result: Result;
+  @Input() result: TestResult;
 
   @ViewChild('filter')
   private filterInput;

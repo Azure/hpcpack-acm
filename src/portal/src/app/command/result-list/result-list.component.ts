@@ -2,8 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
 import { SelectionModel  } from '@angular/cdk/collections';
-import { Result } from '../result';
-import { CommandService } from '../command.service';
+import { ApiService } from '../../api.service';
 
 @Component({
   selector: 'app-result-list',
@@ -20,11 +19,11 @@ export class ResultListComponent implements OnInit {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private commandService: CommandService
+    private api: ApiService
   ) {}
 
   ngOnInit() {
-    this.commandService.getResults().subscribe(results => {
+    this.api.command.getAll().subscribe(results => {
       this.dataSource.data = results;
     });
   }
