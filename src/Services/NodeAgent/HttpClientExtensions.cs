@@ -19,7 +19,9 @@
                 request.Headers.Add(h.Key, h.Value);
             }
 
-            request.Content = new StringContent(JsonConvert.SerializeObject(obj), Encoding.UTF8, "application/json");
+            var str = JsonConvert.SerializeObject(obj);
+            
+            request.Content = new StringContent(str.Replace("Item", "m_Item"), Encoding.UTF8, "application/json");
 
             return await client.SendAsync(request, token);
         }

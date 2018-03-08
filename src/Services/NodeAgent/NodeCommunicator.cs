@@ -35,13 +35,13 @@
         {
             if (IsAdmin(userName, password))
             {
-                startInfo.EnvironmentVariables[Constants.CcpAdminEnv] = "1";
+                startInfo.environmentVariables[Constants.CcpAdminEnv] = "1";
             }
 
             await this.SendRequestAsync("startjobandtask",
                 this.GetCallbackUri(nodeName, "taskcompleted"),
                 nodeName,
-                Tuple.Create(arg, startInfo, userName, password),
+                Tuple.Create(arg, startInfo, userName, password, "", ""),
                 0,
                 token);
         }

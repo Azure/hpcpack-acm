@@ -66,9 +66,9 @@
                         this.logger.LogInformation("Call startjobandtask for job {0}, task {1}", job.Id, taskKey);
                         await this.communicator.StartJobAndTaskAsync(
                             nodeName,
-                            new StartJobAndTaskArg(null, job.Id, taskId),
-                            "", "", new ProcessStartInfo(cmd, null, null, $"{this.communicator.Options.AgentUriBase}/message/{taskKey}",
-                            null, new System.Collections.Hashtable(), null, job.RequeueCount), token);
+                            new StartJobAndTaskArg(new int[0], job.Id, taskId),
+                                "", "", new ProcessStartInfo(cmd, "", "", $"{this.communicator.Options.AgentUriBase}/message/{taskKey}",
+                                "", new System.Collections.Hashtable(), new long[0], job.RequeueCount), token);
 
                         this.logger.LogInformation("Wait for response for job {0}, task {1}", job.Id, taskKey);
                         var taskResult = await monitor.Execution;

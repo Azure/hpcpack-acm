@@ -25,42 +25,42 @@ namespace Microsoft.HpcAcm.Services.Common
         /// <summary>
         /// the command line to execute.
         /// </summary>
-        private string commandLine;
+        public string commandLine { get; set; }
 
         /// <summary>
         /// Search paths for files, directories for temporary files, application-specific options, and other similar information.
         /// </summary>
-        private IDictionary environmentVariables;
+        public IDictionary environmentVariables { get; set; }
 
         /// <summary>
         /// The initial directory for the process to be started.
         /// </summary>
-        private string workingDirectory;
+        public string workingDirectory { get; set; }
 
         /// <summary>
         /// standard input to the application. can be null.
         /// </summary>
-        private string stdin;
+        public string stdin { get; set; }
 
         /// <summary>
         /// standard output of the application. can be null.
         /// </summary>
-        private string stdout;
+        public string stdout { get; set; }
 
         /// <summary>
         /// standard error output of the application. can be null.
         /// </summary>
-        private string stderr;
+        public string stderr { get; set; }
 
         /// <summary>
         /// CPU masks for this process
         /// </summary>
-        private Int64[] affinity = null;
+        public Int64[] affinity { get; set; }
 
         /// <summary>
         /// Requeue count of the application (task)
         /// </summary>
-        private int taskRequeueCount = 0;
+        public int taskRequeueCount { get; set; } = 0;
 
         #endregion // PrivateFields
 
@@ -114,116 +114,5 @@ namespace Microsoft.HpcAcm.Services.Common
             this.taskRequeueCount = taskRequeueCount;
         }
         #endregion // Constructors
-
-        #region PublicProperties
-
-        /// <summary>
-        /// the application or document to start.
-        /// </summary>
-        public string CommandLine
-        {
-            get
-            {
-                return commandLine;
-            }
-        }
-
-        /// <summary>
-        /// Search paths for files, directories for temporary files, application-specific options, and other similar information.
-        /// </summary>
-        public IDictionary EnvironmentVariables
-        {
-            get
-            {
-                return environmentVariables;
-            }
-        }
-
-        /// <summary>
-        /// The initial directory for the process to be started.
-        /// </summary>
-        public string WorkingDirectory
-        {
-            get
-            {
-                return workingDirectory;
-            }
-
-            set
-            {
-                workingDirectory = value;
-            }
-        }
-
-        /// <summary>
-        /// Standard input redirection file.
-        /// </summary>
-        public string StandardInput
-        {
-            get
-            {
-                return stdin;
-            }
-
-            set
-            {
-                stdin = value;
-            }
-        }
-
-        /// <summary>
-        /// Standard output redirection file.
-        /// </summary>
-        public string StandardOutput
-        {
-            get
-            {
-                return stdout;
-            }
-
-            set
-            {
-                stdout = value;
-            }
-        }
-
-        /// <summary>
-        /// Standard error output redirection file.
-        /// </summary>
-        public string StandardError
-        {
-            get
-            {
-                return stderr;
-            }
-
-            set
-            {
-                stderr = value;
-            }
-        }
-
-        /// <summary>
-        /// CPIs that may be used by this task on this node
-        /// </summary>
-        public Int64[] Affinity
-        {
-            get
-            {
-                return affinity;
-            }
-        }
-
-        /// <summary>
-        /// Requeue count of this task on this node
-        /// </summary>
-        public int TaskRequeueCount
-        {
-            get
-            {
-                return taskRequeueCount;
-            }
-        }
-        #endregion // PublicProperties
     }
 }
