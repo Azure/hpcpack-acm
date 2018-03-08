@@ -5,22 +5,42 @@ import { of } from 'rxjs/observable/of';
 import { catchError } from 'rxjs/operators';
 import { environment as env } from '../environments/environment';
 
-@Injectable()
-export class ApiService {
+class ApiBase {
+  protected baseUrl = env.apiBase;
 
-  private apiBase = env.apiBase;
+  constructor(protected http: HttpClient) {}
+}
 
-  private nodesUrl = `${this.apiBase}/nodes`;
+class NodeApi extends ApiBase {
+  private url = `${this.baseUrl}/nodes`;
 
-  constructor(private http: HttpClient) {}
-
-  getNodes(): Observable<any[]> {
-    return this.http.get<any[]>(this.nodesUrl)
+  getAll(): Observable<any[]> {
+    return this.http.get<any[]>(this.url)
       .pipe(
         catchError((error: any): Observable<any[]> => {
           console.error(error);
           return of([]);
         })
       );
+  }
+}
+
+class DiagnosticsApi extends ApiBase {
+}
+
+class CommandApi extends ApiBase {
+}
+
+@Injectable()
+export class ApiService {
+  private nodeApi: NodeApi;
+
+  constructor(private http: HttpClient) {}
+
+  get nodes(): NodeApi {
+    if (!this.nodeApi) {
+      this.nodeApi = new NodeApi(this.http);
+    }
+    return this.nodeApi;
   }
 }
