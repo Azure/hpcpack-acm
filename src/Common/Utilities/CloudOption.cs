@@ -16,6 +16,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
         public string JobsTableName { get; set; } = "jobstable";
 
         public string JobDispatchQueueName { get; set; } = "jobdispatchqueue";
+        public string JobResultContainerPattern { get; set; } = "jobresults-{0}";
         public string NodeDispatchQueuePattern { get; set; } = "nodedispatchqueue-{0}";
 
         public string JobPartitionPattern { get; internal set; } = "job-{0}-{1}";

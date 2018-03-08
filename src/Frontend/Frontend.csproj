@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
+    <PackageReference Include="WindowsAzure.Storage" Version="9.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,5 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Common\DTO\DTO.csproj" />
+    <ProjectReference Include="..\Common\Utilities\Utilities.csproj" />
+    <ProjectReference Include="..\Services\Common\ServicesCommon.csproj" />
   </ItemGroup>
 </Project>

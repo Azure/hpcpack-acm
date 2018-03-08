@@ -7,14 +7,16 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
 
     public class TaskMonitor
     {
         public class TaskResultMonitor : IDisposable
         {
-            private string key;
-            private TaskMonitor monitor;
+            private readonly string key;
+            private readonly TaskMonitor monitor;
+
             public TaskResultMonitor(string key, TaskMonitor monitor)
             {
                 this.key = key;
@@ -23,7 +25,8 @@
 
             internal TaskCompletionSource<ComputeNodeTaskCompletionEventArg> commandResult = new TaskCompletionSource<ComputeNodeTaskCompletionEventArg>();
             public Task<ComputeNodeTaskCompletionEventArg> Execution { get => this.commandResult.Task; }
-            private void Dispose(bool isDisposing)
+
+            protected virtual void Dispose(bool isDisposing)
             {
                 if (isDisposing)
                 {
@@ -38,16 +41,99 @@
             }
         }
 
-        private ConcurrentDictionary<string, TaskResultMonitor> taskResults = new ConcurrentDictionary<string, TaskResultMonitor>();
-
-        public TaskResultMonitor StartMonitorTaskResult(string key)
+        public class OutputSorter : IDisposable
         {
+            private readonly string key;
+            private readonly TaskMonitor monitor;
+
+            public OutputSorter(string key, TaskMonitor monitor, Func<string, CancellationToken, Task> processor)
+            {
+                this.processor = processor;
+                this.key = key;
+                this.monitor = monitor;
+            }
+
+            protected virtual void Dispose(bool isDisposing)
+            {
+                if (isDisposing)
+                {
+                    this.monitor.taskOutputs.TryRemove(this.key, out _);
+                }
+            }
+
+            public void Dispose()
+            {
+                this.Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+
+            private readonly ConcurrentDictionary<int, ClusrunOutput> cache = new ConcurrentDictionary<int, ClusrunOutput>();
+            private int leftKey;
+            private int rightKey;
+
+            public async Task PutOutput(ClusrunOutput output, CancellationToken token)
+            {
+                await this.sem.WaitAsync(token);
+
+                try
+                {
+                    if (output.Order == leftKey)
+                    {
+                        StringBuilder builder = new StringBuilder();
+
+                        var i = output;
+
+                        while (!i.Eof)
+                        {
+                            builder.Append(i.Content);
+
+                            leftKey++;
+                            if (!this.cache.TryRemove(leftKey, out i))
+                            {
+                                break;
+                            }
+                        }
+
+                        await this.processor(builder.ToString(), token);
+                        if (i.Eof)
+                        {
+                            this.Dispose();
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        this.cache.TryAdd(output.Order, output);
+                        this.rightKey = Math.Max(this.rightKey, output.Order);
+                    }
+                }
+                finally
+                {
+                    this.sem.Release();
+                }
+            }
+
+            private readonly SemaphoreSlim sem = new SemaphoreSlim(1);
+            private readonly Func<string, CancellationToken, Task> processor;
+        }
+
+        private readonly ConcurrentDictionary<string, TaskResultMonitor> taskResults = new ConcurrentDictionary<string, TaskResultMonitor>();
+        private readonly ConcurrentDictionary<string, OutputSorter> taskOutputs = new ConcurrentDictionary<string, OutputSorter>();
+
+        public TaskResultMonitor StartMonitorTask(string key, Func<string, CancellationToken, Task> outputProcessor)
+        {
+            this.taskOutputs.GetOrAdd(key, new OutputSorter(key, this, outputProcessor));
             return this.taskResults.GetOrAdd(key, new TaskResultMonitor(key, this));
         }
 
         public TaskResultMonitor GetTaskResultMonitor(string key)
         {
             return this.taskResults.TryGetValue(key, out TaskResultMonitor t) ? t : null;
+        }
+
+        public Task PutOutput(string key, ClusrunOutput output, CancellationToken token)
+        {
+            return this.taskOutputs.TryGetValue(key, out OutputSorter sorter) ? sorter.PutOutput(output, token) : Task.CompletedTask;
         }
 
         public void CompleteTask(string key, ComputeNodeTaskCompletionEventArg commandResult)

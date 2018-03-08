@@ -17,24 +17,23 @@
 
     internal class NodeAgentWorker : WorkerBase
     {
-        private ILogger logger;
-        private IConfiguration config;
-        private CloudUtilities utilities;
-        private CloudTable jobsTable;
-        private CloudTable nodesTable;
+        private readonly ILogger logger;
+        private readonly CloudUtilities utilities;
+        private readonly CloudTable jobsTable;
+        private readonly CloudTable nodesTable;
 
-        private IDictionary<string, CloudQueue> nodesJobQueue = new Dictionary<string, CloudQueue>();
-        private NodeCommunicator communicator;
+        private readonly NodeCommunicator communicator;
 
         public NodeAgentWorker(IConfiguration config, ILoggerFactory loggerFactory, CloudTable jobsTable, CloudTable nodesTable, CloudUtilities utilities)
         {
-            this.config = config;
+            this.Configuration = config;
             this.logger = loggerFactory.CreateLogger<NodeAgentWorker>();
             this.communicator = new NodeCommunicator(loggerFactory, config);
             this.utilities = utilities;
             this.jobsTable = jobsTable;
             this.nodesTable = nodesTable;
         }
+        private IConfiguration Configuration { get; set; }
 
         public TaskMonitor Monitor { get; set; }
 
@@ -44,37 +43,51 @@
             var nodeName = Environment.MachineName.ToLowerInvariant();
             using (this.logger.BeginScope("Do work for InternalJob {0} on node {1}", job.Id, nodeName))
             {
+                logger.LogInformation("Executing job {0}", job.Id);
                 var tasks = Enumerable.Range(0, job.CommandLines.Length).Select(async taskId =>
                 {
                     var cmd = job.CommandLines[taskId];
+                    logger.LogInformation("Executing command {0}, job {1}", cmd, job.Id);
                     var taskKey = this.utilities.GetTaskKey(job.Id, taskId, job.RequeueCount);
-                    using (var monitor = this.Monitor.StartMonitorTaskResult(taskKey))
+                    var taskResultBlob = await this.utilities.CreateOrReplaceTaskOutputBlobAsync(job.Id, taskKey, token);
+                    using (var monitor = this.Monitor.StartMonitorTask(taskKey, async (output, cancellationToken) =>
                     {
+                        try
+                        {
+                            await taskResultBlob.AppendTextAsync(output, null, null, null, null, cancellationToken);
+                        }
+                        catch (Exception ex)
+                        {
+                            this.logger.LogError(ex, "Error happened when append to blob {0}", taskResultBlob.Name);
+                        }
+                    }))
+                    {
+                        this.logger.LogInformation("Call startjobandtask for job {0}, task {1}", job.Id, taskKey);
                         await this.communicator.StartJobAndTaskAsync(
                             nodeName,
                             new StartJobAndTaskArg(null, job.Id, taskId),
-                            "", "", new ProcessStartInfo(cmd, null, null, null, null, null, null, job.RequeueCount), token);
+                            "", "", new ProcessStartInfo(cmd, null, null, $"{this.communicator.Options.AgentUriBase}/message/{taskKey}",
+                            null, new System.Collections.Hashtable(), null, job.RequeueCount), token);
 
+                        this.logger.LogInformation("Wait for response for job {0}, task {1}", job.Id, taskKey);
                         var taskResult = await monitor.Execution;
 
+                        this.logger.LogInformation("Saving result for job {0}, task {1}", job.Id, taskKey);
                         var resultKey = this.utilities.GetJobResultKey(nodeName, taskKey);
-                        var jobTableEntity = new GenericTableEntity<ComputeNodeTaskCompletionEventArg>(
-                            this.utilities.GetJobPartitionName(job.Id, $"{job.Type}"),
-                            resultKey,
-                            taskResult);
+                        var jobPartitionName = this.utilities.GetJobPartitionName(job.Id, $"{job.Type}");
 
-                        var result = await jobsTable.ExecuteAsync(TableOperation.InsertOrReplace(jobTableEntity), null, null, token);
+                        var jobEntity = new JsonTableEntity(jobPartitionName, resultKey, taskResult);
+
+                        var result = await jobsTable.ExecuteAsync(TableOperation.InsertOrReplace(jobEntity), null, null, token);
 
                         // TODO: deal with return code.
 
                         this.logger.LogInformation("Saved task result {0} to jobs table, status code {1}", resultKey, result.HttpStatusCode);
 
-                        var nodeTableEntity = new GenericTableEntity<ComputeNodeTaskCompletionEventArg>(
-                            this.utilities.GetNodePartitionName(nodeName),
-                            resultKey,
-                            taskResult);
+                        var nodePartitionName = this.utilities.GetNodePartitionName(nodeName);
+                        var nodeEntity = new JsonTableEntity(nodePartitionName, resultKey, taskResult);
 
-                        result = await nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(nodeTableEntity), null, null, token);
+                        result = await nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(nodeEntity), null, null, token);
                         this.logger.LogInformation("Saved task result {0} to nodes table, status code {1}", resultKey, result.HttpStatusCode);
                         // TODO: upload to storage
                     }

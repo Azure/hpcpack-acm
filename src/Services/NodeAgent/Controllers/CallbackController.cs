@@ -13,9 +13,9 @@
     [Route("api/[controller]")]
     public class CallbackController : Controller
     {
-        private ILogger logger;
-        private TaskMonitor monitor;
-        private CloudUtilities utilities;
+        private readonly ILogger logger;
+        private readonly TaskMonitor monitor;
+        private readonly CloudUtilities utilities;
         public CallbackController(ILogger<CallbackController> logger, TaskMonitor monitor, CloudUtilities utilities)
         {
             this.logger = logger;

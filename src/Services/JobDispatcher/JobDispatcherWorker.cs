@@ -17,20 +17,18 @@
 
     internal class JobDispatcherWorker : WorkerBase
     {
-        private ILogger logger;
-        private CloudUtilities utilities;
-        private CloudTable jobTable;
-        private IConfiguration config;
-
-        private IDictionary<string, CloudQueue> nodesJobQueue = new Dictionary<string, CloudQueue>();
+        private readonly ILogger logger;
+        private readonly CloudUtilities utilities;
+        private readonly CloudTable jobTable;
 
         public JobDispatcherWorker(IConfiguration config, ILoggerFactory loggerFactory, CloudTable jobTable, CloudUtilities utilities)
         {
-            this.config = config;
+            this.Configuration = config;
             this.logger = loggerFactory.CreateLogger<JobDispatcherWorker>();
             this.utilities = utilities;
             this.jobTable = jobTable;
         }
+        public IConfiguration Configuration { get; }
 
         public override async Task DoWorkAsync(TaskItem taskItem, CancellationToken token)
         {
@@ -38,7 +36,7 @@
             using (this.logger.BeginScope("Do work for JobDispatchMessage {0}", message.Id))
             {
                 var result = await this.jobTable.ExecuteAsync(
-                    TableOperation.Retrieve<JobTableEntity>(
+                    TableOperation.Retrieve<JsonTableEntity>(
                         this.utilities.GetJobPartitionName(message.Id, message.Type.ToString()),
                         this.utilities.JobEntryKey),
                     null,
@@ -47,9 +45,9 @@
 
                 this.logger.LogInformation("Queried job table entity for job id {0}, result {1}", message.Id, result.HttpStatusCode);
 
-                if (result.Result is JobTableEntity entity)
+                if (result.Result is JsonTableEntity entity)
                 {
-                    var job = entity.Job;
+                    var job = entity.GetObject<Job>();
 
                     job.State = JobState.Running;
                     var internalJob = InternalJob.CreateFrom(job);

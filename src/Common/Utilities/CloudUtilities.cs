@@ -1,6 +1,7 @@
 ﻿namespace Microsoft.HpcAcm.Common.Utilities
 {
     using Microsoft.WindowsAzure.Storage;
+    using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Microsoft.WindowsAzure.Storage.Table;
     using System;
@@ -23,7 +24,7 @@
                     true)
                 : CloudStorageAccount.Parse(this.Option.ConnectionString);
 
-            //var account = CloudStorageAccount.Parse(cloudOption.StorageKeyOrSas);
+            this.blobClient = new CloudBlobClient(account.BlobEndpoint, account.Credentials);
             this.queueClient = new CloudQueueClient(account.QueueEndpoint, account.Credentials);
             this.tableClient = new CloudTableClient(account.TableEndpoint, account.Credentials);
             queueClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(cloudOption.QueueServerTimeoutSeconds);
@@ -32,8 +33,9 @@
 
         public CloudOption Option { get; private set; }
 
-        private CloudQueueClient queueClient;
-        private CloudTableClient tableClient;
+        private readonly CloudBlobClient blobClient;
+        private readonly CloudQueueClient queueClient;
+        private readonly CloudTableClient tableClient;
 
         public string GetJobPartitionName(int jobId, string type) => string.Format(this.Option.JobPartitionPattern, type, jobId);
         public string GetNodePartitionName(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);
@@ -41,6 +43,16 @@
 
         public string GetJobResultKey(string nodeKey, string taskKey) => string.Format(this.Option.JobResultPattern, nodeKey, taskKey);
         public string GetTaskKey(int jobId, int taskId, int requeueCount) => $"{jobId}:{taskId}:{requeueCount}";
+
+        public async Task<CloudAppendBlob> CreateOrReplaceTaskOutputBlobAsync(int jobId, string key, CancellationToken token)
+        {
+            var jobContainer = this.blobClient.GetContainerReference(string.Format(this.Option.JobResultContainerPattern, jobId));
+            await jobContainer.CreateIfNotExistsAsync(BlobContainerPublicAccessType.Off, null, null, token);
+            var blob = jobContainer.GetAppendBlobReference(key);
+            await blob.CreateOrReplaceAsync(null, null, null, token);
+            return blob;
+        }
+
 
         public async Task<CloudQueue> GetOrCreateJobDispatchQueueAsync(CancellationToken token)
         {

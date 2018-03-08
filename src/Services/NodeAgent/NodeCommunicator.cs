@@ -15,18 +15,19 @@
     {
         private const string CallbackUriHeaderName = "CallbackUri";
 
-        private HttpClient client;
-        private NodeCommunicatorOptions options;
+        private readonly HttpClient client;
 
-        private ILogger<NodeCommunicator> logger;
-        private IConfiguration Configuration;
+        private readonly ILogger<NodeCommunicator> logger;
+        private IConfiguration Configuration { get; }
         public NodeCommunicator(ILoggerFactory log, IConfiguration config)
         {
             this.Configuration = config;
             this.logger = log.CreateLogger<NodeCommunicator>();
-            this.options = this.Configuration.GetValue<NodeCommunicatorOptions>("NodeCommunicator");
+            this.Options = this.Configuration.GetSection("NodeCommunicator").Get<NodeCommunicatorOptions>();
             this.client = new HttpClient();
         }
+
+        public NodeCommunicatorOptions Options { get; }
 
         public async Task StartJobAndTaskAsync(string nodeName, StartJobAndTaskArg arg,
             string userName, string password, ProcessStartInfo startInfo,
@@ -65,9 +66,9 @@
             }
             catch (Exception e)
             {
-                if (this.CanRetry(e) && retryCount < this.options.AutoResendLimit)
+                if (this.CanRetry(e) && retryCount < this.Options.AutoResendLimit)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(this.options.ResendIntervalSeconds), token);
+                    await Task.Delay(TimeSpan.FromSeconds(this.Options.ResendIntervalSeconds), token);
                     await this.SendRequestAsync(action, callbackUri, nodeName, arg, retryCount + 1, token);
                 }
             }
@@ -100,8 +101,7 @@
             return false;
         }
 
-        private Uri GetResoureUri(string nodeName, string action) =>
-            new Uri(new Uri(this.options.NodeManagerUriBase), $"{nodeName}/{action}");
+        private Uri GetResoureUri(string nodeName, string action) => new Uri($"{this.Options.NodeManagerUriBase}/{nodeName}/{action}");
 
         private string GetMetricCallbackUri(string headNodeName, int port, Guid nodeGuid)
         {
@@ -110,6 +110,6 @@
             return string.Format("udp://{0}:{1}/api/{2}/metricreported", headNodeName, port, nodeGuid);
         }
 
-        private string GetCallbackUri(string nodeName, string action) => new Uri(new Uri(this.options.AgentUriBase), $"/{nodeName}/{action}").AbsoluteUri;
+        private string GetCallbackUri(string nodeName, string action) => $"{this.Options.AgentUriBase}/{nodeName}/{action}";
     }
 }

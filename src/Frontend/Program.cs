@@ -9,6 +9,7 @@
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
+    using Microsoft.HpcAcm.Common.Utilities;
 
     public class Program
     {
@@ -31,6 +32,13 @@
                         .AddConsole()
                         .AddDebug()
                         .AddAzureWebAppDiagnostics();
+                })
+                .ConfigureServices((context, services) =>
+                {
+                    var option = context.Configuration.GetSection("CloudOption").Get<CloudOption>();
+                    services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(CloudOption), option));
+                    var utilities = new CloudUtilities(option);
+                    services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(CloudUtilities), utilities));
                 })
                 .UseUrls("http://*:80", "http://*:5000")
                 .UseStartup<Startup>()

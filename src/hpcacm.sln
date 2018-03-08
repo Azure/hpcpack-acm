@@ -17,8 +17,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{49669C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{643CDBA6-FEA8-44C2-96A3-856050BA128B}"
 EndProject
-Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{72FD69BB-4142-4538-B0C5-5BC79D657AF8}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{F5EDA3A7-92BF-4756-B4A0-C9734B0FBD94}"
 	ProjectSection(SolutionItems) = preProject
 		docker\Dockerfile = docker\Dockerfile
@@ -56,10 +54,6 @@ Global
 		{2EF4016C-03FE-4D9F-9DB9-143200EB374F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2EF4016C-03FE-4D9F-9DB9-143200EB374F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2EF4016C-03FE-4D9F-9DB9-143200EB374F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{72FD69BB-4142-4538-B0C5-5BC79D657AF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{72FD69BB-4142-4538-B0C5-5BC79D657AF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{72FD69BB-4142-4538-B0C5-5BC79D657AF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{72FD69BB-4142-4538-B0C5-5BC79D657AF8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{186A06F0-5D24-484A-AAA1-C0CC285C2EFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{186A06F0-5D24-484A-AAA1-C0CC285C2EFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{186A06F0-5D24-484A-AAA1-C0CC285C2EFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
