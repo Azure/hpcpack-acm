@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from './auth.service';
+import { ApiService } from './api.service';
 
 const now = (new Date()).getTime();
 
@@ -60,7 +61,15 @@ export class AppComponent {
   constructor(
     public authService: AuthService,
     public router: Router,
-    public route: ActivatedRoute) {}
+    public route: ActivatedRoute,
+    public api: ApiService
+  ) {}
+
+  ngOnInit() {
+    this.api.getNodes().subscribe(nodes => {
+      console.log(nodes);
+    });
+  }
 
   private get isLoggedIn(): boolean {
     return this.authService.isLoggedIn;
