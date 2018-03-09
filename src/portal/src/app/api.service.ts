@@ -67,6 +67,12 @@ class CommandApi extends Resource<CommandResult> {
   protected get url(): string {
     return `${this.baseUrl}/clusRun`;
   }
+
+  protected normalize(result: CommandResult): void {
+    result.command = result['commandLine'];
+    result.progress /= 100;
+    result.startedAt = result['createdAt'];
+  }
 }
 
 @Injectable()
