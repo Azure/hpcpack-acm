@@ -114,7 +114,8 @@ export class NodeDetailComponent implements AfterViewInit {
   }
 
   ngOnDestroy() {
-    this.subcription.unsubscribe();
+    if (this.subcription)
+      this.subcription.unsubscribe();
   }
 
   makeLabels(usage): void {

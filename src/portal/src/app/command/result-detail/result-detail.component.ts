@@ -59,7 +59,8 @@ export class ResultDetailComponent implements OnInit {
   }
 
   ngOnDestroy() {
-    this.subcription.unsubscribe();
+    if (this.subcription)
+      this.subcription.unsubscribe();
   }
 
   makeChartData() {
