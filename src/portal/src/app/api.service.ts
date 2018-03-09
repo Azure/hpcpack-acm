@@ -69,9 +69,17 @@ class CommandApi extends Resource<CommandResult> {
   }
 
   protected normalize(result: CommandResult): void {
+    result.state = result.state.toLowerCase();
     result.command = result['commandLine'];
     result.progress /= 100;
     result.startedAt = result['createdAt'];
+    if (result['results']) {
+      result.nodes = result['results'];
+      result.nodes.forEach(e => {
+        e.name = e.nodeName;
+        e.state = e.state.toLowerCase();
+      });
+    }
   }
 }
 
