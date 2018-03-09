@@ -81,6 +81,16 @@ class CommandApi extends Resource<CommandResult> {
       });
     }
   }
+
+  create(command: string, targets: any): any {
+    return this.http.post<any>(this.url, { command, targets }, { observe: 'response', responseType: 'json' })
+      .pipe(
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return of({});
+        })
+      );
+  }
 }
 
 @Injectable()

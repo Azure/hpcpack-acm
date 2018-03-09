@@ -1,10 +1,10 @@
 <h2 mat-dialog-title>Run Command</h2>
 <mat-dialog-content>
   <mat-form-field class="cmd-line">
-    <input matInput placeholder="Your command here" value="">
+    <input [(ngModel)]="command" matInput placeholder="Your command here" value="">
   </mat-form-field>
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
-  <button mat-raised-button [mat-dialog-close]="true">Run</button>
+  <button mat-raised-button [mat-dialog-close]="command">Run</button>
 </mat-dialog-actions>

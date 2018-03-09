@@ -1,8 +1,10 @@
 import { Component, Input } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableDataSource, MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { SelectionModel } from '@angular/cdk/collections';
 import { NewDiagnosticsComponent } from '../new-diagnostics/new-diagnostics.component';
 import { NewCommandComponent } from '../new-command/new-command.component';
+import { ApiService } from '../../api.service';
 
 @Component({
   selector: 'resource-node-list',
@@ -17,7 +19,12 @@ export class NodeListComponent {
 
   private selection = new SelectionModel(true, []);
 
-  constructor(private dialog: MatDialog) {}
+  constructor(
+    private dialog: MatDialog,
+    private api: ApiService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
   get selectedData(): any[] {
     return this.selection.selected;
@@ -58,7 +65,18 @@ export class NodeListComponent {
     });
 
     //TODO: Run diagnostic tests on user selected nodes...
-    //dialogRef.afterClosed().subscribe(result => {
-    //});
+    dialogRef.afterClosed().subscribe(cmd => {
+      if (cmd) {
+        this.api.command.create(cmd, '').subscribe(obj => {
+          console.log(obj);
+          //TODO: This
+          this.router.navigate(['/command/results/1001']);
+          //Should be
+          //let url = console.log(obj.headers.get('Location'));
+          //this.router.navigate(obj.url);
+          //However the header Location seems inaccessible in CORS.
+        });
+      }
+    });
   }
 }
