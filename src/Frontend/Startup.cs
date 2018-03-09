@@ -1,4 +1,4 @@
-﻿namespace Microsoft.HpcAcm.Frontend
+namespace Microsoft.HpcAcm.Frontend
 {
     using System;
     using System.Collections.Generic;
@@ -27,7 +27,10 @@
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
-            services.AddMvc();
+            services.AddMvc().AddJsonOptions(options => {
+                options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+                options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
