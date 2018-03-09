@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { of } from 'rxjs/observable/of';
-import { catchError } from 'rxjs/operators';
-import 'rxjs/add/operator/map';
+import { catchError, map } from 'rxjs/operators';
 import { environment as env } from '../environments/environment';
 import { Node } from './models/node';
 import { CommandResult } from './models/command-result';
@@ -16,12 +15,18 @@ abstract class Resource<T> {
 
   protected abstract get url(): string;
 
+  protected normalize(e: T): void {}
+
   getAll(): Observable<T[]> {
     return this.http.get<T[]>(this.url)
       .pipe(
         catchError((error: any): Observable<T[]> => {
           console.error(error);
           return of([]);
+        }),
+        map(array => {
+          array.forEach(e => this.normalize(e));
+          return array;
         })
       );
   }
@@ -32,6 +37,10 @@ abstract class Resource<T> {
         catchError((error: any): Observable<T> => {
           console.error(error);
           return of({} as T);
+        }),
+        map(e => {
+          this.normalize(e);
+          return e;
         })
       );
   }
@@ -42,15 +51,9 @@ class NodeApi extends Resource<Node> {
     return `${this.baseUrl}/nodes`;
   }
 
-
-  getAll(): Observable<Node[]> {
-    return super.getAll().map(array => {
-      array.forEach(e => {
-        if (!e.id)
-          e.id = e.name;
-      })
-      return array;
-    });
+  protected normalize(node: Node): void {
+    if (!node.id)
+      node.id = node.name;
   }
 }
 
