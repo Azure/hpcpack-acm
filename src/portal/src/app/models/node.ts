@@ -1,4 +1,5 @@
 export class Node {
+  id: string;
   name: string;
   state: string;
   health: string;
