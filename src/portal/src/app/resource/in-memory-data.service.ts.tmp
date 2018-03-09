@@ -79,7 +79,7 @@ export class InMemoryDataService implements InMemoryDbService {
         name: name,
         state: state,
         health: health,
-        runningJobs: state == 'online' && health == 'ok' ? this.randomNum(100) : 0,
+        runningJobCount: state == 'online' && health == 'ok' ? this.randomNum(100) : 0,
         cpuUsage: this.generateCpuUsage(),
         networkUsage: this.generateNetworkUsage(),
         diskUsage: this.generateDiskUsage(),

@@ -16,9 +16,9 @@ export class NodeHeatmapComponent implements OnInit {
 
   nodeClass(node): string {
     let res;
-    if (node.runningJobs < 10)
+    if (node.runningJobCount < 10)
       res = 'low';
-    else if (node.runningJobs < 50)
+    else if (node.runningJobCount < 50)
       res = 'median';
     else
       res = 'high';
@@ -26,7 +26,7 @@ export class NodeHeatmapComponent implements OnInit {
   }
 
   nodeTip(node): string {
-    return `${node.name}: ${node.runningJobs} jobs`;
+    return `${node.name}: ${node.runningJobCount} jobs`;
   }
 
   clickRow(node): void {

@@ -2,7 +2,7 @@ export class Node {
   name: string;
   state: string;
   health: string;
-  runningJobs: number;
+  runningJobCount: number;
   cpuUsage: any;
   networkUsage: any;
   diskUsage: any;

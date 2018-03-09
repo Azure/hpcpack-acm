@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { of } from 'rxjs/observable/of';
 import { catchError } from 'rxjs/operators';
+import 'rxjs/add/operator/map';
 import { environment as env } from '../environments/environment';
 import { Node } from './models/node';
 import { CommandResult } from './models/command-result';
@@ -39,6 +40,17 @@ abstract class Resource<T> {
 class NodeApi extends Resource<Node> {
   protected get url(): string {
     return `${this.baseUrl}/nodes`;
+  }
+
+
+  getAll(): Observable<Node[]> {
+    return super.getAll().map(array => {
+      array.forEach(e => {
+        if (!e.id)
+          e.id = e.name;
+      })
+      return array;
+    });
   }
 }
 

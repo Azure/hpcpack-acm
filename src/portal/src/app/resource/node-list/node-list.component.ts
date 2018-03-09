@@ -13,7 +13,7 @@ export class NodeListComponent {
   @Input()
   dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
-  private displayedColumns = ['select', 'name', 'health', 'state', 'runningJobs', 'actions'];
+  private displayedColumns = ['select', 'name', 'health', 'state', 'runningJobCount', 'actions'];
 
   private selection = new SelectionModel(true, []);
 
