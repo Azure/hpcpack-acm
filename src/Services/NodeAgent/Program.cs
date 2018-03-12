@@ -35,9 +35,6 @@
 
         public static ServerBuilder BuildServer(string[] args, TaskMonitor monitor)
         {
-            var nodeName = Environment.MachineName.ToLowerInvariant();
-            nodeName = "evanclinuxdev";
-
             var builder = new ServerBuilder();
             builder.ConfigureAppConfiguration(config =>
             {
@@ -54,8 +51,8 @@
                     .AddDebug(debugLevel);
             })
             .ConfigureCloudOptions(c => c.GetSection("CloudOption").Get<CloudOption>())
-            .AddTaskItemSource(async (u, token) => new TaskItemSource(
-                await u.GetOrCreateNodeDispatchQueueAsync(nodeName, token),
+            .AddTaskItemSource(async (u, c, token) => new TaskItemSource(
+                await u.GetOrCreateNodeDispatchQueueAsync(c.GetValue<string>(Constants.HpcHostNameEnv), token),
                 TimeSpan.FromSeconds(u.Option.VisibleTimeoutSeconds)))
             .AddWorker(async (config, u, l, token) => new NodeAgentWorker(
                 config,

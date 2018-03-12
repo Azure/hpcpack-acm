@@ -40,7 +40,7 @@
             var jobTable = await this.utilities.GetOrCreateJobsTableAsync(token);
             var job = new Job()
             {
-                CommandLine = "ls -l",
+                CommandLine = "cat /opt/hpcnodemanager/nodemanager.json",
                 Id = id,
                 Name = "testjob",
                 RequeueCount = 0,
@@ -57,7 +57,7 @@
                 null, null, token);
 
             this.logger.LogInformation("GetAsync called. create job result {0}", result.HttpStatusCode);
-            
+
             this.logger.LogInformation("GetAsync called. Creating job dispatch message");
             var jobDispatchQueue = await this.utilities.GetOrCreateJobDispatchQueueAsync(token);
 

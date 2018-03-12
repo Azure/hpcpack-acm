@@ -12,6 +12,7 @@
 
     public class CloudUtilities
     {
+
         public CloudUtilities(CloudOption cloudOption)
         {
             this.Option = cloudOption;

@@ -40,8 +40,7 @@
         public override async Task DoWorkAsync(TaskItem taskItem, CancellationToken token)
         {
             var job = taskItem.GetMessage<InternalJob>();
-            var nodeName = Environment.MachineName.ToLowerInvariant();
-            nodeName = "evanclinuxdev";
+            var nodeName = this.Configuration.GetValue<string>(Constants.HpcHostNameEnv);
             using (this.logger.BeginScope("Do work for InternalJob {0} on node {1}", job.Id, nodeName))
             {
                 logger.LogInformation("Executing job {0}", job.Id);
@@ -64,11 +63,17 @@
                     }))
                     {
                         this.logger.LogInformation("Call startjobandtask for job {0}, task {1}", job.Id, taskKey);
+                        //await this.communicator.StartJobAndTaskAsync(
+                        //   nodeName,
+                        //   new StartJobAndTaskArg(new int[0], job.Id, taskId),
+                        //       "", "", new ProcessStartInfo("bash", "", "", $"/opt/test.txt",
+                        //       "", new System.Collections.Hashtable(), new long[0], job.RequeueCount), token);
+
                         await this.communicator.StartJobAndTaskAsync(
-                            nodeName,
-                            new StartJobAndTaskArg(new int[0], job.Id, taskId),
-                                "", "", new ProcessStartInfo(cmd, "", "", $"{this.communicator.Options.AgentUriBase}/message/{taskKey}",
-                                "", new System.Collections.Hashtable(), new long[0], job.RequeueCount), token);
+                             nodeName,
+                             new StartJobAndTaskArg(new int[0], job.Id, taskId),
+                             "", "", new ProcessStartInfo(cmd, "", "", $"{this.communicator.Options.AgentUriBase}/output/{taskKey}",
+                             "", new System.Collections.Hashtable(), new long[0], job.RequeueCount), token);
 
                         this.logger.LogInformation("Wait for response for job {0}, task {1}", job.Id, taskKey);
                         var taskResult = await monitor.Execution;

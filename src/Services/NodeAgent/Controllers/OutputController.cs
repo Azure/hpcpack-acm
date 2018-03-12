@@ -26,7 +26,7 @@
             this.utilities = utilities;
         }
 
-        [HttpPost("[action]/{taskkey}")]
+        [HttpPost("{taskkey}")]
         public async Task MessageAsync(string taskKey, [FromBody] ClusrunOutput output, CancellationToken token)
         {
             try
