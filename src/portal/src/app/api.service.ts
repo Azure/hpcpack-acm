@@ -82,8 +82,8 @@ class CommandApi extends Resource<CommandResult> {
     }
   }
 
-  create(command: string, targets: any): any {
-    return this.http.post<any>(this.url, { command, targets }, { observe: 'response', responseType: 'json' })
+  create(commandLine: string, nodeFilter: any): any {
+    return this.http.post<any>(this.url, { commandLine, nodeFilter }, { observe: 'response', responseType: 'json' })
       .pipe(
         catchError((error: any): Observable<any> => {
           console.error(error);

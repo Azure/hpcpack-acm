@@ -64,17 +64,13 @@ export class NodeListComponent {
       data: {}
     });
 
-    //TODO: Run diagnostic tests on user selected nodes...
     dialogRef.afterClosed().subscribe(cmd => {
       if (cmd) {
         this.api.command.create(cmd, '').subscribe(obj => {
           console.log(obj);
-          //TODO: This
-          this.router.navigate(['/command/results/1001']);
-          //Should be
-          //let url = console.log(obj.headers.get('Location'));
-          //this.router.navigate(obj.url);
-          //However the header Location seems inaccessible in CORS.
+          let url = obj.headers.get('location');
+          console.log(url);
+          this.router.navigate([`/command/results/${obj.body.id}`]);
         });
       }
     });
