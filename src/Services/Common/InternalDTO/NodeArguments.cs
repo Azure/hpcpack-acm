@@ -1,5 +1,6 @@
 ﻿namespace Microsoft.HpcAcm.Services.Common
 {
+    using Microsoft.HpcAcm.Common.Dto;
     using System;
     using System.Collections.Generic;
     using System.Security.Principal;
@@ -255,35 +256,6 @@
             get { return _nodeName; }
         }
     }
-
-    /// <summary>
-    /// Argument for a delegate that reports the whole compute node's state to the scheduler
-    /// </summary>
-    public class ComputeNodeInfoEventArg : ComputeNodeEventArg
-    {
-        ComputeClusterNodeInformation _nodeInfo;
-        bool _shouldUpdateHeartBeat;
-
-        public ComputeNodeInfoEventArg(string nodeName, ComputeClusterNodeInformation nodeInfo)
-            : base(nodeName)
-        {
-            _nodeInfo = nodeInfo;
-            _shouldUpdateHeartBeat = true;
-        }
-
-        public ComputeClusterNodeInformation NodeInfo
-        {
-            get { return _nodeInfo; }
-        }
-
-        public bool ShouldUpdateHeartBeat
-        {
-            get { return _shouldUpdateHeartBeat; }
-            set { _shouldUpdateHeartBeat = value; }
-        }
-
-    }
-
     /// <summary>
     /// Argument for a delegate that reports that a compute node finished on the scheduler
     /// </summary>
@@ -311,8 +283,6 @@
 
 
     #region delegates from the scheduler
-    public delegate void ComputeNodeSyncDelegate(ComputeNodeInfoEventArg arg);
-    public delegate int ComputeNodeReportDelegate(ComputeNodeInfoEventArg arg);
     public delegate NextOperation TaskCompletionDelegate(ComputeNodeTaskCompletionEventArg arg);
     public delegate void SetReachableOnNodeDelegate(string nodeName, bool isReachable);
     public delegate bool IsNodeValidDelegate(string nodeName, IIdentity identity);
@@ -436,26 +406,6 @@
 
         #region Delegates used by the communicator to report events to and exchange data with the scheduler
 
-        /// <summary>
-        /// Callback used to synchronize the reported state of a compute node with the scheduler
-        /// This can be performed when a compute node reconnects to the scheduler after a disconnect
-        /// or if the scheduler itself appears to have restarted
-        /// </summary>
-        ComputeNodeSyncDelegate OnSyncWithComputeNode
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Callback used to report the state of a compute node to the scheduler
-        /// This is useful for updating the resource consumption of running tasks
-        /// </summary>
-        ComputeNodeReportDelegate OnComputeNodeReport
-        {
-            get;
-            set;
-        }
         /// <summary>
         /// Callback used to report the completion of a task to the scheduler
         /// </summary>

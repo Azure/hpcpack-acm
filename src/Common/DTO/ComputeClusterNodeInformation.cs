@@ -1,4 +1,4 @@
-﻿namespace Microsoft.HpcAcm.Services.Common
+﻿namespace Microsoft.HpcAcm.Common.Dto
 {
     using System.Collections.Generic;
     using System.Linq;
@@ -11,19 +11,6 @@
         public ComputeClusterNodeInformation()
         {
             this.Jobs = new List<ComputeClusterJobInformation>();
-        }
-
-        /// <summary>
-        /// Copy Constructor used to create base object from a derived class
-        /// </summary>
-        public ComputeClusterNodeInformation(ComputeClusterNodeInformation previousNodeInformation)
-        {
-            this.Name = previousNodeInformation.Name;
-            this.MacAddress = previousNodeInformation.MacAddress;
-            this.Availability = previousNodeInformation.Availability;
-            this.JustStarted = previousNodeInformation.JustStarted;
-
-            this.Jobs = previousNodeInformation.Jobs.Select(j => new ComputeClusterJobInformation(j)).ToList();
         }
 
         /// <summary>

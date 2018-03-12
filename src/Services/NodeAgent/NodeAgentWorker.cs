@@ -80,7 +80,7 @@
 
                         this.logger.LogInformation("Saving result for job {0}, task {1}", job.Id, taskKey);
                         var resultKey = this.utilities.GetJobResultKey(nodeName, taskKey);
-                        var jobPartitionName = this.utilities.GetJobPartitionName(job.Id, $"{job.Type}");
+                        var jobPartitionName = this.utilities.GetJobPartitionKey(job.Id, $"{job.Type}");
 
                         var jobEntity = new JsonTableEntity(jobPartitionName, resultKey, taskResult);
 
@@ -90,7 +90,7 @@
 
                         this.logger.LogInformation("Saved task result {0} to jobs table, status code {1}", resultKey, result.HttpStatusCode);
 
-                        var nodePartitionName = this.utilities.GetNodePartitionName(nodeName);
+                        var nodePartitionName = this.utilities.GetNodePartitionKey(nodeName);
                         var nodeEntity = new JsonTableEntity(nodePartitionName, resultKey, taskResult);
 
                         result = await nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(nodeEntity), null, null, token);

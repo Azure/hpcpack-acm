@@ -1,4 +1,4 @@
-﻿namespace Microsoft.HpcAcm.Services.Common
+﻿namespace Microsoft.HpcAcm.Common.Dto
 {
     public class ComputeClusterNetworkInformation
     {

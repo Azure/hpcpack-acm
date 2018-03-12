@@ -37,7 +37,7 @@
             {
                 var result = await this.jobTable.ExecuteAsync(
                     TableOperation.Retrieve<JsonTableEntity>(
-                        this.utilities.GetJobPartitionName(message.Id, message.Type.ToString()),
+                        this.utilities.GetJobPartitionKey(message.Id, message.Type.ToString()),
                         this.utilities.JobEntryKey),
                     null,
                     null,

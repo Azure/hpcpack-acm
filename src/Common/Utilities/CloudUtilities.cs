@@ -38,54 +38,39 @@
         private readonly CloudQueueClient queueClient;
         private readonly CloudTableClient tableClient;
 
-        public string GetJobPartitionName(int jobId, string type) => string.Format(this.Option.JobPartitionPattern, type, jobId);
-        public string GetNodePartitionName(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);
+        public string GetJobPartitionKey(int jobId, string type) => string.Format(this.Option.JobPartitionPattern, type, jobId);
+        public string GetNodePartitionKey(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);
+        public string GetHeartbeatKey(string nodeName) => string.Format(this.Option.HeartbeatPattern, nodeName);
+        public string NodesPartitionKey { get => this.Option.NodesPartitionKey; }
         public string JobEntryKey { get => this.Option.JobEntryKey; }
 
         public string GetJobResultKey(string nodeKey, string taskKey) => string.Format(this.Option.JobResultPattern, nodeKey, taskKey);
         public string GetTaskKey(int jobId, int taskId, int requeueCount) => $"{jobId}:{taskId}:{requeueCount}";
 
-        public async Task<CloudAppendBlob> CreateOrReplaceTaskOutputBlobAsync(int jobId, string key, CancellationToken token)
+        public CloudQueue GetQueue(string queueName) => this.queueClient.GetQueueReference(queueName);
+
+        public async Task<CloudQueue> GetOrCreateQueueAsync(string queueName, CancellationToken token)
         {
-            var jobContainer = this.blobClient.GetContainerReference(string.Format(this.Option.JobResultContainerPattern, jobId));
+            var q = this.GetQueue(queueName);
+            await q.CreateIfNotExistsAsync(null, null, token);
+            return q;
+        }
+        public CloudBlobContainer GetContainer(string containerName) => this.blobClient.GetContainerReference(containerName);
+
+        public async Task<CloudAppendBlob> GetOrCreateAppendBlobAsync(string containerName, string blobName, CancellationToken token)
+        {
+            var jobContainer = this.blobClient.GetContainerReference(containerName);
             await jobContainer.CreateIfNotExistsAsync(BlobContainerPublicAccessType.Off, null, null, token);
-            var blob = jobContainer.GetAppendBlobReference(key);
+            var blob = jobContainer.GetAppendBlobReference(blobName);
             await blob.CreateOrReplaceAsync(null, null, null, token);
             return blob;
         }
 
+        public CloudTable GetTable(string tableName) => this.tableClient.GetTableReference(tableName);
 
-        public async Task<CloudQueue> GetOrCreateJobDispatchQueueAsync(CancellationToken token)
+        public async Task<CloudTable> GetOrCreateTableAsync(string tableName, CancellationToken token)
         {
-            return await this.GetOrCreateQueueAsync(this.Option.JobDispatchQueueName, token);
-        }
-
-        public async Task<CloudQueue> GetOrCreateNodeDispatchQueueAsync(string nodeName, CancellationToken token)
-        {
-            return await this.GetOrCreateQueueAsync(string.Format(this.Option.NodeDispatchQueuePattern, nodeName), token);
-        }
-
-        public async Task<CloudTable> GetOrCreateNodesTableAsync(CancellationToken token)
-        {
-            return await this.GetOrCreateTableAsync(this.Option.NodesTableName, token);
-        }
-
-
-        public async Task<CloudTable> GetOrCreateJobsTableAsync(CancellationToken token)
-        {
-            return await this.GetOrCreateTableAsync(this.Option.JobsTableName, token);
-        }
-
-        private async Task<CloudQueue> GetOrCreateQueueAsync(string queueName, CancellationToken token)
-        {
-            var q = this.queueClient.GetQueueReference(queueName);
-            await q.CreateIfNotExistsAsync(null, null, token);
-            return q;
-        }
-
-        private async Task<CloudTable> GetOrCreateTableAsync(string tableName, CancellationToken token)
-        {
-            var t = this.tableClient.GetTableReference(tableName);
+            var t = this.GetTable(tableName);
             await t.CreateIfNotExistsAsync(null, null, token);
             return t;
         }
