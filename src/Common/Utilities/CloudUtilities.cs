@@ -40,6 +40,7 @@
 
         public string GetJobPartitionKey(int jobId, string type) => string.Format(this.Option.JobPartitionPattern, type, jobId);
         public string GetNodePartitionKey(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);
+        public string GetRegistrationKey(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);
         public string GetHeartbeatKey(string nodeName) => string.Format(this.Option.HeartbeatPattern, nodeName);
         public string NodesPartitionKey { get => this.Option.NodesPartitionKey; }
         public string JobEntryKey { get => this.Option.JobEntryKey; }

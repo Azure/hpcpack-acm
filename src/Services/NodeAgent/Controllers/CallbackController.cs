@@ -43,7 +43,7 @@
                 var jsonTableEntity = new JsonTableEntity(
                     this.utilities.NodesPartitionKey,
                     this.utilities.GetHeartbeatKey(nodeName),
-                    nodeInfo);
+                    (nodeInfo, DateTime.UtcNow));
 
                 var result = await nodeTable.ExecuteAsync(TableOperation.InsertOrReplace(jsonTableEntity), null, null, token);
 
@@ -53,14 +53,14 @@
                 }
 
                 // 30 s 
-                return 30000;
+                return this.utilities.Option.HeartbeatIntervalSeconds * 1000;
             }
             catch (Exception ex)
             {
                 this.logger.LogError(ex, "ComputeNodeReported. NodeName {0}, JobCount {1}", nodeInfo.Name, nodeInfo.Jobs.Count);
             }
 
-            return 5000;
+            return this.utilities.Option.RetryOnFailureSeconds * 1000;
         }
 
         [HttpPost("taskcompleted")]
@@ -89,7 +89,7 @@
                     taskInfo.TaskInfo.Message);
 
                 this.monitor.FailTask(taskKey, ex);
-                
+
                 return Task.FromResult(NextOperation.CancelJob);
             }
         }
@@ -103,7 +103,7 @@
                 this.logger.LogInformation("RegisterRequested, NodeName {0}, Distro {1} ", nodeName, registerInfo.DistroInfo);
                 var nodeTable = this.utilities.GetNodesTable();
 
-                var jsonTableEntity = new JsonTableEntity(this.utilities.NodesPartitionKey, this.utilities.GetNodePartitionKey(nodeName), registerInfo);
+                var jsonTableEntity = new JsonTableEntity(this.utilities.NodesPartitionKey, this.utilities.GetRegistrationKey(nodeName), registerInfo);
                 var result = await nodeTable.ExecuteAsync(TableOperation.InsertOrReplace(jsonTableEntity), null, null, token);
 
                 using (HttpResponseMessage r = new HttpResponseMessage((HttpStatusCode)result.HttpStatusCode))
@@ -112,7 +112,7 @@
                 }
 
                 // 5 minutes
-                return 300000;
+                return this.utilities.Option.RegistrationIntervalSeconds * 1000;
             }
             catch (Exception ex)
             {
@@ -120,7 +120,7 @@
                     registerInfo.NodeName, registerInfo.DistroInfo);
             }
 
-            return 5000;
+            return this.utilities.Option.RetryOnFailureSeconds * 1000;
         }
     }
 }

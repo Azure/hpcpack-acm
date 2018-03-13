@@ -24,8 +24,14 @@ namespace Microsoft.HpcAcm.Common.Utilities
 
         public string NodesTableName { get; set; } = "nodestable";
         public string NodePartitionPattern { get; internal set; } = "node-{0}";
+        public string RegistrationPattern { get; set; } = "registration-{0}";
         public string HeartbeatPattern { get; internal set; } = "heartbeat-{0}";
         public string NodesPartitionKey { get; internal set; } = "nodes";
+
+        public int HeartbeatIntervalSeconds { get; set; } = 30;
+        public int MaxMissedHeartbeats { get; set; } = 3;
+        public int RegistrationIntervalSeconds { get; set; } = 300;
+        public int RetryOnFailureSeconds { get; set; } = 5;
 
         #endregion
 

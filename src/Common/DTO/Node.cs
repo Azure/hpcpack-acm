@@ -15,14 +15,11 @@ namespace Microsoft.HpcAcm.Common.Dto
 
     public class Node   
     {
-        public string Name { get; private set; }
-        public NodeHealth Health { get; private set; }
-        public NodeState State { get; private set; }
-        public int RunningJobCount { get; private set; }
-        public int EventCount { get; private set; }
-        public int CoreCount { get; private set; }
-        public int SocketCount { get; private set; }
-        public int GpuCoreCount { get; private set; }
-        public int MemoryMB { get; private set; }
+        public string Name { get; set; }
+        public NodeHealth Health { get; set; }
+        public NodeState State { get; set; }
+        public int RunningJobCount { get; set; }
+        public int EventCount { get; set; }
+        public ComputeClusterRegistrationInformation NodeRegistrationInfo { get; set; }
     }
 }
