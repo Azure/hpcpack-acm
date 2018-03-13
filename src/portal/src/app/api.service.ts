@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { of } from 'rxjs/observable/of';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment as env } from '../environments/environment';
 import { Node } from './models/node';
 import { CommandResult } from './models/command-result';
@@ -15,12 +15,18 @@ abstract class Resource<T> {
 
   protected abstract get url(): string;
 
+  protected normalize(e: T): void {}
+
   getAll(): Observable<T[]> {
     return this.http.get<T[]>(this.url)
       .pipe(
         catchError((error: any): Observable<T[]> => {
           console.error(error);
           return of([]);
+        }),
+        map(array => {
+          array.forEach(e => this.normalize(e));
+          return array;
         })
       );
   }
@@ -31,6 +37,10 @@ abstract class Resource<T> {
         catchError((error: any): Observable<T> => {
           console.error(error);
           return of({} as T);
+        }),
+        map(e => {
+          this.normalize(e);
+          return e;
         })
       );
   }
@@ -39,6 +49,11 @@ abstract class Resource<T> {
 class NodeApi extends Resource<Node> {
   protected get url(): string {
     return `${this.baseUrl}/nodes`;
+  }
+
+  protected normalize(node: Node): void {
+    if (!node.id)
+      node.id = node.name;
   }
 }
 
@@ -51,6 +66,30 @@ class TestApi extends Resource<TestResult> {
 class CommandApi extends Resource<CommandResult> {
   protected get url(): string {
     return `${this.baseUrl}/clusRun`;
+  }
+
+  protected normalize(result: CommandResult): void {
+    result.state = result.state.toLowerCase();
+    result.command = result['commandLine'];
+    result.progress /= 100;
+    result.startedAt = result['createdAt'];
+    if (result['results']) {
+      result.nodes = result['results'];
+      result.nodes.forEach(e => {
+        e.name = e.nodeName;
+        e.state = e.state.toLowerCase();
+      });
+    }
+  }
+
+  create(commandLine: string, nodeFilter: any): any {
+    return this.http.post<any>(this.url, { commandLine, nodeFilter }, { observe: 'response', responseType: 'json' })
+      .pipe(
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return of({});
+        })
+      );
   }
 }
 

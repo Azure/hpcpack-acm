@@ -8,22 +8,10 @@ import { NodeFilterBuilderComponent } from '../../widgets/node-filter-builder/no
   styleUrls: ['./new-command.component.css']
 })
 export class NewCommandComponent implements OnInit {
-  private nodeFilter: string = '';
+  private command: string = '';
 
   constructor(public dialog: MatDialog) {}
 
   ngOnInit() {
-  }
-
-  private openFilterBuilder(): void {
-    let dialogRef = this.dialog.open(NodeFilterBuilderComponent, {
-      //width: '250px',
-      data: { filter: this.nodeFilter }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result)
-        this.nodeFilter = result;
-    });
   }
 }

@@ -26,7 +26,8 @@ export class BreadcrumbComponent implements OnInit {
   }
 
   ngOnDestroy() {
-    this.subcription.unsubscribe();
+    if (this.subcription)
+      this.subcription.unsubscribe();
   }
 
   private getBreadcrumbs(route, url = "", breadcrumbs = []) {

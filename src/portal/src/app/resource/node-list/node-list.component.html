@@ -34,9 +34,9 @@
     <mat-cell *matCellDef="let node"> {{node.health | titlecase }} </mat-cell>
   </ng-container>
 
-  <ng-container matColumnDef="runningJobs">
+  <ng-container matColumnDef="runningJobCount">
     <mat-header-cell *matHeaderCellDef> Running Jobs </mat-header-cell>
-    <mat-cell *matCellDef="let node"> {{node.runningJobs}} </mat-cell>
+    <mat-cell *matCellDef="let node"> {{node.runningJobCount}} </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="actions">

@@ -1,8 +1,10 @@
 import { Component, Input } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableDataSource, MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { SelectionModel } from '@angular/cdk/collections';
 import { NewDiagnosticsComponent } from '../new-diagnostics/new-diagnostics.component';
 import { NewCommandComponent } from '../new-command/new-command.component';
+import { ApiService } from '../../api.service';
 
 @Component({
   selector: 'resource-node-list',
@@ -13,11 +15,16 @@ export class NodeListComponent {
   @Input()
   dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
-  private displayedColumns = ['select', 'name', 'health', 'state', 'runningJobs', 'actions'];
+  private displayedColumns = ['select', 'name', 'health', 'state', 'runningJobCount', 'actions'];
 
   private selection = new SelectionModel(true, []);
 
-  constructor(private dialog: MatDialog) {}
+  constructor(
+    private dialog: MatDialog,
+    private api: ApiService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
   get selectedData(): any[] {
     return this.selection.selected;
@@ -57,8 +64,15 @@ export class NodeListComponent {
       data: {}
     });
 
-    //TODO: Run diagnostic tests on user selected nodes...
-    //dialogRef.afterClosed().subscribe(result => {
-    //});
+    dialogRef.afterClosed().subscribe(cmd => {
+      if (cmd) {
+        this.api.command.create(cmd, '').subscribe(obj => {
+          console.log(obj);
+          let url = obj.headers.get('location');
+          console.log(url);
+          this.router.navigate([`/command/results/${obj.body.id}`]);
+        });
+      }
+    });
   }
 }
