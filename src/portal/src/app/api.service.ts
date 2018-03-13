@@ -9,7 +9,7 @@ import { CommandResult } from './models/command-result';
 import { TestResult } from './models/test-result';
 
 abstract class Resource<T> {
-  protected baseUrl = env.apiBase;
+  static baseUrl = env.apiBase;
 
   constructor(protected http: HttpClient) {}
 
@@ -47,8 +47,10 @@ abstract class Resource<T> {
 }
 
 class NodeApi extends Resource<Node> {
+  static url = `${Resource.baseUrl}/nodes`;
+
   protected get url(): string {
-    return `${this.baseUrl}/nodes`;
+    return NodeApi.url;
   }
 
   protected normalize(node: Node): void {
@@ -58,14 +60,18 @@ class NodeApi extends Resource<Node> {
 }
 
 class TestApi extends Resource<TestResult> {
+  static url = `${Resource.baseUrl}/diagnostics/jobs`;
+
   protected get url(): string {
-    return `${this.baseUrl}/diagnostics/jobs`;
+    return TestApi.url;
   }
 }
 
 class CommandApi extends Resource<CommandResult> {
+  static url = `${Resource.baseUrl}/clusRun`;
+
   protected get url(): string {
-    return `${this.baseUrl}/clusRun`;
+    return CommandApi.url;
   }
 
   protected normalize(result: CommandResult): void {
