@@ -46,7 +46,7 @@ abstract class Resource<T> {
   }
 }
 
-class NodeApi extends Resource<Node> {
+export class NodeApi extends Resource<Node> {
   static url = `${Resource.baseUrl}/nodes`;
 
   protected get url(): string {
@@ -59,7 +59,7 @@ class NodeApi extends Resource<Node> {
   }
 }
 
-class TestApi extends Resource<TestResult> {
+export class TestApi extends Resource<TestResult> {
   static url = `${Resource.baseUrl}/diagnostics/jobs`;
 
   protected get url(): string {
@@ -67,7 +67,7 @@ class TestApi extends Resource<TestResult> {
   }
 }
 
-class CommandApi extends Resource<CommandResult> {
+export class CommandApi extends Resource<CommandResult> {
   static url = `${Resource.baseUrl}/clusRun`;
 
   protected get url(): string {
@@ -77,8 +77,8 @@ class CommandApi extends Resource<CommandResult> {
   protected normalize(result: CommandResult): void {
     result.state = result.state.toLowerCase();
     result.command = result['commandLine'];
-    result.progress /= 100;
-    result.startedAt = result['createdAt'];
+    //result.progress /= 100;
+    //result.startedAt = result['createdAt'];
     if (result['results']) {
       result.nodes = result['results'];
       result.nodes.forEach(e => {
