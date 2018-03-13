@@ -51,9 +51,10 @@
                     .AddDebug(debugLevel);
             })
             .ConfigureCloudOptions(c => c.GetSection("CloudOption").Get<CloudOption>())
-            .AddTaskItemSource(async (u, c, token) => new TaskItemSource(
+            .AddTaskItemSource(async (u, c, l, token) => new TaskItemSource(
                 await u.GetOrCreateNodeDispatchQueueAsync(c.GetValue<string>(Constants.HpcHostNameEnv), token),
-                TimeSpan.FromSeconds(u.Option.VisibleTimeoutSeconds)))
+                TimeSpan.FromSeconds(u.Option.VisibleTimeoutSeconds),
+                l))
             .AddWorker(async (config, u, l, token) => new NodeAgentWorker(
                 config,
                 l,
@@ -85,7 +86,7 @@
                     services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(TaskMonitor), taskMonitor));
                     services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(CloudUtilities), utilities));
                 })
-                .UseUrls("http://*:8080", "http://*:5000")
+                .UseUrls("http://*:80", "http://*:5000")
                 .UseStartup<Startup>()
                 .Build();
     }

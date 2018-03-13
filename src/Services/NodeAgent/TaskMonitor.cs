@@ -95,7 +95,7 @@
                         }
 
                         await this.processor(builder.ToString(), token);
-                        if (i.Eof)
+                        if (i != null && i.Eof)
                         {
                             this.Dispose();
                             return;

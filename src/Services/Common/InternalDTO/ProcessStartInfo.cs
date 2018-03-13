@@ -1,22 +1,13 @@
-//------------------------------------------------------------------------------
-// <copyright file="ProcessStartInfo.cs" company="Microsoft">
-//      Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-// <owner current="true" primary="true">colinw</owner>
-// <securityReview name="colinw" date="1-28-06"/>
-//------------------------------------------------------------------------------
-
-#region Using directives
-
-using System;
-using System.Diagnostics;
-using System.Collections;
-
-#endregion
-
-
 namespace Microsoft.HpcAcm.Services.Common
 {
+    #region Using directives
+
+    using System;
+    using System.Diagnostics;
+    using System.Collections;
+
+    #endregion
+
 
     [Serializable()]
     public sealed class ProcessStartInfo

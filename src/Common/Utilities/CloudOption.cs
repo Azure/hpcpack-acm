@@ -20,6 +20,12 @@ namespace Microsoft.HpcAcm.Common.Utilities
 
         #endregion
 
+        #region Ids table
+
+        public string IdsTableName { get; set; } = "idstable";
+
+        #endregion
+
         #region Nodes table
 
         public string NodesTableName { get; set; } = "nodestable";

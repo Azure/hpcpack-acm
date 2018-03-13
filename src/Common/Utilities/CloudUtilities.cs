@@ -12,7 +12,6 @@
 
     public class CloudUtilities
     {
-
         public CloudUtilities(CloudOption cloudOption)
         {
             this.Option = cloudOption;
@@ -32,6 +31,14 @@
             tableClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(cloudOption.TableServerTimeoutSeconds);
         }
 
+        public async Task InitializeAsync(CancellationToken token)
+        {
+            await this.GetOrCreateJobDispatchQueueAsync(token);
+            await this.GetOrCreateJobsTableAsync(token);
+            await this.GetOrCreateNodesTableAsync(token);
+            await this.GetOrCreateIdsTableAsync(token);
+        }
+
         public CloudOption Option { get; private set; }
 
         private readonly CloudBlobClient blobClient;
@@ -46,7 +53,7 @@
         public string JobEntryKey { get => this.Option.JobEntryKey; }
 
         public string GetJobResultKey(string nodeKey, string taskKey) => string.Format(this.Option.JobResultPattern, nodeKey, taskKey);
-        public string GetTaskKey(int jobId, int taskId, int requeueCount) => $"{jobId}:{taskId}:{requeueCount}";
+        public string GetTaskKey(int jobId, int taskId, int requeueCount) => $"{jobId}-{taskId}-{requeueCount}";
 
         public CloudQueue GetQueue(string queueName) => this.queueClient.GetQueueReference(queueName);
 

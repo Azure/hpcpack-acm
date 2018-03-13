@@ -49,7 +49,8 @@
                     var cmd = job.CommandLines[taskId];
                     logger.LogInformation("Executing command {0}, job {1}", cmd, job.Id);
                     var taskKey = this.utilities.GetTaskKey(job.Id, taskId, job.RequeueCount);
-                    var taskResultBlob = await this.utilities.CreateOrReplaceTaskOutputBlobAsync(job.Id, taskKey, token);
+                    var resultKey = this.utilities.GetJobResultKey(nodeName, taskKey);
+                    var taskResultBlob = await this.utilities.CreateOrReplaceTaskOutputBlobAsync(job.Id, resultKey, token);
                     using (var monitor = this.Monitor.StartMonitorTask(taskKey, async (output, cancellationToken) =>
                     {
                         try
@@ -79,7 +80,6 @@
                         var taskResult = await monitor.Execution;
 
                         this.logger.LogInformation("Saving result for job {0}, task {1}", job.Id, taskKey);
-                        var resultKey = this.utilities.GetJobResultKey(nodeName, taskKey);
                         var jobPartitionName = this.utilities.GetJobPartitionKey(job.Id, $"{job.Type}");
 
                         var jobEntity = new JsonTableEntity(jobPartitionName, resultKey, taskResult);

@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
@@ -38,6 +39,7 @@
                     var option = context.Configuration.GetSection("CloudOption").Get<CloudOption>();
                     services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(CloudOption), option));
                     var utilities = new CloudUtilities(option);
+                    utilities.InitializeAsync(CancellationToken.None).GetAwaiter().GetResult();
                     services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(CloudUtilities), utilities));
                 })
                 .UseUrls("http://*:80", "http://*:5000")

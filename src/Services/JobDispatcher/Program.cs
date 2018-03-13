@@ -33,9 +33,10 @@
                         .AddDebug(debugLevel);
                 })
                 .ConfigureCloudOptions(c => c.GetSection("CloudOption").Get<CloudOption>())
-                .AddTaskItemSource(async (u, c, token) => new TaskItemSource(
+                .AddTaskItemSource(async (u, c, l, token) => new TaskItemSource(
                     await u.GetOrCreateJobDispatchQueueAsync(token),
-                    TimeSpan.FromSeconds(u.Option.VisibleTimeoutSeconds)))
+                    TimeSpan.FromSeconds(u.Option.VisibleTimeoutSeconds),
+                    l))
                 .AddWorker(async (config, u, l, token) => new JobDispatcherWorker(
                     config,
                     l,

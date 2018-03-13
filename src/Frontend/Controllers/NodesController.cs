@@ -6,6 +6,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.WindowsAzure.Storage.Table;
@@ -15,13 +16,15 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     public class NodesController : Controller
     {
         private readonly CloudUtilities utilities;
+        private readonly ILogger logger;
 
-        public NodesController(CloudUtilities u)
+        public NodesController(CloudUtilities u, ILogger<NodesController> logger)
         {
             this.utilities = u;
+            this.logger = logger;
         }
 
-        // GET api/nodes?count=50&NextPartitionKey=key&NextRowKey=key&NextTableName=name&TargetLocation=location
+        // GET api/nodes?count=50&lastNodeName=testnode
         [HttpGet()]
         public async Task<IEnumerable<Node>> GetAsync(
             [FromQuery] string lastNodeName,

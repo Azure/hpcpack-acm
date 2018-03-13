@@ -18,8 +18,6 @@
                 { "nodeagent", "/app/NodeAgent/NodeAgent.dll" },
             };
 
-            var possibleServices = string.Join("|", serviceCollection.Keys);
-
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
 
             CommandOption sasToken = app.Option(

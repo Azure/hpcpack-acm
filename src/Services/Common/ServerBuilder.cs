@@ -58,8 +58,9 @@
 
                 this.CloudOptions = this.cloudOptionMethod?.Invoke(this.Configuration);
                 this.Utilities = new CloudUtilities(this.CloudOptions);
+                await this.Utilities.InitializeAsync(token);
 
-                this.source = await this.taskItemSourceMethod?.Invoke(this.Utilities, this.Configuration, token);
+                this.source = await this.taskItemSourceMethod?.Invoke(this.Utilities, this.Configuration, this.LoggerFactory, token);
                 this.worker = await this.workerMethod?.Invoke(this.Configuration, this.Utilities, this.LoggerFactory, token);
                 this.configWorkerMethod?.Invoke(this.worker);
 
@@ -106,13 +107,13 @@
         #endregion
 
         #region Task item source
-        public ServerBuilder AddTaskItemSource(Func<CloudUtilities, IConfiguration, CancellationToken, Task<TaskItemSource>> configMethod)
+        public ServerBuilder AddTaskItemSource(Func<CloudUtilities, IConfiguration, ILoggerFactory, CancellationToken, Task<TaskItemSource>> configMethod)
         {
             this.taskItemSourceMethod = configMethod;
             return this;
         }
 
-        private Func<CloudUtilities, IConfiguration, CancellationToken, Task<TaskItemSource>> taskItemSourceMethod;
+        private Func<CloudUtilities, IConfiguration, ILoggerFactory, CancellationToken, Task<TaskItemSource>> taskItemSourceMethod;
         private TaskItemSource source;
 
         #endregion

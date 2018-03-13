@@ -11,10 +11,10 @@
 
     public class Server
     {
-        private WorkerBase worker;
-        private TaskItemSource source;
-        private ILogger logger;
-        private ServerOptions options;
+        private readonly WorkerBase worker;
+        private readonly TaskItemSource source;
+        private readonly ILogger logger;
+        private readonly ServerOptions options;
 
         public Server(TaskItemSource source, WorkerBase worker, ILoggerFactory loggerFactory, ServerOptions options)
         {
@@ -33,6 +33,7 @@
                     var t = await this.source.FetchTaskItemAsync(token);
                     if (t == null)
                     {
+                        this.logger.LogInformation("RunAsync, no tasks fetched. Sleep for {0} seconds", this.options.FetchIntervalSeconds);
                         await Task.Delay(TimeSpan.FromSeconds(this.options.FetchIntervalSeconds), token);
                         continue;
                     }
