@@ -89,12 +89,12 @@ export class CommandApi extends Resource<CommandResult> {
     }
   }
 
-  create(commandLine: string, nodeFilter: any): any {
-    return this.http.post<any>(this.url, { commandLine, nodeFilter }, { observe: 'response', responseType: 'json' })
+  create(commandLine: string, targetNodes: string[]): any {
+    return this.http.post<any>(this.url, { commandLine, targetNodes }, { observe: 'response', responseType: 'json' })
       .pipe(
         catchError((error: any): Observable<any> => {
           console.error(error);
-          return of({});
+          return new ErrorObservable(error);
         })
       );
   }

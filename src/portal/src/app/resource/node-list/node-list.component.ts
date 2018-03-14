@@ -66,11 +66,10 @@ export class NodeListComponent {
 
     dialogRef.afterClosed().subscribe(cmd => {
       if (cmd) {
-        this.api.command.create(cmd, '').subscribe(obj => {
+        let names = this.selection.selected.map(e => e.name);
+        this.api.command.create(cmd, names).subscribe(obj => {
           console.log(obj);
-          let url = obj.headers.get('location');
-          console.log(url);
-          this.router.navigate([`/command/results/${obj.body.id}`]);
+          this.router.navigate([`/command/results/${obj.body}`]); //body is the new id.
         });
       }
     });

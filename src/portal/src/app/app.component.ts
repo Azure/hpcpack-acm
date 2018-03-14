@@ -65,12 +65,6 @@ export class AppComponent {
     public api: ApiService
   ) {}
 
-  ngOnInit() {
-    this.api.node.getAll().subscribe(nodes => {
-      console.log(nodes);
-    });
-  }
-
   private get isLoggedIn(): boolean {
     return this.authService.isLoggedIn;
   }
