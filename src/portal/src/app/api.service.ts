@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
+import { ErrorObservable } from 'rxjs/observable/ErrorObservable';
 import { of } from 'rxjs/observable/of';
 import { catchError, map } from 'rxjs/operators';
 import { environment as env } from '../environments/environment';
@@ -20,13 +21,13 @@ abstract class Resource<T> {
   getAll(): Observable<T[]> {
     return this.http.get<T[]>(this.url)
       .pipe(
-        catchError((error: any): Observable<T[]> => {
-          console.error(error);
-          return of([]);
-        }),
         map(array => {
           array.forEach(e => this.normalize(e));
           return array;
+        }),
+        catchError((error: any): Observable<T[]> => {
+          console.error(error);
+          return new ErrorObservable(error);
         })
       );
   }
@@ -34,13 +35,13 @@ abstract class Resource<T> {
   get(id: string): Observable<T> {
     return this.http.get<T>(this.url + '/' + id)
       .pipe(
-        catchError((error: any): Observable<T> => {
-          console.error(error);
-          return of({} as T);
-        }),
         map(e => {
           this.normalize(e);
           return e;
+        }),
+        catchError((error: any): Observable<T> => {
+          console.error(error);
+          return new ErrorObservable(error);
         })
       );
   }
