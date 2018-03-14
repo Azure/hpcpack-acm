@@ -23,8 +23,8 @@
                 this.monitor = monitor;
             }
 
-            internal TaskCompletionSource<ComputeNodeTaskCompletionEventArg> commandResult = new TaskCompletionSource<ComputeNodeTaskCompletionEventArg>();
-            public Task<ComputeNodeTaskCompletionEventArg> Execution { get => this.commandResult.Task; }
+            internal TaskCompletionSource<ComputeNodeTaskCompletionEventArgs> commandResult = new TaskCompletionSource<ComputeNodeTaskCompletionEventArgs>();
+            public Task<ComputeNodeTaskCompletionEventArgs> Execution { get => this.commandResult.Task; }
 
             protected virtual void Dispose(bool isDisposing)
             {
@@ -136,7 +136,7 @@
             return this.taskOutputs.TryGetValue(key, out OutputSorter sorter) ? sorter.PutOutput(output, token) : Task.CompletedTask;
         }
 
-        public void CompleteTask(string key, ComputeNodeTaskCompletionEventArg commandResult)
+        public void CompleteTask(string key, ComputeNodeTaskCompletionEventArgs commandResult)
         {
             using (var m = this.GetTaskResultMonitor(key))
             {

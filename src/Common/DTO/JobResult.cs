@@ -4,6 +4,6 @@ namespace Microsoft.HpcAcm.Common.Dto
     
     public class JobResult : Job
     {
-        public IList<NodeResult> Results { get; private set; }
+        public IList<NodeResult> Results { get; set; }
     }
 }

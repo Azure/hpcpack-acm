@@ -34,7 +34,7 @@
                     int currentId = 1;
                     if (result.Result is JsonTableEntity id)
                     {
-                        currentId = JsonConvert.DeserializeObject<int>(id.JsonContent) + 1;
+                        currentId = id.GetObject<int>() + 1;
                     }
                     else
                     {
@@ -77,11 +77,16 @@
         public static async Task<CloudAppendBlob> CreateOrReplaceTaskOutputBlobAsync(this CloudUtilities u, int jobId, string key, CancellationToken token)
         {
             return await u.GetOrCreateAppendBlobAsync(
-                string.Format(u.Option.JobResultContainerPattern, jobId),
+                string.Format(u.Option.JobResultContainerPattern, IntegerKey.ToStringKey(jobId)),
                 key,
                 token);
         }
 
+        public static CloudAppendBlob GetTaskOutputBlob(this CloudUtilities u, int jobId, string key) => u.GetAppendBlob(
+            string.Format(u.Option.JobResultContainerPattern, jobId),//IntegerKey.ToStringKey(jobId)),
+            key);
+
+        public static CloudQueue GetJobDispatchQueue(this CloudUtilities u) => u.GetQueue(u.Option.JobDispatchQueueName);
 
         public static async Task<CloudQueue> GetOrCreateJobDispatchQueueAsync(this CloudUtilities u, CancellationToken token)
         {

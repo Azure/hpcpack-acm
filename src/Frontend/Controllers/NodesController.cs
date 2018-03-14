@@ -31,15 +31,12 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             [FromQuery] int? count,
             CancellationToken token)
         {
-            var partitionQuery = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, this.utilities.NodesPartitionKey);
+            var partitionQuery = this.utilities.GetPartitionQueryString(this.utilities.NodesPartitionKey);
 
             var lastRegistrationKey = this.utilities.GetRegistrationKey(lastNodeName);
-            var registrationEnd = this.utilities.GetRegistrationKey(new string(Char.MaxValue, 1));
+            var registrationEnd = this.utilities.GetMaximumRegistrationKey();
 
-            var registrationRangeQuery = TableQuery.CombineFilters(
-                TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.GreaterThan, lastRegistrationKey),
-                TableOperators.And,
-                TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.LessThan, registrationEnd));
+            var registrationRangeQuery = this.utilities.GetRowKeyRangeString(lastRegistrationKey, registrationEnd);
 
             var q = new TableQuery<JsonTableEntity>()
                 .Where(TableQuery.CombineFilters(
@@ -57,7 +54,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             {
                 var result = await nodes.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
                 registrations.AddRange(
-                    result.Results.Select(r => JsonConvert.DeserializeObject<ComputeClusterRegistrationInformation>(r.JsonContent)));
+                    result.Results.Select(r => r.GetObject<ComputeClusterRegistrationInformation>()));
 
                 conToken = result.ContinuationToken;
             }
@@ -89,7 +86,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             do
             {
                 var result = await nodes.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-                foreach (var h in result.Results.Select(r => JsonConvert.DeserializeObject<(ComputeClusterNodeInformation, DateTime)>(r.JsonContent)))
+                foreach (var h in result.Results.Select(r => r.GetObject<(ComputeClusterNodeInformation, DateTime)>()))
                 {
                     heartbeats[h.Item1.Name.ToLowerInvariant()] = h;
                 }

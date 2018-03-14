@@ -55,7 +55,7 @@
                     {
                         try
                         {
-                            await taskResultBlob.AppendTextAsync(output, null, null, null, null, cancellationToken);
+                            await taskResultBlob.AppendTextAsync(output, Encoding.UTF8, null, null, null, cancellationToken);
                         }
                         catch (Exception ex)
                         {
@@ -64,11 +64,6 @@
                     }))
                     {
                         this.logger.LogInformation("Call startjobandtask for job {0}, task {1}", job.Id, taskKey);
-                        //await this.communicator.StartJobAndTaskAsync(
-                        //   nodeName,
-                        //   new StartJobAndTaskArg(new int[0], job.Id, taskId),
-                        //       "", "", new ProcessStartInfo("bash", "", "", $"/opt/test.txt",
-                        //       "", new System.Collections.Hashtable(), new long[0], job.RequeueCount), token);
 
                         await this.communicator.StartJobAndTaskAsync(
                              nodeName,
@@ -80,11 +75,11 @@
                         var taskResult = await monitor.Execution;
 
                         this.logger.LogInformation("Saving result for job {0}, task {1}", job.Id, taskKey);
-                        var jobPartitionName = this.utilities.GetJobPartitionKey(job.Id, $"{job.Type}");
+                        var jobPartitionName = this.utilities.GetJobPartitionKey($"{job.Type}", job.Id);
 
-                        var jobEntity = new JsonTableEntity(jobPartitionName, resultKey, taskResult);
+                        var taskResultEntity = new JsonTableEntity(jobPartitionName, resultKey, taskResult);
 
-                        var result = await jobsTable.ExecuteAsync(TableOperation.InsertOrReplace(jobEntity), null, null, token);
+                        var result = await jobsTable.ExecuteAsync(TableOperation.InsertOrReplace(taskResultEntity), null, null, token);
 
                         // TODO: deal with return code.
 

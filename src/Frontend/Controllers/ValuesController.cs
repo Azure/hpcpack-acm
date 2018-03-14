@@ -49,7 +49,7 @@
                 Type = JobType.ClusRun,
             };
 
-            var partitionName = utilities.GetJobPartitionKey(job.Id, $"{job.Type}");
+            var partitionName = utilities.GetJobPartitionKey($"{job.Type}", job.Id);
             var rowKey = utilities.JobEntryKey;
 
             var result = await jobTable.ExecuteAsync(

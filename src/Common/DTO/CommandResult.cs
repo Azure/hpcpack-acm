@@ -6,10 +6,10 @@
 
     public class CommandResult
     {
+        public string ResultKey { get; set; }
         public DiagnosticsTest Test { get; set; }
-        public string CommandLine { get; private set; }
-        public string Output { get; private set; }
-        public int ExitCode { get; private set; }
-        public string NodeName { get; private set; }
+        public string CommandLine { get; set; }
+        public ComputeClusterTaskInformation TaskInfo { get; set; }
+        public string NodeName { get; set; }
     }
 }

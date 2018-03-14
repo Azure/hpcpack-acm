@@ -64,7 +64,7 @@
         }
 
         [HttpPost("taskcompleted")]
-        public Task<NextOperation> TaskCompletedAsync([FromBody] ComputeNodeTaskCompletionEventArg taskInfo, CancellationToken token)
+        public Task<NextOperation> TaskCompletedAsync([FromBody] ComputeNodeTaskCompletionEventArgs taskInfo, CancellationToken token)
         {
             // TODO: move task key to url
             var taskKey = this.utilities.GetTaskKey(taskInfo.JobId, taskInfo.TaskInfo.TaskId, taskInfo.TaskInfo.TaskRequeueCount ?? 0);

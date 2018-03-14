@@ -9,6 +9,7 @@
     public class JsonTableEntity : TableEntity
     {
         public JsonTableEntity() { }
+
         public JsonTableEntity(string partitionKey, string rowKey, object obj) : base(partitionKey, rowKey)
         {
             this.JsonContent = JsonConvert.SerializeObject(obj, Formatting.Indented);

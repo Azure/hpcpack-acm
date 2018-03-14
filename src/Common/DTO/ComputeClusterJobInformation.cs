@@ -13,15 +13,6 @@
             this.Tasks = new List<ComputeClusterTaskInformation>();
         }
 
-        /// <summary>
-        /// Copy Constructor used to create base object from a derived class
-        /// </summary>
-        public ComputeClusterJobInformation(ComputeClusterJobInformation previousJobInformation)
-        {
-            this.JobId = previousJobInformation.JobId;
-            this.Tasks = previousJobInformation.Tasks.Select(t => new ComputeClusterTaskInformation(t)).ToList();
-        }
-
         public int JobId { get; set; }
 
         public List<ComputeClusterTaskInformation> Tasks { get; private set; }

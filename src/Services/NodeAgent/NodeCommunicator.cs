@@ -2,6 +2,7 @@
 {
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
+    using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Services.Common;
     using System;
     using System.Collections.Generic;
