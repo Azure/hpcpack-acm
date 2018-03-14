@@ -11,49 +11,37 @@ import { ApiService } from '../../api.service';
   styleUrls: ['./result-detail.component.scss']
 })
 export class ResultDetailComponent implements OnInit {
+  private states = ['all', 'queued', 'running', 'finished', 'failed', 'canceled'];
+
+  private state = 'all';
+
+  private name = '';
+
+  private dataSource = new MatTableDataSource();
+
+  private displayedColumns = ['name', 'state'];
+
+  private filteredNodes = [];
+
+  private selectedNode: any = {};
+
   private result: CommandResult = {} as CommandResult;
 
-  private nodeResults = new MatTableDataSource();
-
-  private overviewData: any = {};
-
-  private overviewOption = {
-    responsive: true,
-    maintainAspectRatio: false,
-    legend : {
-      position: 'right',
-    },
-    onClick: (event, item) => {
-      if (!item || item.length == 0)
-        return;
-      let index = item[0]._index;
-      let text = index == 0 ? 'success' : (index == 1 ? 'failure' : 'running');
-      this.nodeResults.filter = text;
-    },
-    onHover: (event, item) => {
-      event.target.style.cursor = item.length == 0 ? 'default' : 'pointer';
-    },
-  };
-
   private subcription: Subscription;
+
   constructor(
     private route: ActivatedRoute,
     private api: ApiService,
-  ) {
-    this.nodeResults.filterPredicate = (data: any, filter: string) => {
-      let lwr = filter.trim().toLowerCase();
-      return (data.state.toLowerCase().indexOf(lwr) >= 0
-        || data.name.toLowerCase().indexOf(lwr) >= 0);
-    }
-  }
+  ) {}
 
   ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
       let id = map.get('id');
       this.api.command.get(id).subscribe(result => {
         this.result = result;
-        this.makeChartData();
-        this.nodeResults.data = result.nodes;
+        this.selectedNode = result.nodes[0];
+        this.filteredNodes = result.nodes.map(e => e);
+        this.dataSource.data = this.filteredNodes;
       });
     });
   }
@@ -61,32 +49,6 @@ export class ResultDetailComponent implements OnInit {
   ngOnDestroy() {
     if (this.subcription)
       this.subcription.unsubscribe();
-  }
-
-  makeChartData() {
-    let success = 0;
-    let failure = 0;
-    let running = 0;
-
-    this.result.nodes.forEach(node => {
-      if (node.state == 'success')
-        success++;
-      else if (node.state == 'failure')
-        failure++;
-      else
-        running++;
-    });
-    this.overviewData = {
-      labels: ['Success', 'Failure', 'Running'],
-      datasets: [{
-        data: [success, failure, running],
-        backgroundColor: [
-          '#44d42b',
-          '#ff4e4e',
-          '#6f7de4',
-        ]
-      }],
-    };
   }
 
   stateIcon(state) {
@@ -119,5 +81,16 @@ export class ResultDetailComponent implements OnInit {
         break;
     }
     return res;
+  }
+
+  filter() {
+    let res = this.result.nodes.filter(e => {
+      if (this.state != 'all' && e.state != this.state)
+        return false;
+      if (e.name.toLowerCase().indexOf(this.name.toLowerCase()) < 0)
+        return false;
+      return true;
+    });
+    this.dataSource.data = res;
   }
 }

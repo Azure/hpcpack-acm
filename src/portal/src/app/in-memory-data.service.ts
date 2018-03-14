@@ -186,7 +186,7 @@ export class InMemoryDataService implements InMemoryDbService {
       let s;
       if (state === 'running') {
         let r = Math.random();
-        s = r < 0.5 ? 'running' : (r < 0.9 ? 'success' : 'failure');
+        s = r < 0.5 ? 'running' : (r < 0.9 ? 'finished' : 'failed');
       }
       else {
         s = state;
@@ -194,7 +194,7 @@ export class InMemoryDataService implements InMemoryDbService {
       return {
         name: name,
         state: s,
-        output: dirResult,
+        output: name + "\n" + dirResult,
       };
     });
     return result;

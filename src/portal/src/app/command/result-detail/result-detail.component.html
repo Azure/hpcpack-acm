@@ -6,35 +6,37 @@
 </div>
 <div class="time">started at {{result.startedAt | date:'yyyy-MM-dd HH:mm:ss'}} updated at {{result.updatedAt | date:'yyyy-MM-dd HH:mm:ss'}}</div>
 
-<div class="overview">
-  <h3>Overview</h3>
-  <chart type="doughnut" [data]="overviewData" [options]="overviewOption"></chart>
-</div>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-3 selection">
+      <mat-form-field>
+        <mat-select placeholder="State" [(ngModel)]="state" (change)="filter()">
+          <mat-option *ngFor="let opt of states" [value]="opt">
+            {{ opt | titlecase }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput placeholder="Name" [(ngModel)]="name" (keyup)="filter()">
+      </mat-form-field>
+      <mat-table #table [dataSource]="dataSource">
+        <ng-container matColumnDef="name">
+          <mat-header-cell *matHeaderCellDef> Node </mat-header-cell>
+          <mat-cell *matCellDef="let node">{{node.name}}</mat-cell>
+        </ng-container>
 
-<div class="filter">
-  <mat-form-field>
-    <input #filter matInput [(ngModel)]="nodeResults.filter" placeholder="Filter">
-    <mat-hint>Filter results by node name or state</mat-hint>
-    <mat-hint align="end">{{nodeResults.filteredData.length}} results</mat-hint>
-  </mat-form-field>
-</div>
+        <ng-container matColumnDef="state">
+          <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
+          <mat-cell *matCellDef="let node">{{node.state | titlecase }}</mat-cell>
+        </ng-container>
 
-<mat-accordion class="nodes">
-  <mat-expansion-panel class="node" [ngClass]="node.state" *ngFor="let node of nodeResults.filteredData">
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        <span class="name">{{node.name}}</span>
-      </mat-panel-title>
-      <mat-panel-description>
-        <i class="material-icons md-18">{{stateIcon(node.state)}}</i>
-        <span class="state">{{node.state | titlecase}}</span>
-      </mat-panel-description>
-    </mat-expansion-panel-header>
-
-    <div class="details">
-      <pre>
-{{node.output}}
-      </pre>
+        <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+        <mat-row *matRowDef="let node; columns: displayedColumns;" (click)="selectedNode = node"></mat-row>
+      </mat-table>
     </div>
-  </mat-expansion-panel>
-</mat-accordion>
+
+    <div class="col-md-9 output">
+      <pre>{{selectedNode.output}}</pre>
+    </div>
+  </div>
+</div>
