@@ -4,6 +4,8 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Net.Http.Headers;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
@@ -43,8 +45,10 @@
             using (MemoryStream stream = new MemoryStream(pageSize))
             {
                 await blob.DownloadRangeToStreamAsync(stream, result.Offset, pageSize, null, null, null, token);
-                result.Content = stream.ToArray();
-                result.Size = stream.Length;
+                stream.Seek(0, SeekOrigin.Begin);
+                StreamReader sr = new StreamReader(stream, Encoding.UTF8);
+                result.Content = await sr.ReadToEndAsync();
+                result.Size = stream.Position;
             }
 
             return result;
@@ -67,16 +71,18 @@
             using (MemoryStream stream = new MemoryStream(pageSize))
             {
                 await blob.DownloadRangeToStreamAsync(stream, offset, pageSize, null, null, null, token);
-                result.Content = stream.ToArray();
-                result.Size = stream.Length;
+                stream.Seek(0, SeekOrigin.Begin);
+                StreamReader sr = new StreamReader(stream, Encoding.UTF8);
+                result.Content = await sr.ReadToEndAsync();
+                result.Size = stream.Position;
             }
 
             return result;
         }
 
-        // GET: api/taskoutput/getdownloaduri/2/nodejobresult-node1-0002-0003-0004
-        [HttpGet("getdownloaduri/{jobId}/{taskResultKey}")]
-        public async Task<string> GetDownloadUriAsync(int jobId, string taskResultKey, CancellationToken token)
+        // GET: api/taskoutput/download/2/nodejobresult-node1-0002-0003-0004
+        [HttpGet("download/{jobId}/{taskResultKey}")]
+        public async Task<IActionResult> GetDownloadUriAsync(int jobId, string taskResultKey, CancellationToken token)
         {
             var blob = this.utilities.GetTaskOutputBlob(jobId, taskResultKey);
 
@@ -85,13 +91,24 @@
                 return null;
             }
 
-            var sasToken = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
+            if (this.utilities.IsSharedKeyAccount)
             {
-                Permissions = SharedAccessBlobPermissions.Read,
-                SharedAccessExpiryTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1.0),
-            });
+                //TODO: test this.
+                var sasToken = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
+                {
+                    Permissions = SharedAccessBlobPermissions.Read,
+                    SharedAccessExpiryTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1.0),
+                });
 
-            return blob.Uri + $"?{sasToken}";
+                return new RedirectResult(blob.Uri + $"?{sasToken}", false);
+            }
+            else
+            {
+                await blob.FetchAttributesAsync(null, null, null, token);
+                var stream = await blob.OpenReadAsync(null, null, null, token);
+                FileStreamResult r = new FileStreamResult(stream, blob.Properties.ContentType);
+                return r;
+            }
         }
     }
 }

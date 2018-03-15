@@ -16,7 +16,7 @@
         {
             this.Option = cloudOption;
 
-            var account = string.IsNullOrEmpty(this.Option.ConnectionString) ?
+            account = string.IsNullOrEmpty(this.Option.ConnectionString) ?
                 new CloudStorageAccount(
                     new WindowsAzure.Storage.Auth.StorageCredentials(cloudOption.StorageKeyOrSas),
                     this.Option.AccountName,
@@ -30,6 +30,10 @@
             queueClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(cloudOption.QueueServerTimeoutSeconds);
             tableClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(cloudOption.TableServerTimeoutSeconds);
         }
+
+        private readonly CloudStorageAccount account;
+
+        public bool IsSharedKeyAccount { get => this.account.Credentials.IsSharedKey; }
 
         public async Task InitializeAsync(CancellationToken token)
         {
