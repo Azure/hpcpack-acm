@@ -40,11 +40,18 @@
 
                     token.ThrowIfCancellationRequested();
 
-                    await this.worker.DoWorkAsync(t, token);
+                    bool result = await this.worker.DoWorkAsync(t, token);
 
                     token.ThrowIfCancellationRequested();
 
-                    await t.FinishAsync(token);
+                    if (result)
+                    {
+                        await t.FinishAsync(token);
+                    }
+                    else
+                    {
+                        this.logger.LogInformation("RunAsync, failed to process the task.");
+                    }
                 }
                 catch(Exception ex)
                 {

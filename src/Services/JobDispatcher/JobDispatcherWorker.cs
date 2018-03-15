@@ -30,7 +30,7 @@
         }
         public IConfiguration Configuration { get; }
 
-        public override async Task DoWorkAsync(TaskItem taskItem, CancellationToken token)
+        public override async Task<bool> DoWorkAsync(TaskItem taskItem, CancellationToken token)
         {
             var message = taskItem.GetMessage<JobDispatchMessage>();
             using (this.logger.BeginScope("Do work for JobDispatchMessage {0}", message.Id))
@@ -58,13 +58,15 @@
                         await q.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(internalJob)), null, null, null, null, token);
                     }));
 
-                    result = await this.jobTable.ExecuteAsync(TableOperation.Merge(entity), null, null, token);
+                    result = await this.jobTable.ExecuteAsync(TableOperation.Replace(entity), null, null, token);
 
                     this.logger.LogInformation("Dispatched job, update job result code {0}", result.HttpStatusCode);
+                    return result.IsSuccessfulStatusCode();
                 }
                 else
                 {
                     this.logger.LogWarning("The entity queried is not of <JobTableEntity> type, {0}", result.Result);
+                    return false;
                 }
             }
         }

@@ -37,7 +37,7 @@
 
         public TaskMonitor Monitor { get; set; }
 
-        public override async Task DoWorkAsync(TaskItem taskItem, CancellationToken token)
+        public override async Task<bool> DoWorkAsync(TaskItem taskItem, CancellationToken token)
         {
             var job = taskItem.GetMessage<InternalJob>();
             var nodeName = this.Configuration.GetValue<string>(Constants.HpcHostNameEnv);
@@ -82,7 +82,10 @@
 
                         var result = await jobsTable.ExecuteAsync(TableOperation.InsertOrReplace(taskResultEntity), null, null, token);
 
-                        // TODO: deal with return code.
+                        if (!result.IsSuccessfulStatusCode())
+                        {
+                            return false;
+                        }
 
                         this.logger.LogInformation("Saved task result {0} to jobs table, status code {1}", resultKey, result.HttpStatusCode);
 
@@ -91,11 +94,18 @@
 
                         result = await nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(nodeEntity), null, null, token);
                         this.logger.LogInformation("Saved task result {0} to nodes table, status code {1}", resultKey, result.HttpStatusCode);
-                        // TODO: upload to storage
+
+                        if (!result.IsSuccessfulStatusCode())
+                        {
+                            return false;
+                        }
+
+                        return true;
                     }
                 });
 
-                await Task.WhenAll(tasks);
+                var results = await Task.WhenAll<bool>(tasks);
+                return results.All(r => r);
             }
         }
     }

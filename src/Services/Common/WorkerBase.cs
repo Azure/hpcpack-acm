@@ -5,6 +5,6 @@
 
     public abstract class WorkerBase
     {
-        public abstract Task DoWorkAsync(TaskItem taskItem, CancellationToken token);
+        public abstract Task<bool> DoWorkAsync(TaskItem taskItem, CancellationToken token);
     }
 }
