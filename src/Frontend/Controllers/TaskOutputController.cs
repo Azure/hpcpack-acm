@@ -27,16 +27,21 @@
         [HttpGet("getlastpage/{jobId}/{taskResultKey}")]
         public async Task<TaskOutputPage> GetLastPageAsync(int jobId, string taskResultKey, [FromQuery] int pageSize, CancellationToken token)
         {
+            var result = new TaskOutputPage() { Offset = 0, Size = 0 };
             var blob = this.utilities.GetTaskOutputBlob(jobId, taskResultKey);
 
             if (pageSize > 1024 || !await blob.ExistsAsync(null, null, token))
             {
-                return new TaskOutputPage() { Offset = 0, Size = 0 };
+                return result;
             }
 
             await blob.FetchAttributesAsync(null, null, null, token);
+            if (blob.Properties.Length == 0)
+            {
+                return result;
+            }
 
-            var result = new TaskOutputPage() { Offset = blob.Properties.Length - pageSize };
+            result.Offset = blob.Properties.Length - pageSize;
             if (result.Offset < 0)
             {
                 result.Offset = 0;
@@ -58,15 +63,21 @@
         [HttpGet("getpage/{jobId}/{taskResultKey}")]
         public async Task<TaskOutputPage> GetPageAsync(int jobId, string taskResultKey, [FromQuery] int pageSize, [FromQuery] int offset, CancellationToken token)
         {
+            if (offset < 0) offset = 0;
+            var result = new TaskOutputPage() { Offset = offset, Size = 0 };
             var blob = this.utilities.GetTaskOutputBlob(jobId, taskResultKey);
 
-            if (pageSize == 0) pageSize = 1024;
+            if (pageSize <= 0) pageSize = 1024;
             if (pageSize > 1024 || !await blob.ExistsAsync(null, null, token))
             {
-                return new TaskOutputPage() { Offset = offset, Size = 0 };
+                return result;
             }
 
-            var result = new TaskOutputPage() { Offset = offset, };
+            await blob.FetchAttributesAsync();
+            if (blob.Properties.Length <= offset)
+            {
+                return result;
+            }
 
             using (MemoryStream stream = new MemoryStream(pageSize))
             {
