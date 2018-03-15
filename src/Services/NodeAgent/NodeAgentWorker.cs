@@ -43,6 +43,7 @@
             var nodeName = this.Configuration.GetValue<string>(Constants.HpcHostNameEnv);
             using (this.logger.BeginScope("Do work for InternalJob {0} on node {1}", job.Id, nodeName))
             {
+                // TODO: make sure invisible.
                 logger.LogInformation("Executing job {0}", job.Id);
                 var tasks = Enumerable.Range(0, job.CommandLines.Length).Select(async taskId =>
                 {

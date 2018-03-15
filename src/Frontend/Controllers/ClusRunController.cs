@@ -139,7 +139,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 Name = "testjob",
                 RequeueCount = 0,
                 State = JobState.Queued,
-                TargetNodes = new string[] { "evanc6" },
+                TargetNodes = new string[] { "evanc6", "evanclinuxdev" },
                 Type = JobType.ClusRun,
             };
 

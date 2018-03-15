@@ -56,6 +56,7 @@
         {
             var blob = this.utilities.GetTaskOutputBlob(jobId, taskResultKey);
 
+            if (pageSize == 0) pageSize = 1024;
             if (pageSize > 1024 || !await blob.ExistsAsync(null, null, token))
             {
                 return new TaskOutputPage() { Offset = offset, Size = 0 };
