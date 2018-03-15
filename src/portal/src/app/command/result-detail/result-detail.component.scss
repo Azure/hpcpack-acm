@@ -3,13 +3,16 @@ app-back-button {
 }
 
 .title {
-  display: flex;
-  align-items: center;
-  padding: 1em;
+  clear: both;
+  font-size: 150%;
+  padding: 0.5em;
 
-  .name {
+  .command {
     font-weight: bold;
-    margin-left: 0.3em;
+  }
+
+  .state {
+    font-size: small;
   }
 }
 
@@ -26,16 +29,6 @@ app-back-button {
 .title.success {
   color: green;
   background-color: #d5ffd4;
-}
-
-.title.main {
-  font-size: 150%;
-  clear: both;
-}
-
-.time {
-  margin-top: 8px;
-  font-size: small;
 }
 
 .container-fluid {

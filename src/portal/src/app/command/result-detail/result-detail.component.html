@@ -1,10 +1,9 @@
 <app-back-button></app-back-button>
 
-<div class="title main" [ngClass]="result.state">
-  <i class="material-icons">{{stateIcon(result.state)}}</i>
-  <div class="name">{{title(result.command, result.state)}}</div>
+<div class="title" [ngClass]="result.state">
+  <div class="command">{{result.command}}</div>
+  <div class="state">{{result.state}}</div>
 </div>
-<div class="time">started at {{result.startedAt | date:'yyyy-MM-dd HH:mm:ss'}} updated at {{result.updatedAt | date:'yyyy-MM-dd HH:mm:ss'}}</div>
 
 <div class="container-fluid">
   <div class="row">
