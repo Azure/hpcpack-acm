@@ -83,7 +83,7 @@
         }
 
         public static CloudAppendBlob GetTaskOutputBlob(this CloudUtilities u, int jobId, string key) => u.GetAppendBlob(
-            string.Format(u.Option.JobResultContainerPattern, jobId),//IntegerKey.ToStringKey(jobId)),
+            string.Format(u.Option.JobResultContainerPattern, IntegerKey.ToStringKey(jobId)),
             key);
 
         public static CloudQueue GetJobDispatchQueue(this CloudUtilities u) => u.GetQueue(u.Option.JobDispatchQueueName);
