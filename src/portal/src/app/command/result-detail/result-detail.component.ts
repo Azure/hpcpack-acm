@@ -21,8 +21,6 @@ export class ResultDetailComponent implements OnInit {
 
   private displayedColumns = ['name', 'state'];
 
-  private filteredNodes = [];
-
   private selectedNode: any = {};
 
   private result: CommandResult = {} as CommandResult;
@@ -39,9 +37,8 @@ export class ResultDetailComponent implements OnInit {
       let id = map.get('id');
       this.api.command.get(id).subscribe(result => {
         this.result = result;
-        this.selectedNode = result.nodes[0];
-        this.filteredNodes = result.nodes.map(e => e);
-        this.dataSource.data = this.filteredNodes;
+        this.dataSource.data = result.nodes;
+        this.selectedNode = result.nodes[0] || {};
       });
     });
   }
@@ -92,5 +89,6 @@ export class ResultDetailComponent implements OnInit {
       return true;
     });
     this.dataSource.data = res;
+    this.selectedNode = res[0] || {};
   }
 }
