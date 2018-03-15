@@ -104,14 +104,13 @@
 
             if (this.utilities.IsSharedKeyAccount)
             {
-                //TODO: test this.
                 var sasToken = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
                 {
                     Permissions = SharedAccessBlobPermissions.Read,
                     SharedAccessExpiryTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1.0),
                 });
 
-                return new RedirectResult(blob.Uri + $"?{sasToken}", false);
+                return new RedirectResult(blob.Uri + sasToken);
             }
             else
             {
