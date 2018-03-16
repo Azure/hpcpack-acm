@@ -6,7 +6,8 @@ import 'rxjs/add/operator/delay';
 
 @Injectable()
 export class AuthService {
-  isLoggedIn = false;
+  //For now, default to true for development convenience
+  isLoggedIn = true;
 
   user = {
     name: 'Lei.Zhang@microsoft.com',

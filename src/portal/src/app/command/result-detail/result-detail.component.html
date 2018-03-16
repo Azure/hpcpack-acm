@@ -1,42 +1,50 @@
 <app-back-button></app-back-button>
 
-<div class="title main" [ngClass]="result.state">
-  <i class="material-icons">{{stateIcon(result.state)}}</i>
-  <div class="name">{{title(result.command, result.state)}}</div>
+<div class="title" [ngClass]="result?.state">
+  <div class="command">{{result?.command}}</div>
+  <div class="state">{{result?.state}}</div>
 </div>
-<div class="time">started at {{result.startedAt | date:'yyyy-MM-dd HH:mm:ss'}} updated at {{result.updatedAt | date:'yyyy-MM-dd HH:mm:ss'}}</div>
 
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-md-3 selection">
-      <mat-form-field>
-        <mat-select placeholder="State" [(ngModel)]="state" (change)="filter()">
-          <mat-option *ngFor="let opt of states" [value]="opt">
-            {{ opt | titlecase }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field>
-        <input matInput placeholder="Name" [(ngModel)]="name" (keyup)="filter()">
-      </mat-form-field>
-      <mat-table #table [dataSource]="dataSource">
-        <ng-container matColumnDef="name">
-          <mat-header-cell *matHeaderCellDef> Node </mat-header-cell>
-          <mat-cell *matCellDef="let node">{{node.name}}</mat-cell>
-        </ng-container>
+<ng-container *ngIf="loaded; else loading">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-3 selection">
+        <mat-form-field>
+          <mat-select placeholder="State" [(ngModel)]="state" (change)="filter()">
+            <mat-option *ngFor="let opt of states" [value]="opt">
+              {{ opt | titlecase }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <input matInput placeholder="Name" [(ngModel)]="name" (keyup)="filter()">
+        </mat-form-field>
+        <mat-table #table [dataSource]="dataSource">
+          <ng-container matColumnDef="name">
+            <mat-header-cell *matHeaderCellDef> Node </mat-header-cell>
+            <mat-cell *matCellDef="let node">{{node.name}}</mat-cell>
+          </ng-container>
 
-        <ng-container matColumnDef="state">
-          <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
-          <mat-cell *matCellDef="let node">{{node.state | titlecase }}</mat-cell>
-        </ng-container>
+          <ng-container matColumnDef="state">
+            <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
+            <mat-cell *matCellDef="let node">{{node.state | titlecase }}</mat-cell>
+          </ng-container>
 
-        <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-        <mat-row *matRowDef="let node; columns: displayedColumns;" (click)="selectedNode = node"></mat-row>
-      </mat-table>
-    </div>
+          <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+          <mat-row *matRowDef="let node; columns: displayedColumns;" (click)="selectNode(node)"></mat-row>
+        </mat-table>
+      </div>
 
-    <div class="col-md-9 output">
-      <pre>{{selectedNode.output}}</pre>
+      <div class="col-md-9 output">
+        <pre>{{selectedNode?.output}}</pre>
+      </div>
     </div>
   </div>
-</div>
+</ng-container>
+
+<ng-template #loading>
+  <p>
+    Loading...
+  </p>
+  <p>{{errorMsg}}</p>
+</ng-template>

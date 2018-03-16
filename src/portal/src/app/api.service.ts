@@ -16,6 +16,7 @@ abstract class Resource<T> {
 
   protected abstract get url(): string;
 
+  //TODO: return a new one instead of modifying in place.
   protected normalize(e: T): void {}
 
   getAll(): Observable<T[]> {
@@ -78,19 +79,33 @@ export class CommandApi extends Resource<CommandResult> {
   protected normalize(result: CommandResult): void {
     result.state = result.state.toLowerCase();
     result.command = result['commandLine'];
-    //result.progress /= 100;
-    //result.startedAt = result['createdAt'];
     if (result['results']) {
-      result.nodes = result['results'];
-      result.nodes.forEach(e => {
-        e.name = e.nodeName;
-        e.state = e.state.toLowerCase();
-      });
+      result.nodes = result['results'].map(e => {
+        let odd = e.results[0];
+        return {
+          name: e.nodeName,
+          state: odd.taskInfo ? (odd.taskInfo.exitCode == 0 ? 'finished' : 'failed') : 'running',
+          key: odd.resultKey,
+          output: '',
+          next: 0,
+        };
+      }).sort((a, b) => (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)));
     }
   }
 
   create(commandLine: string, targetNodes: string[]): any {
     return this.http.post<any>(this.url, { commandLine, targetNodes }, { observe: 'response', responseType: 'json' })
+      .pipe(
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
+  }
+
+  getOuput(id, key, next) {
+    let url = `${Resource.baseUrl}/taskoutput/getpage/${id}/${key}?offset=${next}`;
+    return this.http.get<any>(url)
       .pipe(
         catchError((error: any): Observable<any> => {
           console.error(error);
