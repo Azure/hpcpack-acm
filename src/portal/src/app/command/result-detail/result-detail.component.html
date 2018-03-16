@@ -1,11 +1,11 @@
 <app-back-button></app-back-button>
 
-<ng-container *ngIf="result; else loading">
-  <div class="title" [ngClass]="result?.state">
-    <div class="command">{{result?.command}}</div>
-    <div class="state">{{result?.state}}</div>
-  </div>
+<div class="title" [ngClass]="result?.state">
+  <div class="command">{{result?.command}}</div>
+  <div class="state">{{result?.state}}</div>
+</div>
 
+<ng-container *ngIf="loaded; else loading">
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-3 selection">
@@ -43,7 +43,8 @@
 </ng-container>
 
 <ng-template #loading>
-  <div>
+  <p>
     Loading...
-  </div>
+  </p>
+  <p>{{errorMsg}}</p>
 </ng-template>

@@ -29,6 +29,12 @@ export class ResultDetailComponent implements OnInit {
 
   private subcription: Subscription;
 
+  private loaded: boolean;
+
+  private retries = 0;
+
+  private errorMsg: string;
+
   constructor(
     private route: ActivatedRoute,
     private api: ApiService,
@@ -37,6 +43,8 @@ export class ResultDetailComponent implements OnInit {
   ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
       this.id = map.get('id');
+      this.retries = 0;
+      this.loaded = false;
       this.updateResult(this.id);
     });
   }
@@ -44,9 +52,24 @@ export class ResultDetailComponent implements OnInit {
   updateResult(id) {
     this.api.command.get(id).subscribe(result => {
       //id may change when result arrives in some time later.
-      if (id != this.id)
+      if (id != this.id) {
         return;
+      }
+
       this.result = result;
+
+      //If the job is not started, query it later.
+      if (result.nodes.length == 0) {
+        const max = 20;
+        this.retries++;
+        if (this.retries < max)
+          setTimeout(() => this.updateResult(id), 2000);
+        else
+          this.errorMsg = `Tried ${max} times but the job seems not started yet. Please refresh the page later.`;
+        return;
+      }
+
+      this.loaded = true;
       this.filter();
       let state = this.setResultState();
       if (state != 'finished' && state != 'failed')
@@ -68,7 +91,7 @@ export class ResultDetailComponent implements OnInit {
       return true;
     });
     this.dataSource.data = res;
-    this.selectNode(res[0]);
+    this.selectNode(res[0]); //TODO: select res[0] only when filter changes!
   }
 
   selectNode(node) {
