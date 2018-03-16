@@ -30,12 +30,12 @@
         </ng-container>
 
         <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-        <mat-row *matRowDef="let node; columns: displayedColumns;" (click)="selectedNode = node"></mat-row>
+        <mat-row *matRowDef="let node; columns: displayedColumns;" (click)="selectNode(node)"></mat-row>
       </mat-table>
     </div>
 
     <div class="col-md-9 output">
-      <pre>{{selectedNode.output}}</pre>
+      <pre>{{selectedNode?.output}}</pre>
     </div>
   </div>
 </div>

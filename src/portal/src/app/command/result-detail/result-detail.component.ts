@@ -11,6 +11,8 @@ import { ApiService } from '../../api.service';
   styleUrls: ['./result-detail.component.scss']
 })
 export class ResultDetailComponent implements OnInit {
+  private id: string;
+
   private states = ['all', 'queued', 'running', 'finished', 'failed', 'canceled'];
 
   private state = 'all';
@@ -21,7 +23,7 @@ export class ResultDetailComponent implements OnInit {
 
   private displayedColumns = ['name', 'state'];
 
-  private selectedNode: any = {};
+  private selectedNode: any;
 
   private result: CommandResult = {} as CommandResult;
 
@@ -34,50 +36,27 @@ export class ResultDetailComponent implements OnInit {
 
   ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
-      let id = map.get('id');
-      this.api.command.get(id).subscribe(result => {
-        this.result = result;
-        this.dataSource.data = result.nodes;
-        this.selectedNode = result.nodes[0] || {};
-      });
+      this.id = map.get('id');
+      this.updateResult(this.id);
+    });
+  }
+
+  updateResult(id) {
+    this.api.command.get(id).subscribe(result => {
+      //id may change when result arrives in some time later.
+      if (id != this.id)
+        return;
+      this.result = result;
+      this.filter();
+      let state = this.setResultState();
+      if (state != 'finished' && state != 'failed')
+        this.updateResult(id);
     });
   }
 
   ngOnDestroy() {
     if (this.subcription)
       this.subcription.unsubscribe();
-  }
-
-  stateIcon(state) {
-    let res;
-    switch(state) {
-      case 'success':
-        res = 'check';
-        break;
-      case 'running':
-        res = 'directions_run';
-        break;
-      case 'failure':
-        res = 'close';
-        break;
-    }
-    return res;
-  }
-
-  title(name, state) {
-    let res = name;
-    switch(state) {
-      case 'success':
-        res += ' Succeeded!';
-        break;
-      case 'running':
-        res += ' is Running.';
-        break;
-      case 'failure':
-        res += ' Failed!';
-        break;
-    }
-    return res;
   }
 
   filter() {
@@ -89,6 +68,50 @@ export class ResultDetailComponent implements OnInit {
       return true;
     });
     this.dataSource.data = res;
-    this.selectedNode = res[0] || {};
+    this.selectNode(res[0]);
+  }
+
+  selectNode(node) {
+    if (!node) {
+      this.selectedNode = node;
+      return;
+    }
+    if (this.selectedNode && node.name == this.selectedNode.name) {
+      return;
+    }
+    this.selectedNode = node;
+    this.updateNodeResult(this.id, node);
+  }
+
+  updateNodeResult(id, node) {
+    if (node.end)
+      return;
+    this.api.command.getOuput(id, node.key, node.next).subscribe(result => {
+      //id and/or node may change when result arrives in some time later.
+      if (this.id != id || this.selectedNode.name != node.name)
+        return;
+      node.next = result.offset + result.size;
+      node.end = result.size == 0;
+      if (!node.end) {
+        node.output += result.content;
+        this.updateNodeResult(id, node);
+      }
+    });
+  }
+
+  setResultState() {
+    let stats = { running: 0, finished: 0, failed: 0 };
+    this.result.nodes.forEach(e => {
+      stats[e.state]++;
+    });
+    let state;
+    if (stats.running > 0)
+      state = 'running';
+    else if (stats.failed > 0)
+      state = 'failed';
+    else
+      state = 'finished';
+    this.result.state = state;
+    return state;
   }
 }
