@@ -25,7 +25,7 @@ export class ResultDetailComponent implements OnInit {
 
   private selectedNode: any;
 
-  private result: CommandResult = {} as CommandResult;
+  private result: CommandResult;
 
   private subcription: Subscription;
 
