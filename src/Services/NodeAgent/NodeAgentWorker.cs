@@ -65,6 +65,19 @@
                     }))
                     {
                         this.logger.LogInformation("Call startjobandtask for job {0}, task {1}", job.Id, taskKey);
+                        var jobPartitionName = this.utilities.GetJobPartitionKey($"{job.Type}", job.Id);
+                        var nodePartitionName = this.utilities.GetNodePartitionKey(nodeName);
+
+                        var taskResultArgs = new ComputeNodeTaskCompletionEventArgs(nodeName, job.Id, null) { State = TaskState.Dispatching };
+                        var taskResultEntity = new JsonTableEntity(jobPartitionName, resultKey, taskResultArgs);
+                        var result = await jobsTable.ExecuteAsync(TableOperation.InsertOrReplace(taskResultEntity), null, null, token);
+                        this.logger.LogInformation("Saved task result {0} to jobs table, status code {1}", resultKey, result.HttpStatusCode);
+                        if (!result.IsSuccessfulStatusCode()) { return false; }
+
+                        var nodeResultEntity = new JsonTableEntity(nodePartitionName, resultKey, taskResultArgs);
+                        result = await nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(nodeResultEntity), null, null, token);
+                        this.logger.LogInformation("Saved task result {0} to nodes table, status code {1}", resultKey, result.HttpStatusCode);
+                        if (!result.IsSuccessfulStatusCode()) { return false; }
 
                         await this.communicator.StartJobAndTaskAsync(
                              nodeName,
@@ -72,33 +85,32 @@
                              "", "", new ProcessStartInfo(cmd, "", "", $"{this.communicator.Options.AgentUriBase}/output/{taskKey}",
                              "", new System.Collections.Hashtable(), new long[0], job.RequeueCount), token);
 
+                        taskResultArgs = new ComputeNodeTaskCompletionEventArgs(nodeName, job.Id, null) { State = TaskState.Running };
+                        taskResultEntity = new JsonTableEntity(jobPartitionName, resultKey, taskResultArgs);
+                        result = await jobsTable.ExecuteAsync(TableOperation.InsertOrReplace(taskResultEntity), null, null, token);
+                        this.logger.LogInformation("Saved task result {0} to jobs table, status code {1}", resultKey, result.HttpStatusCode);
+                        if (!result.IsSuccessfulStatusCode()) { return false; }
+
+                        nodeResultEntity = new JsonTableEntity(nodePartitionName, resultKey, taskResultArgs);
+                        result = await nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(nodeResultEntity), null, null, token);
+                        this.logger.LogInformation("Saved task result {0} to nodes table, status code {1}", resultKey, result.HttpStatusCode);
+                        if (!result.IsSuccessfulStatusCode()) { return false; }
+
                         this.logger.LogInformation("Wait for response for job {0}, task {1}", job.Id, taskKey);
-                        var taskResult = await monitor.Execution;
+                        taskResultArgs = await monitor.Execution;
 
                         this.logger.LogInformation("Saving result for job {0}, task {1}", job.Id, taskKey);
-                        var jobPartitionName = this.utilities.GetJobPartitionKey($"{job.Type}", job.Id);
 
-                        var taskResultEntity = new JsonTableEntity(jobPartitionName, resultKey, taskResult);
-
-                        var result = await jobsTable.ExecuteAsync(TableOperation.InsertOrReplace(taskResultEntity), null, null, token);
-
-                        if (!result.IsSuccessfulStatusCode())
-                        {
-                            return false;
-                        }
-
+                        taskResultArgs.State = TaskState.Finished;
+                        taskResultEntity = new JsonTableEntity(jobPartitionName, resultKey, taskResultArgs);
+                        result = await jobsTable.ExecuteAsync(TableOperation.InsertOrReplace(taskResultEntity), null, null, token);
                         this.logger.LogInformation("Saved task result {0} to jobs table, status code {1}", resultKey, result.HttpStatusCode);
+                        if (!result.IsSuccessfulStatusCode()) { return false; }
 
-                        var nodePartitionName = this.utilities.GetNodePartitionKey(nodeName);
-                        var nodeEntity = new JsonTableEntity(nodePartitionName, resultKey, taskResult);
-
-                        result = await nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(nodeEntity), null, null, token);
+                        nodeResultEntity = new JsonTableEntity(nodePartitionName, resultKey, taskResultArgs);
+                        result = await nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(nodeResultEntity), null, null, token);
                         this.logger.LogInformation("Saved task result {0} to nodes table, status code {1}", resultKey, result.HttpStatusCode);
-
-                        if (!result.IsSuccessfulStatusCode())
-                        {
-                            return false;
-                        }
+                        if (!result.IsSuccessfulStatusCode()) { return false; }
 
                         return true;
                     }

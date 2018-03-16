@@ -19,6 +19,14 @@
 
         public string NodeName { get; set; }
     }
+
+    public enum TaskState
+    {
+        Dispatching,
+        Running,
+        Finished,
+    }
+
     /// <summary>
     /// Argument for a delegate that reports that a compute node finished on the scheduler
     /// </summary>
@@ -31,6 +39,8 @@
             this.TaskInfo = taskInfo;
         }
         public int JobId { get; set; }
+
+        public TaskState State { get; set; }
         public ComputeClusterTaskInformation TaskInfo { get; set; }
     }
 

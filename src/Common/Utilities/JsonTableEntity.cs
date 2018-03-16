@@ -12,10 +12,12 @@
 
         public JsonTableEntity(string partitionKey, string rowKey, object obj) : base(partitionKey, rowKey)
         {
-            this.JsonContent = JsonConvert.SerializeObject(obj, Formatting.Indented);
+            this.PutObject(obj);
         }
 
         public string JsonContent { get; set; }
+
+        public void PutObject(object obj) => this.JsonContent = JsonConvert.SerializeObject(obj, Formatting.Indented);
 
         public T GetObject<T>() => JsonConvert.DeserializeObject<T>(this.JsonContent);
     }

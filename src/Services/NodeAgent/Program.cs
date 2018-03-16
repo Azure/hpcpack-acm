@@ -86,7 +86,7 @@
                     services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(TaskMonitor), taskMonitor));
                     services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(CloudUtilities), utilities));
                 })
-                .UseUrls("http://*:80", "http://*:5000")
+                .UseUrls("http://*:8080", "http://*:5000")
                 .UseStartup<Startup>()
                 .Build();
     }
