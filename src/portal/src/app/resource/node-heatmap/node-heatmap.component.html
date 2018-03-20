@@ -1,1 +1,6 @@
-<div class="tile" *ngFor="let node of nodes" [ngClass]="nodeClass(node)" [matTooltip]="nodeTip(node)" (click)="clickRow(node)"></div>
+<nav mat-tab-nav-bar>
+  <a mat-tab-link [routerLink]="['..', 'list']" [active]="false">List</a>
+  <a mat-tab-link [routerLink]="" [active]="true">Heatmap</a>
+</nav>
+
+<div class="tile" *ngFor="let node of nodes" [ngClass]="nodeClass(node)" [matTooltip]="nodeTip(node)" (click)="clickNode(node)"></div>

@@ -10,7 +10,6 @@ import { ResourceComponent } from './resource.component';
 import { NodeListComponent } from './node-list/node-list.component';
 import { NodeDetailComponent } from './node-detail/node-detail.component';
 import { NodeHeatmapComponent } from './node-heatmap/node-heatmap.component';
-import { ResourceMainComponent } from './resource-main/resource-main.component';
 import { NewDiagnosticsComponent } from './new-diagnostics/new-diagnostics.component';
 import { NewCommandComponent } from './new-command/new-command.component';
 
@@ -24,7 +23,7 @@ import { NewCommandComponent } from './new-command/new-command.component';
     WidgetsModule,
     ChartModule,
   ],
-  declarations: [ResourceComponent, NodeListComponent, NodeDetailComponent, NodeHeatmapComponent, ResourceMainComponent, NewDiagnosticsComponent, NewCommandComponent],
+  declarations: [ResourceComponent, NodeListComponent, NodeDetailComponent, NodeHeatmapComponent, NewDiagnosticsComponent, NewCommandComponent],
   entryComponents: [NewDiagnosticsComponent, NewCommandComponent],
 })
 export class ResourceModule { }

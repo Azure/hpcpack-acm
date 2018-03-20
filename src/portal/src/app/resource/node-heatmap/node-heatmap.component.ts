@@ -1,4 +1,6 @@
-import { Component, OnInit, EventEmitter, Input, Output } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { ApiService } from '../../api.service';
 
 @Component({
   selector: 'resource-node-heatmap',
@@ -6,12 +8,18 @@ import { Component, OnInit, EventEmitter, Input, Output } from '@angular/core';
   styleUrls: ['./node-heatmap.component.css']
 })
 export class NodeHeatmapComponent implements OnInit {
-  @Input() nodes = [];
-  @Output() clickNode: EventEmitter<any> = new EventEmitter();
+  private nodes = [];
 
-  constructor() { }
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private api: ApiService,
+  ) {}
 
   ngOnInit() {
+    this.api.node.getAll().subscribe(nodes => {
+      this.nodes = nodes;
+    });
   }
 
   nodeClass(node): string {
@@ -29,7 +37,7 @@ export class NodeHeatmapComponent implements OnInit {
     return `${node.name}: ${node.runningJobCount} jobs`;
   }
 
-  clickRow(node): void {
-    this.clickNode.emit(node);
+  clickNode(node): void {
+    this.router.navigate(['..', node.id], { relativeTo: this.route })
   }
 }
