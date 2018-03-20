@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableDataSource, MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { SelectionModel } from '@angular/cdk/collections';
+import { Subscription } from 'rxjs/Subscription';
 import { NewDiagnosticsComponent } from '../new-diagnostics/new-diagnostics.component';
 import { NewCommandComponent } from '../new-command/new-command.component';
 import { ApiService } from '../../api.service';
@@ -12,8 +13,11 @@ import { ApiService } from '../../api.service';
   styleUrls: ['./node-list.component.css']
 })
 export class NodeListComponent {
-  @Input()
-  dataSource: MatTableDataSource<any> = new MatTableDataSource();
+  private query = { filter: '' };
+
+  private subcription: Subscription;
+
+  private dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
   private displayedColumns = ['select', 'name', 'health', 'state', 'runningJobCount', 'actions'];
 
@@ -25,6 +29,25 @@ export class NodeListComponent {
     private router: Router,
     private route: ActivatedRoute
   ) {}
+
+  ngOnInit() {
+    this.api.node.getAll().subscribe(nodes => {
+      this.dataSource.data = nodes;
+    });
+    this.subcription = this.route.queryParamMap.subscribe(params => {
+      this.query.filter = params.get('filter');
+      this.updateUI();
+    });
+  }
+
+  updateUI() {
+    let filter = this.query.filter;
+    this.dataSource.filter = filter;
+  }
+
+  updateUrl() {
+    this.router.navigate(['.'], { relativeTo: this.route, queryParams: this.query});
+  }
 
   get selectedData(): any[] {
     return this.selection.selected;
@@ -73,5 +96,9 @@ export class NodeListComponent {
         });
       }
     });
+  }
+
+  hasNoSelection(): boolean {
+    return this.selectedData.length == 0;
   }
 }

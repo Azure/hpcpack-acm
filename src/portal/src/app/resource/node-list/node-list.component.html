@@ -1,3 +1,21 @@
+<nav mat-tab-nav-bar>
+  <a mat-tab-link [routerLink]="" [active]="true">List</a>
+  <a mat-tab-link [routerLink]="['..', 'heatmap']" [active]="false">Heatmap</a>
+</nav>
+
+<div class="actions">
+  <button mat-raised-button [disabled]="hasNoSelection()" (click)="runDiagnostics()">Run Diagnostics...</button>
+  <button mat-raised-button [disabled]="hasNoSelection()" (click)="runCommand()">Run Command...</button>
+</div>
+
+<div class="filter">
+  <mat-form-field>
+    <input matInput (keyup)="updateUrl()" [(ngModel)]="query.filter" placeholder="Filter">
+    <mat-hint>Filter results by node name, health or state</mat-hint>
+    <mat-hint align="end">{{dataSource.filteredData.length}} results</mat-hint>
+  </mat-form-field>
+</div>
+
 <mat-table #table [dataSource]="dataSource">
   <!--
    Note that these columns can be defined in any order. The actual rendered
@@ -21,7 +39,7 @@
 
   <ng-container matColumnDef="name">
     <mat-header-cell *matHeaderCellDef> Name </mat-header-cell>
-    <mat-cell *matCellDef="let node"><a [routerLink]="node.id">{{node.name}}</a></mat-cell>
+    <mat-cell *matCellDef="let node"><a [routerLink]="['..', node.id]">{{node.name}}</a></mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="state">
