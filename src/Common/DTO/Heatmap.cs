@@ -5,7 +5,12 @@ namespace Microsoft.HpcAcm.Common.Dto
 
     public class Heatmap
     {
-        public IDictionary<string, double> Values { get; private set; } 
-        public string MetricName { get; private set; }
+        /// <summary>
+        /// [ "node1": [ { "_Total": 0.5 }, { "_1": 0.2 }, { "_2", 0.3 } ],
+        ///     "node2": ...
+        /// ]
+        /// </summary>
+        public IDictionary<string, IList<(string, double?)>> Values { get; set; }
+        public string Category { get; set; }
     }
 }

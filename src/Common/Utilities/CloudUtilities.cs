@@ -69,6 +69,8 @@
         public string GetHeartbeatKey(string nodeName) => string.Format(this.Option.HeartbeatPattern, nodeName);
         public string NodesPartitionKey { get => this.Option.NodesPartitionKey; }
         public string JobEntryKey { get => this.Option.JobEntryKey; }
+        public string MetricsValuesPartitionKey { get => this.Option.MetricsValuesPartitionKey; }
+        public string MetricsCategoriesPartitionKey { get => this.Option.MetricsCategoriesPartitionKey; }
 
         public string GetJobResultKey(string nodeKey, string taskKey) => string.Format(this.Option.JobResultPattern, nodeKey, taskKey);
         public string GetMinimumJobResultKey() => string.Format(this.Option.JobResultPattern, this.MinString, null);

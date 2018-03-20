@@ -98,6 +98,10 @@
             return await u.GetOrCreateQueueAsync(string.Format(u.Option.NodeDispatchQueuePattern, nodeName), token);
         }
 
+        public static CloudTable GetMetricsTable(this CloudUtilities u) => u.GetTable(u.Option.MetricsTableName);
+
+        public static async Task<CloudTable> GetOrCreateMetricsTableAsync(this CloudUtilities u, CancellationToken token) => await u.GetOrCreateTableAsync(u.Option.NodesTableName, token);
+
         public static CloudTable GetNodesTable(this CloudUtilities u)
         {
             return u.GetTable(u.Option.NodesTableName);

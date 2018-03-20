@@ -33,6 +33,8 @@
             this.jobsTable = jobsTable;
             this.nodesTable = nodesTable;
         }
+
+        // TODO: abstract workerbase.
         private IConfiguration Configuration { get; set; }
 
         public TaskMonitor Monitor { get; set; }

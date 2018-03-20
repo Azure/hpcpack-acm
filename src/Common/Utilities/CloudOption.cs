@@ -20,6 +20,16 @@ namespace Microsoft.HpcAcm.Common.Utilities
 
         #endregion
 
+        #region Metrics table
+
+        public string MetricsTableName { get; set; } = "metricstable";
+
+        // TODO: scale out by metric category
+        public string MetricsValuesPartitionKey { get; set; } = "metricsvalues";
+        public string MetricsCategoriesPartitionKey { get; set; } = "metricscategories";
+
+        #endregion
+
         #region Ids table
 
         public string IdsTableName { get; set; } = "idstable";
