@@ -31,6 +31,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             [FromQuery] int? count,
             CancellationToken token)
         {
+            // todo: abstract range query
             var partitionQuery = this.utilities.GetPartitionQueryString(this.utilities.NodesPartitionKey);
 
             var lastRegistrationKey = this.utilities.GetRegistrationKey(lastNodeName);
