@@ -17,17 +17,17 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         {
             await Task.CompletedTask;
 
-            var list = new List<(string InstanceName, double? Value)>()
+            var list = new Dictionary<string, double?>()
             {
-                ( "_Total", 0.5 ),
-                ( "_1", 0.3 ),
-                ( "_2", 0.2 ),
+                { "_Total", 0.5 },
+                { "_1", 0.3 },
+                { "_2", 0.2 },
             };
 
             return new Heatmap()
             {
                 Category = category,
-                Values = new Dictionary<string, IList<(string, double?)>>()
+                Values = new Dictionary<string, IDictionary<string, double?>>()
                 {
                     { "node1", list },
                     { "node2", list }
