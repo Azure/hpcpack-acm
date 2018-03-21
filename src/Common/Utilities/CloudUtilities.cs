@@ -41,6 +41,7 @@
             await this.GetOrCreateJobsTableAsync(token);
             await this.GetOrCreateNodesTableAsync(token);
             await this.GetOrCreateIdsTableAsync(token);
+            await this.GetOrCreateMetricsTableAsync(token);
         }
 
         public CloudOption Option { get; private set; }

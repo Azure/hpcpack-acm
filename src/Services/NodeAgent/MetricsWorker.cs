@@ -16,10 +16,10 @@
 
     public class MetricsWorker : WorkerBase
     {
-        private CloudUtilities utilities;
-        private IConfiguration config;
-        private CloudTable table;
-        private ILogger logger;
+        private readonly CloudUtilities utilities;
+        private readonly IConfiguration config;
+        private readonly CloudTable table;
+        private readonly ILogger logger;
 
         public MetricsWorker(CloudUtilities utilities, IConfiguration config, CloudTable metricsTable, ILoggerFactory loggerFactory)
         {
@@ -59,46 +59,65 @@
                 {
                     var nodeName = this.config.GetValue<string>(Constants.HpcHostNameEnv);
 
-                    IList<(string, string)> metricScripts = await this.GetMetricScriptsAsync(token);
-
-                    var results = await Task.WhenAll(metricScripts.Select(async s =>
+                    using (this.logger.BeginScope("do metrics loop on {0}", nodeName))
                     {
-                        try
+                        // TODO: different frequency
+                        IList<(string, string)> metricScripts = await this.GetMetricScriptsAsync(token);
+                        string toErrorJson(string e) =>
+                            JsonConvert.SerializeObject(new Dictionary<string, string>() { { "Error", e } }, Formatting.Indented);
+
+                        var results = await Task.WhenAll(metricScripts.Select(async s =>
                         {
-                            var psi = new System.Diagnostics.ProcessStartInfo(s.Item2);
-                            psi.RedirectStandardOutput = true;
-                            var process = Process.Start(psi);
-                            var output = await process.StandardOutput.ReadToEndAsync();
-                            return (s.Item1, output);
-                        }
-                        catch (Exception ex)
+                            try
+                            {
+                                this.logger.LogDebug("Collect metrics for {0}", s.Item1);
+                                var psi = new System.Diagnostics.ProcessStartInfo(
+                                    @"python",
+                                    $"-c \"{s.Item2.Replace("\"", "\\\"")}\"")
+                                {
+                                    UseShellExecute = false,
+                                    CreateNoWindow = true,
+                                    RedirectStandardOutput = true,
+                                    RedirectStandardError = true,
+                                    RedirectStandardInput = true
+                                };
+
+                                var process = Process.Start(psi);
+
+                                var output = await process.StandardOutput.ReadToEndAsync();
+                                var error = await process.StandardError.ReadToEndAsync();
+
+                                return (s.Item1, string.IsNullOrEmpty(error) ? output : toErrorJson(error));
+                            }
+                            catch (Exception ex)
+                            {
+                                return (s.Item1, toErrorJson(ex.ToString()));
+                            }
+                        }));
+
+                        DynamicTableEntity entity = new DynamicTableEntity(
+                            this.utilities.MetricsValuesPartitionKey,
+                            nodeName,
+                            "*",
+                            results.ToDictionary(
+                                r => r.Item1,
+                                r => new EntityProperty(r.Item2)));
+
+                        var result = await table.ExecuteAsync(TableOperation.InsertOrReplace(entity), null, null, token);
+
+                        if (!result.IsSuccessfulStatusCode())
                         {
-                            return (s.Item1, ex.ToString());
+                            break;
                         }
-                    }));
 
-                    DynamicTableEntity entity = new DynamicTableEntity(
-                        this.utilities.MetricsValuesPartitionKey,
-                        nodeName,
-                        "*",
-                        results.ToDictionary(
-                            r => r.Item1,
-                            r => new EntityProperty(r.Item2)));
-
-                    var result = await table.ExecuteAsync(TableOperation.InsertOrReplace(entity), null, null, token);
-
-                    if (!result.IsSuccessfulStatusCode())
-                    {
-                        break;
+                        // todo: metric options
+                        await Task.Delay(this.config.GetValue<int>("MetricInterval"), token);
                     }
-
-                    // todo: metric options
-                    await Task.Delay(this.config.GetValue<int>("MetricInterval"), token);
                 }
 
                 return false;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 this.logger.LogError(ex, "DoWorkAsync error.");
                 throw;

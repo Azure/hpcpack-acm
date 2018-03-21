@@ -100,7 +100,7 @@
 
         public static CloudTable GetMetricsTable(this CloudUtilities u) => u.GetTable(u.Option.MetricsTableName);
 
-        public static async Task<CloudTable> GetOrCreateMetricsTableAsync(this CloudUtilities u, CancellationToken token) => await u.GetOrCreateTableAsync(u.Option.NodesTableName, token);
+        public static async Task<CloudTable> GetOrCreateMetricsTableAsync(this CloudUtilities u, CancellationToken token) => await u.GetOrCreateTableAsync(u.Option.MetricsTableName, token);
 
         public static CloudTable GetNodesTable(this CloudUtilities u)
         {

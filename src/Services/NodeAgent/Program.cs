@@ -25,6 +25,10 @@
 
                 serverBuilder.Start();
 
+                // TODO: refactor with multi purpose server.
+                var metricsWorker = new MetricsWorker(serverBuilder.Utilities, serverBuilder.Configuration, serverBuilder.Utilities.GetMetricsTable(), serverBuilder.LoggerFactory);
+                metricsWorker.DoWorkAsync(null, serverBuilder.CancelToken).FireAndForget();
+
                 while (Console.In.Peek() == -1) { Task.Delay(1000).Wait(); }
                 var logger = serverBuilder.LoggerFactory.CreateLogger<Program>();
                 logger.LogInformation("Stop message received, stopping");
