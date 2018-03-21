@@ -5,9 +5,9 @@ import { ErrorObservable } from 'rxjs/observable/ErrorObservable';
 import { of } from 'rxjs/observable/of';
 import { catchError, map } from 'rxjs/operators';
 import { environment as env } from '../../environments/environment';
-import { Node } from './models/node';
-import { CommandResult } from './models/command-result';
-import { TestResult } from './models/test-result';
+import { Node } from '../models/node';
+import { CommandResult } from '../models/command-result';
+import { TestResult } from '../models/test-result';
 
 abstract class Resource<T> {
   static baseUrl = env.apiBase;
