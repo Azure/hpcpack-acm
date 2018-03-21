@@ -15,7 +15,7 @@ import { ApiService } from './services/api.service';
 import { InMemoryDataService }  from './services/in-memory-data.service';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
-import { NotificationsComponent } from './notifications/notifications.component';
+import { NotificationComponent } from './notification/notification.component';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 
 
@@ -23,7 +23,7 @@ import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
   declarations: [
     AppComponent,
     LoginComponent,
-    NotificationsComponent,
+    NotificationComponent,
     BreadcrumbComponent,
   ],
   imports: [
