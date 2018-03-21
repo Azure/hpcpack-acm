@@ -30,15 +30,19 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 
 ## Docker on Windows
 
-To develop in Docker on Windows, firstly [get Docker](https://www.docker.com/get-docker) on Windows. Then you can use a Docker container as a "runtime box" for your Angular project. Do it as the followings.
+To develop in Docker on Windows, firstly [register for a Docker account](https://www.docker.com/) and [get Docker](https://www.docker.com/get-docker) on Windows. Then you can use a Docker container as a "runtime box" for your Angular project. Do it as the followings.
 
-Open a "cmd" shell, cd into the portal project root(like ".../hpc-acm/src/portal") and execute:
+Open a "cmd" shell, and log in with your Docker account by
+
+`docker login`
+
+Then cd into the portal project root(like ".../hpc-acm/src/portal") and execute:
 
 `docker run --rm -it -v %cd%:/opt/app -w /opt/app --name portal -p 4200:4200 teracy/angular-cli /bin/bash`
 
-It mounts the current directory `%cd%` to `/opt/app` in the Docker container's system, sets `/opt/app` as the working dirand opens an interactive Bash shell. It also maps the port 4200 of the container to the host's 4200 port.
+It mounts the current directory `%cd%` to `/opt/app` in the Docker container's system, sets `/opt/app` as the working dirand opens an interactive Bash shell inside the docker container. It also maps the port 4200 of the container to the host's 4200 port.
 
-For the first time(or when you update package.json), you need to install(or update) npm packages. Do it in the shell:
+For the first time(or when you update package.json), you need to install(or update) npm packages. Do it inside the docker container's shell:
 
 `npm install`
 
@@ -48,14 +52,14 @@ Then start the dev server by:
 
 Then you got it!
 
-If you already had `npm install`, then you can start devlopment simply by
+If you already had `npm install`, then you can start devlopment simply by an one line command from Windows "cmd" shell:
 
 `docker run --rm -v %cd%:/opt/app -w /opt/app --name portal -p 4200:4200 teracy/angular-cli /bin/bash -c "npm start"`
 
-in a "cmd" shell, under the portal project root.
+Still, it has to be under the portal project root for `%cd%` to work.
 
-You stop the dev container by
+After use, stop the container by
 
 `docker stop portal`
 
-Simply "Ctrl+C" doesn't stop it(which can be observed by `docker container list`).
+Note that simply "Ctrl+C" doesn't stop a container(which can be observed by `docker container list`).
