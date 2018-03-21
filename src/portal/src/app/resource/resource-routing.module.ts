@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthGuardService } from '../auth-guard.service';
+import { AuthGuardService } from '../services/auth-guard.service';
 import { ResourceComponent } from './resource.component';
 import { NodeListComponent } from './node-list/node-list.component';
 import { NodeHeatmapComponent } from './node-heatmap/node-heatmap.component';

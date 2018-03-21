@@ -3,7 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MatTabGroup } from '@angular/material/tabs'
 import { MatTableDataSource } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
-import { ApiService } from '../../api.service';
+import { ApiService } from '../../services/api.service';
 import { NodeListComponent } from '../node-list/node-list.component';
 import { NodeHeatmapComponent } from '../node-heatmap/node-heatmap.component';
 

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { AuthService } from './auth.service';
-import { ApiService } from './api.service';
+import { AuthService } from './services/auth.service';
+import { ApiService } from './services/api.service';
 
 const now = (new Date()).getTime();
 

@@ -8,11 +8,11 @@ import { MaterialsModule } from './materials.module';
 
 import { environment as env } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
-import { AuthGuardService } from './auth-guard.service';
-import { AuthService } from './auth.service';
-import { LoginGuardService } from './login-guard.service';
-import { ApiService } from './api.service';
-import { InMemoryDataService }  from './in-memory-data.service';
+import { AuthGuardService } from './services/auth-guard.service';
+import { AuthService } from './services/auth.service';
+import { LoginGuardService } from './services/login-guard.service';
+import { ApiService } from './services/api.service';
+import { InMemoryDataService }  from './services/in-memory-data.service';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
 import { NotificationsComponent } from './notifications/notifications.component';

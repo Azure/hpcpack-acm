@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ViewContainerRef, ComponentFactoryResolve
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TestResult } from '../../models/test-result';
-import { ApiService } from '../../api.service';
+import { ApiService } from '../../services/api.service';
 import { ServiceRunningTestComponent } from './service-running-test/service-running-test.component';
 import { PingTestComponent } from './ping-test/ping-test.component';
 
