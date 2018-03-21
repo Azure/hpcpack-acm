@@ -11,16 +11,33 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     [Route("api/[controller]")]
     public class HeatmapController : Controller
     {
-        // GET api/heatmap/values/cpu?
-        [HttpGet("{category}")]
+        // GET api/heatmap/values/cpu?lastNodeName=abc&count=5
+        [HttpGet("values/{category}")]
         public async Task<Heatmap> GetValuesAsync(string category, [FromQuery] string lastNodeName, [FromQuery] int? count, CancellationToken token)
         {
             await Task.CompletedTask;
-            return new Heatmap();
+
+            var list = new List<(string InstanceName, double? Value)>()
+            {
+                ( "_Total", 0.5 ),
+                ( "_1", 0.3 ),
+                ( "_2", 0.2 ),
+            };
+
+            return new Heatmap()
+            {
+                Category = category,
+                Values = new Dictionary<string, IList<(string, double?)>>()
+                {
+                    { "node1", list },
+                    { "node2", list }
+                }
+            };
+            //      return new Heatmap() { Category = category, Values = new Dictionary<string, IList> }
         }
 
         // GET api/heatmap/categories
-        [HttpGet]
+        [HttpGet("categories")]
         public async Task<string[]> GetCategoriesAsync(CancellationToken token)
         {
             return await Task.FromResult(new string[] { "cpu" });
