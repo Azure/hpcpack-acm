@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
@@ -11,6 +11,9 @@ import { ApiService, Loop } from '../../services/api.service';
   styleUrls: ['./result-detail.component.scss']
 })
 export class ResultDetailComponent implements OnInit {
+  @ViewChild('output')
+  private output: ElementRef;
+
   private id: string;
 
   private states = ['all', 'queued', 'running', 'finished', 'failed', 'canceled'];
@@ -133,6 +136,7 @@ export class ResultDetailComponent implements OnInit {
           }
           if (result.content) {
             node.output += result.content;
+            setTimeout(() => this.scrollOutputToBottom(), 0);
           }
           node.next = result.offset + result.size;
           node.end = result.size == 0;
@@ -142,6 +146,11 @@ export class ResultDetailComponent implements OnInit {
       //interval(in ms):
       500
     );
+  }
+
+  scrollOutputToBottom(): void {
+    let elem = this.output.nativeElement;
+    elem.scrollTop = elem.scrollHeight;
   }
 
   setResultState() {
