@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { CommandResult } from '../../models/command-result';
-import { ApiService } from '../../services/api.service';
+import { ApiService, Loop } from '../../services/api.service';
 
 @Component({
   selector: 'app-result-detail',
@@ -29,9 +29,9 @@ export class ResultDetailComponent implements OnInit {
 
   private subcription: Subscription;
 
-  private loaded: boolean;
+  private mainLoop: object;
 
-  private retries = 0;
+  private nodeLoop: object;
 
   private errorMsg: string;
 
@@ -43,43 +43,49 @@ export class ResultDetailComponent implements OnInit {
   ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
       this.id = map.get('id');
-      this.retries = 0;
-      this.loaded = false;
       this.updateResult(this.id);
     });
   }
 
+  isLoaded(): boolean {
+    return this.result && this.result.nodes.length > 0;
+  }
+
   updateResult(id) {
-    this.api.command.get(id).subscribe(result => {
-      //id may change when result arrives in some time later.
-      if (id != this.id) {
-        return;
+    this.mainLoop = Loop.start(
+      //observable:
+      this.api.command.get(id),
+      //observer:
+      {
+        next: (result) => {
+          if (id != this.id) {
+            return; //A false value indicates the end of the loop
+          }
+          this.result = result;
+          if (result.nodes.length == 0) {
+            return true;
+          }
+          this.filter();
+          let state = this.setResultState();
+          return !(state == 'finished' || state == 'failed');
+        },
+        error: (err) => {
+          this.errorMsg = err;
+        }
       }
-
-      this.result = result;
-
-      //If the job is not started, query it later.
-      if (result.nodes.length == 0) {
-        const max = 20;
-        this.retries++;
-        if (this.retries < max)
-          setTimeout(() => this.updateResult(id), 2000);
-        else
-          this.errorMsg = `Tried ${max} times but the job seems not started yet. Please refresh the page later.`;
-        return;
-      }
-
-      this.loaded = true;
-      this.filter();
-      let state = this.setResultState();
-      if (state != 'finished' && state != 'failed')
-        this.updateResult(id);
-    });
+    );
   }
 
   ngOnDestroy() {
-    if (this.subcription)
+    if (this.subcription) {
       this.subcription.unsubscribe();
+    }
+    if (this.mainLoop) {
+      Loop.stop(this.mainLoop);
+    }
+    if (this.nodeLoop) {
+      Loop.stop(this.nodeLoop);
+    }
   }
 
   filter() {
@@ -107,19 +113,35 @@ export class ResultDetailComponent implements OnInit {
   }
 
   updateNodeResult(id, node) {
-    if (node.end)
+    //Cancel previous loop if any
+    if (this.nodeLoop) {
+      Loop.stop(this.nodeLoop);
+    }
+    if (node.end) {
       return;
-    this.api.command.getOuput(id, node.key, node.next).subscribe(result => {
-      //id and/or node may change when result arrives in some time later.
-      if (this.id != id || this.selectedNode.name != node.name)
-        return;
-      node.next = result.offset + result.size;
-      node.end = result.size == 0;
-      if (!node.end) {
-        node.output += result.content;
-        this.updateNodeResult(id, node);
-      }
-    });
+    }
+    this.nodeLoop = Loop.start(
+      //observable:
+      this.api.command.getOuput(id, node.key, node.next),
+      //observer:
+      {
+        next: (result) => {
+          //id and/or node may change when result arrives in some time later.
+          if (this.id != id || this.selectedNode.name != node.name) {
+            //End the loop by returning a false value.
+            return;
+          }
+          if (result.content) {
+            node.output += result.content;
+          }
+          node.next = result.offset + result.size;
+          node.end = result.size == 0;
+          return node.end ? false : this.api.command.getOuput(id, node.key, node.next);
+        }
+      },
+      //interval(in ms):
+      500
+    );
   }
 
   setResultState() {

@@ -145,5 +145,48 @@ export class ApiService {
     }
     return this.testApi;
   }
+}
 
+export class Loop {
+  //The observable is supposed to be a HTTP request and only emits at most once,
+  //thus no need to be unsubscribed. If not, modify the code to unsubscribe it.
+  static start(observable, observer, interval = 1500): object {
+    let looper = { observable: observable, ended: false };
+    let _loop = () => {
+      if (looper.ended) {
+        return;
+      }
+      let ts = new Date().getTime();
+      looper.observable.subscribe(
+        res => {
+          if (looper.ended) {
+            return;
+          }
+          let elapse = new Date().getTime() - ts;
+          //Here the next return value determines if the loop should end.
+          //This is a difference from a normal observer's next method, which has
+          //no specification on the return value. Also note that observer.next
+          //may return a new observable to be subscribed in the next iteration.
+          let n = observer.next(res);
+          if (!n) {
+            return;
+          }
+          if (typeof(n) === 'object') {
+            looper.observable = n;
+          }
+          let delta = interval - elapse;
+          let _interval = delta > 0 ? delta : 0;
+          setTimeout(_loop, _interval);
+        },
+        observer.error,
+        observer.complete
+      );
+    };
+    _loop();
+    return looper;
+  }
+
+  static stop(looper: object): void {
+    (looper as any).ended = true;
+  }
 }
