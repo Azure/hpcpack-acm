@@ -129,13 +129,14 @@
 
                         result = await this.nodesTable.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(nodesPartitionKey, minuteHistoryKey), null, null, token);
 
-                        var history = result.Result is JsonTableEntity historyEntity ? historyEntity.GetObject<MetricHistory>() : new MetricHistory(TimeSpan.FromMinutes(1));
+                        var history = result.Result is JsonTableEntity historyEntity ? historyEntity.GetObject<MetricHistory>() : new MetricHistory(TimeSpan.FromSeconds(10));
                         var currentMetrics = results.Select(r => new MetricItem()
                         {
                             Category = r.Item1,
                             InstanceValues = JsonConvert.DeserializeObject<Dictionary<string, double?>>(r.Item2)
                         }).ToList();
 
+                        history.Range = TimeSpan.FromSeconds(10);
                         history.Put(time, currentMetrics);
 
                         result = await this.nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(new JsonTableEntity(nodesPartitionKey, minuteHistoryKey, history)), null, null, token);
