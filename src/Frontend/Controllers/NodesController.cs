@@ -82,12 +82,12 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
 
             conToken = null;
 
-            var heartbeats = new Dictionary<string, (ComputeClusterNodeInformation, DateTime)>();
+            var heartbeats = new Dictionary<string, (ComputeClusterNodeInformation, DateTimeOffset)>();
 
             do
             {
                 var result = await nodes.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-                foreach (var h in result.Results.Select(r => r.GetObject<(ComputeClusterNodeInformation, DateTime)>()))
+                foreach (var h in result.Results.Select(r => (r.GetObject<ComputeClusterNodeInformation>(), r.Timestamp)))
                 {
                     heartbeats[h.Item1.Name.ToLowerInvariant()] = h;
                 }
@@ -101,9 +101,9 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 var nodeName = r.NodeName.ToLowerInvariant();
                 var node = new Node() { NodeRegistrationInfo = r, Name = nodeName, };
 
-                if (heartbeats.TryGetValue(nodeName, out (ComputeClusterNodeInformation, DateTime) n))
+                if (heartbeats.TryGetValue(nodeName, out (ComputeClusterNodeInformation, DateTimeOffset) n))
                 {
-                    if (n.Item2.AddSeconds(this.utilities.Option.MaxMissedHeartbeats * this.utilities.Option.HeartbeatIntervalSeconds) > DateTime.UtcNow)
+                    if (n.Item2.AddSeconds(this.utilities.Option.MaxMissedHeartbeats * this.utilities.Option.HeartbeatIntervalSeconds) > DateTimeOffset.UtcNow)
                     {
                         node.Health = NodeHealth.OK;
                         node.State = NodeState.Online;
@@ -123,10 +123,60 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
 
         // GET api/nodes/node1
         [HttpGet("{name}")]
-        public async Task<NodeDetails> GetAsync(string name)
+        public async Task<IActionResult> GetAsync(string name, CancellationToken token)
         {
-            await Task.CompletedTask;
-            return new NodeDetails();
+            name = name.ToLowerInvariant();
+            var registrationKey = this.utilities.GetRegistrationKey(name);
+
+            var nodes = this.utilities.GetNodesTable();
+            var result = await nodes.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(this.utilities.NodesPartitionKey, registrationKey), null, null, token);
+
+            if (!result.IsSuccessfulStatusCode())
+            {
+                return new StatusCodeResult(result.HttpStatusCode);
+            }
+
+            ComputeClusterRegistrationInformation registerInfo = (result.Result as JsonTableEntity)?.GetObject<ComputeClusterRegistrationInformation>();
+
+            var heartbeatKey = this.utilities.GetHeartbeatKey(name);
+            result = await nodes.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(this.utilities.NodesPartitionKey, heartbeatKey), null, null, token);
+
+            if (!result.IsSuccessfulStatusCode())
+            {
+                return new StatusCodeResult(result.HttpStatusCode);
+            }
+
+            var entity = result.Result as JsonTableEntity;
+            ComputeClusterNodeInformation nodeInfo = entity?.GetObject<ComputeClusterNodeInformation>();
+
+            var node = new Node() { NodeRegistrationInfo = registerInfo, Name = name, };
+            if (entity?.Timestamp.AddSeconds(this.utilities.Option.MaxMissedHeartbeats * this.utilities.Option.HeartbeatIntervalSeconds) > DateTimeOffset.UtcNow)
+            {
+                node.Health = NodeHealth.OK;
+                node.RunningJobCount = nodeInfo.Jobs.Count;
+                node.EventCount = 5;
+            }
+            else
+            {
+                node.Health = NodeHealth.Error;
+            }
+
+            node.State = NodeState.Online;
+
+            var nodeDetails = new NodeDetails() { NodeInfo = node, Jobs = nodeInfo?.Jobs, };
+
+            var metricsKey = this.utilities.GetMinuteHistoryKey();
+            result = await nodes.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(this.utilities.GetNodePartitionKey(name), metricsKey), null, null, token);
+
+            if (!result.IsSuccessfulStatusCode())
+            {
+                return new StatusCodeResult(result.HttpStatusCode);
+            }
+
+            var historyEntity = result.Result as JsonTableEntity;
+            nodeDetails.History = historyEntity.GetObject<MetricHistory>();
+
+            return new OkObjectResult(nodeDetails);
         }
 
         // POST api/nodes/node1/online

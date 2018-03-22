@@ -5,9 +5,9 @@ namespace Microsoft.HpcAcm.Common.Dto
 
     public class NodeDetails
     {
-        public Node NodeInfo { get; private set; }
-        public IList<Event> Events { get; private set; }
-        public IList<Job> Jobs { get; private set; }
-        public IDictionary<string, IDictionary<DateTime, double>> MetricHistories { get; private set; }
+        public Node NodeInfo { get; set; }
+        public IList<Event> Events { get; set; }
+        public IList<ComputeClusterJobInformation> Jobs { get; set; }
+        public MetricHistory History { get; set; }
     }
 }
