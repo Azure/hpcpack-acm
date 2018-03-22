@@ -18,14 +18,16 @@
     {
         private readonly CloudUtilities utilities;
         private readonly IConfiguration config;
-        private readonly CloudTable table;
+        private readonly CloudTable metricsTable;
+        private readonly CloudTable nodesTable;
         private readonly ILogger logger;
 
-        public MetricsWorker(CloudUtilities utilities, IConfiguration config, CloudTable metricsTable, ILoggerFactory loggerFactory)
+        public MetricsWorker(CloudUtilities utilities, IConfiguration config, CloudTable metricsTable, CloudTable nodesTable, ILoggerFactory loggerFactory)
         {
             this.utilities = utilities;
             this.config = config;
-            this.table = metricsTable;
+            this.metricsTable = metricsTable;
+            this.nodesTable = nodesTable;
             this.logger = loggerFactory.CreateLogger<MetricsWorker>();
         }
 
@@ -41,7 +43,7 @@
 
             do
             {
-                var result = await this.table.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
+                var result = await this.metricsTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
                 categories.AddRange(result.Results.Select(r => (r.RowKey, r.GetObject<string>())));
 
                 conToken = result.ContinuationToken;
@@ -53,9 +55,12 @@
 
         public override async Task<bool> DoWorkAsync(TaskItem taskItem, CancellationToken token)
         {
-            try
+            long currentMinute = 0;
+            while (true)
             {
-                while (true)
+                await Task.Delay(this.config.GetValue<int>("MetricInterval"), token);
+
+                try
                 {
                     var nodeName = this.config.GetValue<string>(Constants.HpcHostNameEnv);
 
@@ -103,24 +108,57 @@
                                 r => r.Item1,
                                 r => new EntityProperty(r.Item2)));
 
-                        var result = await table.ExecuteAsync(TableOperation.InsertOrReplace(entity), null, null, token);
+                        var result = await metricsTable.ExecuteAsync(TableOperation.InsertOrReplace(entity), null, null, token);
 
                         if (!result.IsSuccessfulStatusCode())
                         {
-                            break;
+                            continue;
                         }
 
-                        // todo: metric options
-                        await Task.Delay(this.config.GetValue<int>("MetricInterval"), token);
+                        var nodesPartitionKey = this.utilities.GetNodePartitionKey(nodeName);
+                        var time = DateTimeOffset.UtcNow;
+
+                        var minuteHistoryKey = this.utilities.GetMinuteHistoryKey();
+
+                        result = await this.nodesTable.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(nodesPartitionKey, minuteHistoryKey), null, null, token);
+
+                        var history = result.Result is JsonTableEntity historyEntity ? historyEntity.GetObject<MetricHistory>() : new MetricHistory(TimeSpan.FromMinutes(1));
+                        var currentMetrics = results.Select(r => new MetricItem()
+                        {
+                            Category = r.Item1,
+                            InstanceValues = JsonConvert.DeserializeObject<Dictionary<string, double?>>(r.Item2)
+                        }).ToList();
+
+                        history.Put(time, currentMetrics);
+
+                        result = await this.nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(new JsonTableEntity(nodesPartitionKey, minuteHistoryKey, history)), null, null, token);
+                        if (!result.IsSuccessfulStatusCode())
+                        {
+                            continue;
+                        }
+
+                        var minute = time.UtcTicks / TimeSpan.TicksPerMinute;
+                        if (minute > currentMinute)
+                        {
+                            currentMinute = minute;
+
+                            // persist minute data
+                            var currentMetricsEntity = new JsonTableEntity(this.utilities.GetNodePartitionKey(nodeName),
+                                this.utilities.GetMinuteHistoryKey(currentMinute),
+                                currentMetrics);
+
+                            result = await this.nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(currentMetricsEntity), null, null, token);
+                            if (!result.IsSuccessfulStatusCode())
+                            {
+                                continue;
+                            }
+                        }
                     }
                 }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                this.logger.LogError(ex, "DoWorkAsync error.");
-                throw;
+                catch (Exception ex)
+                {
+                    this.logger.LogError(ex, "DoWorkAsync error.");
+                }
             }
         }
     }

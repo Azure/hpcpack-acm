@@ -8,6 +8,6 @@
     {
         public string Category { get; set; }
 
-        public IList<(string, double)> InstanceValues { get; set; }
+        public Dictionary<string, double?> InstanceValues { get; set; }
     }
 }

@@ -79,7 +79,7 @@
 
         public void Stop()
         {
-            this.cts.Cancel();
+            this.cts?.Cancel();
         }
 
         #region Server options

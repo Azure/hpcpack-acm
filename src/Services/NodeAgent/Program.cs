@@ -26,8 +26,15 @@
                 serverBuilder.Start();
 
                 // TODO: refactor with multi purpose server.
-                var metricsWorker = new MetricsWorker(serverBuilder.Utilities, serverBuilder.Configuration, serverBuilder.Utilities.GetMetricsTable(), serverBuilder.LoggerFactory);
+                var metricsWorker = new MetricsWorker(
+                    serverBuilder.Utilities,
+                    serverBuilder.Configuration,
+                    serverBuilder.Utilities.GetMetricsTable(),
+                    serverBuilder.Utilities.GetNodesTable(),
+                    serverBuilder.LoggerFactory);
                 metricsWorker.DoWorkAsync(null, serverBuilder.CancelToken).FireAndForget();
+
+                Console.CancelKeyPress += (s, e) => { serverBuilder.Stop(); };
 
                 while (Console.In.Peek() == -1) { Task.Delay(1000).Wait(); }
                 var logger = serverBuilder.LoggerFactory.CreateLogger<Program>();
