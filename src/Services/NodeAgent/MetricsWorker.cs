@@ -87,12 +87,19 @@
                                     RedirectStandardInput = true
                                 };
 
-                                var process = Process.Start(psi);
-
-                                var output = await process.StandardOutput.ReadToEndAsync();
-                                var error = await process.StandardError.ReadToEndAsync();
-
-                                return (s.Item1, string.IsNullOrEmpty(error) ? output : toErrorJson(error));
+                                using (var process = Process.Start(psi))
+                                {
+                                    try
+                                    {
+                                        var output = await process.StandardOutput.ReadToEndAsync();
+                                        var error = await process.StandardError.ReadToEndAsync();
+                                        return (s.Item1, string.IsNullOrEmpty(error) ? output : toErrorJson(error));
+                                    }
+                                    finally
+                                    {
+                                        process.Kill();
+                                    }
+                                }
                             }
                             catch (Exception ex)
                             {
