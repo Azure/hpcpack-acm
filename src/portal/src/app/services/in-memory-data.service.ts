@@ -362,7 +362,7 @@ export class InMemoryDataService implements InMemoryDbService {
 
   //Begin of heatmap
   generateRandomUsageOfHeatmap(){
-    return (Math.random() * (1.0 - 0.0)).toFixed(4);
+    return (Math.random() * (100.0 - 0.0)).toFixed(2);
   }
 
   generateRandomNodesInfoOfHeatmap(){
@@ -372,11 +372,7 @@ export class InMemoryDataService implements InMemoryDbService {
     for(let i = 1; i <= totalNumber; i++){
       let nodeInfo = {};
       nodeInfo["nodeName"] = "node" + i;
-      nodeInfo["id"] = i;
-      nodeInfo["value"] = {};
-      nodeInfo["value"]["_Total"] = this.generateRandomUsageOfHeatmap();
-      nodeInfo["value"]["_1"] = 0.0;
-      nodeInfo["value"]["_2"] = 0.0;
+      nodeInfo["value"] = this.generateRandomUsageOfHeatmap();
       randomNodeInfo.push(nodeInfo);
     }
     

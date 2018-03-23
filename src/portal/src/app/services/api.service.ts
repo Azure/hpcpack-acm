@@ -9,8 +9,7 @@ import { environment as env } from '../../environments/environment';
 import { Node } from '../models/node';
 import { CommandResult } from '../models/command-result';
 import { TestResult } from '../models/test-result';
-import { HeatmapInfo } from '../models/heatmap-info';
-import { TestHeatmapInfo } from '../models/test-heatmap-info';
+import { HeatmapNodeInfo } from '../models/heatmap-node-info';
 import 'rxjs/add/operator/concatMap';
 
 abstract class Resource<T> {
@@ -126,7 +125,7 @@ export class HeatmapApi extends Resource<any>{
     return HeatmapApi.url;
   }
 
-  protected normalize(heatmapInfo: HeatmapInfo): void { 
+  protected normalize(heatmapInfo: any): void { 
 
   }
 
@@ -144,9 +143,9 @@ export class HeatmapApi extends Resource<any>{
       );
   }
 
-  getHeatmapInfo(category: string): Observable<HeatmapInfo>{
+  getHeatmapInfo(category: string): Observable<any>{
     let url = HeatmapApi.url + '/values/' + category;
-    return this.http.get<HeatmapInfo>(url)
+    return this.http.get<any>(url)
       .pipe(
         map(e => {
           return e;
@@ -159,20 +158,24 @@ export class HeatmapApi extends Resource<any>{
   }
   
 
-  normalizeHeatmapInfo(data: any): Array<TestHeatmapInfo>{
-    let nodes = new Array<TestHeatmapInfo>();
+  normalizeHeatmapInfo(data: any): Array<HeatmapNodeInfo>{
+    let nodes = new Array<HeatmapNodeInfo>();
     for(let key in data.values){
-      nodes.push({"value": data.values[key], "nodeName": key, "id": 1});//should be modified later, id is not defined
+      if(!data.values[key]._Total)
+        nodes.push({"value": NaN, "nodeName": key});
+      else 
+        nodes.push({"value": data.values[key]._Total, "nodeName": key});
+        
     }
     return nodes;
   }
 
-  getFakedHeatmapInfo(): Observable<TestHeatmapInfo[]>{
+  getFakedHeatmapInfo(): Observable<HeatmapNodeInfo[]>{
     let url = HeatmapApi.url + '/values/cpu';
 
     return this.http.post(HeatmapApi.url+ '/commands', {clear: true})
       .concatMap(() => {
-        return this.http.get<TestHeatmapInfo[]>(url)
+        return this.http.get<HeatmapNodeInfo[]>(url)
           .pipe(
             map(e => {
               return e;

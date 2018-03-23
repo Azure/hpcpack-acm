@@ -29,10 +29,6 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // this.api.node.getAll().subscribe(nodes => {
-    //   this.nodes = nodes;
-    // });
-
     this.api.heatmapInfo.getCategories().subscribe(categories => {
       this.categories = categories;
       console.log(categories);
@@ -41,35 +37,24 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
     TimerObservable.create(0, this.interval)
       .takeWhile(() => this.alive)
       .subscribe(() => {
-
         this.api.heatmapInfo.getHeatmapInfo(this.selectedCategory)
           .subscribe((data) => {
             this.nodes = this.api.heatmapInfo.normalizeHeatmapInfo(data);
           });
-        
-        // this.api.heatmapInfo.getFakedHeatmapInfo()
-        //   .subscribe((data) => {
-        //     this.nodes = data;
-        //   });
       })  
   }
 
 
   nodeClass(node): string {
     let res;
-    // if (node.runningJobCount < 10)
-    //   res = 'low';
-    // else if (node.runningJobCount < 50)
-    //   res = 'median';
-    // else
-    //   res = 'high';
-    if(!node.value._Total){
+
+    if(!node.value){
       return;
     }
 
-    if (node.value._Total < 5){
+    if (node.value < 5){
       res = 'low';
-    } else if (node.value._Total < 10){
+    } else if (node.value < 10){
       res = 'median';
     }else{
       res = 'high';
@@ -78,15 +63,14 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
   }
 
   nodeTip(node): string {
-    // return `${node.name}: ${node.runningJobCount} jobs`;
-    if(!node.value._Total){
+    if(!node.value){
       return `${node.nodeName}: Offline`;
     }
-    return `${node.nodeName}: ${(node.value._Total).toFixed(2)} %`;
+    return `${node.nodeName}: ${node.value} %`;
   }
 
   clickNode(node): void {
-    this.router.navigate(['..', node.id], { relativeTo: this.route })
+    this.router.navigate(['..', node.nodeName], { relativeTo: this.route })
   }
 
   ngOnDestroy(){
