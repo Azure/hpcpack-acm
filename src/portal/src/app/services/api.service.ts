@@ -8,6 +8,9 @@ import { environment as env } from '../../environments/environment';
 import { Node } from '../models/node';
 import { CommandResult } from '../models/command-result';
 import { TestResult } from '../models/test-result';
+import { HeatmapInfo } from '../models/heatmap-info';
+import { TestHeatmapInfo } from '../models/test-heatmap-info';
+import 'rxjs/add/operator/concatMap';
 
 abstract class Resource<T> {
   static baseUrl = env.apiBase;
@@ -115,6 +118,73 @@ export class CommandApi extends Resource<CommandResult> {
   }
 }
 
+export class HeatmapApi extends Resource<any>{
+  static url = `${Resource.baseUrl}/heatmap`;
+
+  protected get url(): string{
+    return HeatmapApi.url;
+  }
+
+  protected normalize(heatmapInfo: HeatmapInfo): void { 
+
+  }
+
+  getCategories(): Observable<string[]>{
+    let url = HeatmapApi.url + "/categories";
+    return this.http.get<string[]>(url)
+      .pipe(
+        map(e => {
+          return e;
+        }),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
+  }
+
+  getHeatmapInfo(category: string): Observable<HeatmapInfo>{
+    let url = HeatmapApi.url + '/values/' + category;
+    return this.http.get<HeatmapInfo>(url)
+      .pipe(
+        map(e => {
+          return e;
+        }),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
+  }
+  
+
+  normalizeHeatmapInfo(data: any): Array<TestHeatmapInfo>{
+    let nodes = new Array<TestHeatmapInfo>();
+    for(let key in data.values){
+      nodes.push({"value": data.values[key], "nodeName": key, "id": 1});//should be modified later, id is not defined
+    }
+    return nodes;
+  }
+
+  getFakedHeatmapInfo(): Observable<TestHeatmapInfo[]>{
+    let url = HeatmapApi.url + '/values/cpu';
+
+    return this.http.post(HeatmapApi.url+ '/commands', {clear: true})
+      .concatMap(() => {
+        return this.http.get<TestHeatmapInfo[]>(url)
+          .pipe(
+            map(e => {
+              return e;
+            }), catchError((error: any): Observable<any> => {
+              console.error(error);
+              return new ErrorObservable(error);
+            })
+          )
+      })
+  }
+
+}
+
 @Injectable()
 export class ApiService {
   private nodeApi: NodeApi;
@@ -122,6 +192,8 @@ export class ApiService {
   private testApi: TestApi;
 
   private commandApi: CommandApi;
+
+  private heatmapApi: HeatmapApi;
 
   constructor(private http: HttpClient) {}
 
@@ -144,6 +216,13 @@ export class ApiService {
       this.testApi = new TestApi(this.http);
     }
     return this.testApi;
+  }
+
+  get heatmapInfo(): HeatmapApi {
+    if(!this.heatmapApi) {
+      this.heatmapApi = new HeatmapApi(this.http);
+    }
+    return this.heatmapApi;
   }
 
 }

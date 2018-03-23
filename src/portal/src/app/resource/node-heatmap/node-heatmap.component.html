@@ -3,4 +3,14 @@
   <a mat-tab-link [routerLink]="" [active]="true">Heatmap</a>
 </nav>
 
+<div class="selectedCategory">
+  <mat-form-field>
+    <mat-select placeholder="Select Category" [(value)] = "selectedCategory">
+      <mat-option *ngFor="let category of categories" [value]="category">
+        {{ category }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+
 <div class="tile" *ngFor="let node of nodes" [ngClass]="nodeClass(node)" [matTooltip]="nodeTip(node)" (click)="clickNode(node)"></div>

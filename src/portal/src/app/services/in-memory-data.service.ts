@@ -1,11 +1,13 @@
 import { InMemoryDbService } from 'angular-in-memory-web-api';
-import { NodeApi, CommandApi, TestApi } from './api.service';
+import { NodeApi, CommandApi, TestApi, HeatmapApi } from './api.service';
 
 export class InMemoryDataService implements InMemoryDbService {
   urlMap = [
     { url: NodeApi.url, coll: 'nodes' },
     { url: CommandApi.url, coll: 'commands' },
     { url: TestApi.url, coll: 'tests' },
+    { url: HeatmapApi.url +'/values/cpu', coll: 'nodesInfoOfHeatmap'},
+    { url: HeatmapApi.url + '/commands', coll: 'resetdb'}
   ];
 
   parseRequestUrl(url, utils) {
@@ -13,11 +15,16 @@ export class InMemoryDataService implements InMemoryDbService {
     if (!res)
       return null;
 
-    let parsed = utils.parseRequestUrl(url);
+    let parsed = utils.parseRequestUrl(url);;
     parsed.collectionName = res.coll;
+
     if (url.length != res.url.length) {
       let id = url.substring(res.url.length + 1); //+1 to skip "/"
       parsed.id = id;
+    }
+
+    if(res.coll == 'resetdb'){
+      parsed.apiBase = 'commands';
     }
     return parsed;
   }
@@ -353,10 +360,39 @@ export class InMemoryDataService implements InMemoryDbService {
   }
   //End of tests
 
+  //Begin of heatmap
+  generateRandomUsageOfHeatmap(){
+    return (Math.random() * (1.0 - 0.0)).toFixed(4);
+  }
+
+  generateRandomNodesInfoOfHeatmap(){
+    let totalNumber = 1000;
+    let randomNodeInfo = [];
+
+    for(let i = 1; i <= totalNumber; i++){
+      let nodeInfo = {};
+      nodeInfo["nodeName"] = "node" + i;
+      nodeInfo["id"] = i;
+      nodeInfo["value"] = {};
+      nodeInfo["value"]["_Total"] = this.generateRandomUsageOfHeatmap();
+      nodeInfo["value"]["_1"] = 0.0;
+      nodeInfo["value"]["_2"] = 0.0;
+      randomNodeInfo.push(nodeInfo);
+    }
+    
+    return randomNodeInfo;
+  }
+  //End of heatmap
+
   createDb() {
+    let ts = new Date().getTime();
     let nodes = this.generateNodes();
     let commands = this.generateCommands();
     let tests = this.generateTests();
-    return { nodes, commands, tests };
+    let nodesInfoOfHeatmap = this.generateRandomNodesInfoOfHeatmap();
+    let delta = (new Date().getTime() - ts) / 1000;
+    console.log("createDb: " + delta);
+    
+    return { nodes, commands, tests, nodesInfoOfHeatmap };
   }
 }
