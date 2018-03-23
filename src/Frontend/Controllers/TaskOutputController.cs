@@ -35,6 +35,8 @@
                 return result;
             }
 
+            if (pageSize == 0) { pageSize = 1000; }
+
             await blob.FetchAttributesAsync(null, null, null, token);
             if (blob.Properties.Length == 0)
             {
