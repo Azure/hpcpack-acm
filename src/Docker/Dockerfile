@@ -1,5 +1,8 @@
-FROM microsoft/aspnetcore:2.0 AS base
+FROM microsoft/aspnetcore:2.0 AS python
 WORKDIR /app
+RUN apt update
+RUN apt install python-pip -y
+RUN pip install psutil
 EXPOSE 80
 EXPOSE 5000
 
@@ -24,7 +27,7 @@ RUN dotnet publish -c Release -o /app/JobDispatcher
 WORKDIR /src/Services/NodeAgent
 RUN dotnet publish -c Release -o /app/NodeAgent
 
-FROM base AS final
+FROM python AS final
 WORKDIR /app
 COPY --from=allbuild /app .
 ENTRYPOINT ["dotnet", "Bootstrap/Bootstrap.dll"]

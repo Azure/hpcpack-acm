@@ -10,7 +10,7 @@ namespace Microsoft.HpcAcm.Common.Dto
         ///     "node2": ...
         /// ]
         /// </summary>
-        public IDictionary<string, IDictionary<string, double?>> Values { get; set; }
+        public Dictionary<string, Dictionary<string, double?>> Values { get; set; }
         public string Category { get; set; }
     }
 }

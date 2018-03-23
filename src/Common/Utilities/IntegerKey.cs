@@ -7,5 +7,6 @@
     public static class IntegerKey
     {
         public static string ToStringKey(int key) => key.ToString("D16");
+        public static string ToStringKey(long key) => key.ToString("D19");
     }
 }

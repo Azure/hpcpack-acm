@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { ErrorObservable } from 'rxjs/observable/ErrorObservable';
 import { of } from 'rxjs/observable/of';
 import { catchError, map } from 'rxjs/operators';
+import 'rxjs/add/operator/first';
 import { environment as env } from '../../environments/environment';
 import { Node } from '../models/node';
 import { CommandResult } from '../models/command-result';
@@ -223,6 +224,68 @@ export class ApiService {
       this.heatmapApi = new HeatmapApi(this.http);
     }
     return this.heatmapApi;
+  }
+}
+
+export class Loop {
+  //Subscribe an observable repeatedly with a time interval between each
+  //subscription. Only the first emit of the observable is taken.
+  //The observer parameter is an object of
+  //{ next: (res) => {...}, error: (err) => {...} },
+  //much like a Rxjs observer object with the differences in:
+  //1) The next method's return value matters. A false value indicate the end
+  //   of the loop, while true to continue. And, if an observable is returned,
+  //   it will be subscribed in the next iteration instead of the one passed
+  //   as start's parameter.
+  //2) no complete callback on observable.
+  //The interval parameter is the LEAST time between each subscription.
+  static start(observable, observer, interval = 1500): object {
+    let looper = { observable: observable, ended: false };
+    let _loop = () => {
+      if (looper.ended) {
+        return;
+      }
+      let ts = new Date().getTime();
+      looper.observable.first().subscribe(
+        res => {
+          if (looper.ended) {
+            return;
+          }
+          let elapse = new Date().getTime() - ts;
+          //Here the next return value determines if the loop should end.
+          //This is a difference from a normal observer's next method, which has
+          //no specification on the return value. Also note that observer.next
+          //may return a new observable to be subscribed in the next iteration.
+          let n = observer.next(res);
+          if (!n) {
+            looper.ended = true;
+            return;
+          }
+          if (typeof(n) === 'object') {
+            looper.observable = n;
+          }
+          let delta = interval - elapse;
+          let _interval = delta > 0 ? delta : 0;
+          setTimeout(_loop, _interval);
+        },
+        err => {
+          looper.ended = true;
+          if (observer.error) {
+            observer.error(err);
+          }
+        }
+      );
+    };
+    _loop();
+    return looper;
+  }
+
+  static stop(looper: object): void {
+    (looper as any).ended = true;
+  }
+
+  static isStopped(looper: object): boolean {
+    return (looper as any).ended;
   }
 
 }

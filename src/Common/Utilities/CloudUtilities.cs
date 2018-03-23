@@ -41,6 +41,7 @@
             await this.GetOrCreateJobsTableAsync(token);
             await this.GetOrCreateNodesTableAsync(token);
             await this.GetOrCreateIdsTableAsync(token);
+            await this.GetOrCreateMetricsTableAsync(token);
         }
 
         public CloudOption Option { get; private set; }
@@ -64,8 +65,10 @@
 
         public string GetJobPartitionKey(string type, int jobId) => string.Format(this.Option.JobPartitionPattern, type, IntegerKey.ToStringKey(jobId));
         public string GetNodePartitionKey(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);
-        public string GetRegistrationKey(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);
-        public string GetMaximumRegistrationKey() => string.Format(this.Option.NodePartitionPattern, this.MaxString);
+        public string GetMinuteHistoryKey(long minutes) => string.Format(this.Option.MinuteHistoryPattern, IntegerKey.ToStringKey(minutes));
+        public string GetMinuteHistoryKey() => string.Format(this.Option.MinuteHistoryKey);
+        public string GetRegistrationKey(string nodeName) => string.Format(this.Option.RegistrationPattern, nodeName);
+        public string GetMaximumRegistrationKey() => string.Format(this.Option.RegistrationPattern, this.MaxString);
         public string GetHeartbeatKey(string nodeName) => string.Format(this.Option.HeartbeatPattern, nodeName);
         public string NodesPartitionKey { get => this.Option.NodesPartitionKey; }
         public string JobEntryKey { get => this.Option.JobEntryKey; }

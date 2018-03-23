@@ -40,6 +40,8 @@ namespace Microsoft.HpcAcm.Common.Utilities
 
         public string NodesTableName { get; set; } = "nodestable";
         public string NodePartitionPattern { get; internal set; } = "node-{0}";
+        public string MinuteHistoryPattern { get; internal set; } = "history-minute-{0}";
+        public string MinuteHistoryKey { get; internal set; } = "history-minute";
         public string RegistrationPattern { get; set; } = "registration-{0}";
         public string HeartbeatPattern { get; internal set; } = "heartbeat-{0}";
         public string NodesPartitionKey { get; internal set; } = "nodes";

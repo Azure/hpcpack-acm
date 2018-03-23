@@ -13,6 +13,8 @@
     {
         private CancellationTokenSource cts = new CancellationTokenSource();
 
+        public CancellationToken CancelToken { get => this.cts.Token; }
+
         public void BuildAndStart()
         {
             Task.Run(async () =>
@@ -61,10 +63,10 @@
                 await this.Utilities.InitializeAsync(token);
 
                 this.source = await this.taskItemSourceMethod?.Invoke(this.Utilities, this.Configuration, this.LoggerFactory, token);
-                this.worker = await this.workerMethod?.Invoke(this.Configuration, this.Utilities, this.LoggerFactory, token);
-                this.configWorkerMethod?.Invoke(this.worker);
+                var worker = await this.workerMethod?.Invoke(this.Configuration, this.Utilities, this.LoggerFactory, token);
+                this.configWorkerMethod?.Invoke(worker);
 
-                this.server = new Server(this.source, this.worker, this.LoggerFactory, this.serverOptions);
+                this.server = new Server(this.source, worker, this.LoggerFactory, this.serverOptions);
             }
             catch (Exception ex)
             {
@@ -77,7 +79,7 @@
 
         public void Stop()
         {
-            this.cts.Cancel();
+            this.cts?.Cancel();
         }
 
         #region Server options
@@ -137,7 +139,6 @@
         }
 
         private Func<IConfiguration, CloudUtilities, ILoggerFactory, CancellationToken, Task<WorkerBase>> workerMethod;
-        private WorkerBase worker;
 
         #endregion
 
@@ -148,9 +149,9 @@
             return this;
         }
 
-        private IConfigurationBuilder configBuilder = new ConfigurationBuilder();
+        private readonly IConfigurationBuilder configBuilder = new ConfigurationBuilder();
         private Action<IConfigurationBuilder> appConfigMethod;
-        public IConfiguration Configuration;
+        public IConfiguration Configuration { get; set; }
 
         #endregion
 
@@ -175,7 +176,7 @@
             GC.SuppressFinalize(this);
         }
 
-        private void Dispose(bool isDisposing)
+        protected virtual void Dispose(bool isDisposing)
         {
             if (isDisposing)
             {

@@ -43,7 +43,7 @@
                 var jsonTableEntity = new JsonTableEntity(
                     this.utilities.NodesPartitionKey,
                     this.utilities.GetHeartbeatKey(nodeName),
-                    (nodeInfo, DateTime.UtcNow));
+                    nodeInfo);
 
                 var result = await nodeTable.ExecuteAsync(TableOperation.InsertOrReplace(jsonTableEntity), null, null, token);
 

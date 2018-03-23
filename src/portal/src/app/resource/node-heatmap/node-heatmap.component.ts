@@ -63,8 +63,11 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
     //   res = 'median';
     // else
     //   res = 'high';
+    if(!node.value._Total){
+      return;
+    }
 
-    if (node.value._Total < 5 || !node.value._Total){
+    if (node.value._Total < 5){
       res = 'low';
     } else if (node.value._Total < 10){
       res = 'median';
@@ -77,7 +80,7 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
   nodeTip(node): string {
     // return `${node.name}: ${node.runningJobCount} jobs`;
     if(!node.value._Total){
-      return `${node.nodeName}`;
+      return `${node.nodeName}: Offline`;
     }
     return `${node.nodeName}: ${(node.value._Total).toFixed(2)} %`;
   }
