@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { ErrorObservable } from 'rxjs/observable/ErrorObservable';
 import { of } from 'rxjs/observable/of';
 import { catchError, map } from 'rxjs/operators';
+import 'rxjs/add/operator/first';
 import { environment as env } from '../../environments/environment';
 import { Node } from '../models/node';
 import { CommandResult } from '../models/command-result';
@@ -148,8 +149,17 @@ export class ApiService {
 }
 
 export class Loop {
-  //The observable is supposed to be a HTTP request and only emits at most once,
-  //thus no need to be unsubscribed. If not, modify the code to unsubscribe it.
+  //Subscribe an observable repeatedly with a time interval between each
+  //subscription. Only the first emit of the observable is taken.
+  //The observer parameter is an object of
+  //{ next: (res) => {...}, error: (err) => {...} },
+  //much like a Rxjs observer object with the differences in:
+  //1) The next method's return value matters. A false value indicate the end
+  //   of the loop, while true to continue. And, if an observable is returned,
+  //   it will be subscribed in the next iteration instead of the one passed
+  //   as start's parameter.
+  //2) no complete callback on observable.
+  //The interval parameter is the LEAST time between each subscription.
   static start(observable, observer, interval = 1500): object {
     let looper = { observable: observable, ended: false };
     let _loop = () => {
@@ -157,7 +167,7 @@ export class Loop {
         return;
       }
       let ts = new Date().getTime();
-      looper.observable.subscribe(
+      looper.observable.first().subscribe(
         res => {
           if (looper.ended) {
             return;
@@ -169,6 +179,7 @@ export class Loop {
           //may return a new observable to be subscribed in the next iteration.
           let n = observer.next(res);
           if (!n) {
+            looper.ended = true;
             return;
           }
           if (typeof(n) === 'object') {
@@ -178,8 +189,12 @@ export class Loop {
           let _interval = delta > 0 ? delta : 0;
           setTimeout(_loop, _interval);
         },
-        observer.error,
-        observer.complete
+        err => {
+          looper.ended = true;
+          if (observer.error) {
+            observer.error(err);
+          }
+        }
       );
     };
     _loop();
@@ -188,5 +203,9 @@ export class Loop {
 
   static stop(looper: object): void {
     (looper as any).ended = true;
+  }
+
+  static isStopped(looper: object): boolean {
+    return (looper as any).ended;
   }
 }
