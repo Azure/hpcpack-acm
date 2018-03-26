@@ -1,9 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { ApiService } from '../../services/api.service';
+import { ApiService, Loop } from '../../services/api.service';
 import { Observable } from 'rxjs';
-import { TimerObservable } from 'rxjs/observable/TimerObservable';
-import 'rxjs/add/operator/takeWhile';
 
 @Component({
   selector: 'resource-node-heatmap',
@@ -13,16 +11,15 @@ import 'rxjs/add/operator/takeWhile';
 export class NodeHeatmapComponent implements OnInit, OnDestroy {
   private nodes = [];
   private categories = [];
-  private alive: boolean;
   private interval: number;
   private selectedCategory: string;
+  private heatmapLoop: Object;
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private api: ApiService,
   ){
-    this.alive = true;
     this.interval = 3000;
     this.selectedCategory = "cpu";
   }
@@ -32,16 +29,21 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
       this.categories = categories;
     })
 
-    TimerObservable.create(0, this.interval)
-      .takeWhile(() => this.alive)
-      .subscribe(() => {
-        //If you want to emulate the get operation, please call the in-memory web api function below.
-        //this.api.heatmapInfo.getMockData(this.selectedCategory)
-        this.api.heatmap.get(this.selectedCategory)
-          .subscribe((data) => {
-            this.nodes = data.results;
-          });
-      })
+    this.heatmapLoop = Loop.start(
+      //observable
+      //If you want to emulate the get operation, please call the in-memory web api function below.
+      //this.api.heatmapInfo.getMockData(this.selectedCategory)
+      this.api.heatmap.get(this.selectedCategory),
+      //observer
+      {
+        next: (result) => {
+          this.nodes = result.results;
+          return true;
+        }
+      },
+      //interval in ms
+      this.interval
+    );
   }
 
   categoryCtrl(): void {
@@ -75,6 +77,8 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.alive = false;
+    if(this.heatmapLoop) {
+      Loop.stop(this.heatmapLoop);
+    }
   }
 }

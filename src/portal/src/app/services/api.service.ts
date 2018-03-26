@@ -174,7 +174,8 @@ export class HeatmapApi extends Resource<any> {
             map(e => {
               this.normalize(e);
               return e;
-            }), catchError((error: any): Observable<any> => {
+            }),
+            catchError((error: any): Observable<any> => {
               console.error(error);
               return new ErrorObservable(error);
             })
