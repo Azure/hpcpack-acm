@@ -4,12 +4,11 @@ import { Observable } from 'rxjs/Observable';
 import { ErrorObservable } from 'rxjs/observable/ErrorObservable';
 import { of } from 'rxjs/observable/of';
 import { catchError, map } from 'rxjs/operators';
-import 'rxjs/add/operator/first';
 import { environment as env } from '../../environments/environment';
 import { Node } from '../models/node';
 import { CommandResult } from '../models/command-result';
 import { TestResult } from '../models/test-result';
-import { HeatmapNodeInfo } from '../models/heatmap-node-info';
+import { HeatmapNode } from '../models/heatmap-node';
 import 'rxjs/add/operator/concatMap';
 
 abstract class Resource<T> {
@@ -118,19 +117,26 @@ export class CommandApi extends Resource<CommandResult> {
   }
 }
 
-export class HeatmapApi extends Resource<any>{
+export class HeatmapApi extends Resource<any> {
   static url = `${Resource.baseUrl}/heatmap`;
 
-  protected get url(): string{
+  protected get url(): string {
     return HeatmapApi.url;
   }
 
-  protected normalize(heatmapInfo: any): void { 
-
+  protected normalize(result: any): void {
+    result["results"] = new Array<HeatmapNode>();
+    for(let key in result.values) {
+      if(!result.values[key]._Total) {
+        result["results"].push({"id": key, "value": NaN});
+      } else {
+        result["results"].push({"id": key, "value": result.values[key]._Total});
+      }
+    }
   }
 
-  getCategories(): Observable<string[]>{
-    let url = HeatmapApi.url + "/categories";
+  getCategories(): Observable<string[]> {
+    let url = this.url + "/categories";
     return this.http.get<string[]>(url)
       .pipe(
         map(e => {
@@ -143,11 +149,12 @@ export class HeatmapApi extends Resource<any>{
       );
   }
 
-  getHeatmapInfo(category: string): Observable<any>{
-    let url = HeatmapApi.url + '/values/' + category;
+  get(category: string): Observable<any> {
+    let url = this.url + '/values/' + category;
     return this.http.get<any>(url)
       .pipe(
         map(e => {
+          this.normalize(e);
           return e;
         }),
         catchError((error: any): Observable<any> => {
@@ -156,35 +163,22 @@ export class HeatmapApi extends Resource<any>{
         })
       );
   }
-  
 
-  normalizeHeatmapInfo(data: any): Array<HeatmapNodeInfo>{
-    let nodes = new Array<HeatmapNodeInfo>();
-    for(let key in data.values){
-      if(!data.values[key]._Total)
-        nodes.push({"value": NaN, "nodeName": key});
-      else 
-        nodes.push({"value": data.values[key]._Total, "nodeName": key});
-        
-    }
-    return nodes;
-  }
-
-  getFakedHeatmapInfo(): Observable<HeatmapNodeInfo[]>{
-    let url = HeatmapApi.url + '/values/cpu';
-
-    return this.http.post(HeatmapApi.url+ '/commands', {clear: true})
+  getMockData(category: string): Observable<any> {
+    let url = this.url + '/values/' + category;
+    return this.http.post(env.apiBase + '/commands/resetdb', {clear: true})
       .concatMap(() => {
-        return this.http.get<HeatmapNodeInfo[]>(url)
+        return this.http.get<any>(url)
           .pipe(
             map(e => {
+              this.normalize(e);
               return e;
             }), catchError((error: any): Observable<any> => {
               console.error(error);
               return new ErrorObservable(error);
             })
           )
-      })
+      });
   }
 
 }
@@ -222,7 +216,7 @@ export class ApiService {
     return this.testApi;
   }
 
-  get heatmapInfo(): HeatmapApi {
+  get heatmap(): HeatmapApi {
     if(!this.heatmapApi) {
       this.heatmapApi = new HeatmapApi(this.http);
     }

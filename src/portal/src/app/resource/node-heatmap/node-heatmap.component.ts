@@ -29,7 +29,7 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.api.heatmapInfo.getCategories().subscribe(categories => {
+    this.api.heatmap.getCategories().subscribe(categories => {
       this.categories = categories;
       console.log(categories);
     })
@@ -37,36 +37,33 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
     TimerObservable.create(0, this.interval)
       .takeWhile(() => this.alive)
       .subscribe(() => {
-        this.api.heatmapInfo.getHeatmapInfo(this.selectedCategory)
+        //If you want to emulate the get operation, please call the in-memory web api function below.
+        //this.api.heatmapInfo.getMockData(this.selectedCategory)
+        this.api.heatmap.get(this.selectedCategory)
           .subscribe((data) => {
-            this.nodes = this.api.heatmapInfo.normalizeHeatmapInfo(data);
+            this.nodes = data.results;
           });
-      })  
+      })
   }
-
 
   nodeClass(node): string {
     let res;
-
-    if(!node.value){
+    if (!node.value) {
       return;
     }
 
-    if (node.value < 5){
+    if (node.value < 5) {
       res = 'low';
-    } else if (node.value < 10){
+    } else if (node.value < 10) {
       res = 'median';
-    }else{
+    } else {
       res = 'high';
     }
     return res;
   }
 
   nodeTip(node): string {
-    if(!node.value){
-      return `${node.nodeName}: Offline`;
-    }
-    return `${node.nodeName}: ${node.value} %`;
+    return `${node.id} : `.concat(node.value ? `${node.value} %` : 'offline');
   }
 
   clickNode(node): void {

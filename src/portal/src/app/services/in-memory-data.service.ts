@@ -1,13 +1,15 @@
 import { InMemoryDbService } from 'angular-in-memory-web-api';
 import { NodeApi, CommandApi, TestApi, HeatmapApi } from './api.service';
+import { environment as env } from '../../environments/environment';
 
 export class InMemoryDataService implements InMemoryDbService {
   urlMap = [
     { url: NodeApi.url, coll: 'nodes' },
     { url: CommandApi.url, coll: 'commands' },
     { url: TestApi.url, coll: 'tests' },
-    { url: HeatmapApi.url +'/values/cpu', coll: 'nodesInfoOfHeatmap'},
-    { url: HeatmapApi.url + '/commands', coll: 'resetdb'}
+    { url: HeatmapApi.url + '/values/cpu', coll: 'heatmapNodes'},
+    { url: HeatmapApi.url + '/categories', coll: 'heatmapCategories'},
+    { url: env.apiBase + '/commands/resetdb', coll: 'resetdb'}
   ];
 
   parseRequestUrl(url, utils) {
@@ -15,16 +17,14 @@ export class InMemoryDataService implements InMemoryDbService {
     if (!res)
       return null;
 
-    let parsed = utils.parseRequestUrl(url);;
+    let parsed = utils.parseRequestUrl(url);
+    if (res.coll == 'resetdb') {
+      parsed.apiBase = 'commands';
+    }
     parsed.collectionName = res.coll;
-
     if (url.length != res.url.length) {
       let id = url.substring(res.url.length + 1); //+1 to skip "/"
       parsed.id = id;
-    }
-
-    if(res.coll == 'resetdb'){
-      parsed.apiBase = 'commands';
     }
     return parsed;
   }
@@ -361,22 +361,24 @@ export class InMemoryDataService implements InMemoryDbService {
   //End of tests
 
   //Begin of heatmap
-  generateRandomUsageOfHeatmap(){
+  generateRandomResourceUsage() {
     return (Math.random() * (100.0 - 0.0)).toFixed(2);
   }
 
-  generateRandomNodesInfoOfHeatmap(){
+  generateRandomHeatmapNodes() {
     let totalNumber = 1000;
-    let randomNodeInfo = [];
-
-    for(let i = 1; i <= totalNumber; i++){
-      let nodeInfo = {};
-      nodeInfo["nodeName"] = "node" + i;
-      nodeInfo["value"] = this.generateRandomUsageOfHeatmap();
-      randomNodeInfo.push(nodeInfo);
+    let randomNodeInfo = {};
+    randomNodeInfo["values"] = {};
+    for(let i = 1; i <= totalNumber; i++) {
+      randomNodeInfo["values"]["node" + i] = {};
+      randomNodeInfo["values"]["node" + i]["_Total"] = this.generateRandomResourceUsage();
     }
-    
+    console.log(randomNodeInfo);
     return randomNodeInfo;
+  }
+
+  generateHeatmapCategories() {
+    return ["cpu"];
   }
   //End of heatmap
 
@@ -385,10 +387,11 @@ export class InMemoryDataService implements InMemoryDbService {
     let nodes = this.generateNodes();
     let commands = this.generateCommands();
     let tests = this.generateTests();
-    let nodesInfoOfHeatmap = this.generateRandomNodesInfoOfHeatmap();
+    let heatmapNodes = this.generateRandomHeatmapNodes();
+    let heatmapCategories = this.generateHeatmapCategories();
     let delta = (new Date().getTime() - ts) / 1000;
     console.log("createDb: " + delta);
-    
-    return { nodes, commands, tests, nodesInfoOfHeatmap };
+
+    return { nodes, commands, tests, heatmapNodes, heatmapCategories };
   }
 }
