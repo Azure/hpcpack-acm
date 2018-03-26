@@ -52,7 +52,7 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
 
   nodeClass(node): string {
     let res;
-    if (!node.value) {
+    if (isNaN(node.value)) {
       return;
     }
 
@@ -69,7 +69,7 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
   }
 
   nodeTip(node): string {
-    return `${node.id} : `.concat(node.value ? `${node.value} %` : 'offline');
+    return `${node.id} : `.concat(isNaN(node.value) ? 'offline' : `${node.value} %`);
   }
 
   clickNode(node): void {
