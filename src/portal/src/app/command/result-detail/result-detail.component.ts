@@ -100,7 +100,8 @@ export class ResultDetailComponent implements OnInit {
       return true;
     });
     this.dataSource.data = res;
-    this.selectNode(res[0]); //TODO: select res[0] only when filter changes!
+    if (!this.selectedNode || res.findIndex((e) => e.name == this.selectedNode.name) < 0)
+      this.selectNode(res[0]);
   }
 
   selectNode(node) {
