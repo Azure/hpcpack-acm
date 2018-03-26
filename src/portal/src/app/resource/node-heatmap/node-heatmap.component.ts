@@ -4,7 +4,6 @@ import { ApiService } from '../../services/api.service';
 import { Observable } from 'rxjs';
 import { TimerObservable } from 'rxjs/observable/TimerObservable';
 import 'rxjs/add/operator/takeWhile';
-import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'resource-node-heatmap',
@@ -45,6 +44,10 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
       })
   }
 
+  categoryCtrl(): void {
+    this.nodes = [];
+  }
+
   nodeClass(node): string {
     let res;
     if (!node.value) {
@@ -53,9 +56,11 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
 
     if (node.value < 5) {
       res = 'low';
-    } else if (node.value < 10) {
+    }
+    else if (node.value < 10) {
       res = 'median';
-    } else {
+    }
+    else {
       res = 'high';
     }
     return res;
@@ -69,7 +74,7 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
     this.router.navigate(['..', node.id], { relativeTo: this.route })
   }
 
-  ngOnDestroy(){
+  ngOnDestroy() {
     this.alive = false;
   }
 }
