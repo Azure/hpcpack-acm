@@ -285,5 +285,4 @@ export class Loop {
   static isStopped(looper: object): boolean {
     return (looper as any).ended;
   }
-
 }

@@ -45,10 +45,6 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
       })
   }
 
-  onCategoryChange(): void {
-    this.nodes = [];
-  }
-
   nodeClass(node): string {
     let res;
     if (!node.value) {
