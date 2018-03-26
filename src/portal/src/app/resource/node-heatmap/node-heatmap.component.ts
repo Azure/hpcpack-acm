@@ -31,7 +31,6 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.api.heatmap.getCategories().subscribe(categories => {
       this.categories = categories;
-      console.log(categories);
     })
 
     TimerObservable.create(0, this.interval)
@@ -44,6 +43,10 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
             this.nodes = data.results;
           });
       })
+  }
+
+  onCategoryChange(): void {
+    this.nodes = [];
   }
 
   nodeClass(node): string {
@@ -67,7 +70,7 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
   }
 
   clickNode(node): void {
-    this.router.navigate(['..', node.nodeName], { relativeTo: this.route })
+    this.router.navigate(['..', node.id], { relativeTo: this.route })
   }
 
   ngOnDestroy(){

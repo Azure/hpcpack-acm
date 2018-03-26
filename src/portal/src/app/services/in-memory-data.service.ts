@@ -373,12 +373,11 @@ export class InMemoryDataService implements InMemoryDbService {
       randomNodeInfo["values"]["node" + i] = {};
       randomNodeInfo["values"]["node" + i]["_Total"] = this.generateRandomResourceUsage();
     }
-    console.log(randomNodeInfo);
     return randomNodeInfo;
   }
 
   generateHeatmapCategories() {
-    return ["cpu"];
+    return ["cpu", "memory"];
   }
   //End of heatmap
 

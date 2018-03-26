@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { ErrorObservable } from 'rxjs/observable/ErrorObservable';
 import { of } from 'rxjs/observable/of';
 import { catchError, map } from 'rxjs/operators';
+import 'rxjs/add/operator/first';
 import { environment as env } from '../../environments/environment';
 import { Node } from '../models/node';
 import { CommandResult } from '../models/command-result';
