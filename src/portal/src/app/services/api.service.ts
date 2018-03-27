@@ -52,6 +52,8 @@ export class NodeApi extends Resource<Node> {
   }
 
   protected normalize(node: any): Node {
+    if (node.nodeInfo)
+      node = node.nodeInfo;
     return {
       id: node.name,
       name: node.name,
