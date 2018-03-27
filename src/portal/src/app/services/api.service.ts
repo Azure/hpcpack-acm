@@ -19,16 +19,12 @@ abstract class Resource<T> {
 
   protected abstract get url(): string;
 
-  //TODO: return a new one instead of modifying in place.
-  protected normalize(e: T): void { }
+  protected normalize(e: any): T {}
 
   getAll(): Observable<T[]> {
     return this.http.get<T[]>(this.url)
       .pipe(
-        map(array => {
-          array.forEach(e => this.normalize(e));
-          return array;
-        }),
+        map(array => array.map(e => this.normalize(e))),
         catchError((error: any): Observable<T[]> => {
           console.error(error);
           return new ErrorObservable(error);
@@ -39,10 +35,7 @@ abstract class Resource<T> {
   get(id: string): Observable<T> {
     return this.http.get<T>(this.url + '/' + id)
       .pipe(
-        map(e => {
-          this.normalize(e);
-          return e;
-        }),
+        map(e => this.normalize(e)),
         catchError((error: any): Observable<T> => {
           console.error(error);
           return new ErrorObservable(error);
@@ -58,9 +51,16 @@ export class NodeApi extends Resource<Node> {
     return NodeApi.url;
   }
 
-  protected normalize(node: Node): void {
-    if (!node.id)
-      node.id = node.name;
+  protected normalize(node: any): Node {
+    if (node.nodeInfo)
+      node = node.nodeInfo;
+    return {
+      id: node.name,
+      name: node.name,
+      state: node.state,
+      health: node.health,
+      runningJobCount: node.runningJobCount,
+    };
   }
 }
 
@@ -79,7 +79,7 @@ export class CommandApi extends Resource<CommandResult> {
     return CommandApi.url;
   }
 
-  protected normalize(result: CommandResult): void {
+  protected normalize(result: any): CommandResult {
     result.state = result.state.toLowerCase();
     result.command = result['commandLine'];
     if (result['results']) {
@@ -94,6 +94,7 @@ export class CommandApi extends Resource<CommandResult> {
         };
       }).sort((a, b) => (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)));
     }
+    return result;
   }
 
   create(commandLine: string, targetNodes: string[]): any {
@@ -133,8 +134,10 @@ export class HeatmapApi extends Resource<any> {
       }
       else {
         result['results'].push({ 'id': key, 'value': result.values[key]._Total });
+
       }
     }
+    return result;
   }
 
   getCategories(): Observable<string[]> {
@@ -155,10 +158,7 @@ export class HeatmapApi extends Resource<any> {
     let url = this.url + '/values/' + category;
     return this.http.get<any>(url)
       .pipe(
-        map(e => {
-          this.normalize(e);
-          return e;
-        }),
+        map(e => this.normalize(e)),
         catchError((error: any): Observable<any> => {
           console.error(error);
           return new ErrorObservable(error);
@@ -172,10 +172,7 @@ export class HeatmapApi extends Resource<any> {
       .concatMap(() => {
         return this.http.get<any>(url)
           .pipe(
-            map(e => {
-              this.normalize(e);
-              return e;
-            }),
+            map(e => this.normalize(e)),
             catchError((error: any): Observable<any> => {
               console.error(error);
               return new ErrorObservable(error);

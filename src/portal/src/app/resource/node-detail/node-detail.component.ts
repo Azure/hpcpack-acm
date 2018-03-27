@@ -104,11 +104,11 @@ export class NodeDetailComponent implements AfterViewInit {
       let id = map.get('id');
       this.api.node.get(id).subscribe(node => {
         this.node = node;
-        this.nodeProperties = node.properties;
-        this.makeCpuData(node.cpuUsage);
-        this.makeNetworkData(node.networkUsage);
-        this.makeDiskData(node.diskUsage);
-        this.events.data = node.events;
+        //this.nodeProperties = node.properties;
+        //this.makeCpuData(node.cpuUsage);
+        //this.makeNetworkData(node.networkUsage);
+        //this.makeDiskData(node.diskUsage);
+        //this.events.data = node.events;
       });
     });
   }
