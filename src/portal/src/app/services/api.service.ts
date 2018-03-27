@@ -19,7 +19,7 @@ abstract class Resource<T> {
 
   protected abstract get url(): string;
 
-  protected normalize(e: any): T {}
+  protected normalize(e: any): T { return e as T; }
 
   getAll(): Observable<T[]> {
     return this.http.get<T[]>(this.url)
@@ -60,7 +60,7 @@ export class NodeApi extends Resource<Node> {
       state: node.state,
       health: node.health,
       runningJobCount: node.runningJobCount,
-    };
+    } as Node;
   }
 }
 
