@@ -15,12 +15,12 @@ import 'rxjs/add/operator/concatMap';
 abstract class Resource<T> {
   static baseUrl = env.apiBase;
 
-  constructor(protected http: HttpClient) {}
+  constructor(protected http: HttpClient) { }
 
   protected abstract get url(): string;
 
   //TODO: return a new one instead of modifying in place.
-  protected normalize(e: T): void {}
+  protected normalize(e: T): void { }
 
   getAll(): Observable<T[]> {
     return this.http.get<T[]>(this.url)
@@ -168,7 +168,7 @@ export class HeatmapApi extends Resource<any> {
 
   getMockData(category: string): Observable<any> {
     let url = this.url + '/values/' + category;
-    return this.http.post(env.apiBase + '/commands/resetdb', {clear: true})
+    return this.http.post(env.apiBase + '/commands/resetdb', { clear: true })
       .concatMap(() => {
         return this.http.get<any>(url)
           .pipe(
@@ -196,7 +196,7 @@ export class ApiService {
 
   private heatmapApi: HeatmapApi;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   get node(): NodeApi {
     if (!this.nodeApi) {
@@ -261,7 +261,7 @@ export class Loop {
             looper.ended = true;
             return;
           }
-          if (typeof(n) === 'object') {
+          if (typeof (n) === 'object') {
             looper.observable = n;
           }
           let delta = interval - elapse;

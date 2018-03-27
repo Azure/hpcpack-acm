@@ -1,4 +1,4 @@
 export class HeatmapNode {
-    id: string;
-    value: number;
+  id: string;
+  value: number;
 }

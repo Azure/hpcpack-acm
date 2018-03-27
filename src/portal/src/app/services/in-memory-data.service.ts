@@ -117,7 +117,7 @@ export class InMemoryDataService implements InMemoryDbService {
           memory: 14336,
           os: 'Microsoft Windows NT 6.2.9200.0',
           nodeGroup: isHead ? ['WCFBrokerNodes', 'HeadNodes', 'CompuateNodes'] : ['CompuateNodes'],
-          nodeTemplate: isHead ? 'HeadNode Template': 'Default ComputeNode Template',
+          nodeTemplate: isHead ? 'HeadNode Template' : 'Default ComputeNode Template',
           network: {
             mac: '00-0D-3A-A1-B2-17',
             ip: '10.0.0.' + index,
@@ -291,7 +291,7 @@ export class InMemoryDataService implements InMemoryDbService {
           return {
             destination: pname,
             ip: 'xxx.xxx.xxx.xxx',
-            result: 'success' ,
+            result: 'success',
             average: 0,
             best: 0,
             worst: 0,
