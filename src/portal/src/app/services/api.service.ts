@@ -126,18 +126,19 @@ export class HeatmapApi extends Resource<any> {
   }
 
   protected normalize(result: any): void {
-    result["results"] = new Array<HeatmapNode>();
-    for(let key in result.values) {
-      if(result.values[key]._Total == undefined) {
-        result["results"].push({"id": key, "value": NaN});
-      } else {
-        result["results"].push({"id": key, "value": result.values[key]._Total});
+    result['results'] = new Array<HeatmapNode>();
+    for (let key in result.values) {
+      if (result.values[key]._Total == undefined) {
+        result['results'].push({ 'id': key, 'value': NaN });
+      }
+      else {
+        result['results'].push({ 'id': key, 'value': result.values[key]._Total });
       }
     }
   }
 
   getCategories(): Observable<string[]> {
-    let url = this.url + "/categories";
+    let url = this.url + '/categories';
     return this.http.get<string[]>(url)
       .pipe(
         map(e => {
@@ -219,7 +220,7 @@ export class ApiService {
   }
 
   get heatmap(): HeatmapApi {
-    if(!this.heatmapApi) {
+    if (!this.heatmapApi) {
       this.heatmapApi = new HeatmapApi(this.http);
     }
     return this.heatmapApi;

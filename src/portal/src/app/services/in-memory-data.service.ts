@@ -7,9 +7,9 @@ export class InMemoryDataService implements InMemoryDbService {
     { url: NodeApi.url, coll: 'nodes' },
     { url: CommandApi.url, coll: 'commands' },
     { url: TestApi.url, coll: 'tests' },
-    { url: HeatmapApi.url + '/values/cpu', coll: 'heatmapNodes'},
-    { url: HeatmapApi.url + '/categories', coll: 'heatmapCategories'},
-    { url: env.apiBase + '/commands/resetdb', coll: 'resetdb'}
+    { url: HeatmapApi.url + '/values/cpu', coll: 'heatmapNodes' },
+    { url: HeatmapApi.url + '/categories', coll: 'heatmapCategories' },
+    { url: env.apiBase + '/commands/resetdb', coll: 'resetdb' }
   ];
 
   parseRequestUrl(url, utils) {
@@ -368,16 +368,16 @@ export class InMemoryDataService implements InMemoryDbService {
   generateRandomHeatmapNodes() {
     let totalNumber = 1000;
     let randomNodeInfo = {};
-    randomNodeInfo["values"] = {};
-    for(let i = 1; i <= totalNumber; i++) {
-      randomNodeInfo["values"]["node" + i] = {};
-      randomNodeInfo["values"]["node" + i]["_Total"] = this.generateRandomResourceUsage();
+    randomNodeInfo['values'] = {};
+    for (let i = 1; i <= totalNumber; i++) {
+      randomNodeInfo['values']['node' + i] = {};
+      randomNodeInfo['values']['node' + i]['_Total'] = this.generateRandomResourceUsage();
     }
     return randomNodeInfo;
   }
 
   generateHeatmapCategories() {
-    return ["cpu", "memory"];
+    return ['cpu', 'memory'];
   }
   //End of heatmap
 

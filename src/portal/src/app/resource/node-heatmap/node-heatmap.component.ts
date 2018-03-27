@@ -18,8 +18,8 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private api: ApiService,
-  ){
+    private api: ApiService
+  ) {
     this.interval = 3000;
     this.selectedCategory = "cpu";
   }
@@ -77,7 +77,7 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if(this.heatmapLoop) {
+    if (this.heatmapLoop) {
       Loop.stop(this.heatmapLoop);
     }
   }

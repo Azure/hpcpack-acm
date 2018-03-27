@@ -1,4 +1,4 @@
-export class HeatmapNode{
+export class HeatmapNode {
     id: string;
     value: number;
 }
