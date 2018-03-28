@@ -38,7 +38,7 @@ Open a "cmd" shell, and log in with your Docker account by
 
 Then cd into the portal project root(like ".../hpc-acm/src/portal") and execute:
 
-`docker run --rm -it -v %cd%:/opt/app -w /opt/app --name portal -p 4200:4200 teracy/angular-cli /bin/bash`
+`docker run --rm -it -v %cd%:/opt/app -w /opt/app --name portal -p 4200:4200 louirobert/angular-cli-with-chrome:1.0.0 /bin/bash`
 
 It mounts the current directory `%cd%` to `/opt/app` in the Docker container's system, sets `/opt/app` as the working dirand opens an interactive Bash shell inside the docker container. It also maps the port 4200 of the container to the host's 4200 port.
 
@@ -54,7 +54,7 @@ Then you got it!
 
 If you already had `npm install`, then you can start devlopment simply by an one line command from Windows "cmd" shell:
 
-`docker run --rm -v %cd%:/opt/app -w /opt/app --name portal -p 4200:4200 teracy/angular-cli /bin/bash -c "npm start"`
+`docker run --rm -v %cd%:/opt/app -w /opt/app --name portal -p 4200:4200 louirobert/angular-cli-with-chrome:1.0.0 /bin/bash -c "npm start"`
 
 Still, it has to be under the portal project root for `%cd%` to work.
 
@@ -63,3 +63,13 @@ After use, stop the container by
 `docker stop portal`
 
 Note that simply "Ctrl+C" doesn't stop a container(which can be observed by `docker container list`).
+
+To run unit test, you need to run the docker container as a non-privileged user dev and with a `--privileged` argument(it has something to do with the Chrome browser for test):
+
+`docker run --rm -it -v %cd%:/opt/app -w /opt/app --name portal2 --user dev --privileged louirobert/angular-cli-with-chrome:1.0.0 /bin/bash`
+
+Then execute:
+
+`npm test`
+
+in the container's shell.

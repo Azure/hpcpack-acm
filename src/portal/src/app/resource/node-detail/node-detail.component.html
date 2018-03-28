@@ -4,7 +4,7 @@
 </h2>
 <mat-tab-group [dynamicHeight]="true">
   <mat-tab label="Usage">
-    <div class="row">
+    <!-- div class="row">
       <div class="col-lg-6">
         <h3>CPU</h3>
         <chart type="line" [data]="cpuData" [options]="cpuOptions"></chart>
@@ -17,10 +17,10 @@
         <h3>Disk</h3>
         <chart type="line" [data]="diskData" [options]="diskOptions"></chart>
       </div>
-    </div>
+    </div -->
   </mat-tab>
   <mat-tab label="Events">
-    <mat-table #table [dataSource]="events">
+    <!-- mat-table #table [dataSource]="events">
       <ng-container matColumnDef="id">
         <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
         <mat-cell *matCellDef="let event">{{event.id}}</mat-cell>
@@ -53,13 +53,13 @@
 
       <mat-header-row *matHeaderRowDef="eventColumns"></mat-header-row>
       <mat-row *matRowDef="let event; columns: eventColumns;"></mat-row>
-    </mat-table>
+    </mat-table -->
   </mat-tab>
   <mat-tab label="Jobs">
   </mat-tab>
   <mat-tab label="Properties">
     <div class="row">
-      <div class="col-lg-6">
+      <!-- div class="col-lg-6">
         <h3>Basics</h3>
         <table>
           <tr>
@@ -100,7 +100,7 @@
             <td class="value">{{nodeProperties.network?.domain}}</td>
           </tr>
         </table>
-      </div>
+      </div -->
       <div class="col-lg-6">
         <h3>HPC Node</h3>
         <table>
@@ -112,14 +112,14 @@
             <td class="name">Health</td>
             <td class="value">{{node.health}}</td>
           </tr>
-          <tr>
+          <!-- tr>
             <td class="name">Groups</td>
             <td class="value">{{nodeProperties.nodeGroup?.join(', ')}}</td>
           </tr>
           <tr>
             <td class="name">Template</td>
             <td class="value">{{nodeProperties.nodeTemplate}}</td>
-          </tr>
+          </tr -->
         </table>
       </div>
     </div>

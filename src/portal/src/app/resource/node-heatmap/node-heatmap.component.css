@@ -23,3 +23,7 @@ nav {
 .tile.high {
   background-color: #878bfb;
 }
+
+.selectedCategory {
+  display: flex;
+}

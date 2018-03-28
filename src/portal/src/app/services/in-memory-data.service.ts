@@ -1,11 +1,15 @@
 import { InMemoryDbService } from 'angular-in-memory-web-api';
-import { NodeApi, CommandApi, TestApi } from './api.service';
+import { NodeApi, CommandApi, TestApi, HeatmapApi } from './api.service';
+import { environment as env } from '../../environments/environment';
 
 export class InMemoryDataService implements InMemoryDbService {
   urlMap = [
     { url: NodeApi.url, coll: 'nodes' },
     { url: CommandApi.url, coll: 'commands' },
     { url: TestApi.url, coll: 'tests' },
+    { url: HeatmapApi.url + '/values/cpu', coll: 'heatmapNodes' },
+    { url: HeatmapApi.url + '/categories', coll: 'heatmapCategories' },
+    { url: env.apiBase + '/commands/resetdb', coll: 'resetdb' }
   ];
 
   parseRequestUrl(url, utils) {
@@ -14,6 +18,9 @@ export class InMemoryDataService implements InMemoryDbService {
       return null;
 
     let parsed = utils.parseRequestUrl(url);
+    if (res.coll == 'resetdb') {
+      parsed.apiBase = 'commands';
+    }
     parsed.collectionName = res.coll;
     if (url.length != res.url.length) {
       let id = url.substring(res.url.length + 1); //+1 to skip "/"
@@ -110,7 +117,7 @@ export class InMemoryDataService implements InMemoryDbService {
           memory: 14336,
           os: 'Microsoft Windows NT 6.2.9200.0',
           nodeGroup: isHead ? ['WCFBrokerNodes', 'HeadNodes', 'CompuateNodes'] : ['CompuateNodes'],
-          nodeTemplate: isHead ? 'HeadNode Template': 'Default ComputeNode Template',
+          nodeTemplate: isHead ? 'HeadNode Template' : 'Default ComputeNode Template',
           network: {
             mac: '00-0D-3A-A1-B2-17',
             ip: '10.0.0.' + index,
@@ -284,7 +291,7 @@ export class InMemoryDataService implements InMemoryDbService {
           return {
             destination: pname,
             ip: 'xxx.xxx.xxx.xxx',
-            result: 'success' ,
+            result: 'success',
             average: 0,
             best: 0,
             worst: 0,
@@ -353,10 +360,37 @@ export class InMemoryDataService implements InMemoryDbService {
   }
   //End of tests
 
+  //Begin of heatmap
+  generateRandomResourceUsage() {
+    return (Math.random() * (100.0 - 0.0)).toFixed(2);
+  }
+
+  generateRandomHeatmapNodes() {
+    let totalNumber = 1000;
+    let randomNodeInfo = {};
+    randomNodeInfo['values'] = {};
+    for (let i = 1; i <= totalNumber; i++) {
+      randomNodeInfo['values']['node' + i] = {};
+      randomNodeInfo['values']['node' + i]['_Total'] = this.generateRandomResourceUsage();
+    }
+    return randomNodeInfo;
+  }
+
+  generateHeatmapCategories() {
+    return ['cpu', 'memory'];
+  }
+  //End of heatmap
+
   createDb() {
+    let ts = new Date().getTime();
     let nodes = this.generateNodes();
     let commands = this.generateCommands();
     let tests = this.generateTests();
-    return { nodes, commands, tests };
+    let heatmapNodes = this.generateRandomHeatmapNodes();
+    let heatmapCategories = this.generateHeatmapCategories();
+    let delta = (new Date().getTime() - ts) / 1000;
+    console.log("createDb: " + delta);
+
+    return { nodes, commands, tests, heatmapNodes, heatmapCategories };
   }
 }

@@ -38,6 +38,8 @@ export class ResultDetailComponent implements OnInit {
 
   private errorMsg: string;
 
+  private nodeOutputs = {};
+
   constructor(
     private route: ActivatedRoute,
     private api: ApiService,
@@ -45,6 +47,7 @@ export class ResultDetailComponent implements OnInit {
 
   ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
+      this.nodeOutputs = {};
       this.id = map.get('id');
       this.updateResult(this.id);
     });
@@ -70,7 +73,7 @@ export class ResultDetailComponent implements OnInit {
           }
           this.filter();
           let state = this.setResultState();
-          return !(state == 'finished' || state == 'failed');
+          return !this.isOver;
         },
         error: (err) => {
           this.errorMsg = err;
@@ -121,7 +124,11 @@ export class ResultDetailComponent implements OnInit {
     if (this.nodeLoop) {
       Loop.stop(this.nodeLoop);
     }
-    if (node.end) {
+    let output = this.nodeOutputs[node.name];
+    if (!output) {
+      output = this.nodeOutputs[node.name] = { content: '', next: 0 };
+    }
+    if (output.end) {
       return;
     }
     this.nodeLoop = Loop.start(
@@ -135,18 +142,26 @@ export class ResultDetailComponent implements OnInit {
             //End the loop by returning a false value.
             return;
           }
+          //let output = this.nodeOutputs[node.name];
           if (result.content) {
-            node.output += result.content;
+            output.content += result.content;
             setTimeout(() => this.scrollOutputToBottom(), 0);
           }
-          node.next = result.offset + result.size;
-          node.end = result.size == 0;
-          return node.end ? false : this.api.command.getOuput(id, node.key, node.next);
+          output.next = result.offset + result.size;
+          output.end = result.size == 0 && this.isOver;
+          return output.end ? false : this.api.command.getOuput(id, node.key, output.next);
         }
       },
       //interval(in ms):
       500
     );
+  }
+
+  get currentOutput(): string {
+    if (!this.selectedNode)
+      return '';
+    let output = this.nodeOutputs[this.selectedNode.name];
+    return output ? output.content : '';
   }
 
   scrollOutputToBottom(): void {
@@ -168,5 +183,10 @@ export class ResultDetailComponent implements OnInit {
       state = 'finished';
     this.result.state = state;
     return state;
+  }
+
+  get isOver(): boolean {
+    let state = this.result.state;
+    return state == 'finished' || state == 'failed';
   }
 }

@@ -9,24 +9,22 @@ import { environment as env } from '../../environments/environment';
 import { Node } from '../models/node';
 import { CommandResult } from '../models/command-result';
 import { TestResult } from '../models/test-result';
+import { HeatmapNode } from '../models/heatmap-node';
+import 'rxjs/add/operator/concatMap';
 
 abstract class Resource<T> {
   static baseUrl = env.apiBase;
 
-  constructor(protected http: HttpClient) {}
+  constructor(protected http: HttpClient) { }
 
   protected abstract get url(): string;
 
-  //TODO: return a new one instead of modifying in place.
-  protected normalize(e: T): void {}
+  protected normalize(e: any): T { return e as T; }
 
   getAll(): Observable<T[]> {
     return this.http.get<T[]>(this.url)
       .pipe(
-        map(array => {
-          array.forEach(e => this.normalize(e));
-          return array;
-        }),
+        map(array => array.map(e => this.normalize(e))),
         catchError((error: any): Observable<T[]> => {
           console.error(error);
           return new ErrorObservable(error);
@@ -37,10 +35,7 @@ abstract class Resource<T> {
   get(id: string): Observable<T> {
     return this.http.get<T>(this.url + '/' + id)
       .pipe(
-        map(e => {
-          this.normalize(e);
-          return e;
-        }),
+        map(e => this.normalize(e)),
         catchError((error: any): Observable<T> => {
           console.error(error);
           return new ErrorObservable(error);
@@ -56,9 +51,16 @@ export class NodeApi extends Resource<Node> {
     return NodeApi.url;
   }
 
-  protected normalize(node: Node): void {
-    if (!node.id)
-      node.id = node.name;
+  protected normalize(node: any): Node {
+    if (node.nodeInfo)
+      node = node.nodeInfo;
+    return {
+      id: node.name,
+      name: node.name,
+      state: node.state,
+      health: node.health,
+      runningJobCount: node.runningJobCount,
+    } as Node;
   }
 }
 
@@ -77,7 +79,7 @@ export class CommandApi extends Resource<CommandResult> {
     return CommandApi.url;
   }
 
-  protected normalize(result: CommandResult): void {
+  protected normalize(result: any): CommandResult {
     result.state = result.state.toLowerCase();
     result.command = result['commandLine'];
     if (result['results']) {
@@ -92,6 +94,7 @@ export class CommandApi extends Resource<CommandResult> {
         };
       }).sort((a, b) => (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)));
     }
+    return result;
   }
 
   create(commandLine: string, targetNodes: string[]): any {
@@ -116,6 +119,70 @@ export class CommandApi extends Resource<CommandResult> {
   }
 }
 
+export class HeatmapApi extends Resource<any> {
+  static url = `${Resource.baseUrl}/heatmap`;
+
+  protected get url(): string {
+    return HeatmapApi.url;
+  }
+
+  protected normalize(result: any): void {
+    result['results'] = new Array<HeatmapNode>();
+    for (let key in result.values) {
+      if (result.values[key]._Total == undefined) {
+        result['results'].push({ 'id': key, 'value': NaN });
+      }
+      else {
+        result['results'].push({ 'id': key, 'value': result.values[key]._Total });
+
+      }
+    }
+    return result;
+  }
+
+  getCategories(): Observable<string[]> {
+    let url = this.url + '/categories';
+    return this.http.get<string[]>(url)
+      .pipe(
+        map(e => {
+          return e;
+        }),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
+  }
+
+  get(category: string): Observable<any> {
+    let url = this.url + '/values/' + category;
+    return this.http.get<any>(url)
+      .pipe(
+        map(e => this.normalize(e)),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
+  }
+
+  getMockData(category: string): Observable<any> {
+    let url = this.url + '/values/' + category;
+    return this.http.post(env.apiBase + '/commands/resetdb', { clear: true })
+      .concatMap(() => {
+        return this.http.get<any>(url)
+          .pipe(
+            map(e => this.normalize(e)),
+            catchError((error: any): Observable<any> => {
+              console.error(error);
+              return new ErrorObservable(error);
+            })
+          )
+      });
+  }
+
+}
+
 @Injectable()
 export class ApiService {
   private nodeApi: NodeApi;
@@ -124,7 +191,9 @@ export class ApiService {
 
   private commandApi: CommandApi;
 
-  constructor(private http: HttpClient) {}
+  private heatmapApi: HeatmapApi;
+
+  constructor(private http: HttpClient) { }
 
   get node(): NodeApi {
     if (!this.nodeApi) {
@@ -145,6 +214,13 @@ export class ApiService {
       this.testApi = new TestApi(this.http);
     }
     return this.testApi;
+  }
+
+  get heatmap(): HeatmapApi {
+    if (!this.heatmapApi) {
+      this.heatmapApi = new HeatmapApi(this.http);
+    }
+    return this.heatmapApi;
   }
 }
 
@@ -182,7 +258,7 @@ export class Loop {
             looper.ended = true;
             return;
           }
-          if (typeof(n) === 'object') {
+          if (typeof (n) === 'object') {
             looper.observable = n;
           }
           let delta = interval - elapse;
