@@ -84,10 +84,10 @@
                                     CreateNoWindow = true,
                                     RedirectStandardOutput = true,
                                     RedirectStandardError = true,
-                                    RedirectStandardInput = true
+                                    RedirectStandardInput = true,
                                 };
 
-                                using (var process = Process.Start(psi))
+                                using (var process = new Process() { StartInfo = psi, EnableRaisingEvents = true })
                                 {
                                     try
                                     {
