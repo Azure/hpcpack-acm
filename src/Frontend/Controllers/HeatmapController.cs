@@ -58,7 +58,14 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                     if (r.Timestamp > DateTimeOffset.UtcNow - TimeSpan.FromSeconds(5.0)
                         && r.Properties.TryGetValue(category, out EntityProperty values))
                     {
-                        return (r.RowKey, JsonConvert.DeserializeObject<Dictionary<string, double?>>(values.StringValue));
+                        try
+                        {
+                            return (r.RowKey, JsonConvert.DeserializeObject<Dictionary<string, double?>>(values.StringValue));
+                        }
+                        catch (JsonReaderException)
+                        {
+                            return (r.RowKey, new Dictionary<string, double?>());
+                        }
                     }
                     else
                     {
