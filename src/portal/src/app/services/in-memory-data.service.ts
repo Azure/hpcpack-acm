@@ -1,5 +1,5 @@
 import { InMemoryDbService } from 'angular-in-memory-web-api';
-import { NodeApi, CommandApi, TestApi, HeatmapApi } from './api.service';
+import { NodeApi, CommandApi, TestApi, HeatmapApi, NodeHistoryApi } from './api.service';
 import { environment as env } from '../../environments/environment';
 
 export class InMemoryDataService implements InMemoryDbService {
@@ -9,7 +9,8 @@ export class InMemoryDataService implements InMemoryDbService {
     { url: TestApi.url, coll: 'tests' },
     { url: HeatmapApi.url + '/values/cpu', coll: 'heatmapNodes' },
     { url: HeatmapApi.url + '/categories', coll: 'heatmapCategories' },
-    { url: env.apiBase + '/commands/resetdb', coll: 'resetdb' }
+    { url: env.apiBase + '/commands/resetdb', coll: 'resetdb' },
+    { url: NodeHistoryApi.url, coll: 'nodeHistory' }
   ];
 
   parseRequestUrl(url, utils) {
@@ -88,7 +89,8 @@ export class InMemoryDataService implements InMemoryDbService {
   generateNames(num) {
     let a = [];
     for (let i = 1; i <= num; i++) {
-      let prefix = Math.random() > 0.9 ? 'HN' : 'WN';
+      // let prefix = Math.random() > 0.9 ? 'HN' : 'WN';
+      let prefix = i % 7 == 0 ? 'HN' : 'WN';
       let name = prefix + i;
       a.push(name);
     }
@@ -104,7 +106,7 @@ export class InMemoryDataService implements InMemoryDbService {
       let health = this.randomHealth();
       let isHead = name.indexOf('HN') == 0;
       let res = {
-        id: index,
+        id: name,
         name: name,
         state: state,
         health: health,
@@ -127,6 +129,9 @@ export class InMemoryDataService implements InMemoryDbService {
           }
         },
         events: [],
+        history: {
+          data: this.generateRandomHistoryData()
+        }
       };
       if (health == 'warning') {
         res.events = [
@@ -365,15 +370,19 @@ export class InMemoryDataService implements InMemoryDbService {
     return (Math.random() * (100.0 - 0.0)).toFixed(2);
   }
 
-  generateRandomHeatmapNodes() {
-    let totalNumber = 1000;
-    let randomNodeInfo = {};
-    randomNodeInfo['values'] = {};
-    for (let i = 1; i <= totalNumber; i++) {
-      randomNodeInfo['values']['node' + i] = {};
-      randomNodeInfo['values']['node' + i]['_Total'] = this.generateRandomResourceUsage();
+  generateRandomHeatmapNodes(randomNodes) {
+    // let totalNumber = 1000;
+    // let names = this.generateNames(totalNumber);
+    let nodes_size = randomNodes.length;
+    let heatmapNodes = {};
+
+    heatmapNodes['values'] = {};
+    for (let i = 0; i < nodes_size; i++) {
+      let name = randomNodes[i].name;
+      heatmapNodes['values'][name] = {};
+      heatmapNodes['values'][name]['_Total'] = this.generateRandomResourceUsage();
     }
-    return randomNodeInfo;
+    return heatmapNodes;
   }
 
   generateHeatmapCategories() {
@@ -381,13 +390,44 @@ export class InMemoryDataService implements InMemoryDbService {
   }
   //End of heatmap
 
+  //Begin of node history
+  generateRandomNodeHistory() {
+    return {
+      history: {
+        data: this.generateRandomHistoryData()
+      }
+    }
+  }
+
+  generateRandomHistoryData() {
+    let history = {};
+    for (let i = 0; i < 5; i++) {
+      let now = new Date(new Date().getTime() - i * 1000);
+      let date_key = now.toString();
+
+      history[date_key] = [];
+      history[date_key].push({
+        category: 'cpu',
+        instanceValues: {
+          _Total: this.generateRandomResourceUsage()
+        }
+      });
+
+    }
+    return history;
+  }
+  //End of node history
+
   createDb() {
     let ts = new Date().getTime();
     let nodes = this.generateNodes();
     let commands = this.generateCommands();
     let tests = this.generateTests();
-    let heatmapNodes = this.generateRandomHeatmapNodes();
+    let heatmapNodes = this.generateRandomHeatmapNodes(nodes);
+
     let heatmapCategories = this.generateHeatmapCategories();
+    // let nodeHistory = this.generateRandomNodeHistory();
+
     let delta = (new Date().getTime() - ts) / 1000;
     console.log("createDb: " + delta);
 

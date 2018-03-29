@@ -32,7 +32,7 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
     this.heatmapLoop = Loop.start(
       //observable
       //If you want to emulate the get operation, please call the in-memory web api function below.
-      //this.api.heatmapInfo.getMockData(this.selectedCategory)
+      //this.api.heatmap.getMockData(this.selectedCategory),
       this.api.heatmap.get(this.selectedCategory),
       //observer
       {

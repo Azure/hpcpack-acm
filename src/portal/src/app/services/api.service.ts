@@ -64,6 +64,40 @@ export class NodeApi extends Resource<Node> {
   }
 }
 
+export class NodeHistoryApi extends Resource<any> {
+  static url = `${Resource.baseUrl}/nodes`;
+
+  protected get url(): string {
+    return NodeHistoryApi.url;
+  }
+
+  getMockData(id: string): Observable<any> {
+    const url = `${Resource.baseUrl}/nodes/${id}`;
+    return this.http.post(env.apiBase + '/commands/resetdb', { clear: true })
+      .concatMap(() => {
+        return this.http.get<any>(url)
+          .pipe(
+            map(e => this.normalize(e)),
+            catchError((error: any): Observable<any> => {
+              console.error(error);
+              return new ErrorObservable(error);
+            })
+          )
+      });
+  }
+
+  protected normalize(node: any): any {
+    let historyData = [];
+
+    if (node.history.data) {
+      for (let key in node.history.data) {
+        historyData.push({ label: key, data: node.history.data[key] });
+      }
+    }
+    return historyData;
+  }
+}
+
 export class TestApi extends Resource<TestResult> {
   static url = `${Resource.baseUrl}/diagnostics/jobs`;
 
@@ -187,6 +221,8 @@ export class HeatmapApi extends Resource<any> {
 export class ApiService {
   private nodeApi: NodeApi;
 
+  private nodeHistoryApi: NodeHistoryApi;
+
   private testApi: TestApi;
 
   private commandApi: CommandApi;
@@ -200,6 +236,13 @@ export class ApiService {
       this.nodeApi = new NodeApi(this.http);
     }
     return this.nodeApi;
+  }
+
+  get nodeHistory(): NodeHistoryApi {
+    if (!this.nodeHistoryApi) {
+      this.nodeHistoryApi = new NodeHistoryApi(this.http);
+    }
+    return this.nodeHistoryApi;
   }
 
   get command(): CommandApi {
