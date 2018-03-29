@@ -91,6 +91,7 @@
                                 {
                                     try
                                     {
+                                        process.Start();
                                         var output = await process.StandardOutput.ReadToEndAsync();
                                         var error = await process.StandardError.ReadToEndAsync();
                                         return (s.Item1, string.IsNullOrEmpty(error) ? output : toErrorJson(error));
