@@ -107,9 +107,13 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
 
   private labels: string[];
 
-  private cpuTotal: number[];
+  private cpuCoresName = [];
 
-  private hasCpuData: boolean;
+  // private cpuUsage = [];
+
+  // private colors = ['#3e95cd', '#8e5ea2', '#3cba9f', '#e8c3b9', '#c45850', '#FFA07A', '#DB7093', '#FFA500', '#E6E6FA', '#8FBC8B', '#E0FFFF', '#B0C4DE', '#FFDEAD', '#BC8F8F',
+  //   '#A0522D', '#D3D3D3', '#778899', '#F4A460', '#ADD8E6', '#F0E68C'];
+
 
   constructor(
     private api: ApiService,
@@ -117,8 +121,6 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
   ) {
     this.interval = 10000;
     this.labels = [];
-    this.cpuTotal = [];
-    this.hasCpuData = false;
   }
 
   ngAfterViewInit() {
@@ -140,19 +142,15 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
         {
           next: (history) => {
             this.labels = this.makeLabels(history);
-            this.cpuTotal = this.makeCpuTotalData(history);
-            this.cpuData = { labels: this.labels, datasets: [{ data: this.cpuTotal, borderColor: '#215ebb' }] };
+            let cpuTotal = this.makeCpuTotalData(history);
+            // this.makeCpuUsageData(history);
+            this.cpuData = { labels: this.labels, datasets: [{ label: '_Total', data: cpuTotal, borderColor: '#215ebb' }] };
+            // this.cpuData = { labels: this.labels, datasets: this.cpuUsage };
             return true;
           }
         },
         this.interval
       );
-
-      // this.api.nodeHistory.get(id).subscribe(history => {
-      //   this.makeCpuTotalData(history);
-      //   console.log(this.cpuData);
-      // })
-
     });
   }
 
@@ -207,16 +205,67 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
     //get cpu data in the format of array
     //[v1, v2, v3, ...]
     cpuHistory.forEach(h => {
-      if (h.instanceValues._Total) {
-        cpuTotal.push(h.instanceValues._Total);
+      if (h.instanceValues._Total == undefined) {
+        cpuTotal.push(NaN);
       }
       else {
-        cpuTotal.push(NaN);
+        cpuTotal.push(h.instanceValues._Total);
       }
     });
 
     return cpuTotal;
   }
+
+ /* get every cores' resource usage
+  makeCpuUsageData(history): any {
+    let cpuHistory = [];
+
+
+    //sort history data by time
+    history.sort((a, b) => {
+      return (new Date(a.label)).getTime() - (new Date(b.label)).getTime();
+    });
+
+    //select recent cpu history data from all categories
+    //[{ category: 'cpu', instanceValues:{_Total: xxx, _1: xxx, ...} }]
+    history.forEach(h => {
+      cpuHistory = cpuHistory.concat(
+        h.data.filter(v => {
+          return v.category == 'cpu';
+        })
+      );
+    });
+
+    if (cpuHistory[0].instanceValues && this.cpuCoresName.length == 0) {
+      this.cpuCoresName = Object.keys(cpuHistory[0].instanceValues);
+    }
+
+    for (let i = 0; i < this.cpuCoresName.length; i++) {
+      if (this.cpuUsage.length !== this.cpuCoresName.length) {
+        this.cpuUsage.push({ label: this.cpuCoresName[i], data: [], borderColor: this.colors[i] });
+      }
+      else {
+        if (this.cpuUsage[i] !== undefined) {
+          this.cpuUsage[i]['data'] = [];
+        }
+      }
+    }
+
+    cpuHistory.forEach(h => {
+      for (let key in h.instanceValues) {
+        let usageIndex = this.cpuUsage.findIndex((ele) => {
+          return ele.label == key;
+        });
+        if (this.cpuUsage[usageIndex] !== undefined) {
+          this.cpuUsage[usageIndex].data.push(h.instanceValues[key]);
+        }
+      }
+    });
+
+    console.log(this.cpuUsage);
+    // return cpuUsage;
+  }
+  */
 
   // makeNetworkData(usage): void {
   //   let labels = this.makeLabels(usage);
