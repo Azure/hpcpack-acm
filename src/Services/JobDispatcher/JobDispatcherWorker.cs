@@ -58,6 +58,7 @@
                         await q.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(internalJob)), null, null, null, null, token);
                     }));
 
+                    entity.PutObject(job);
                     result = await this.jobTable.ExecuteAsync(TableOperation.Replace(entity), null, null, token);
 
                     this.logger.LogInformation("Dispatched job, update job result code {0}", result.HttpStatusCode);
