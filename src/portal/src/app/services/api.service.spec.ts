@@ -1,6 +1,29 @@
-import { Loop } from './api.service';
+import { ApiService, Loop } from './api.service';
 import { of } from 'rxjs/observable/of';
 import { _throw } from 'rxjs/observable/throw';
+
+fdescribe('ApiService', () => {
+  let apiService;
+
+  beforeEach(() => {
+    apiService = new ApiService(null);
+  });
+
+  it('should get node', () => {
+    let res = apiService.node;
+    expect(typeof res).toBe('object');
+  });
+
+  it('should get command', () => {
+    let res = apiService.command;
+    expect(typeof res).toBe('object');
+  });
+
+  it('should get heatmap', () => {
+    let res = apiService.heatmap;
+    expect(typeof res).toBe('object');
+  });
+})
 
 fdescribe('Loop', () => {
   it('should call next once and stop', () => {
