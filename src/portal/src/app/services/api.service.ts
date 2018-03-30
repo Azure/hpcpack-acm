@@ -141,7 +141,7 @@ export class CommandApi extends Resource<CommandResult> {
       );
   }
 
-  getOuput(id, key, next) {
+  getOutput(id, key, next) {
     let url = `${Resource.baseUrl}/taskoutput/getpage/${id}/${key}?offset=${next}`;
     return this.http.get<any>(url)
       .pipe(

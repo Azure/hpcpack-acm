@@ -1,4 +1,4 @@
-import { Resource, ApiService, Loop } from './api.service';
+import { Resource, CommandApi, ApiService, Loop } from './api.service';
 import { of } from 'rxjs/observable/of';
 import { _throw } from 'rxjs/observable/throw';
 
@@ -26,13 +26,35 @@ fdescribe('Resource', () => {
   it('should get', () => {
     let value = 1;
     httpSpy.get.and.returnValue(of(value));
-    resource.get('id').subscribe(res => expect(res).toEqual(value));
+    resource.get('id').subscribe(res => expect(res).toBe(value));
   });
 
   it('should normalize', () => {
     httpSpy.get.and.returnValue(of(1));
     spyOn(resource, 'normalize').and.returnValue(2);
-    resource.get('id').subscribe(res => expect(res).toEqual(2));
+    resource.get('id').subscribe(res => expect(res).toBe(2));
+  });
+});
+
+fdescribe('CommandApi', () => {
+  let httpSpy;
+  let resource;
+
+  beforeEach(() => {
+    httpSpy = jasmine.createSpyObj('HttpClient', ['get', 'post']);
+    resource = new CommandApi(httpSpy);
+  });
+
+  it('should create', () => {
+    let value = 1;
+    httpSpy.post.and.returnValue(of(value));
+    resource.create('a command', []).subscribe(res => expect(res).toBe(value));
+  });
+
+  it('should get output', () => {
+    let value = 1;
+    httpSpy.get.and.returnValue(of(value));
+    resource.getOutput('id', 'key', 0).subscribe(res => expect(res).toBe(value));
   });
 });
 

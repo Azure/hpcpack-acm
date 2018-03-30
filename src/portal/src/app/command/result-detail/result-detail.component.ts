@@ -133,7 +133,7 @@ export class ResultDetailComponent implements OnInit {
     }
     this.nodeLoop = Loop.start(
       //observable:
-      this.api.command.getOuput(id, node.key, node.next),
+      this.api.command.getOutput(id, node.key, node.next),
       //observer:
       {
         next: (result) => {
@@ -149,7 +149,7 @@ export class ResultDetailComponent implements OnInit {
           }
           output.next = result.offset + result.size;
           output.end = result.size == 0 && this.isOver;
-          return output.end ? false : this.api.command.getOuput(id, node.key, output.next);
+          return output.end ? false : this.api.command.getOutput(id, node.key, output.next);
         }
       },
       //interval(in ms):
