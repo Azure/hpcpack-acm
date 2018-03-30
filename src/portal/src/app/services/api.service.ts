@@ -12,7 +12,7 @@ import { TestResult } from '../models/test-result';
 import { HeatmapNode } from '../models/heatmap-node';
 import 'rxjs/add/operator/concatMap';
 
-abstract class Resource<T> {
+export abstract class Resource<T> {
   static baseUrl = env.apiBase;
 
   constructor(protected http: HttpClient) { }

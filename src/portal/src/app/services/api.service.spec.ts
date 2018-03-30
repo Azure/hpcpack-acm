@@ -1,6 +1,40 @@
-import { ApiService, Loop } from './api.service';
+import { Resource, ApiService, Loop } from './api.service';
 import { of } from 'rxjs/observable/of';
 import { _throw } from 'rxjs/observable/throw';
+
+fdescribe('Resource', () => {
+  class TestResource extends Resource<any> {
+    protected get url(): string {
+      return '';
+    }
+  }
+
+  let httpSpy;
+  let resource;
+
+  beforeEach(() => {
+    httpSpy = jasmine.createSpyObj('HttpClient', ['get']);
+    resource = new TestResource(httpSpy);
+  });
+
+  it('should get all', () => {
+    let value = [1, 2, 3];
+    httpSpy.get.and.returnValue(of(value));
+    resource.getAll().subscribe(res => expect(res).toEqual(value));
+  });
+
+  it('should get', () => {
+    let value = 1;
+    httpSpy.get.and.returnValue(of(value));
+    resource.get('id').subscribe(res => expect(res).toEqual(value));
+  });
+
+  it('should normalize', () => {
+    httpSpy.get.and.returnValue(of(1));
+    spyOn(resource, 'normalize').and.returnValue(2);
+    resource.get('id').subscribe(res => expect(res).toEqual(2));
+  });
+});
 
 fdescribe('ApiService', () => {
   let apiService;
@@ -23,7 +57,7 @@ fdescribe('ApiService', () => {
     let res = apiService.heatmap;
     expect(typeof res).toBe('object');
   });
-})
+});
 
 fdescribe('Loop', () => {
   it('should call next once and stop', () => {
