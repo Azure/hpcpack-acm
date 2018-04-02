@@ -1,14 +1,18 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component } from '@angular/core';
 
 import { CommandComponent } from './command.component';
 
-describe('CommandComponent', () => {
+@Component({ selector: 'router-outlet', template: '' })
+class RouterOutletStubComponent {}
+
+fdescribe('CommandComponent', () => {
   let component: CommandComponent;
   let fixture: ComponentFixture<CommandComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ CommandComponent ]
+      declarations: [ CommandComponent, RouterOutletStubComponent ],
     })
     .compileComponents();
   }));
