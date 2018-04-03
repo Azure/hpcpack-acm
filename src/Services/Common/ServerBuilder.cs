@@ -2,94 +2,140 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
     using Microsoft.HpcAcm.Common.Utilities;
 
     public class ServerBuilder : IDisposable
     {
+        #region Constructor
+
+        private readonly string[] args;
+
+        public ServerBuilder(string[] args)
+        {
+            this.args = args;
+        }
+
+        #endregion
+
+        #region Shared Properties
+
+        public CloudUtilities Utilities { get; private set; }
+
+        #endregion
+
+        #region App config
+
+        public ServerBuilder ConfigureAppConfiguration(Action<IConfigurationBuilder> configMethod)
+        {
+            this.appConfigMethod = configMethod;
+            return this;
+        }
+
+        private Action<IConfigurationBuilder> appConfigMethod;
+
+        #endregion
+
+        #region Build
+
         private CancellationTokenSource cts = new CancellationTokenSource();
 
         public CancellationToken CancelToken { get => this.cts.Token; }
 
-        public void BuildAndStart()
-        {
-            Task.Run(async () =>
-            {
-                try
-                {
-                    await this.BuildAsync();
-                    await this.server.RunAsync(this.cts.Token);
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine(ex);
-                    Environment.Exit(-1);
-                }
-            });
-
-        }
-        public void Start()
-        {
-            Task.Run(async () =>
-            {
-                try
-                {
-                    await this.server.RunAsync(this.cts.Token);
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine(ex);
-                    Environment.Exit(-1);
-                }
-            });
-        }
-
-        public async Task BuildAsync()
+        public async Task<Server> BuildAsync()
         {
             try
             {
                 var token = this.cts.Token;
-                this.appConfigMethod?.Invoke(this.configBuilder);
-                this.Configuration = this.configBuilder.Build();
-                this.loggerFactoryConfigMethod?.Invoke(this.Configuration, this.LoggerFactory);
-                this.Configuration[Constants.HpcHostNameEnv] = this.Configuration.GetValue<string>(Constants.HpcHostNameEnv, null) ?? Environment.MachineName.ToLowerInvariant();
+                var dict = new Dictionary<string, string>()
+                {
+                    { Constants.HpcHostNameEnv, Environment.MachineName.ToLowerInvariant() }
+                };
 
-                this.CloudOptions = this.cloudOptionMethod?.Invoke(this.Configuration);
-                this.Utilities = new CloudUtilities(this.CloudOptions);
+                var configBuilder = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddInMemoryCollection(dict)
+                    .AddJsonFile("appsettings.json", false, true)
+                    .AddEnvironmentVariables()
+                    .AddCommandLine(this.args);
+
+                this.appConfigMethod?.Invoke(configBuilder);
+
+                var configuration = configBuilder.Build();
+
+                this.services.AddSingleton<IConfiguration>(configuration);
+
+                this.LoggerFactory = new LoggerFactory()
+                    .AddConsole(configuration.GetSection("Logging").GetSection("Console"))
+                    .AddDebug(LogLevel.Debug);
+
+                this.loggerFactoryConfigMethod?.Invoke(configuration, this.LoggerFactory);
+
+                this.logger = this.LoggerFactory.CreateLogger<ServerBuilder>();
+                this.services.AddSingleton(this.LoggerFactory).AddLogging();
+
+                this.services.AddOptions();
+                this.services.Configure<CloudOptions>(configuration.GetSection("CloudOptions"));
+                this.services.Configure<ServerOptions>(configuration.GetSection("ServerOptions"));
+
+                this.services.AddSingleton<CloudUtilities>();
+
+                this.serviceCollectionConfigMethod?.Invoke(this.services, configuration, token);
+                this.services.AddSingleton<Server>();
+
+                var provider = this.services.BuildServiceProvider();
+
+                var server = provider.GetService<Server>();
+                server.Workers.ForEach(w =>
+                {
+                    if (w is ServerObject so)
+                    {
+                        so.Configuration = configuration;
+                        so.Logger = this.LoggerFactory.CreateLogger(w.GetType());
+                        so.CloudOptions = provider.GetService<IOptions<CloudOptions>>().Value;
+                        so.Utilities = provider.GetService<CloudUtilities>();
+                        so.ServerOptions = provider.GetService<IOptions<ServerOptions>>().Value;
+                    }
+
+                    w.InitializeAsync(token).Wait();
+                });
+
+                this.Utilities = provider.GetRequiredService<CloudUtilities>();
                 await this.Utilities.InitializeAsync(token);
 
-                this.source = await this.taskItemSourceMethod?.Invoke(this.Utilities, this.Configuration, this.LoggerFactory, token);
-                var worker = await this.workerMethod?.Invoke(this.Configuration, this.Utilities, this.LoggerFactory, token);
-                this.configWorkerMethod?.Invoke(worker);
-
-                this.server = new Server(this.source, worker, this.LoggerFactory, this.serverOptions);
+                return server;
             }
             catch (Exception ex)
             {
-                this.LoggerFactory?.CreateLogger<ServerBuilder>()?.LogError(ex, $"Error happened in {nameof(BuildAsync)}");
+                this.logger?.LogError(ex, $"Error happened in {nameof(BuildAsync)}");
                 throw;
             }
         }
-
-        private Server server;
 
         public void Stop()
         {
             this.cts?.Cancel();
         }
 
-        #region Server options
+        #endregion
 
-        public ServerOptions serverOptions { get; set; } = new ServerOptions();
-        private Action<IConfiguration, ServerOptions> serverOptionsConfigMethod;
+        #region Service collection
 
-        public ServerBuilder ConfigServerOptions(Action<IConfiguration, ServerOptions> configMethod)
+        private readonly ServiceCollection services = new ServiceCollection();
+
+        private Action<ServiceCollection, IConfiguration, CancellationToken> serviceCollectionConfigMethod;
+
+        public ServerBuilder ConfigServiceCollection(Action<ServiceCollection, IConfiguration, CancellationToken> configMethod)
         {
-            this.serverOptionsConfigMethod = configMethod;
+            this.serviceCollectionConfigMethod = configMethod;
             return this;
         }
 
@@ -97,7 +143,7 @@
 
         #region Logger factory
 
-        public ILoggerFactory LoggerFactory { get; set; } = new LoggerFactory();
+        public ILoggerFactory LoggerFactory { get; private set; }
         private Action<IConfiguration, ILoggerFactory> loggerFactoryConfigMethod;
 
         public ServerBuilder ConfigureLogging(Action<IConfiguration, ILoggerFactory> configMethod)
@@ -106,65 +152,7 @@
             return this;
         }
 
-        #endregion
-
-        #region Task item source
-        public ServerBuilder AddTaskItemSource(Func<CloudUtilities, IConfiguration, ILoggerFactory, CancellationToken, Task<TaskItemSource>> configMethod)
-        {
-            this.taskItemSourceMethod = configMethod;
-            return this;
-        }
-
-        private Func<CloudUtilities, IConfiguration, ILoggerFactory, CancellationToken, Task<TaskItemSource>> taskItemSourceMethod;
-        private TaskItemSource source;
-
-        #endregion
-
-        #region Worker
-        public ServerBuilder ConfigureWorker(Action<WorkerBase> configMethod)
-        {
-            this.configWorkerMethod = configMethod;
-            return this;
-        }
-
-        private Action<WorkerBase> configWorkerMethod;
-
-        #endregion
-
-        #region Worker
-        public ServerBuilder AddWorker(Func<IConfiguration, CloudUtilities, ILoggerFactory, CancellationToken, Task<WorkerBase>> configMethod)
-        {
-            this.workerMethod = configMethod;
-            return this;
-        }
-
-        private Func<IConfiguration, CloudUtilities, ILoggerFactory, CancellationToken, Task<WorkerBase>> workerMethod;
-
-        #endregion
-
-        #region App config
-        public ServerBuilder ConfigureAppConfiguration(Action<IConfigurationBuilder> configMethod)
-        {
-            this.appConfigMethod = configMethod;
-            return this;
-        }
-
-        private readonly IConfigurationBuilder configBuilder = new ConfigurationBuilder();
-        private Action<IConfigurationBuilder> appConfigMethod;
-        public IConfiguration Configuration { get; set; }
-
-        #endregion
-
-        #region cloud options
-        public ServerBuilder ConfigureCloudOptions(Func<IConfiguration, CloudOption> cloudOptionMethod)
-        {
-            this.cloudOptionMethod = cloudOptionMethod;
-            return this;
-        }
-
-        public CloudOption CloudOptions { get; set; }
-        public CloudUtilities Utilities { get; set; }
-        private Func<IConfiguration, CloudOption> cloudOptionMethod;
+        private ILogger<ServerBuilder> logger;
 
         #endregion
 

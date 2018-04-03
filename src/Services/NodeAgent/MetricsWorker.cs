@@ -1,6 +1,7 @@
 ﻿namespace Microsoft.HpcAcm.Services.NodeAgent
 {
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Options;
     using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
@@ -14,26 +15,26 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class MetricsWorker : WorkerBase
+    public class MetricsWorker : ServerObject, IWorker
     {
-        private readonly CloudUtilities utilities;
-        private readonly IConfiguration config;
-        private readonly CloudTable metricsTable;
-        private readonly CloudTable nodesTable;
-        private readonly ILogger logger;
+        private CloudTable metricsTable;
+        private CloudTable nodesTable;
+        private readonly MetricsWorkerOptions workerOptions;
 
-        public MetricsWorker(CloudUtilities utilities, IConfiguration config, CloudTable metricsTable, CloudTable nodesTable, ILoggerFactory loggerFactory)
+        public MetricsWorker(IOptions<MetricsWorkerOptions> options)
         {
-            this.utilities = utilities;
-            this.config = config;
-            this.metricsTable = metricsTable;
-            this.nodesTable = nodesTable;
-            this.logger = loggerFactory.CreateLogger<MetricsWorker>();
+            this.workerOptions = options.Value;
+        }
+
+        public async Task InitializeAsync(CancellationToken token)
+        {
+            this.metricsTable = await this.Utilities.GetOrCreateMetricsTableAsync(token);
+            this.nodesTable = await this.Utilities.GetOrCreateNodesTableAsync(token);
         }
 
         public async Task<IList<(string, string)>> GetMetricScriptsAsync(CancellationToken token)
         {
-            var partitionQuery = this.utilities.GetPartitionQueryString(this.utilities.MetricsCategoriesPartitionKey);
+            var partitionQuery = this.Utilities.GetPartitionQueryString(this.Utilities.MetricsCategoriesPartitionKey);
 
             var q = new TableQuery<JsonTableEntity>().Where(partitionQuery);
 
@@ -53,18 +54,18 @@
             return categories;
         }
 
-        public override async Task<bool> DoWorkAsync(TaskItem taskItem, CancellationToken token)
+        public async Task DoWorkAsync(CancellationToken token)
         {
             long currentMinute = 0;
             while (true)
             {
-                await Task.Delay(this.config.GetValue<int>("MetricInterval"), token);
+                await Task.Delay(TimeSpan.FromSeconds(this.workerOptions.MetricsIntervalSeconds), token);
 
                 try
                 {
-                    var nodeName = this.config.GetValue<string>(Constants.HpcHostNameEnv);
+                    var nodeName = this.ServerOptions.HostName;
 
-                    using (this.logger.BeginScope("do metrics loop on {0}", nodeName))
+                    using (this.Logger.BeginScope("do metrics loop on {0}", nodeName))
                     {
                         // TODO: different frequency
                         IList<(string, string)> metricScripts = await this.GetMetricScriptsAsync(token);
@@ -75,32 +76,10 @@
                         {
                             try
                             {
-                                this.logger.LogDebug("Collect metrics for {0}", s.Item1);
-                                var psi = new System.Diagnostics.ProcessStartInfo(
-                                    @"python",
-                                    $"-c \"{s.Item2.Replace("\"", "\\\"")}\"")
-                                {
-                                    UseShellExecute = false,
-                                    CreateNoWindow = true,
-                                    RedirectStandardOutput = true,
-                                    RedirectStandardError = true,
-                                    RedirectStandardInput = true,
-                                };
+                                this.Logger.LogDebug("Collect metrics for {0}", s.Item1);
 
-                                using (var process = new Process() { StartInfo = psi, EnableRaisingEvents = true })
-                                {
-                                    try
-                                    {
-                                        process.Start();
-                                        var output = await process.StandardOutput.ReadToEndAsync();
-                                        var error = await process.StandardError.ReadToEndAsync();
-                                        return (s.Item1, string.IsNullOrEmpty(error) ? output : toErrorJson(error));
-                                    }
-                                    finally
-                                    {
-                                        process.Kill();
-                                    }
-                                }
+                                var scriptOutput = await PythonExecutor.ExecuteAsync(s.Item2);
+                                return (s.Item1, string.IsNullOrEmpty(scriptOutput.Item2) ? scriptOutput.Item1 : toErrorJson(scriptOutput.Item2));
                             }
                             catch (Exception ex)
                             {
@@ -109,7 +88,7 @@
                         }));
 
                         DynamicTableEntity entity = new DynamicTableEntity(
-                            this.utilities.MetricsValuesPartitionKey,
+                            this.Utilities.MetricsValuesPartitionKey,
                             nodeName,
                             "*",
                             results.ToDictionary(
@@ -123,10 +102,10 @@
                             continue;
                         }
 
-                        var nodesPartitionKey = this.utilities.GetNodePartitionKey(nodeName);
+                        var nodesPartitionKey = this.Utilities.GetNodePartitionKey(nodeName);
                         var time = DateTimeOffset.UtcNow;
 
-                        var minuteHistoryKey = this.utilities.GetMinuteHistoryKey();
+                        var minuteHistoryKey = this.Utilities.GetMinuteHistoryKey();
 
                         result = await this.nodesTable.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(nodesPartitionKey, minuteHistoryKey), null, null, token);
 
@@ -152,8 +131,8 @@
                             currentMinute = minute;
 
                             // persist minute data
-                            var currentMetricsEntity = new JsonTableEntity(this.utilities.GetNodePartitionKey(nodeName),
-                                this.utilities.GetMinuteHistoryKey(currentMinute),
+                            var currentMetricsEntity = new JsonTableEntity(this.Utilities.GetNodePartitionKey(nodeName),
+                                this.Utilities.GetMinuteHistoryKey(currentMinute),
                                 currentMetrics);
 
                             result = await this.nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(currentMetricsEntity), null, null, token);
@@ -166,7 +145,7 @@
                 }
                 catch (Exception ex)
                 {
-                    this.logger.LogError(ex, "DoWorkAsync error.");
+                    this.Logger.LogError(ex, "DoWorkAsync error.");
                 }
             }
         }

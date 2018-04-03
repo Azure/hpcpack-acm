@@ -24,11 +24,11 @@ namespace Microsoft.HpcAcm.Common.Dto
         public JobState State { get; set; }
         public JobType Type { get; set; }
         public int Progress { get; set; }
-        public bool IsTaskExclusive { get; set; }
         public int RequeueCount { get; set; } = 0;
 
-        public IList<DiagnosticsTest> DiagnosticTests { get; set; }
+        public DiagnosticsTest DiagnosticTest { get; set; }
         public string CommandLine { get; set; }
         public string[] TargetNodes { get; set; }
+        public List<Event> Events { get; set; }
     }
 }

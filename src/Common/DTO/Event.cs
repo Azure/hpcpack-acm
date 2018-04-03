@@ -19,12 +19,12 @@ namespace Microsoft.HpcAcm.Common.Dto
 
     public class Event
     {
-        public string Content { get; private set; }
+        public string Content { get; set; }
 
-        public DateTime Time { get; private set; }
+        public DateTimeOffset Time { get; set; }
 
-        public EventType Type { get; private set; }
+        public EventType Type { get; set; }
 
-        public EventSource Source { get; private set; }
+        public EventSource Source { get; set; }
     }
 }

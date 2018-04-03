@@ -28,7 +28,7 @@
         public async Task<TaskOutputPage> GetLastPageAsync(int jobId, string taskResultKey, [FromQuery] int pageSize, CancellationToken token)
         {
             var result = new TaskOutputPage() { Offset = 0, Size = 0 };
-            var blob = this.utilities.GetTaskOutputBlob(jobId, taskResultKey);
+            var blob = this.utilities.GetTaskOutputBlob(JobType.ClusRun.ToString().ToLowerInvariant(), jobId, taskResultKey);
 
             if (pageSize > 1024 || !await blob.ExistsAsync(null, null, token))
             {
@@ -67,7 +67,7 @@
         {
             if (offset < 0) offset = 0;
             var result = new TaskOutputPage() { Offset = offset, Size = 0 };
-            var blob = this.utilities.GetTaskOutputBlob(jobId, taskResultKey);
+            var blob = this.utilities.GetTaskOutputBlob(JobType.ClusRun.ToString().ToLowerInvariant(), jobId, taskResultKey);
 
             if (pageSize <= 0) pageSize = 1024;
             if (pageSize > 1024 || !await blob.ExistsAsync(null, null, token))
@@ -97,7 +97,7 @@
         [HttpGet("download/{jobId}/{taskResultKey}")]
         public async Task<IActionResult> GetDownloadUriAsync(int jobId, string taskResultKey, CancellationToken token)
         {
-            var blob = this.utilities.GetTaskOutputBlob(jobId, taskResultKey);
+            var blob = this.utilities.GetTaskOutputBlob(JobType.ClusRun.ToString().ToLowerInvariant(), jobId, taskResultKey);
 
             if (!await blob.ExistsAsync(null, null, token))
             {

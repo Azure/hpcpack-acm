@@ -1,4 +1,4 @@
-﻿namespace Microsoft.HpcAcm.Services.JobDispatcher
+﻿namespace Microsoft.HpcAcm.Services.TaskDispatcher
 {
     using System;
     using System.IO;
@@ -35,10 +35,8 @@
         static ServerBuilder BuildServer(string[] args) => new ServerBuilder(args)
             .ConfigServiceCollection((svc, config, token) =>
             {
-                svc.Configure<JobDispatcherOptions>(config.GetSection(nameof(JobDispatcherOptions)));
-                svc.AddSingleton<IDispatcher, ClusrunJobDispatcher>();
-                svc.AddSingleton<IDispatcher, DiagnosticsJobDispatcher>();
-                svc.AddSingleton<IWorker, JobDispatcherWorker>();
+                svc.Configure<TaskDispatcherOptions>(config.GetSection(nameof(TaskDispatcherOptions)));
+                svc.AddSingleton<IWorker, TaskDispatcherWorker>();
             });
     }
 }

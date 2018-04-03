@@ -6,9 +6,8 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class TaskItem
+    public interface ITaskItemSource
     {
-        public virtual T GetMessage<T>() => default(T);
-        public virtual Task FinishAsync(CancellationToken token) => Task.CompletedTask;
+        Task<TaskItem> FetchTaskItemAsync(CancellationToken token);
     }
 }

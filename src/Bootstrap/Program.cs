@@ -15,6 +15,7 @@
             {
                 { "frontend", "/app/Frontend/Frontend.dll" },
                 { "jobdispatcher", "/app/JobDispatcher/JobDispatcher.dll" },
+                { "taskdispatcher", "/app/TaskDispatcher/TaskDispatcher.dll" },
                 { "nodeagent", "/app/NodeAgent/NodeAgent.dll" },
             };
 

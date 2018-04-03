@@ -1,0 +1,50 @@
+﻿namespace Microsoft.HpcAcm.Services.Common
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Microsoft.Extensions.Logging;
+
+    public abstract class TaskItemWorker : ServerObject, IWorker
+    {
+        protected TaskItemWorker(TaskItemSourceOptions taskItemSourceOptions)
+        {
+            this.TaskItemSourceOptions = taskItemSourceOptions;
+        }
+
+        protected ITaskItemSource Source { get; set; }
+        private TaskItemSourceOptions TaskItemSourceOptions { get; }
+
+        public virtual Task InitializeAsync(CancellationToken token)
+        {
+            if (this.Source is ServerObject so)
+            {
+                so.CopyFrom(this);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public async Task DoWorkAsync(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    var taskItem = await this.Source.FetchTaskItemAsync(token);
+
+                    await this.ProcessTaskItemAsync(taskItem, token);
+                }
+                catch (Exception ex)
+                {
+                    this.Logger.LogError(ex, $"Exception happened in {nameof(DoWorkAsync)}");
+                    await Task.Delay(TimeSpan.FromSeconds(this.TaskItemSourceOptions.FailureRetryIntervalSeconds), token);
+                }
+            }
+        }
+
+        public abstract Task ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token);
+    }
+}

@@ -9,11 +9,14 @@
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Utilities;
 
     public class Program
     {
+        protected Program() { }
+
         public static void Main(string[] args)
         {
             BuildWebHost(args).Run();
@@ -36,11 +39,8 @@
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    var option = context.Configuration.GetSection("CloudOption").Get<CloudOption>();
-                    services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(CloudOption), option));
-                    var utilities = new CloudUtilities(option);
-                    utilities.InitializeAsync(CancellationToken.None).GetAwaiter().GetResult();
-                    services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(CloudUtilities), utilities));
+                    services.Configure<CloudOptions>(context.Configuration.GetSection("CloudOptions"));
+                    services.AddSingleton<CloudUtilities>();
                 })
                 .UseUrls("http://*:80", "http://*:5000")
                 .UseStartup<Startup>()

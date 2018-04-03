@@ -18,17 +18,17 @@
 
         private readonly HttpClient client;
 
-        private readonly ILogger<NodeCommunicator> logger;
+        private readonly ILogger logger;
         private IConfiguration Configuration { get; }
-        public NodeCommunicator(ILoggerFactory log, IConfiguration config)
+        public NodeCommunicator(ILogger logger, IConfiguration config, NodeAgentWorkerOptions options)
         {
             this.Configuration = config;
-            this.logger = log.CreateLogger<NodeCommunicator>();
-            this.Options = this.Configuration.GetSection("NodeCommunicator").Get<NodeCommunicatorOptions>();
+            this.logger = logger;
+            this.Options = options;
             this.client = new HttpClient();
         }
 
-        public NodeCommunicatorOptions Options { get; }
+        public NodeAgentWorkerOptions Options { get; }
 
         public async Task StartJobAndTaskAsync(string nodeName, StartJobAndTaskArg arg,
             string userName, string password, ProcessStartInfo startInfo,

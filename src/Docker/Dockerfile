@@ -16,6 +16,7 @@ COPY Common/DTO/DTO.csproj Common/DTO/
 COPY Common/Utilities/Utilities.csproj Common/Utilities/
 COPY Services/Common/ServicesCommon.csproj Services/Common/
 COPY Services/JobDispatcher/JobDispatcher.csproj Services/JobDispatcher/
+COPY Services/TaskDispatcher/TaskDispatcher.csproj Services/TaskDispatcher/
 COPY Services/NodeAgent/NodeAgent.csproj Services/NodeAgent/
 COPY Bootstrap/Bootstrap.csproj Bootstrap/
 RUN dotnet restore
@@ -26,6 +27,8 @@ WORKDIR /src/Bootstrap
 RUN dotnet publish -c Release -o /app/Bootstrap
 WORKDIR /src/Services/JobDispatcher
 RUN dotnet publish -c Release -o /app/JobDispatcher
+WORKDIR /src/Services/TaskDispatcher
+RUN dotnet publish -c Release -o /app/TaskDispatcher
 WORKDIR /src/Services/NodeAgent
 RUN dotnet publish -c Release -o /app/NodeAgent
 

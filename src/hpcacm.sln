@@ -28,6 +28,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bootstrap", "Bootstrap\Boot
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NodeAgent", "Services\NodeAgent\NodeAgent.csproj", "{A2B5A8EC-5512-476E-9B30-3870D1D0A09D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskDispatcher", "Services\TaskDispatcher\TaskDispatcher.csproj", "{F7322350-F0DF-4041-A70D-42B881644DBA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -62,6 +64,10 @@ Global
 		{A2B5A8EC-5512-476E-9B30-3870D1D0A09D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A2B5A8EC-5512-476E-9B30-3870D1D0A09D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A2B5A8EC-5512-476E-9B30-3870D1D0A09D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7322350-F0DF-4041-A70D-42B881644DBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7322350-F0DF-4041-A70D-42B881644DBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7322350-F0DF-4041-A70D-42B881644DBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7322350-F0DF-4041-A70D-42B881644DBA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -73,6 +79,7 @@ Global
 		{E633D796-C009-4201-A0FE-8264B3D27779} = {49669C57-4887-45A4-8C69-1ADA01C19970}
 		{2EF4016C-03FE-4D9F-9DB9-143200EB374F} = {49669C57-4887-45A4-8C69-1ADA01C19970}
 		{A2B5A8EC-5512-476E-9B30-3870D1D0A09D} = {643CDBA6-FEA8-44C2-96A3-856050BA128B}
+		{F7322350-F0DF-4041-A70D-42B881644DBA} = {643CDBA6-FEA8-44C2-96A3-856050BA128B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7205F4D9-7579-41B9-AA1A-29529107BA1D}

@@ -14,60 +14,88 @@
     using Newtonsoft.Json;
     using System.Linq;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Options;
 
-    internal class JobDispatcherWorker : WorkerBase
+    internal class JobDispatcherWorker : TaskItemWorker, IWorker
     {
-        private readonly ILogger logger;
-        private readonly CloudUtilities utilities;
-        private readonly CloudTable jobTable;
+        private readonly JobDispatcherOptions options;
+        private readonly Dictionary<JobType, IDispatcher> dispatchers;
 
-        public JobDispatcherWorker(IConfiguration config, ILoggerFactory loggerFactory, CloudTable jobTable, CloudUtilities utilities)
+        public JobDispatcherWorker(IOptions<JobDispatcherOptions> options, IEnumerable<IDispatcher> dispatchers) : base(options.Value)
         {
-            this.Configuration = config;
-            this.logger = loggerFactory.CreateLogger<JobDispatcherWorker>();
-            this.utilities = utilities;
-            this.jobTable = jobTable;
+            this.options = options.Value;
+            this.dispatchers = dispatchers.ToDictionary(d => d.RestrictedJobType);
         }
-        public IConfiguration Configuration { get; }
 
-        public override async Task<bool> DoWorkAsync(TaskItem taskItem, CancellationToken token)
+        private CloudTable jobsTable;
+
+        public override async Task InitializeAsync(CancellationToken token)
+        {
+            this.jobsTable = await this.Utilities.GetOrCreateJobsTableAsync(token);
+
+            this.Source = new QueueTaskItemSource(
+                await this.Utilities.GetOrCreateJobDispatchQueueAsync(token),
+                TimeSpan.FromSeconds(this.options.VisibleTimeoutSeconds),
+                TimeSpan.FromSeconds(this.options.RetryIntervalSeconds));
+
+            this.dispatchers.Values.OfType<ServerObject>().ToList().ForEach(so => so.CopyFrom(this));
+
+            await base.InitializeAsync(token);
+        }
+
+        public override async Task ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
         {
             var message = taskItem.GetMessage<JobDispatchMessage>();
-            using (this.logger.BeginScope("Do work for JobDispatchMessage {0}", message.Id))
+            using (this.Logger.BeginScope("Do work for JobDispatchMessage {0}", message.Id))
             {
-                var result = await this.jobTable.ExecuteAsync(
+                var result = await this.jobsTable.ExecuteAsync(
                     TableOperation.Retrieve<JsonTableEntity>(
-                        this.utilities.GetJobPartitionKey($"{message.Type}", message.Id),
-                        this.utilities.JobEntryKey),
+                        this.Utilities.GetJobPartitionKey($"{message.Type}", message.Id),
+                        this.Utilities.JobEntryKey),
                     null,
                     null,
                     token);
 
-                this.logger.LogInformation("Queried job table entity for job id {0}, result {1}", message.Id, result.HttpStatusCode);
+                this.Logger.LogInformation("Queried job table entity for job id {0}, result {1}", message.Id, result.HttpStatusCode);
 
                 if (result.Result is JsonTableEntity entity)
                 {
                     var job = entity.GetObject<Job>();
 
-                    job.State = JobState.Running;
-                    var internalJob = InternalJob.CreateFrom(job);
-
-                    await Task.WhenAll(internalJob.TargetNodes.Select(async n =>
+                    try
                     {
-                        var q = await this.utilities.GetOrCreateNodeDispatchQueueAsync(n, token);
-                        await q.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(internalJob)), null, null, null, null, token);
-                    }));
+                        if (this.dispatchers.TryGetValue(job.Type, out var dispatcher))
+                        {
+                            await dispatcher.DispatchAsync(job, token);
+                            job.State = JobState.Running;
+                            entity.PutObject(job);
+                            this.Logger.LogInformation("Dispatched job {0}", job.Id);
+                        }
+                        else
+                        {
+                            this.Logger.LogWarning("No dispatchers found for job type {0}, {1}, {2}", job.Type, job.Id, job.Name);
+                            job.State = JobState.Failed;
+                            (job.Events ?? (job.Events = new List<Event>())).Add(new Event() { Content = $"No dispatchers found for job type {job.Type}", Source = EventSource.Job, Type = EventType.Alert, Time = DateTimeOffset.UtcNow });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Logger.LogError("Exception occurred when dispatch job {0}, {1}", job.Id, job.Name);
+                        job.State = JobState.Failed;
+                        (job.Events ?? (job.Events = new List<Event>())).Add(new Event() { Content = $"Exception occurred when dispatch job {job.Id} {job.Name}. {ex}", Source = EventSource.Job, Type = EventType.Alert, Time = DateTimeOffset.UtcNow });
+                    }
 
-                    entity.PutObject(job);
-                    result = await this.jobTable.ExecuteAsync(TableOperation.Replace(entity), null, null, token);
+                    result = await this.jobsTable.ExecuteAsync(TableOperation.Replace(entity), null, null, token);
+                    this.Logger.LogInformation("Update job {1} result code {0}", result.HttpStatusCode, job.Id);
 
-                    this.logger.LogInformation("Dispatched job, update job result code {0}", result.HttpStatusCode);
-                    return result.IsSuccessfulStatusCode();
+                    if (result.IsSuccessfulStatusCode())
+                    {
+                        await taskItem.FinishAsync(token);
+                    }
                 }
                 else
                 {
-                    this.logger.LogWarning("The entity queried is not of <JobTableEntity> type, {0}", result.Result);
-                    return false;
+                    this.Logger.LogWarning("The entity queried is not of <JobTableEntity> type, {0}", result.Result);
                 }
             }
         }

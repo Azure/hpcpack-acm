@@ -8,77 +8,47 @@
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
 
     public class Program
     {
+        protected Program() { }
+
         public static void Main(string[] args)
         {
             var taskMonitor = new TaskMonitor();
 
             using (var serverBuilder = BuildServer(args, taskMonitor))
             {
-                serverBuilder.BuildAsync().GetAwaiter().GetResult();
-                Task.Run(() => BuildWebHost(args, taskMonitor, serverBuilder.Utilities).Run());
-
-                serverBuilder.Start();
-
-                // TODO: refactor with multi purpose server.
-                var metricsWorker = new MetricsWorker(
-                    serverBuilder.Utilities,
-                    serverBuilder.Configuration,
-                    serverBuilder.Utilities.GetMetricsTable(),
-                    serverBuilder.Utilities.GetNodesTable(),
-                    serverBuilder.LoggerFactory);
-                metricsWorker.DoWorkAsync(null, serverBuilder.CancelToken).FireAndForget();
-
+                var server = serverBuilder.BuildAsync().GetAwaiter().GetResult();
                 Console.CancelKeyPress += (s, e) => { serverBuilder.Stop(); };
+                var webHost = BuildWebHost(args, taskMonitor, serverBuilder.Utilities);
 
+                server.Start(serverBuilder.CancelToken);
+                webHost.RunAsync(serverBuilder.CancelToken);
                 while (Console.In.Peek() == -1) { Task.Delay(1000).Wait(); }
                 var logger = serverBuilder.LoggerFactory.CreateLogger<Program>();
                 logger.LogInformation("Stop message received, stopping");
-
                 serverBuilder.Stop();
             }
         }
 
-        public static ServerBuilder BuildServer(string[] args, TaskMonitor monitor)
-        {
-            var builder = new ServerBuilder();
-            builder.ConfigureAppConfiguration(config =>
-            {
-                config.SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", false, true)
-                    .AddEnvironmentVariables()
-                    .AddCommandLine(args);
-            })
-            .ConfigureLogging((config, l) =>
-            {
-                var debugLevel = config.GetValue<Extensions.Logging.LogLevel>("Logging:Debug:LogLevel:Default", Extensions.Logging.LogLevel.Debug);
-
-                l.AddConsole(config.GetSection("Logging").GetSection("Console"))
-                    .AddDebug(debugLevel);
-            })
-            .ConfigureCloudOptions(c => c.GetSection("CloudOption").Get<CloudOption>())
-            .AddTaskItemSource(async (u, c, l, token) => new TaskItemSource(
-                await u.GetOrCreateNodeDispatchQueueAsync(c.GetValue<string>(Constants.HpcHostNameEnv), token),
-                TimeSpan.FromSeconds(u.Option.VisibleTimeoutSeconds),
-                l))
-            .AddWorker(async (config, u, l, token) => new NodeAgentWorker(
-                config,
-                l,
-                await u.GetOrCreateJobsTableAsync(token),
-                await u.GetOrCreateNodesTableAsync(token),
-                u))
-            .ConfigureWorker(w => ((NodeAgentWorker)w).Monitor = monitor);
-
-            return builder;
-        }
+        public static ServerBuilder BuildServer(string[] args, TaskMonitor monitor) =>
+            new ServerBuilder(args)
+                .ConfigServiceCollection((svc, config, token) =>
+                {
+                    svc.AddSingleton(monitor);
+                    svc.Configure<MetricsWorkerOptions>(config.GetSection(nameof(MetricsWorkerOptions)));
+                    svc.AddSingleton<IWorker, MetricsWorker>();
+                    svc.Configure<NodeAgentWorkerOptions>(config.GetSection(nameof(NodeAgentWorkerOptions)));
+                    svc.AddSingleton<IWorker, NodeAgentWorker>();
+                });
 
         public static IWebHost BuildWebHost(string[] args, TaskMonitor taskMonitor, CloudUtilities utilities) =>
-            WebHost.CreateDefaultBuilder()
+            WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration(c =>
                 {
                     c.AddJsonFile("appsettings.json")
@@ -94,8 +64,8 @@
                 })
                 .ConfigureServices(services =>
                 {
-                    services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(TaskMonitor), taskMonitor));
-                    services.Add(new Extensions.DependencyInjection.ServiceDescriptor(typeof(CloudUtilities), utilities));
+                    services.AddSingleton(taskMonitor);
+                    services.AddSingleton(utilities);
                 })
                 .UseUrls("http://*:8080", "http://*:5000")
                 .UseStartup<Startup>()

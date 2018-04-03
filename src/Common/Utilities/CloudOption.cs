@@ -2,7 +2,7 @@
 
 namespace Microsoft.HpcAcm.Common.Utilities
 {
-    public class CloudOption
+    public class CloudOptions
     {
         #region Credential
 
@@ -64,12 +64,13 @@ namespace Microsoft.HpcAcm.Common.Utilities
 
         #region Blobs
 
-        public string JobResultContainerPattern { get; set; } = "jobresults-{0}";
+        public string JobResultContainerPattern { get; set; } = "jobresults-{0}-{1}";
 
         #endregion
 
         #region Queue
 
+        public string TaskCompletionQueueName { get; set; } = "taskcompletionqueue";
         public string JobDispatchQueueName { get; set; } = "jobdispatchqueue";
         public string NodeDispatchQueuePattern { get; set; } = "nodedispatchqueue-{0}";
 

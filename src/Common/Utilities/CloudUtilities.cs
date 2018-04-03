@@ -1,5 +1,6 @@
 ﻿namespace Microsoft.HpcAcm.Common.Utilities
 {
+    using Microsoft.Extensions.Options;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -12,13 +13,13 @@
 
     public class CloudUtilities
     {
-        public CloudUtilities(CloudOption cloudOption)
+        public CloudUtilities(IOptions<CloudOptions> cloudOption)
         {
-            this.Option = cloudOption;
+            this.Option = cloudOption.Value;
 
             account = string.IsNullOrEmpty(this.Option.ConnectionString) ?
                 new CloudStorageAccount(
-                    new WindowsAzure.Storage.Auth.StorageCredentials(cloudOption.StorageKeyOrSas),
+                    new WindowsAzure.Storage.Auth.StorageCredentials(this.Option.StorageKeyOrSas),
                     this.Option.AccountName,
                     null,
                     true)
@@ -27,8 +28,8 @@
             this.blobClient = new CloudBlobClient(account.BlobEndpoint, account.Credentials);
             this.queueClient = new CloudQueueClient(account.QueueEndpoint, account.Credentials);
             this.tableClient = new CloudTableClient(account.TableEndpoint, account.Credentials);
-            queueClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(cloudOption.QueueServerTimeoutSeconds);
-            tableClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(cloudOption.TableServerTimeoutSeconds);
+            queueClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(this.Option.QueueServerTimeoutSeconds);
+            tableClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(this.Option.TableServerTimeoutSeconds);
         }
 
         private readonly CloudStorageAccount account;
@@ -44,7 +45,7 @@
             await this.GetOrCreateMetricsTableAsync(token);
         }
 
-        public CloudOption Option { get; private set; }
+        public CloudOptions Option { get; private set; }
         public readonly string MaxString = new string(Char.MaxValue, 1);
         public readonly string MinString = new string(Char.MinValue, 1);
 
@@ -78,7 +79,9 @@
         public string GetJobResultKey(string nodeKey, string taskKey) => string.Format(this.Option.JobResultPattern, nodeKey, taskKey);
         public string GetMinimumJobResultKey() => string.Format(this.Option.JobResultPattern, this.MinString, null);
         public string GetMaximumJobResultKey() => string.Format(this.Option.JobResultPattern, this.MaxString, null);
-        public string GetTaskKey(int jobId, int taskId, int requeueCount) => $"{IntegerKey.ToStringKey(jobId)}-{IntegerKey.ToStringKey(taskId)}-{IntegerKey.ToStringKey(requeueCount)}";
+        public string GetMinimumTaskKey(int jobId, int requeueCount) => $"{IntegerKey.ToStringKey(jobId)}-{IntegerKey.ToStringKey(requeueCount)}-{this.MinString}";
+        public string GetMaximumTaskKey(int jobId, int requeueCount) => $"{IntegerKey.ToStringKey(jobId)}-{IntegerKey.ToStringKey(requeueCount)}-{this.MaxString}";
+        public string GetTaskKey(int jobId, int taskId, int requeueCount) => $"{IntegerKey.ToStringKey(jobId)}-{IntegerKey.ToStringKey(requeueCount)}-{IntegerKey.ToStringKey(taskId)}";
 
         public CloudQueue GetQueue(string queueName) => this.queueClient.GetQueueReference(queueName);
 

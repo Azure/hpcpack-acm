@@ -123,23 +123,39 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                     NodeName = g.Key,
                     ResultKey = e.Item1,
                     TaskInfo = e.Item2.TaskInfo,
-                    Test = j.DiagnosticTests?[e.Item2.TaskInfo.TaskId],
+                    Test = j.DiagnosticTest,
                 }).ToList(),
             }).ToList();
 
             return j;
         }
 
-        [HttpGet("testnewjob")]
+        [HttpGet("testnewdiagjob")]
+        public async Task<int> TestNewDiagJobAsync(CancellationToken token)
+        {
+            var job = new Job()
+            {
+                DiagnosticTest = new DiagnosticsTest() { Category = "mpi", Name = "pingpong" },
+                Name = "mpi-pingpong",
+                RequeueCount = 0,
+                State = JobState.Queued,
+                TargetNodes = new string[] { "evanc6", "evanclinuxdev", "testnode1", "testnode2" },
+                Type = JobType.Diagnostics,
+            };
+
+            return await this.NewJobAsync(job, token);
+        }
+
+        [HttpGet("testnewclusrunjob")]
         public async Task<int> TestNewJobAsync(CancellationToken token)
         {
             var job = new Job()
             {
-                CommandLine = "cat /opt/hpcnodemanager/nodemanager.json",
-                Name = "testjob",
+                CommandLine = "hostname",
+                Name = "hostname",
                 RequeueCount = 0,
                 State = JobState.Queued,
-                TargetNodes = new string[] { "evanc6", "evanclinuxdev" },
+                TargetNodes = new string[] { "evanc6", "evanclinuxdev", "testnode1", "testnode2" },
                 Type = JobType.ClusRun,
             };
 

@@ -4,9 +4,7 @@ namespace Microsoft.HpcAcm.Common.Dto
 
     public class DiagnosticsTest
     {
-        public string Name { get; private set; }
-        public string Category { get; private set; }
-
-        public string CommandLine { get; private set; }
+        public string Name { get; set; }
+        public string Category { get; set; }
     }
 }

@@ -1,6 +1,8 @@
 ﻿namespace Microsoft.HpcAcm.Services.NodeAgent
 {
-    public class NodeCommunicatorOptions
+    using Microsoft.HpcAcm.Services.Common;
+
+    public class NodeAgentWorkerOptions : TaskItemSourceOptions
     {
         public int SendRequestTimeoutSeconds { get; set; } = 5;
         public int AutoResendLimit { get; set; } = 3;

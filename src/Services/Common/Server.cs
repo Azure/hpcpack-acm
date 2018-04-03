@@ -5,60 +5,53 @@
     using Microsoft.HpcAcm.Common.Utilities;
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
 
     public class Server
     {
-        private readonly WorkerBase worker;
-        private readonly TaskItemSource source;
+        public List<IWorker> Workers { get; }
         private readonly ILogger logger;
-        private readonly ServerOptions options;
 
-        public Server(TaskItemSource source, WorkerBase worker, ILoggerFactory loggerFactory, ServerOptions options)
+        public Server(ILogger<Server> logger, IEnumerable<IWorker> workers)
         {
-            this.worker = worker;
-            this.source = source;
-            this.options = options;
-            this.logger = loggerFactory.CreateLogger<Server>();
+            this.logger = logger;
+            this.Workers = workers.ToList();
+        }
+
+        public void Run(CancellationToken token)
+        {
+            this.RunAsync(token).Wait();
         }
 
         public async Task RunAsync(CancellationToken token)
         {
-            while (!token.IsCancellationRequested)
+            this.logger.LogInformation("Server is starting");
+
+            if (this.Workers == null)
             {
-                try
-                {
-                    var t = await this.source.FetchTaskItemAsync(token);
-                    if (t == null)
-                    {
-                        this.logger.LogInformation("RunAsync, no tasks fetched. Sleep for {0} seconds", this.options.FetchIntervalSeconds);
-                        await Task.Delay(TimeSpan.FromSeconds(this.options.FetchIntervalSeconds), token);
-                        continue;
-                    }
-
-                    token.ThrowIfCancellationRequested();
-
-                    bool result = await this.worker.DoWorkAsync(t, token);
-
-                    token.ThrowIfCancellationRequested();
-
-                    if (result)
-                    {
-                        await t.FinishAsync(token);
-                    }
-                    else
-                    {
-                        this.logger.LogInformation("RunAsync, failed to process the task.");
-                    }
-                }
-                catch(Exception ex)
-                {
-                    logger.LogError(ex, "Exception occurred in {0}", nameof(RunAsync));
-                    await Task.Delay(TimeSpan.FromSeconds(this.options.FetchIntervalOnErrorSeconds), token);
-                }
+                this.logger.LogError("No workers configured");
+                return;
             }
+
+            await Task.WhenAll(this.Workers.Select(w => w.DoWorkAsync(token)));
+        }
+
+        public void Start(CancellationToken token)
+        {
+            Task.Run(async () =>
+             {
+                 try
+                 {
+                     await this.RunAsync(token);
+                 }
+                 catch (Exception ex)
+                 {
+                     Console.Error.WriteLine(ex);
+                 }
+             });
         }
     }
 }
