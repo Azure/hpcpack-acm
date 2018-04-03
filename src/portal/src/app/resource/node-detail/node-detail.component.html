@@ -4,10 +4,10 @@
 </h2>
 <mat-tab-group [dynamicHeight]="true">
   <mat-tab label="Usage">
-    <!-- div class="row">
+    <div class="row">
       <div class="col-lg-6">
         <h3>CPU</h3>
-        <chart type="line" [data]="cpuData" [options]="cpuOptions"></chart>
+        <chart #cpuChart type="line" [data]="cpuData" [options]="cpuOptions"></chart>
       </div>
       <div class="col-lg-6">
         <h3>Network</h3>
@@ -17,7 +17,7 @@
         <h3>Disk</h3>
         <chart type="line" [data]="diskData" [options]="diskOptions"></chart>
       </div>
-    </div -->
+    </div>
   </mat-tab>
   <mat-tab label="Events">
     <!-- mat-table #table [dataSource]="events">

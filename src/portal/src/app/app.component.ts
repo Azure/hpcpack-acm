@@ -11,7 +11,7 @@ const now = (new Date()).getTime();
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  private items = [
+  static items = [
     {
       link: 'dashboard',
       title: 'Dashboard',
@@ -33,6 +33,10 @@ export class AppComponent {
       icon: 'call_to_action',
     },
   ];
+
+  private get items(): any[] {
+    return AppComponent.items;
+  }
 
   private notifications = [
     {
