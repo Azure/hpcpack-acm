@@ -3,58 +3,53 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.HpcAcm.Common.Dto;
+    using Microsoft.HpcAcm.Common.Utilities;
+    using Microsoft.WindowsAzure.Storage.Table;
 
     [Route("api/[controller]")]
     public class DiagnosticsController : Controller
     {
-        // GET api/diagnostics/tests
-        [HttpGet("tests")]
-        public async Task<IEnumerable<DiagnosticsTest>> GetDiagnosticsTestsAsync()
+        private readonly CloudUtilities utilities;
+        public DiagnosticsController(CloudUtilities utilities)
         {
-            await Task.CompletedTask;
-            return new DiagnosticsTest[] { new DiagnosticsTest() };
+            this.utilities = utilities;
         }
 
-        // GET api/diagnostics/jobs
-        [HttpGet("jobs")]
-        public async Task<IEnumerable<Job>> GetDiagnosticsJobsAsync()
+        // GET api/diagnostics
+        [HttpGet()]
+        public async Task<IEnumerable<DiagnosticsTest>> GetDiagnosticsTestsAsync(CancellationToken token)
         {
-            await Task.CompletedTask;
-            return new Job[] { new Job() };
-        }
+            var jobsTable = this.utilities.GetJobsTable();
 
-        // GET api/diagnostics/jobs/5
-        [HttpGet("jobs/{jobid}")]
-        public async Task<JobResult> GetAsync(int jobId)
-        {
-            await Task.CompletedTask;
-            return new JobResult(); 
-        }
-        
-        // GET api/diagnostics/statistics
-        [HttpGet("statistics")]
-        public async Task<IDictionary<JobState, int>> GetHistoryAsync()
-        {
-            await Task.CompletedTask;
-            return new Dictionary<JobState, int>();
-        }
-        
-        // POST api/diagnostics/jobs
-        [HttpPost("jobs")]
-        public async Task<int> NewJob([FromBody] Job job)
-        {
-            await Task.CompletedTask;
-            return 1;
-        }
-        
-        // POST api/diagnostics/jobs/5/rerun
-        [HttpPost("jobs/{jobid}/{operation}")]
-        public async Task TakeAction(int jobId, string operation)
-        {
-            await Task.CompletedTask;
+            var partitionString = this.utilities.GetPartitionKeyRangeString(
+                this.utilities.GetDiagPartitionKey(this.utilities.MinString),
+                this.utilities.GetDiagPartitionKey(this.utilities.MaxString));
+
+            TableContinuationToken conToken = null;
+            List<DiagnosticsTest> tests = new List<DiagnosticsTest>();
+
+            var q = new TableQuery<JsonTableEntity>().Where(partitionString);
+            q.SelectColumns = new List<string>() { CloudUtilities.PartitionKeyName, CloudUtilities.RowKeyName };
+
+            do
+            {
+                var result = await jobsTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
+
+                tests.AddRange(result.Results.Select(e => new DiagnosticsTest()
+                {
+                    Category = this.utilities.GetDiagCategoryName(e.PartitionKey),
+                    Name = e.RowKey
+                }));
+
+                conToken = result.ContinuationToken;
+            }
+            while (conToken != null);
+
+            return tests;
         }
     }
 }

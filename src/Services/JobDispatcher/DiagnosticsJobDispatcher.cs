@@ -56,7 +56,7 @@
             // TODO: github integration
             var jobTable = await this.Utilities.GetOrCreateJobsTableAsync(token);
 
-            var result = await jobTable.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(job.DiagnosticTest.Category, job.DiagnosticTest.Name), null, null, token);
+            var result = await jobTable.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(this.Utilities.GetDiagPartitionKey(job.DiagnosticTest.Category), job.DiagnosticTest.Name), null, null, token);
 
             if (!result.IsSuccessfulStatusCode())
             {

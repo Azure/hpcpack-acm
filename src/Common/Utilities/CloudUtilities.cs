@@ -56,15 +56,20 @@
         public const string PartitionKeyName = "PartitionKey";
         public const string RowKeyName = "RowKey";
 
-        public string GetRowKeyRangeString(string lowRowKey, string highRowKey) => TableQuery.CombineFilters(
-            TableQuery.GenerateFilterCondition(RowKeyName, QueryComparisons.GreaterThan, lowRowKey),
+        public string GetRowKeyRangeString(string lowKey, string highKey) => GetKeyRangeString(lowKey, highKey, RowKeyName);
+        public string GetPartitionKeyRangeString(string lowKey, string highKey) => GetKeyRangeString(lowKey, highKey, PartitionKeyName);
+
+        public string GetKeyRangeString(string lowKey, string highKey, string keyName) => TableQuery.CombineFilters(
+            TableQuery.GenerateFilterCondition(keyName, QueryComparisons.GreaterThan, lowKey),
             TableOperators.And,
-            TableQuery.GenerateFilterCondition(RowKeyName, QueryComparisons.LessThan, highRowKey));
+            TableQuery.GenerateFilterCondition(keyName, QueryComparisons.LessThan, highKey));
 
         public string GetPartitionQueryString(string partitionKey) =>
             TableQuery.GenerateFilterCondition(PartitionKeyName, QueryComparisons.Equal, partitionKey);
 
         public string GetJobPartitionKey(string type, int jobId) => string.Format(this.Option.JobPartitionPattern, type, IntegerKey.ToStringKey(jobId));
+        public string GetDiagPartitionKey(string category) => string.Format(this.Option.DiagnosticCategoryPattern, category);
+        public string GetDiagCategoryName(string partitionKey) => partitionKey.Substring(5);
         public string GetNodePartitionKey(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);
         public string GetMinuteHistoryKey(long minutes) => string.Format(this.Option.MinuteHistoryPattern, IntegerKey.ToStringKey(minutes));
         public string GetMinuteHistoryKey() => string.Format(this.Option.MinuteHistoryKey);
