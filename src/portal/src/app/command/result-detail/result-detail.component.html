@@ -2,7 +2,7 @@
 
 <div class="title" [ngClass]="result?.state">
   <div class="command">{{result?.command}}</div>
-  <div class="state">{{result?.state}}</div>
+  <div class="state">{{result?.state | titlecase }}</div>
 </div>
 
 <ng-container *ngIf="isLoaded(); else loading">

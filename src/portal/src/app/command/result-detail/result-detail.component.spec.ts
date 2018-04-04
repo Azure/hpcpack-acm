@@ -62,7 +62,7 @@ fdescribe('ResultDetailComponent', () => {
     let text = fixture.nativeElement.querySelector('.command').textContent;
     expect(text).toContain(ApiServiceStub.result.command);
     text = fixture.nativeElement.querySelector('.state').textContent;
-    expect(text).toContain('finished');
+    expect(text).toContain('Finished');
     text = fixture.nativeElement.querySelector('pre').textContent;
     expect(text).toContain(ApiServiceStub.output.content);
     text = fixture.nativeElement.querySelector('.mat-cell.mat-column-name').textContent;
