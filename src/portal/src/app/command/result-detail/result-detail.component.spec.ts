@@ -14,7 +14,7 @@ import { ResultDetailComponent } from './result-detail.component';
 class BackButtonStubComponent {}
 
 class ApiServiceStub {
-  static result = { commandLine: 'TEST COMMAND', nodes: [{ name: 'TEST NODE', state: 'Finished' }] };
+  static result = { command: 'TEST COMMAND', nodes: [{ name: 'TEST NODE', state: 'finished' }] };
 
   static output = { content: 'TEST OUTPUT', size: 0 };
 
@@ -57,19 +57,17 @@ fdescribe('ResultDetailComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', async(() => {
+  it('should create', () => {
     expect(component).toBeTruthy();
-    fixture.whenStable().then(() => {
-      let text = fixture.nativeElement.querySelector('.command').textContent;
-      expect(text).toContain(ApiServiceStub.result.commandLine);
-      text = fixture.nativeElement.querySelector('.state').textContent;
-      expect(text).toContain('finished');
-      text = fixture.nativeElement.querySelector('pre').textContent;
-      expect(text).toContain(ApiServiceStub.output.content);
-      text = fixture.nativeElement.querySelector('.mat-column-name').textContent;
-      expect(text).toContain(ApiServiceStub.result[0].name);
-      text = fixture.nativeElement.querySelector('.mat-column-state').textContent;
-      expect(text).toContain(ApiServiceStub.result[0].state);
-    });
-  }));
+    let text = fixture.nativeElement.querySelector('.command').textContent;
+    expect(text).toContain(ApiServiceStub.result.command);
+    text = fixture.nativeElement.querySelector('.state').textContent;
+    expect(text).toContain('finished');
+    text = fixture.nativeElement.querySelector('pre').textContent;
+    expect(text).toContain(ApiServiceStub.output.content);
+    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-name').textContent;
+    expect(text).toContain(ApiServiceStub.result.nodes[0].name);
+    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-state').textContent;
+    expect(text).toContain('Finished');
+  });
 });

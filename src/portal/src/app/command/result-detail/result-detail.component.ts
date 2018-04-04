@@ -71,8 +71,9 @@ export class ResultDetailComponent implements OnInit {
           if (result.nodes.length == 0) {
             return true;
           }
+          //filter depends on this.result.state, which is set by setResultState.
+          this.setResultState();
           this.filter();
-          let state = this.setResultState();
           return !this.isOver;
         },
         error: (err) => {
