@@ -86,7 +86,7 @@
                     }
 
                     result = await this.jobsTable.ExecuteAsync(TableOperation.Replace(entity), null, null, token);
-                    this.Logger.LogInformation("Update job {1} result code {0}", result.HttpStatusCode, job.Id);
+                    this.Logger.LogInformation("Update job {0} result code {1}", job.Id, result.HttpStatusCode);
 
                     if (result.IsSuccessfulStatusCode())
                     {

@@ -17,6 +17,38 @@
     public class DiagnosticsJobDispatcher : ServerObject, IDispatcher
     {
         public JobType RestrictedJobType { get => JobType.Diagnostics; }
+
+        private (bool, string) FillData(IEnumerable<InternalTask> tasks, Job job)
+        {
+            var tasksDict = tasks.ToDictionary(t => t.Id);
+            foreach (var t in tasks)
+            {
+                if (t.ParentIds != null)
+                {
+                    foreach (var parentId in t.ParentIds)
+                    {
+                        if (tasksDict.TryGetValue(parentId, out InternalTask p))
+                        {
+#pragma warning disable S1121 // Assignments should not be made from within sub-expressions
+                            (p.ChildIds ?? (p.ChildIds = new List<int>())).Add(t.Id);
+#pragma warning restore S1121 // Assignments should not be made from within sub-expressions
+                        }
+                        else
+                        {
+                            return (false, $"Task {t.Id}'s parent {parentId} not found.");
+                        }
+                    }
+                }
+
+                t.RemainingParentIds = t.ParentIds?.ToHashSet();
+                t.JobId = job.Id;
+                t.JobType = job.Type;
+                t.RequeueCount = job.RequeueCount;
+            }
+
+            return (true, null);
+        }
+
         public async Task DispatchAsync(Job job, CancellationToken token)
         {
             Debug.Assert(job.Type == this.RestrictedJobType, "Job type mismatch");
@@ -36,16 +68,7 @@
             {
                 var diagTest = entity.GetObject<InternalDiagnosticsTest>();
 
-                // Fake output
-                List<InternalTask> tasksFake = new List<InternalTask>()
-                {
-                    new InternalTask() { ChildrenIds = new List<int>() { 1 }, CommandLine = "hostname", Id = 0, JobId = job.Id, JobType = job.Type,
-                     Node = "evanc6", ParentsIds = null, RemainingParentIds = null, RequeueCount = job.RequeueCount },
-                    new InternalTask() { ChildrenIds = new List<int>() {  }, CommandLine = "hostname", Id = 1, JobId = job.Id, JobType = job.Type,
-                     Node = "evanc6", ParentsIds = new List<int>(){0 }, RemainingParentIds = new HashSet<int>(){ 0 }, RequeueCount = job.RequeueCount },
-                };
-
-                var dispatchTasks = await PythonExecutor.ExecuteAsync(diagTest.DispatchScript, tasksFake);
+                var dispatchTasks = await PythonExecutor.ExecuteAsync(diagTest.DispatchScript, job);
 
                 if (!string.IsNullOrEmpty(dispatchTasks.Item2))
                 {
@@ -55,6 +78,13 @@
                 else
                 {
                     var tasks = JsonConvert.DeserializeObject<List<InternalTask>>(dispatchTasks.Item1);
+
+                    var (success, msg) = this.FillData(tasks, job);
+                    if (!success)
+                    {
+                        this.Logger.LogError(msg);
+                        // fail the job.
+                    }
 
                     var batch = new TableBatchOperation();
                     foreach (var e in tasks.Select(t => new JsonTableEntity(

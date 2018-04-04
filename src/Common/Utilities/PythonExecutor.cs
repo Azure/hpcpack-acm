@@ -14,7 +14,7 @@
         {
             var psi = new System.Diagnostics.ProcessStartInfo(
                 @"python",
-                $"-c \"{script.Replace("\"", "\\\"")}\"")
+                $"-c \"{script.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"")
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,

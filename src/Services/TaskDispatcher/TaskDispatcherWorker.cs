@@ -84,7 +84,7 @@
                 if (result.Result is JsonTableEntity entity)
                 {
                     var internalTask = entity.GetObject<InternalTask>();
-                    foreach (var childId in internalTask.ChildrenIds)
+                    foreach (var childId in internalTask.ChildIds)
                     {
                         do
                         {

@@ -135,8 +135,8 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         {
             var job = new Job()
             {
-                DiagnosticTest = new DiagnosticsTest() { Category = "mpi", Name = "pingpong" },
-                Name = "mpi-pingpong",
+                DiagnosticTest = new DiagnosticsTest() { Category = "test", Name = "test" },
+                Name = "test-diag",
                 RequeueCount = 0,
                 State = JobState.Queued,
                 TargetNodes = new string[] { "evanc6", "evanclinuxdev", "testnode1", "testnode2" },

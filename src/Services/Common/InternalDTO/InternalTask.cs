@@ -22,8 +22,8 @@ namespace Microsoft.HpcAcm.Services.Common
         public int Id { get; set; }
         public int RequeueCount { get; set; }
         public JobType JobType { get; set; }
-        public List<int> ParentsIds { get; set; }
-        public List<int> ChildrenIds { get; set; }
+        public List<int> ParentIds { get; set; }
+        public List<int> ChildIds { get; set; }
         public HashSet<int> RemainingParentIds { get; set; }
         public string CommandLine { get; set; }
         public string Node { get; set; }
