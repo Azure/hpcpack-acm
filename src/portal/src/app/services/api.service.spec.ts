@@ -1,3 +1,4 @@
+import { fakeAsync, flush } from '@angular/core/testing';
 import { Resource, CommandApi, ApiService, Loop } from './api.service';
 import { of } from 'rxjs/observable/of';
 import { _throw } from 'rxjs/observable/throw';
@@ -82,7 +83,7 @@ fdescribe('ApiService', () => {
 });
 
 fdescribe('Loop', () => {
-  it('should call next once and stop', (done) => {
+  it('should call next once and stop', fakeAsync(() => {
     let spy = jasmine.createSpyObj('observer', ['next', 'error']);
     spy.next.and.returnValue(undefined);
 
@@ -92,16 +93,15 @@ fdescribe('Loop', () => {
     expect(spy.error.calls.count()).toBe(0);
     expect(Loop.isStopped(looper)).toBe(true);
 
-    setTimeout(() => {
-      expect(spy.next.calls.count()).toBe(1);
-      expect(spy.next).toHaveBeenCalledWith(100);
-      expect(spy.error.calls.count()).toBe(0);
-      expect(Loop.isStopped(looper)).toBe(true);
-      done();
-    }, 0);
-  });
+    flush();
 
-  it('should call next twice and stop', (done) => {
+    expect(spy.next.calls.count()).toBe(1);
+    expect(spy.next).toHaveBeenCalledWith(100);
+    expect(spy.error.calls.count()).toBe(0);
+    expect(Loop.isStopped(looper)).toBe(true);
+  }));
+
+  it('should call next twice and stop', fakeAsync(() => {
     let spy = jasmine.createSpyObj('observer', ['next', 'error']);
     spy.next.and.returnValues(true, undefined);
 
@@ -111,16 +111,15 @@ fdescribe('Loop', () => {
     expect(spy.error.calls.count()).toBe(0);
     expect(Loop.isStopped(looper)).toBe(false);
 
-    setTimeout(() => {
-      expect(spy.next.calls.count()).toBe(2);
-      expect(spy.next.calls.allArgs()).toEqual([[100], [100]]);
-      expect(spy.error.calls.count()).toBe(0);
-      expect(Loop.isStopped(looper)).toBe(true);
-      done();
-    }, 0);
-  });
+    flush();
 
-  it('could be stopped', (done) => {
+    expect(spy.next.calls.count()).toBe(2);
+    expect(spy.next.calls.allArgs()).toEqual([[100], [100]]);
+    expect(spy.error.calls.count()).toBe(0);
+    expect(Loop.isStopped(looper)).toBe(true);
+  }));
+
+  it('could be stopped', fakeAsync(() => {
     let spy = jasmine.createSpyObj('observer', ['next', 'error']);
     spy.next.and.returnValues(true, undefined);
 
@@ -133,16 +132,15 @@ fdescribe('Loop', () => {
     Loop.stop(looper);
     expect(Loop.isStopped(looper)).toBe(true);
 
-    setTimeout(() => {
-      expect(spy.next.calls.count()).toBe(1);
-      expect(spy.next).toHaveBeenCalledWith(100);
-      expect(spy.error.calls.count()).toBe(0);
-      expect(Loop.isStopped(looper)).toBe(true);
-      done();
-    }, 0);
-  });
+    flush();
 
-  it('should call error and stop', () => {
+    expect(spy.next.calls.count()).toBe(1);
+    expect(spy.next).toHaveBeenCalledWith(100);
+    expect(spy.error.calls.count()).toBe(0);
+    expect(Loop.isStopped(looper)).toBe(true);
+  }));
+
+  it('should call error and stop', fakeAsync(() => {
     let spy = jasmine.createSpyObj('observer', ['next', 'error']);
     spy.next.and.returnValues(true, undefined);
 
@@ -152,6 +150,12 @@ fdescribe('Loop', () => {
     expect(spy.error.calls.count()).toBe(1);
     expect(spy.error).toHaveBeenCalledWith(error);
     expect(Loop.isStopped(looper)).toBe(true);
-  });
+
+    flush();
+
+    expect(spy.next.calls.count()).toBe(0);
+    expect(spy.error.calls.count()).toBe(1);
+    expect(Loop.isStopped(looper)).toBe(true);
+  }));
 });
 
