@@ -66,7 +66,9 @@ Note that simply "Ctrl+C" doesn't stop a container(which can be observed by `doc
 
 To run unit test, you need to run the docker container as a non-privileged user dev and with a `--privileged` argument(it has something to do with the Chrome browser for test):
 
-`docker run --rm -it -v %cd%:/opt/app -w /opt/app --name portal2 --user dev --privileged louirobert/angular-cli-with-chrome:1.0.0 /bin/bash`
+`docker run --rm -it -v %cd%:/opt/app -w /opt/app --name portal2 --user dev --privileged -p 9876:9876 louirobert/angular-cli-with-chrome:1.0.0 /bin/bash`
+
+Note: port 9876 is used by karma test server. If no need to access it(that means no test debugger) from outside of the container, then it doesn't have to be mapped.
 
 Then execute:
 
