@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
 import { SelectionModel  } from '@angular/cdk/collections';
 import { ApiService } from '../../services/api.service';
@@ -17,8 +16,6 @@ export class ResultListComponent implements OnInit {
   private selection = new SelectionModel(true, []);
 
   constructor(
-    private router: Router,
-    private route: ActivatedRoute,
     private api: ApiService
   ) {}
 
