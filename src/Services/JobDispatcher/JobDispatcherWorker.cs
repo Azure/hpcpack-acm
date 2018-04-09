@@ -50,7 +50,7 @@
             {
                 var result = await this.jobsTable.ExecuteAsync(
                     TableOperation.Retrieve<JsonTableEntity>(
-                        this.Utilities.GetJobPartitionKey($"{message.Type}", message.Id),
+                        this.Utilities.GetJobPartitionKey(message.Type, message.Id),
                         this.Utilities.JobEntryKey),
                     null,
                     null,
@@ -67,26 +67,41 @@
                         if (this.dispatchers.TryGetValue(job.Type, out var dispatcher))
                         {
                             await dispatcher.DispatchAsync(job, token);
-                            job.State = JobState.Running;
-                            entity.PutObject(job);
+                            job.State = job.State == JobState.Queued ? JobState.Running : job.State;
                             this.Logger.LogInformation("Dispatched job {0}", job.Id);
                         }
                         else
                         {
                             this.Logger.LogWarning("No dispatchers found for job type {0}, {1}, {2}", job.Type, job.Id, job.Name);
                             job.State = JobState.Failed;
-                            (job.Events ?? (job.Events = new List<Event>())).Add(new Event() { Content = $"No dispatchers found for job type {job.Type}", Source = EventSource.Job, Type = EventType.Alert, Time = DateTimeOffset.UtcNow });
+                            (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
+                            {
+                                Content = $"No dispatchers found for job type {job.Type}",
+                                Source = EventSource.Job,
+                                Type = EventType.Alert,
+                            });
                         }
                     }
                     catch (Exception ex)
                     {
                         this.Logger.LogError("Exception occurred when dispatch job {0}, {1}", job.Id, job.Name);
                         job.State = JobState.Failed;
-                        (job.Events ?? (job.Events = new List<Event>())).Add(new Event() { Content = $"Exception occurred when dispatch job {job.Id} {job.Name}. {ex}", Source = EventSource.Job, Type = EventType.Alert, Time = DateTimeOffset.UtcNow });
+                        (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
+                        {
+                            Content = $"Exception occurred when dispatch job {job.Id} {job.Name}. {ex}",
+                            Source = EventSource.Job,
+                            Type = EventType.Alert
+                        });
                     }
 
+                    entity.PutObject(job);
                     result = await this.jobsTable.ExecuteAsync(TableOperation.Replace(entity), null, null, token);
                     this.Logger.LogInformation("Update job {0} result code {1}", job.Id, result.HttpStatusCode);
+
+                    var taskCompletionQueue = await this.Utilities.GetOrCreateTaskCompletionQueueAsync(token);
+                    await taskCompletionQueue.AddMessageAsync(new CloudQueueMessage(
+                        JsonConvert.SerializeObject(new TaskCompletionMessage() { JobId = job.Id, Id = 0, JobType = job.Type, RequeueCount = job.RequeueCount })),
+                        null, null, null, null, token);
 
                     return result.IsSuccessfulStatusCode();
                 }

@@ -90,7 +90,7 @@
                 }))
                 {
                     this.Logger.LogInformation("Call startjobandtask for task {0}", taskKey);
-                    this.jobsPartitionName = this.Utilities.GetJobPartitionKey($"{task.JobType}", task.JobId);
+                    this.jobsPartitionName = this.Utilities.GetJobPartitionKey(task.JobType, task.JobId);
                     this.nodesPartitionName = this.Utilities.GetNodePartitionKey(nodeName);
 
                     var taskResultArgs = new ComputeNodeTaskCompletionEventArgs(nodeName, task.JobId, null)

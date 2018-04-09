@@ -13,22 +13,19 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class ClusrunJobDispatcher : ServerObject, IDispatcher
+    public class ClusrunJobDispatcher : JobDispatcher, IDispatcher
     {
-        public JobType RestrictedJobType { get => JobType.ClusRun; }
+        public override JobType RestrictedJobType { get => JobType.ClusRun; }
 
-        public async Task DispatchAsync(Job job, CancellationToken token)
+        public override Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token)
         {
-            Debug.Assert(job.Type == this.RestrictedJobType, "Job type mismatch");
-
-            var internalTask = InternalTask.CreateFrom(job);
-
-            await Task.WhenAll(job.TargetNodes.Select(async n =>
+            return Task.FromResult(Enumerable.Range(1, job.TargetNodes.Length).Select(id =>
             {
-                var q = await this.Utilities.GetOrCreateNodeDispatchQueueAsync(n, token);
-                internalTask.Node = n;
-                await q.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(internalTask)), null, null, null, null, token);
-            }));
+                var t = InternalTask.CreateFrom(job);
+                t.Id = id;
+                t.Node = job.TargetNodes[id - 1];
+                return t;
+            }).ToList());
         }
     }
 }

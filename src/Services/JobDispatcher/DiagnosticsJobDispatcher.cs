@@ -14,47 +14,14 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class DiagnosticsJobDispatcher : ServerObject, IDispatcher
+    public class DiagnosticsJobDispatcher : JobDispatcher, IDispatcher
     {
-        public JobType RestrictedJobType { get => JobType.Diagnostics; }
+        public override JobType RestrictedJobType { get => JobType.Diagnostics; }
 
-        private (bool, string) FillData(IEnumerable<InternalTask> tasks, Job job)
+        public override async Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token)
         {
-            var tasksDict = tasks.ToDictionary(t => t.Id);
-            foreach (var t in tasks)
-            {
-                if (t.ParentIds != null)
-                {
-                    foreach (var parentId in t.ParentIds)
-                    {
-                        if (tasksDict.TryGetValue(parentId, out InternalTask p))
-                        {
-#pragma warning disable S1121 // Assignments should not be made from within sub-expressions
-                            (p.ChildIds ?? (p.ChildIds = new List<int>())).Add(t.Id);
-#pragma warning restore S1121 // Assignments should not be made from within sub-expressions
-                        }
-                        else
-                        {
-                            return (false, $"Task {t.Id}'s parent {parentId} not found.");
-                        }
-                    }
-                }
-
-                t.RemainingParentIds = t.ParentIds?.ToHashSet();
-                t.JobId = job.Id;
-                t.JobType = job.Type;
-                t.RequeueCount = job.RequeueCount;
-            }
-
-            return (true, null);
-        }
-
-        public async Task DispatchAsync(Job job, CancellationToken token)
-        {
-            Debug.Assert(job.Type == this.RestrictedJobType, "Job type mismatch");
-
             // TODO: github integration
-            var jobTable = await this.Utilities.GetOrCreateJobsTableAsync(token);
+            var jobTable = this.Utilities.GetJobsTable();
 
             var result = await jobTable.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(this.Utilities.GetDiagPartitionKey(job.DiagnosticTest.Category), job.DiagnosticTest.Name), null, null, token);
 
@@ -72,45 +39,40 @@
 
                 if (!string.IsNullOrEmpty(dispatchTasks.Item2))
                 {
-                    this.Logger.LogError("Dispatch failed");
-                    throw new InvalidOperationException(dispatchTasks.Item2);
+                    await this.Utilities.UpdateJobAsync(this.Utilities.GetJobPartitionKey(job.Type, job.Id), j =>
+                    {
+                        j.State = JobState.Failed;
+                        (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                        {
+                            Content = dispatchTasks.Item2,
+                            Source = EventSource.Job,
+                            Type = EventType.Alert
+                        });
+                    }, token);
+
+                    this.Logger.LogError("Dispatch failed {0}", dispatchTasks.Item2);
+                    return null;
                 }
                 else
                 {
-                    var tasks = JsonConvert.DeserializeObject<List<InternalTask>>(dispatchTasks.Item1);
-
-                    var (success, msg) = this.FillData(tasks, job);
-                    if (!success)
-                    {
-                        this.Logger.LogError(msg);
-                        // fail the job.
-                    }
-
-                    var batch = new TableBatchOperation();
-                    foreach (var e in tasks.Select(t => new JsonTableEntity(
-                         this.Utilities.GetJobPartitionKey(job.Type.ToString(), job.Id),
-                         this.Utilities.GetTaskKey(job.Id, t.Id, job.RequeueCount),
-                         t)))
-                    {
-                        batch.InsertOrReplace(e);
-                    }
-
-                    var tableResults = await jobTable.ExecuteBatchAsync(batch, null, null, token);
-
-                    if (!tableResults.All(r => r.IsSuccessfulStatusCode()))
-                    {
-                        throw new InvalidOperationException("Not all tasks dispatched successfully");
-                    }
-
-                    var taskCompletionQueue = await this.Utilities.GetOrCreateTaskCompletionQueueAsync(token);
-                    await taskCompletionQueue.AddMessageAsync(new WindowsAzure.Storage.Queue.CloudQueueMessage(
-                        JsonConvert.SerializeObject(new TaskCompletionMessage() { JobId = job.Id, JobType = this.RestrictedJobType, RequeueCount = job.RequeueCount })),
-                        null, null, null, null, token);
+                    return JsonConvert.DeserializeObject<List<InternalTask>>(dispatchTasks.Item1);
                 }
             }
             else
             {
+                await this.Utilities.UpdateJobAsync(this.Utilities.GetJobPartitionKey(job.Type, job.Id), j =>
+                {
+                    j.State = JobState.Failed;
+                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                    {
+                        Content = $"No diag test {job.DiagnosticTest.Category}/{job.DiagnosticTest.Name} found",
+                        Source = EventSource.Job,
+                        Type = EventType.Alert
+                    });
+                }, token);
+
                 this.Logger.LogError("No diag test found");
+                return null;
             }
         }
     }

@@ -9,7 +9,7 @@
     {
         public int JobId { get; set; }
         public JobType JobType { get; set; }
-        public int? Id { get; set; }
+        public int Id { get; set; }
         public int RequeueCount { get; set; }
         public int? ExitCode { get; set; }
     }

@@ -292,8 +292,8 @@
             this.logger.LogInformation("Get {type} jobs called, lastId {id}, jobCount {count}", type, lastId, count);
             var jobTable = this.utilities.GetJobsTable();
 
-            var lowJobPartitionKey = this.utilities.GetJobPartitionKey($"{type}", lastId);
-            var highJobPartitionKey = this.utilities.GetJobPartitionKey($"{type}", int.MaxValue);
+            var lowJobPartitionKey = this.utilities.GetJobPartitionKey(type, lastId);
+            var highJobPartitionKey = this.utilities.GetJobPartitionKey(type, int.MaxValue);
 
             var partitionRange = this.utilities.GetPartitionKeyRangeString(lowJobPartitionKey, highJobPartitionKey);
             var rowKey = utilities.JobEntryKey;
@@ -332,7 +332,7 @@
             this.logger.LogInformation("Get {type} tasks called. getting job {id}", type, jobId);
             var jobTable = this.utilities.GetJobsTable();
 
-            var jobPartitionKey = this.utilities.GetJobPartitionKey($"{type}", jobId);
+            var jobPartitionKey = this.utilities.GetJobPartitionKey(type, jobId);
             var partitionQuery = this.utilities.GetPartitionQueryString(jobPartitionKey);
 
             var rowKeyRangeQuery = this.utilities.GetRowKeyRangeString(
@@ -370,7 +370,7 @@
             this.logger.LogInformation("Get {type} job called. getting job {id}", type, jobId);
             var jobTable = this.utilities.GetJobsTable();
 
-            var jobPartitionKey = this.utilities.GetJobPartitionKey($"{type}", jobId);
+            var jobPartitionKey = this.utilities.GetJobPartitionKey(type, jobId);
             var rowKey = utilities.JobEntryKey;
 
             var result = await jobTable.ExecuteAsync(
@@ -438,10 +438,10 @@
             this.logger.LogInformation("New job called. creating job");
             var jobTable = this.utilities.GetJobsTable();
 
-            job.Id = await this.utilities.GetNextId("Jobs", $"{job.Type}", token);
+            job.Id = await this.utilities.GetNextId("Jobs", job.Type.ToString().ToLowerInvariant(), token);
             this.logger.LogInformation("generated new job id {0}", job.Id);
 
-            var partitionName = utilities.GetJobPartitionKey($"{job.Type}", job.Id);
+            var partitionName = utilities.GetJobPartitionKey(job.Type, job.Id);
             var rowKey = utilities.JobEntryKey;
 
             var result = await jobTable.ExecuteAsync(
