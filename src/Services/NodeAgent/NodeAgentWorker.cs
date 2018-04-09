@@ -93,7 +93,12 @@
                     this.jobsPartitionName = this.Utilities.GetJobPartitionKey($"{task.JobType}", task.JobId);
                     this.nodesPartitionName = this.Utilities.GetNodePartitionKey(nodeName);
 
-                    var taskResultArgs = new ComputeNodeTaskCompletionEventArgs(nodeName, task.JobId, null) { State = TaskState.Dispatching };
+                    var taskResultArgs = new ComputeNodeTaskCompletionEventArgs(nodeName, task.JobId, null)
+                    {
+                        State = TaskState.Dispatching,
+                        CustomizedData = task.CustomizedData,
+                    };
+
                     if (!await this.PersistTaskResult(resultKey, taskResultArgs, token)) { return false; }
                     if (!await this.PersistTaskResult(taskKey, taskResultArgs, token)) { return false; }
 
@@ -103,7 +108,7 @@
                          new Common.ProcessStartInfo(cmd, "", "", $"{this.communicator.Options.AgentUriBase}/output/{taskKey}",
                             "", new System.Collections.Hashtable(), new long[0], task.RequeueCount), token);
 
-                    taskResultArgs = new ComputeNodeTaskCompletionEventArgs(nodeName, task.JobId, null) { State = TaskState.Running };
+                    taskResultArgs.State = TaskState.Running;
                     if (!await this.PersistTaskResult(resultKey, taskResultArgs, token)) { return false; }
                     if (!await this.PersistTaskResult(taskKey, taskResultArgs, token)) { return false; }
 
