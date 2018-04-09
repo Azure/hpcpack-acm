@@ -33,3 +33,28 @@ td {
 .mat-column-id {
   padding-right: 0.5em;
 }
+
+.node-tag {
+  display: inline-block;
+  color: white;
+  text-align: center;
+  font-weight: 400;
+  font-size: 0.6em;
+  padding: 0.3em 0.8em;
+}
+
+.healthy-tag{
+  background: #009688;
+}
+
+.online-tag {
+  background: #3f51b5;
+}
+.error-tag {
+  background: #DC3636;
+}
+
+.offline-tag {
+  background: gray;
+  color: black;
+}

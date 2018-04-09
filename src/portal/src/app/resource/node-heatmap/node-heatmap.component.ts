@@ -29,7 +29,20 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
       this.categories = categories;
     })
 
-    this.heatmapLoop = Loop.start(
+    this.heatmapLoop = this.getHeatmapInfo();
+  }
+
+  categoryCtrl(): void {
+    this.nodes = [];
+
+    if (this.heatmapLoop) {
+      Loop.stop(this.heatmapLoop);
+    }
+    this.heatmapLoop = this.getHeatmapInfo();
+  }
+
+  getHeatmapInfo(): any {
+    return Loop.start(
       //observable
       //If you want to emulate the get operation, please call the in-memory web api function below.
       //this.api.heatmap.getMockData(this.selectedCategory),
@@ -44,10 +57,6 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
       //interval in ms
       this.interval
     );
-  }
-
-  categoryCtrl(): void {
-    this.nodes = [];
   }
 
   nodeClass(node): string {

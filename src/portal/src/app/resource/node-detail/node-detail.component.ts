@@ -46,6 +46,16 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
     tooltips: {
       mode: 'index',
       intersect: false,
+      callbacks: {
+        label: function (tooltipItem, data) {
+          var label = data.datasets[tooltipItem.datasetIndex].label || '';
+          if (label) {
+            label += ': ';
+          }
+          label = label + tooltipItem.yLabel + '%';
+          return label;
+        }
+      }
     },
   };
 
@@ -126,14 +136,11 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
       let id = map.get('id');
-      //this.api.node.get(id).subscribe(node => {
-      //this.node = node;
-      //this.nodeProperties = node.properties;
-      //this.makeCpuData(node.cpuUsage);
-      //this.makeNetworkData(node.networkUsage);
-      //this.makeDiskData(node.diskUsage);
-      //this.events.data = node.events;
-      //});
+      this.api.node.get(id).subscribe(node => {
+        this.node = node;
+        this.nodeProperties = node.properties;
+        this.events.data = node.events;
+      });
 
       this.historyLoop = Loop.start(
         //in-memory-web-api to mock cpu usage history
@@ -144,7 +151,7 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
             this.labels = this.makeLabels(history);
             let cpuTotal = this.makeCpuTotalData(history);
             // this.makeCpuUsageData(history);
-            this.cpuData = { labels: this.labels, datasets: [{ label: '_Total', data: cpuTotal, borderColor: '#215ebb' }] };
+            this.cpuData = { labels: this.labels, datasets: [{ label: 'CPU usage', data: cpuTotal, borderColor: '#215ebb' }] };
             // this.cpuData = { labels: this.labels, datasets: this.cpuUsage };
             return true;
           }
@@ -216,56 +223,56 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
     return cpuTotal;
   }
 
- /* get every cores' resource usage
-  makeCpuUsageData(history): any {
-    let cpuHistory = [];
+  /* get every cores' resource usage
+   makeCpuUsageData(history): any {
+     let cpuHistory = [];
 
 
-    //sort history data by time
-    history.sort((a, b) => {
-      return (new Date(a.label)).getTime() - (new Date(b.label)).getTime();
-    });
+     //sort history data by time
+     history.sort((a, b) => {
+       return (new Date(a.label)).getTime() - (new Date(b.label)).getTime();
+     });
 
-    //select recent cpu history data from all categories
-    //[{ category: 'cpu', instanceValues:{_Total: xxx, _1: xxx, ...} }]
-    history.forEach(h => {
-      cpuHistory = cpuHistory.concat(
-        h.data.filter(v => {
-          return v.category == 'cpu';
-        })
-      );
-    });
+     //select recent cpu history data from all categories
+     //[{ category: 'cpu', instanceValues:{_Total: xxx, _1: xxx, ...} }]
+     history.forEach(h => {
+       cpuHistory = cpuHistory.concat(
+         h.data.filter(v => {
+           return v.category == 'cpu';
+         })
+       );
+     });
 
-    if (cpuHistory[0].instanceValues && this.cpuCoresName.length == 0) {
-      this.cpuCoresName = Object.keys(cpuHistory[0].instanceValues);
-    }
+     if (cpuHistory[0].instanceValues && this.cpuCoresName.length == 0) {
+       this.cpuCoresName = Object.keys(cpuHistory[0].instanceValues);
+     }
 
-    for (let i = 0; i < this.cpuCoresName.length; i++) {
-      if (this.cpuUsage.length !== this.cpuCoresName.length) {
-        this.cpuUsage.push({ label: this.cpuCoresName[i], data: [], borderColor: this.colors[i] });
-      }
-      else {
-        if (this.cpuUsage[i] !== undefined) {
-          this.cpuUsage[i]['data'] = [];
-        }
-      }
-    }
+     for (let i = 0; i < this.cpuCoresName.length; i++) {
+       if (this.cpuUsage.length !== this.cpuCoresName.length) {
+         this.cpuUsage.push({ label: this.cpuCoresName[i], data: [], borderColor: this.colors[i] });
+       }
+       else {
+         if (this.cpuUsage[i] !== undefined) {
+           this.cpuUsage[i]['data'] = [];
+         }
+       }
+     }
 
-    cpuHistory.forEach(h => {
-      for (let key in h.instanceValues) {
-        let usageIndex = this.cpuUsage.findIndex((ele) => {
-          return ele.label == key;
-        });
-        if (this.cpuUsage[usageIndex] !== undefined) {
-          this.cpuUsage[usageIndex].data.push(h.instanceValues[key]);
-        }
-      }
-    });
+     cpuHistory.forEach(h => {
+       for (let key in h.instanceValues) {
+         let usageIndex = this.cpuUsage.findIndex((ele) => {
+           return ele.label == key;
+         });
+         if (this.cpuUsage[usageIndex] !== undefined) {
+           this.cpuUsage[usageIndex].data.push(h.instanceValues[key]);
+         }
+       }
+     });
 
-    console.log(this.cpuUsage);
-    // return cpuUsage;
-  }
-  */
+     console.log(this.cpuUsage);
+     // return cpuUsage;
+   }
+   */
 
   // makeNetworkData(usage): void {
   //   let labels = this.makeLabels(usage);
