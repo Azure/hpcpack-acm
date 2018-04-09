@@ -33,9 +33,11 @@
             {
                 try
                 {
-                    var taskItem = await this.Source.FetchTaskItemAsync(token);
-
-                    await this.ProcessTaskItemAsync(taskItem, token);
+                    using (var taskItem = await this.Source.FetchTaskItemAsync(token))
+                    {
+                        var success = await this.ProcessTaskItemAsync(taskItem, token);
+                        await (success ? taskItem.FinishAsync(token) : taskItem.ReturnAsync(token));
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -45,6 +47,6 @@
             }
         }
 
-        public abstract Task ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token);
+        public abstract Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token);
     }
 }

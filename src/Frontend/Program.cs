@@ -41,6 +41,7 @@
                 {
                     services.Configure<CloudOptions>(context.Configuration.GetSection("CloudOptions"));
                     services.AddSingleton<CloudUtilities>();
+                    services.AddSingleton<DataProvider>();
                 })
                 .UseUrls("http://*:80", "http://*:5000")
                 .UseStartup<Startup>()

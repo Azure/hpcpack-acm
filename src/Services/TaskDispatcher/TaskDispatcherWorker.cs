@@ -134,7 +134,7 @@
             }
         }
 
-        public override async Task ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
+        public override async Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
         {
             var message = taskItem.GetMessage<TaskCompletionMessage>();
             using (this.Logger.BeginScope("Do work for TaskCompletionMessage {0}", message.Id))
@@ -153,7 +153,7 @@
                         token);
                 }, token);
 
-                await taskItem.FinishAsync(token);
+                return true;
             }
         }
     }

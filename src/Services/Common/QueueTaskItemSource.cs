@@ -36,7 +36,7 @@
                 }
                 else
                 {
-                    return new QueueTaskItem(message, this.queue);
+                    return new QueueTaskItem(message, this.queue, this.visibleTimeout, this.Logger, token);
                 }
             }
             while (true);

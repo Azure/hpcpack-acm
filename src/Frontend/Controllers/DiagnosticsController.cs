@@ -13,43 +13,75 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     [Route("api/[controller]")]
     public class DiagnosticsController : Controller
     {
-        private readonly CloudUtilities utilities;
-        public DiagnosticsController(CloudUtilities utilities)
+        private readonly DataProvider provider;
+
+        public DiagnosticsController(DataProvider provider)
         {
-            this.utilities = utilities;
+            this.provider = provider;
         }
 
-        // GET api/diagnostics
-        [HttpGet()]
-        public async Task<IEnumerable<DiagnosticsTest>> GetDiagnosticsTestsAsync(CancellationToken token)
+        // GET api/diagnostics/tests
+        [HttpGet("tests")]
+        public Task<IEnumerable<DiagnosticsTest>> GetDiagnosticsTestsAsync(CancellationToken token)
         {
-            var jobsTable = this.utilities.GetJobsTable();
+            return this.provider.GetDiagnosticsTestsAsync(token);
+        }
 
-            var partitionString = this.utilities.GetPartitionKeyRangeString(
-                this.utilities.GetDiagPartitionKey(this.utilities.MinString),
-                this.utilities.GetDiagPartitionKey(this.utilities.MaxString));
+        // GET api/diagnostics?lastid=3&count=10
+        [HttpGet()]
+        public Task<IEnumerable<Job>> GetDiagnosticsJobsAsync([FromQuery] int lastId, [FromQuery] int count = 1000, CancellationToken token = default(CancellationToken))
+        {
+            return this.provider.GetJobsAsync(lastId, count, JobType.Diagnostics, token);
+        }
 
-            TableContinuationToken conToken = null;
-            List<DiagnosticsTest> tests = new List<DiagnosticsTest>();
+        // GET api/diagnostics/5?lastNodeName=abc&nodeCount=10
+        [HttpGet("{jobid}")]
+        public Task<JobResult> GetDiagnosticsJobAsync(int jobId, [FromQuery] string lastNodeName, [FromQuery] int nodeCount = 1000, CancellationToken token = default(CancellationToken))
+        {
+            return this.provider.GetJobAsync(jobId, lastNodeName, nodeCount, JobType.Diagnostics, token);
+        }
 
-            var q = new TableQuery<JsonTableEntity>().Where(partitionString);
-            q.SelectColumns = new List<string>() { CloudUtilities.PartitionKeyName, CloudUtilities.RowKeyName };
-
-            do
+        // GET api/diagnostics/5/results/resultkey?offset=25&pagesize=100&raw=true
+        [HttpGet("{jobid}/results/{resultkey}")]
+        public async Task<IActionResult> GetClusRunResultAsync(
+            int jobId,
+            string resultKey,
+            [FromQuery] long offset = -1000,
+            [FromQuery] int pageSize = 1000,
+            [FromQuery] bool raw = false,
+            CancellationToken token = default(CancellationToken))
+        {
+            if (raw)
             {
-                var result = await jobsTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-
-                tests.AddRange(result.Results.Select(e => new DiagnosticsTest()
-                {
-                    Category = this.utilities.GetDiagCategoryName(e.PartitionKey),
-                    Name = e.RowKey
-                }));
-
-                conToken = result.ContinuationToken;
+                return await this.provider.GetOutputRawAsync(JobType.Diagnostics, jobId, resultKey, token);
             }
-            while (conToken != null);
+            else
+            {
+                return new OkObjectResult(await this.provider.GetOutputPageAsync(JobType.Diagnostics, jobId, resultKey, pageSize, offset, token));
+            }
+        }
 
-            return tests;
+        [HttpGet("testnewjob")]
+        public async Task<int> TestCreateJobAsync(CancellationToken token)
+        {
+            var job = new Job()
+            {
+                Name = "diag-test-test",
+                RequeueCount = 0,
+                State = JobState.Queued,
+                TargetNodes = new string[] { "evanc6", "evanclinuxdev", "testnode1", "testnode2" },
+                Type = JobType.Diagnostics,
+                DiagnosticTest = new DiagnosticsTest() { Category = "test", Name = "test" }
+            };
+
+            return await this.provider.CreateJobAsync(job, token);
+        }
+
+        // POST api/clusrun/jobs/5/rerun
+        [HttpPost("{jobid}/{operation}")]
+        public async Task TakeAction(int jobId, string operation)
+        {
+            await Task.CompletedTask;
         }
     }
 }

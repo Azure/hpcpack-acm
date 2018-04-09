@@ -18,136 +18,49 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     [Route("api/[controller]")]
     public class ClusRunController : Controller
     {
-        private readonly ILogger logger;
-        private readonly CloudUtilities utilities;
+        private readonly DataProvider provider;
 
-        public ClusRunController(ILogger<ClusRunController> logger, CloudUtilities cloudEntities)
+        public ClusRunController(DataProvider provider)
         {
-            this.logger = logger;
-            this.utilities = cloudEntities;
+            this.provider = provider;
         }
 
-        // GET api/clusrun?lastJobId=3&jobCount=10
+        // GET api/clusrun?lastid=3&count=10
         [HttpGet()]
-        public async Task<IEnumerable<Job>> GetClusRunJobsAsync([FromQuery] int? lastJobId, [FromQuery] int? jobCount, CancellationToken token)
+        public Task<IEnumerable<Job>> GetClusRunJobsAsync([FromQuery] int lastId, [FromQuery] int count = 1000, CancellationToken token = default(CancellationToken))
         {
-            this.logger.LogInformation("Get clusrun jobs called, lastId {0}, jobCount {1}", lastJobId, jobCount);
-            var jobTable = this.utilities.GetJobsTable();
-
-            var lowJobPartitionKey = this.utilities.GetJobPartitionKey($"{JobType.ClusRun}", lastJobId ?? 0);
-            var rowKey = utilities.JobEntryKey;
-
-            var q = new TableQuery<JsonTableEntity>()
-                .Where(TableQuery.CombineFilters(
-                    TableQuery.GenerateFilterCondition(CloudUtilities.PartitionKeyName, QueryComparisons.GreaterThan, lowJobPartitionKey),
-                    TableOperators.And,
-                    TableQuery.GenerateFilterCondition(CloudUtilities.RowKeyName, QueryComparisons.Equal, rowKey)))
-                .Take(jobCount);
-
-            var jobs = new List<Job>(jobCount ?? 1000);
-            TableContinuationToken conToken = null;
-
-            do
-            {
-                var queryResult = await jobTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-
-                jobs.AddRange(queryResult.Results.Select(r => r.GetObject<Job>()));
-
-                conToken = queryResult.ContinuationToken;
-            }
-            while (conToken != null);
-
-            return jobs;
+            return this.provider.GetJobsAsync(lastId, count, JobType.ClusRun, token);
         }
 
         // GET api/clusrun/5?lastNodeName=abc&nodeCount=10
         [HttpGet("{jobid}")]
-        public async Task<JobResult> GetAsync(int jobId, [FromQuery] string lastNodeName, [FromQuery] int? nodeCount, CancellationToken token)
+        public Task<JobResult> GetClusRunJobAsync(int jobId, [FromQuery] string lastNodeName, [FromQuery] int nodeCount = 1000, CancellationToken token = default(CancellationToken))
         {
-            this.logger.LogInformation("Get clusrun job called. getting job");
-            var jobTable = this.utilities.GetJobsTable();
-
-            var jobPartitionKey = this.utilities.GetJobPartitionKey($"{JobType.ClusRun}", jobId);
-            var rowKey = utilities.JobEntryKey;
-
-            var result = await jobTable.ExecuteAsync(
-                TableOperation.Retrieve<JsonTableEntity>(jobPartitionKey, rowKey),
-                null, null, token);
-
-            this.logger.LogInformation("Retrive job {0} status code {1}", jobId, result.HttpStatusCode);
-
-            HttpResponseMessage response = new HttpResponseMessage((HttpStatusCode)result.HttpStatusCode);
-            response.EnsureSuccessStatusCode();
-
-            if (result.Result == null)
-            {
-                return null;
-            }
-
-            JobResult j = ((JsonTableEntity)result.Result).GetObject<JobResult>();
-
-            this.logger.LogInformation("Fetching job {0} output", jobId);
-
-            var lowResultKey = this.utilities.GetJobResultKey(lastNodeName, null);
-            var highResultKey = this.utilities.GetMaximumJobResultKey();
-            var partitionQuery = this.utilities.GetPartitionQueryString(jobPartitionKey);
-            var rowKeyRangeQuery = this.utilities.GetRowKeyRangeString(lowResultKey, highResultKey);
-
-            var q = new TableQuery<JsonTableEntity>()
-                .Where(TableQuery.CombineFilters(partitionQuery, TableOperators.And, rowKeyRangeQuery))
-                .Take(nodeCount);
-
-            TableContinuationToken conToken = null;
-
-            j.Results = new List<NodeResult>(nodeCount ?? 1000);
-
-            var taskInfos = new List<(string, ComputeNodeTaskCompletionEventArgs)>();
-
-            do
-            {
-                var queryResult = await jobTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-
-                taskInfos.AddRange(queryResult.Results.Select(r => (r.RowKey, r.GetObject<ComputeNodeTaskCompletionEventArgs>())));
-
-                conToken = queryResult.ContinuationToken;
-            }
-            while (conToken != null);
-
-            j.Results = taskInfos.GroupBy(t => t.Item2.NodeName.ToLowerInvariant()).Select(g => new NodeResult()
-            {
-                NodeName = g.Key,
-                JobId = jobId,
-                Results = g.Select(e => new CommandResult()
-                {
-                    CommandLine = j.CommandLine,
-                    NodeName = g.Key,
-                    ResultKey = e.Item1,
-                    TaskInfo = e.Item2.TaskInfo,
-                    Test = j.DiagnosticTest,
-                }).ToList(),
-            }).ToList();
-
-            return j;
+            return this.provider.GetJobAsync(jobId, lastNodeName, nodeCount, JobType.ClusRun, token);
         }
 
-        [HttpGet("testnewdiagjob")]
-        public async Task<int> TestNewDiagJobAsync(CancellationToken token)
+        // GET api/clusrun/5/results/resultkey?offset=25&pagesize=100&raw=true
+        [HttpGet("{jobid}/results/{resultkey}")]
+        public async Task<IActionResult> GetClusRunResultAsync(
+            int jobId,
+            string resultKey,
+            [FromQuery] long offset = -1000,
+            [FromQuery] int pageSize = 1000,
+            [FromQuery] bool raw = false,
+            CancellationToken token = default(CancellationToken))
         {
-            var job = new Job()
+            if (raw)
             {
-                DiagnosticTest = new DiagnosticsTest() { Category = "test", Name = "test" },
-                Name = "test-diag",
-                RequeueCount = 0,
-                State = JobState.Queued,
-                TargetNodes = new string[] { "evanc6", "evanclinuxdev", "testnode1", "testnode2" },
-                Type = JobType.Diagnostics,
-            };
-
-            return await this.NewJobAsync(job, token);
+                return await this.provider.GetOutputRawAsync(JobType.ClusRun, jobId, resultKey, token);
+            }
+            else
+            {
+                return new OkObjectResult(await this.provider.GetOutputPageAsync(JobType.ClusRun, jobId, resultKey, pageSize, offset, token));
+            }
         }
 
-        [HttpGet("testnewclusrunjob")]
-        public async Task<int> TestNewJobAsync(CancellationToken token)
+        [HttpGet("testnewjob")]
+        public async Task<int> TestCreateJobAsync(CancellationToken token)
         {
             var job = new Job()
             {
@@ -159,39 +72,15 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 Type = JobType.ClusRun,
             };
 
-            return await this.NewJobAsync(job, token);
+            return await this.provider.CreateJobAsync(job, token);
         }
 
         // POST api/clusrun
         [HttpPost()]
-        public async Task<int> NewJobAsync([FromBody] Job job, CancellationToken token)
+        public async Task<IActionResult> CreateJobAsync([FromBody] Job job, CancellationToken token)
         {
-            this.logger.LogInformation("New clusrun job called. creating job");
-            var jobTable = this.utilities.GetJobsTable();
-
-            job.Id = await this.utilities.GetNextId("Jobs", $"{job.Type}", token);
-            this.logger.LogInformation("generated new job id {0}", job.Id);
-
-            var partitionName = utilities.GetJobPartitionKey($"{job.Type}", job.Id);
-            var rowKey = utilities.JobEntryKey;
-
-            var result = await jobTable.ExecuteAsync(
-                TableOperation.Insert(new JsonTableEntity(partitionName, rowKey, job)),
-                null, null, token);
-
-            this.logger.LogInformation("create job result {0}", result.HttpStatusCode);
-
-            HttpResponseMessage response = new HttpResponseMessage((HttpStatusCode)result.HttpStatusCode);
-            response.EnsureSuccessStatusCode();
-
-            this.logger.LogInformation("Creating job dispatch message");
-            var jobDispatchQueue = this.utilities.GetJobDispatchQueue();
-
-            var jobMsg = new JobDispatchMessage() { Id = job.Id, Type = job.Type };
-            await jobDispatchQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(jobMsg)), null, null, null, null, token);
-            this.logger.LogInformation("Create job dispatch message success.");
-
-            return job.Id;
+            int id = await this.provider.CreateJobAsync(job, token);
+            return new CreatedResult($"/api/clusrun/{id}", null);
         }
 
         // POST api/clusrun/jobs/5/rerun

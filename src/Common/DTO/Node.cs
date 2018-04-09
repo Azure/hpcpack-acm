@@ -15,6 +15,7 @@ namespace Microsoft.HpcAcm.Common.Dto
 
     public class Node   
     {
+        public string Id { get => this.Name; }
         public string Name { get; set; }
         public NodeHealth Health { get; set; }
         public NodeState State { get; set; }
