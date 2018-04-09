@@ -63,13 +63,14 @@
             var nodeName = this.ServerOptions.HostName;
             Debug.Assert(nodeName == task.Node, "NodeName mismatch");
             var taskKey = this.Utilities.GetTaskKey(task.JobId, task.Id, task.RequeueCount);
+            var taskResultKey = this.Utilities.GetTaskResultKey(task.JobId, task.Id, task.RequeueCount);
             using (this.Logger.BeginScope("Do work for InternalTask {0} on node {1}", taskKey, nodeName))
             {
                 var cmd = task.CommandLine;
                 Logger.LogInformation("Executing command {0}", cmd);
 
-                var resultKey = this.Utilities.GetJobResultKey(nodeName, taskKey);
-                var taskResultBlob = await this.Utilities.CreateOrReplaceTaskOutputBlobAsync(task.JobType.ToString().ToLowerInvariant(), task.JobId, resultKey, token);
+                var nodeTaskResultKey = this.Utilities.GetNodeTaskResultKey(nodeName, task.JobId, task.RequeueCount, task.Id);
+                var taskResultBlob = await this.Utilities.CreateOrReplaceTaskOutputBlobAsync(task.JobType, task.JobId, nodeTaskResultKey, token);
 
                 var rawResult = new StringBuilder();
                 using (var monitor = this.Monitor.StartMonitorTask(taskKey, async (output, cancellationToken) =>
@@ -99,8 +100,8 @@
                         CustomizedData = task.CustomizedData,
                     };
 
-                    if (!await this.PersistTaskResult(resultKey, taskResultArgs, token)) { return false; }
-                    if (!await this.PersistTaskResult(taskKey, taskResultArgs, token)) { return false; }
+                    if (!await this.PersistTaskResult(nodeTaskResultKey, taskResultArgs, token)) { return false; }
+                    if (!await this.PersistTaskResult(taskResultKey, taskResultArgs, token)) { return false; }
 
                     await this.communicator.StartJobAndTaskAsync(
                          nodeName,
@@ -109,8 +110,8 @@
                             "", new System.Collections.Hashtable(), new long[0], task.RequeueCount), token);
 
                     taskResultArgs.State = TaskState.Running;
-                    if (!await this.PersistTaskResult(resultKey, taskResultArgs, token)) { return false; }
-                    if (!await this.PersistTaskResult(taskKey, taskResultArgs, token)) { return false; }
+                    if (!await this.PersistTaskResult(nodeTaskResultKey, taskResultArgs, token)) { return false; }
+                    if (!await this.PersistTaskResult(taskResultKey, taskResultArgs, token)) { return false; }
 
                     this.Logger.LogInformation("Wait for response for job {0}, task {1}", task.JobId, taskKey);
                     taskResultArgs = await monitor.Execution;
@@ -118,10 +119,10 @@
                     this.Logger.LogInformation("Saving result for job {0}, task {1}", task.JobId, taskKey);
 
                     taskResultArgs.State = TaskState.Finished;
-                    taskResultArgs.TaskInfo.Message = rawResult.ToString(0, MaxRawResultLength);
+                    taskResultArgs.TaskInfo.Message = rawResult.Length > MaxRawResultLength ? rawResult.ToString(0, MaxRawResultLength) : rawResult.ToString();
 
-                    if (!await this.PersistTaskResult(resultKey, taskResultArgs, token)) { return false; }
-                    if (!await this.PersistTaskResult(taskKey, taskResultArgs, token)) { return false; }
+                    if (!await this.PersistTaskResult(nodeTaskResultKey, taskResultArgs, token)) { return false; }
+                    if (!await this.PersistTaskResult(taskResultKey, taskResultArgs, token)) { return false; }
 
                     var queue = await this.Utilities.GetOrCreateTaskCompletionQueueAsync(token);
                     await queue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(new TaskCompletionMessage()

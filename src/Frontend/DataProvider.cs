@@ -336,8 +336,8 @@
             var partitionQuery = this.utilities.GetPartitionQueryString(jobPartitionKey);
 
             var rowKeyRangeQuery = this.utilities.GetRowKeyRangeString(
-                this.utilities.GetTaskKey(jobId, lastTaskId, requeueCount),
-                this.utilities.GetTaskKey(jobId, int.MaxValue, requeueCount));
+                this.utilities.GetTaskResultKey(jobId, lastTaskId, requeueCount),
+                this.utilities.GetTaskResultKey(jobId, int.MaxValue, requeueCount));
 
             var q = new TableQuery<JsonTableEntity>()
                 .Where(TableQuery.CombineFilters(partitionQuery, TableOperators.And, rowKeyRangeQuery))
@@ -391,8 +391,8 @@
 
             this.logger.LogInformation("Fetching job {0} output", jobId);
 
-            var lowResultKey = this.utilities.GetJobResultKey(lastNodeName, null);
-            var highResultKey = this.utilities.GetMaximumJobResultKey();
+            var lowResultKey = this.utilities.GetNodeTaskResultKey(lastNodeName, jobId, j.RequeueCount, 0);
+            var highResultKey = this.utilities.GetMaximumNodeTaskResultKey();
             var partitionQuery = this.utilities.GetPartitionQueryString(jobPartitionKey);
             var rowKeyRangeQuery = this.utilities.GetRowKeyRangeString(lowResultKey, highResultKey);
 

@@ -1,5 +1,6 @@
 ﻿namespace Microsoft.HpcAcm.Common.Utilities
 {
+    using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -74,10 +75,10 @@
             return await u.GetOrCreateTableAsync(u.Option.JobsTableName, token);
         }
 
-        public static async Task<CloudAppendBlob> CreateOrReplaceTaskOutputBlobAsync(this CloudUtilities u, string jobType, int jobId, string key, CancellationToken token)
+        public static async Task<CloudAppendBlob> CreateOrReplaceTaskOutputBlobAsync(this CloudUtilities u, JobType jobType, int jobId, string key, CancellationToken token)
         {
             return await u.GetOrCreateAppendBlobAsync(
-                string.Format(u.Option.JobResultContainerPattern, jobType, IntegerKey.ToStringKey(jobId)),
+                string.Format(u.Option.JobResultContainerPattern, jobType.ToString().ToLowerInvariant(), IntegerKey.ToStringKey(jobId)),
                 key,
                 token);
         }
