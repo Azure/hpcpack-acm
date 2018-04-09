@@ -24,9 +24,13 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             this.logger = logger;
         }
 
-        // GET api/heatmap/values/cpu?lastNodeName=abc&count=5
-        [HttpGet("values/{category}")]
-        public async Task<Heatmap> GetValuesAsync(string category, [FromQuery] string lastNodeName, [FromQuery] int? count, CancellationToken token)
+        // GET api/heatmap/cpu?lastNodeName=abc&count=5
+        [HttpGet("{category}", Order = 1)]
+        public async Task<Heatmap> GetValuesAsync(
+            string category = "cpu",
+            [FromQuery] string lastNodeName = null,
+            [FromQuery] int count = 1000,
+            CancellationToken token = default(CancellationToken))
         {
             var partitionQuery = this.utilities.GetPartitionQueryString(this.utilities.MetricsValuesPartitionKey);
 
@@ -85,7 +89,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         }
 
         // GET api/heatmap/categories
-        [HttpGet("categories")]
+        [HttpGet("categories", Order = 0)]
         public async Task<List<string>> GetCategoriesAsync(CancellationToken token)
         {
             var partitionQuery = this.utilities.GetPartitionQueryString(this.utilities.MetricsCategoriesPartitionKey);
@@ -97,7 +101,6 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             var metricsTable = this.utilities.GetMetricsTable();
 
             TableContinuationToken conToken = null;
-
             List<string> list = new List<string>();
 
             do

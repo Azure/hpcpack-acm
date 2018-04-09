@@ -43,7 +43,7 @@
             await base.InitializeAsync(token);
         }
 
-        public override async Task ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
+        public override async Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
         {
             var message = taskItem.GetMessage<JobDispatchMessage>();
             using (this.Logger.BeginScope("Do work for JobDispatchMessage {0}", message.Id))
@@ -88,14 +88,12 @@
                     result = await this.jobsTable.ExecuteAsync(TableOperation.Replace(entity), null, null, token);
                     this.Logger.LogInformation("Update job {0} result code {1}", job.Id, result.HttpStatusCode);
 
-                    if (result.IsSuccessfulStatusCode())
-                    {
-                        await taskItem.FinishAsync(token);
-                    }
+                    return result.IsSuccessfulStatusCode();
                 }
                 else
                 {
                     this.Logger.LogWarning("The entity queried is not of <JobTableEntity> type, {0}", result.Result);
+                    return false;
                 }
             }
         }
