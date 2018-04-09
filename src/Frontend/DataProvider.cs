@@ -293,11 +293,14 @@
             var jobTable = this.utilities.GetJobsTable();
 
             var lowJobPartitionKey = this.utilities.GetJobPartitionKey($"{type}", lastId);
+            var highJobPartitionKey = this.utilities.GetJobPartitionKey($"{type}", int.MaxValue);
+
+            var partitionRange = this.utilities.GetPartitionKeyRangeString(lowJobPartitionKey, highJobPartitionKey);
             var rowKey = utilities.JobEntryKey;
 
             var q = new TableQuery<JsonTableEntity>()
                 .Where(TableQuery.CombineFilters(
-                    TableQuery.GenerateFilterCondition(CloudUtilities.PartitionKeyName, QueryComparisons.GreaterThan, lowJobPartitionKey),
+                    partitionRange,
                     TableOperators.And,
                     TableQuery.GenerateFilterCondition(CloudUtilities.RowKeyName, QueryComparisons.Equal, rowKey)))
                 .Take(count);
@@ -316,6 +319,45 @@
             while (conToken != null);
 
             return jobs;
+        }
+
+        public async Task<IEnumerable<ComputeNodeTaskCompletionEventArgs>> GetTasksAsync(
+            int jobId,
+            int requeueCount,
+            int lastTaskId,
+            int count = 1000,
+            JobType type = JobType.ClusRun,
+            CancellationToken token = default(CancellationToken))
+        {
+            this.logger.LogInformation("Get {type} tasks called. getting job {id}", type, jobId);
+            var jobTable = this.utilities.GetJobsTable();
+
+            var jobPartitionKey = this.utilities.GetJobPartitionKey($"{type}", jobId);
+            var partitionQuery = this.utilities.GetPartitionQueryString(jobPartitionKey);
+
+            var rowKeyRangeQuery = this.utilities.GetRowKeyRangeString(
+                this.utilities.GetTaskKey(jobId, lastTaskId, requeueCount),
+                this.utilities.GetTaskKey(jobId, int.MaxValue, requeueCount));
+
+            var q = new TableQuery<JsonTableEntity>()
+                .Where(TableQuery.CombineFilters(partitionQuery, TableOperators.And, rowKeyRangeQuery))
+                .Take(count);
+
+            TableContinuationToken conToken = null;
+
+            var taskInfos = new List<ComputeNodeTaskCompletionEventArgs>(count);
+
+            do
+            {
+                var queryResult = await jobTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
+
+                taskInfos.AddRange(queryResult.Results.Select(r => r.GetObject<ComputeNodeTaskCompletionEventArgs>()));
+
+                conToken = queryResult.ContinuationToken;
+            }
+            while (conToken != null);
+
+            return taskInfos;
         }
 
         public async Task<JobResult> GetJobAsync(

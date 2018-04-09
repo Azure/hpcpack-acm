@@ -34,6 +34,13 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return this.provider.GetJobsAsync(lastId, count, JobType.Diagnostics, token);
         }
 
+        // GET api/diagnostics/5/tasks?lastid=0&count=10&requeueCount=0
+        [HttpGet("{jobid}/tasks")]
+        public Task<IEnumerable<ComputeNodeTaskCompletionEventArgs>> GetDiagnosticsTasksAsync(int jobId, [FromQuery] int lastId, [FromQuery] int count = 1000, [FromQuery] int requeueCount = 0, CancellationToken token = default(CancellationToken))
+        {
+            return this.provider.GetTasksAsync(jobId, requeueCount, lastId, count, JobType.Diagnostics, token);
+        }
+
         // GET api/diagnostics/5?lastNodeName=abc&nodeCount=10
         [HttpGet("{jobid}")]
         public Task<JobResult> GetDiagnosticsJobAsync(int jobId, [FromQuery] string lastNodeName, [FromQuery] int nodeCount = 1000, CancellationToken token = default(CancellationToken))
