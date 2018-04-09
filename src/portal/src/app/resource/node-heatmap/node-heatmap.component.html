@@ -5,7 +5,7 @@
 
 <div class="selectedCategory">
   <mat-form-field>
-    <mat-select placeholder="Select Category" [(value)] = "selectedCategory" (selectionChange) = "categoryCtrl()">
+    <mat-select placeholder="Select Category" [(ngModel)] = "selectedCategory" (selectionChange) = "categoryCtrl()">
       <mat-option *ngFor="let category of categories" [value]="category">
         {{ category }}
       </mat-option>
