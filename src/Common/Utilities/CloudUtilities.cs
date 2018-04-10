@@ -39,7 +39,7 @@
 
         public async Task InitializeAsync(CancellationToken token)
         {
-            await this.GetOrCreateJobDispatchQueueAsync(token);
+            await this.GetOrCreateJobEventQueueAsync(token);
             await this.GetOrCreateJobsTableAsync(token);
             await this.GetOrCreateNodesTableAsync(token);
             await this.GetOrCreateIdsTableAsync(token);

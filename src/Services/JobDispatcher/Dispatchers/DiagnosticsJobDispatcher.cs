@@ -1,4 +1,4 @@
-﻿namespace Microsoft.HpcAcm.Services.JobDispatcher
+﻿namespace Microsoft.HpcAcm.Services.JobMonitor
 {
     using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Dto;
@@ -14,7 +14,7 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class DiagnosticsJobDispatcher : JobDispatcher, IDispatcher
+    public class DiagnosticsJobDispatcher : JobDispatcher
     {
         public override JobType RestrictedJobType { get => JobType.Diagnostics; }
 
@@ -25,13 +25,7 @@
 
             var result = await jobTable.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(this.Utilities.GetDiagPartitionKey(job.DiagnosticTest.Category), job.DiagnosticTest.Name), null, null, token);
 
-            if (!result.IsSuccessfulStatusCode())
-            {
-                this.Logger.LogError("No diag test found");
-                throw new InvalidOperationException("no diag test found");
-            }
-
-            if (result.Result is JsonTableEntity entity)
+            if (result.IsSuccessfulStatusCode() && result.Result is JsonTableEntity entity)
             {
                 var diagTest = entity.GetObject<InternalDiagnosticsTest>();
 

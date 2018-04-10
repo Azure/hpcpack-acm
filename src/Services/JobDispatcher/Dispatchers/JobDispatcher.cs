@@ -1,9 +1,10 @@
-﻿namespace Microsoft.HpcAcm.Services.JobDispatcher
+﻿namespace Microsoft.HpcAcm.Services.JobMonitor
 {
     using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
+    using Microsoft.WindowsAzure.Storage.Queue;
     using Microsoft.WindowsAzure.Storage.Table;
     using Newtonsoft.Json;
     using System;
@@ -14,9 +15,10 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    public abstract class JobDispatcher : ServerObject, IDispatcher
+    public abstract class JobDispatcher : ServerObject, IJobEventProcessor
     {
         public abstract JobType RestrictedJobType { get; }
+        public string EventVerb { get => "dispatch"; }
 
         private (bool, string) FillData(IEnumerable<InternalTask> tasks, Job job)
         {
@@ -50,7 +52,7 @@
         }
 
 
-        public async Task DispatchAsync(Job job, CancellationToken token)
+        public async Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token)
         {
             Debug.Assert(job.Type == this.RestrictedJobType, "Job type mismatch");
 
@@ -105,6 +107,14 @@
             {
                 throw new InvalidOperationException("Not all tasks dispatched successfully");
             }
+
+            job.State = JobState.Running;
+            await jobTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, this.Utilities.JobEntryKey, job, token);
+
+            var taskCompletionQueue = await this.Utilities.GetOrCreateTaskCompletionQueueAsync(token);
+            await taskCompletionQueue.AddMessageAsync(new CloudQueueMessage(
+                JsonConvert.SerializeObject(new TaskCompletionMessage() { JobId = job.Id, Id = 0, JobType = job.Type, RequeueCount = job.RequeueCount })),
+                null, null, null, null, token);
         }
 
         public abstract Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token);

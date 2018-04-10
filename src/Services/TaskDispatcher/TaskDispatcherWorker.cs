@@ -134,8 +134,13 @@
                     {
                         if (string.Equals(t.CustomizedData, InternalTask.EndTaskMark, StringComparison.OrdinalIgnoreCase))
                         {
-                            await this.Utilities.UpdateJobAsync(jobPartitionKey, j => j.State = j.State == JobState.Running ? JobState.Finished : j.State, token);
-                            // TODO add job finished event
+                            await this.Utilities.UpdateJobAsync(jobPartitionKey, j => j.State = j.State == JobState.Running ? JobState.Finishing : j.State, token);
+                            var jobEventQueue = await this.Utilities.GetOrCreateJobEventQueueAsync(token);
+                            await jobEventQueue.AddMessageAsync(
+                                new CloudQueueMessage(JsonConvert.SerializeObject(new JobEventMessage() { Id = job.Id, EventVerb = "finish", Type = job.Type })),
+                                null, null, null, null,
+                                token);
+
                             return;
                         }
 

@@ -3,8 +3,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <RootNamespace>Microsoft.HpcAcm.Services.JobDispatcher</RootNamespace>
-    <AssemblyName>JobDispatcher</AssemblyName>
+    <RootNamespace>Microsoft.HpcAcm.Services.JobMonitor</RootNamespace>
+    <AssemblyName>JobMonitor</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

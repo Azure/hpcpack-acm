@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobDispatcher", "Services\JobDispatcher\JobDispatcher.csproj", "{32ABC24D-5722-41D9-B88E-A489CDB336A6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JobMonitor", "Services\JobDispatcher\JobMonitor.csproj", "{32ABC24D-5722-41D9-B88E-A489CDB336A6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServicesCommon", "Services\Common\ServicesCommon.csproj", "{8184230E-9B7C-4647-B72C-ECC4EC44F2BA}"
 EndProject

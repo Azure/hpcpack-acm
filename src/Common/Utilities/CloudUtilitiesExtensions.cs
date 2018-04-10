@@ -87,16 +87,16 @@
             string.Format(u.Option.JobResultContainerPattern, jobType, IntegerKey.ToStringKey(jobId)),
             key);
 
-        public static CloudQueue GetJobDispatchQueue(this CloudUtilities u) => u.GetQueue(u.Option.JobDispatchQueueName);
+        public static CloudQueue GetJobEventQueue(this CloudUtilities u) => u.GetQueue(u.Option.JobEventQueueName);
 
         public static async Task<CloudQueue> GetOrCreateTaskCompletionQueueAsync(this CloudUtilities u, CancellationToken token)
         {
             return await u.GetOrCreateQueueAsync(u.Option.TaskCompletionQueueName, token);
         }
 
-        public static async Task<CloudQueue> GetOrCreateJobDispatchQueueAsync(this CloudUtilities u, CancellationToken token)
+        public static async Task<CloudQueue> GetOrCreateJobEventQueueAsync(this CloudUtilities u, CancellationToken token)
         {
-            return await u.GetOrCreateQueueAsync(u.Option.JobDispatchQueueName, token);
+            return await u.GetOrCreateQueueAsync(u.Option.JobEventQueueName, token);
         }
 
         public static async Task<CloudQueue> GetOrCreateNodeDispatchQueueAsync(this CloudUtilities u, string nodeName, CancellationToken token)

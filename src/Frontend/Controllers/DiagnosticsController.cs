@@ -78,10 +78,18 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 State = JobState.Queued,
                 TargetNodes = new string[] { "evanc6", "evanclinuxdev", "testnode1", "testnode2" },
                 Type = JobType.Diagnostics,
-                DiagnosticTest = new DiagnosticsTest() { Category = "test", Name = "test" }
+                DiagnosticTest = new DiagnosticsTest() { Category = "test", Name = "test", Arguments = "some arg" }
             };
 
             return await this.provider.CreateJobAsync(job, token);
+        }
+
+        // POST api/diagnostics
+        [HttpPost()]
+        public async Task<IActionResult> CreateJobAsync([FromBody] Job job, CancellationToken token)
+        {
+            int id = await this.provider.CreateJobAsync(job, token);
+            return new CreatedResult($"/api/diagnostics/{id}", null);
         }
 
         // POST api/clusrun/jobs/5/rerun

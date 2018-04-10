@@ -25,6 +25,7 @@
         Dispatching,
         Running,
         Finished,
+        Failed,
     }
 
     /// <summary>

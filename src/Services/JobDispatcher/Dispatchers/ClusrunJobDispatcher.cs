@@ -1,4 +1,4 @@
-﻿namespace Microsoft.HpcAcm.Services.JobDispatcher
+﻿namespace Microsoft.HpcAcm.Services.JobMonitor
 {
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
@@ -13,7 +13,7 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class ClusrunJobDispatcher : JobDispatcher, IDispatcher
+    public class ClusrunJobDispatcher : JobDispatcher
     {
         public override JobType RestrictedJobType { get => JobType.ClusRun; }
 

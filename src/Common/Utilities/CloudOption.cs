@@ -72,7 +72,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
         #region Queue
 
         public string TaskCompletionQueueName { get; set; } = "taskcompletionqueue";
-        public string JobDispatchQueueName { get; set; } = "jobdispatchqueue";
+        public string JobEventQueueName { get; set; } = "jobeventqueue";
         public string NodeDispatchQueuePattern { get; set; } = "nodedispatchqueue-{0}";
 
         #endregion

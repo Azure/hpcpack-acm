@@ -260,27 +260,11 @@
                 this.utilities.GetDiagPartitionKey(this.utilities.MinString),
                 this.utilities.GetDiagPartitionKey(this.utilities.MaxString));
 
-            TableContinuationToken conToken = null;
-            List<DiagnosticsTest> tests = new List<DiagnosticsTest>();
+            var testsResult = await jobsTable.QueryAsync<DiagnosticsTest>(partitionString, null, token);
 
-            var q = new TableQuery<JsonTableEntity>().Where(partitionString);
-            q.SelectColumns = new List<string>() { CloudUtilities.PartitionKeyName, CloudUtilities.RowKeyName };
+            testsResult.ForEach(tr => { tr.Item3.Category = this.utilities.GetDiagCategoryName(tr.Item1); tr.Item3.Name = tr.Item2; });
 
-            do
-            {
-                var result = await jobsTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-
-                tests.AddRange(result.Results.Select(e => new DiagnosticsTest()
-                {
-                    Category = this.utilities.GetDiagCategoryName(e.PartitionKey),
-                    Name = e.RowKey
-                }));
-
-                conToken = result.ContinuationToken;
-            }
-            while (conToken != null);
-
-            return tests;
+            return testsResult.Select(tr => tr.Item3);
         }
 
         public async Task<IEnumerable<Job>> GetJobsAsync(
@@ -454,10 +438,10 @@
             response.EnsureSuccessStatusCode();
 
             this.logger.LogInformation("Creating job dispatch message");
-            var jobDispatchQueue = this.utilities.GetJobDispatchQueue();
+            var jobEventQueue = this.utilities.GetJobEventQueue();
 
-            var jobMsg = new JobDispatchMessage() { Id = job.Id, Type = job.Type };
-            await jobDispatchQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(jobMsg)), null, null, null, null, token);
+            var jobMsg = new JobEventMessage() { Id = job.Id, Type = job.Type, EventVerb = "dispatch" };
+            await jobEventQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(jobMsg)), null, null, null, null, token);
             this.logger.LogInformation("Create job dispatch message success.");
 
             return job.Id;

@@ -1,4 +1,4 @@
-﻿namespace Microsoft.HpcAcm.Services.JobDispatcher
+﻿namespace Microsoft.HpcAcm.Services.JobMonitor
 {
     using Microsoft.HpcAcm.Common.Dto;
     using System;
@@ -7,9 +7,10 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    interface IDispatcher
+    interface IJobEventProcessor
     {
         JobType RestrictedJobType { get; }
-        Task DispatchAsync(Job job, CancellationToken token);
+        string EventVerb { get; }
+        Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token);
     }
 }
