@@ -1,14 +1,25 @@
 <h2 mat-dialog-title>Run Diagnostics</h2>
 <mat-dialog-content>
+  <div class="error-message">
+    <span *ngIf="errorMessage" class="error-text">
+      {{errorMessage}}
+    </span>
+  </div>
   <mat-vertical-stepper linear="true">
     <mat-step label="Select tests to run">
-      <tree-root [nodes]="tests">
-        <ng-template #treeNodeTemplate let-node let-index="index">
-          <mat-checkbox (change)="check(node, $event.checked)" [checked]="node.data.checked">
-            <span [matTooltip]="node.data.description" matTooltipPosition="right">{{node.data.name}}</span>
-          </mat-checkbox>
-        </ng-template>
-      </tree-root>
+      <div class="select-tests">
+        <tree-root #tree [nodes]="tests" (updateData)="onTreeLoad($event)" class="test-tree">
+          <ng-template #treeNodeTemplate let-node let-index="index">
+            <mat-checkbox (change)="check(node, $event.checked)" [checked]="node.data.checked">
+              <span>{{node.data.name}}</span>
+            </mat-checkbox>
+          </ng-template>
+        </tree-root>
+        <p class="test-description" *ngIf="selectedDescription">
+          {{selectedDescription}}
+          <a href="{{testInfoLink}}">{{testInfoLink}}</a>
+        </p>
+      </div>
       <div>
         <button mat-raised-button matStepperNext (click)="selectTests()">Next</button>
       </div>
@@ -19,7 +30,9 @@
       </div>
       <ng-template #testsWithParameters>
         <div *ngFor="let test of selectedTestsWithParameters" class="test">
-          <div class="name"><span>{{test.name}}</span></div>
+          <div class="name">
+            <span>{{test.name}}</span>
+          </div>
           <div class="parameters" *ngFor="let parameter of test.parameters">
             <mat-form-field>
               <div *ngIf="parameter.options; else noOptions">
@@ -40,9 +53,19 @@
         <button mat-raised-button matStepperPrevious>Back</button>
       </div>
     </mat-step>
+    <mat-step label="Set test name">
+      <div>
+          <mat-form-field class="diagTestName">
+              <input matInput placeholder="Test name" [(ngModel)] = 'diagTestName'/>
+          </mat-form-field>
+      </div>
+      <div>
+        <button mat-raised-button matStepperPrevious>Back</button>
+      </div>
+    </mat-step>
   </mat-vertical-stepper>
 </mat-dialog-content>
-<mat-dialog-actions>
+<mat-dialog-actions class="dialog-actions">
   <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
-  <button mat-raised-button [mat-dialog-close]="true">Run</button>
+  <button mat-raised-button (click)="getTests()">Run</button>
 </mat-dialog-actions>

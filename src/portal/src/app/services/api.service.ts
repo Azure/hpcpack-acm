@@ -189,7 +189,7 @@ export class HeatmapApi extends Resource<any> {
   }
 
   get(category: string): Observable<any> {
-    let url = this.url + '/values/' + category;
+    let url = this.url + '/' + category;
     return this.http.get<any>(url)
       .pipe(
         map(e => this.normalize(e)),
@@ -217,6 +217,87 @@ export class HeatmapApi extends Resource<any> {
 
 }
 
+export class DiagApi extends Resource<any> {
+  static url = `${Resource.baseUrl}/diagnostics`;
+
+  protected get url(): string {
+    return DiagApi.url;
+  }
+
+  protected normalizeTests(result: any): any {
+    let data = { name: 'All', children: [] };
+    let tests = [];
+    for (let i = 0; i < result.length; i++) {
+      let index = data.children.findIndex(item => {
+        return item.name == result[i].category;
+      });
+      if (index != -1) {
+        data.children[index]['children'].push({ name: result[i].name, description: result[i].description });
+      }
+      else {
+        data.children.push({
+          name: result[i].category,
+          children: [{ name: result[i].name, description: result[i].description }]
+        });
+      }
+    }
+    tests.push(data);
+    return tests;
+  }
+
+  getDiagTests() {
+    let url = this.url + '/tests';
+    return this.http.get<any>(url)
+      .pipe(
+        map(e => this.normalizeTests(e)),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      )
+  }
+
+  getDiagJob(id: string) {
+    let url = this.url + '/' + id;
+    return this.http.get<any>(url)
+      .pipe(
+        map(e => e),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
+  }
+
+  getDiagTasks(id: string) {
+    let url = this.url + '/' + id + '/tasks';
+    return this.http.get<any>(url)
+      .pipe(
+        map(e => e),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
+
+  }
+
+  create(name: string, targetNodes: string[], diagTest: any) {
+    return this.http.post<any>(this.url, { name, targetNodes, diagTest }, { observe: 'response', responseType: 'json' })
+      .pipe(
+        map(e => {
+          return e;
+        }),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
+  }
+
+
+}
+
 @Injectable()
 export class ApiService {
   private nodeApi: NodeApi;
@@ -228,6 +309,8 @@ export class ApiService {
   private commandApi: CommandApi;
 
   private heatmapApi: HeatmapApi;
+
+  private diagApi: DiagApi;
 
   constructor(private http: HttpClient) { }
 
@@ -264,6 +347,13 @@ export class ApiService {
       this.heatmapApi = new HeatmapApi(this.http);
     }
     return this.heatmapApi;
+  }
+
+  get diag(): DiagApi {
+    if (!this.diagApi) {
+      this.diagApi = new DiagApi(this.http);
+    }
+    return this.diagApi;
   }
 }
 

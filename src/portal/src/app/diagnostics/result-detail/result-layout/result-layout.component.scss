@@ -5,7 +5,7 @@ app-back-button {
 .title {
   display: flex;
   align-items: center;
-  padding: 1em;
+  padding: 0 1em;
 
   .name {
     margin-left: 0.3em;
@@ -21,6 +21,11 @@ app-back-button {
 .title.success {
   color: green;
   background-color: #d5ffd4;
+}
+
+.title.Finished {
+  color: #16289C;
+  background-color: #94B3E5;
 }
 
 .title.main {

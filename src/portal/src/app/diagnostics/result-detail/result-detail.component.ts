@@ -5,10 +5,12 @@ import { TestResult } from '../../models/test-result';
 import { ApiService } from '../../services/api.service';
 import { ServiceRunningTestComponent } from './service-running-test/service-running-test.component';
 import { PingTestComponent } from './ping-test/ping-test.component';
+import { PingPongTestComponent } from './pingpong-test/pingpong-test.component';
 
 const map = {
   'Service Running Test': ServiceRunningTestComponent,
   'Ping Test': PingTestComponent,
+  'test': PingPongTestComponent
 }
 
 @Component({
@@ -19,7 +21,7 @@ export class ResultDetailComponent implements OnInit {
   @ViewChild('result', { read: ViewContainerRef })
   resultViewRef: ViewContainerRef;
 
-  private result: TestResult = {} as TestResult;
+  private result: any;
 
   private subcription: Subscription;
 
@@ -32,8 +34,9 @@ export class ResultDetailComponent implements OnInit {
   ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
       let id = map.get('id');
-      this.api.test.get(id).subscribe(result => {
+      this.api.diag.getDiagJob(id).subscribe(result => {
         this.result = result;
+        console.log(this.result);
         this.loadComponent();
       });
     });
@@ -48,7 +51,7 @@ export class ResultDetailComponent implements OnInit {
     //Revmoe previously created component.
     this.resultViewRef.remove();
 
-    let comp = map[this.result.testName];
+    let comp = map[this.result.diagnosticTest.category];
     let compFactory = this.componentFactoryResolver.resolveComponentFactory(comp);
     let compRef = this.resultViewRef.createComponent(compFactory);
     (compRef.instance as any).result = this.result;

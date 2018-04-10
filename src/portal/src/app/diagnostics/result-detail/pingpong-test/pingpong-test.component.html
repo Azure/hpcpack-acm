@@ -1,0 +1,45 @@
+<app-result-layout [result]="result" *ngIf="tasks.length > 0" [tasks]="tasks" (filterNodes)="filterNodes($event)">
+  <ng-template #nodes>
+    <div class="filter">
+      <mat-form-field>
+        <input #filter matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter">
+        <mat-hint>Filter results by node name or state</mat-hint>
+        <mat-hint align="end">{{dataSource.filteredData.length}} results</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <mat-table #table [dataSource]="dataSource">
+      <!--
+         Note that these columns can be defined in any order. The actual rendered
+         columns are set as a property on the row definition, displayedColumns."
+        -->
+      <ng-container matColumnDef="node">
+        <mat-header-cell *matHeaderCellDef>Node</mat-header-cell>
+        <mat-cell *matCellDef="let task">{{task.nodeName}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="state">
+        <mat-header-cell *matHeaderCellDef>State</mat-header-cell>
+        <mat-cell *matCellDef="let task">{{task.state}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="message">
+        <mat-header-cell *matHeaderCellDef>Message</mat-header-cell>
+        <mat-cell *matCellDef="let task">{{task.taskInfo.message}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="primaryTask">
+        <mat-header-cell *matHeaderCellDef>Primary Task</mat-header-cell>
+        <mat-cell *matCellDef="let task">{{task.taskInfo.primaryTask}}</mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="exited">
+        <mat-header-cell *matHeaderCellDef>Exited</mat-header-cell>
+        <mat-cell *matCellDef="let task">{{task.taskInfo.exited}}</mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let task; columns: displayedColumns;"></mat-row>
+    </mat-table>
+  </ng-template>
+</app-result-layout>

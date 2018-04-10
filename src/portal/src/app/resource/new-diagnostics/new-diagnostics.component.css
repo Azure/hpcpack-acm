@@ -33,3 +33,34 @@ mat-radio-button {
 .no-params {
   margin: 1em;
 }
+
+.select-tests {
+  display: flex;
+}
+.diagTestName {
+  width: 100%;
+}
+
+.test-tree {
+  margin-right: 1.5em;
+}
+
+.test-description {
+  text-justify: inter-word;
+  text-indent: 1em;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.error-message {
+  background: rgba(220, 54, 54, 0.9);
+  color: #FFF;
+  line-height: 2em;
+}
+
+.error-text {
+  padding: 0 1em;
+}

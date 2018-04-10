@@ -12,22 +12,30 @@
 
   <ng-container matColumnDef="select">
     <mat-header-cell *matHeaderCellDef>
-      <mat-checkbox (change)="$event ? masterToggle() : null"
-                    [checked]="selection.hasValue() && isAllSelected()"
-                    [indeterminate]="false">
+      <mat-checkbox (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()" [indeterminate]="false">
       </mat-checkbox>
     </mat-header-cell>
     <mat-cell *matCellDef="let node">
-      <mat-checkbox (click)="$event.stopPropagation()"
-                    (change)="$event ? selection.toggle(node) : null"
-                    [checked]="selection.isSelected(node)">
+      <mat-checkbox (click)="$event.stopPropagation()" (change)="$event ? selection.toggle(node) : null" [checked]="selection.isSelected(node)">
       </mat-checkbox>
     </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="testName">
     <mat-header-cell *matHeaderCellDef> Test Name </mat-header-cell>
-    <mat-cell *matCellDef="let result"><a [routerLink]="result.id">{{result.testName}}</a></mat-cell>
+    <mat-cell *matCellDef="let result">
+      <a [routerLink]="result.id">{{result.name}}</a>
+    </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="diagnostic">
+    <mat-header-cell *matHeaderCellDef> Diagnostic </mat-header-cell>
+    <mat-cell *matCellDef="let result">{{result.diagnosticTest.name}}</mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="category">
+    <mat-header-cell *matHeaderCellDef> Category </mat-header-cell>
+    <mat-cell *matCellDef="let result">{{result.diagnosticTest.category}}</mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="state">
@@ -40,7 +48,7 @@
     <mat-cell *matCellDef="let result"> {{result.progress | percent}} </mat-cell>
   </ng-container>
 
-  <ng-container matColumnDef="startedAt">
+  <!-- <ng-container matColumnDef="startedAt">
     <mat-header-cell *matHeaderCellDef> Started At </mat-header-cell>
     <mat-cell *matCellDef="let result"> {{result.startedAt | date:'yyyy-MM-dd HH:mm:ss'}} </mat-cell>
   </ng-container>
@@ -48,7 +56,7 @@
   <ng-container matColumnDef="updatedAt">
     <mat-header-cell *matHeaderCellDef> Updated At </mat-header-cell>
     <mat-cell *matCellDef="let result"> {{result.updatedAt | date:'yyyy-MM-dd HH:mm:ss'}} </mat-cell>
-  </ng-container>
+  </ng-container> -->
 
   <ng-container matColumnDef="actions">
     <mat-header-cell *matHeaderCellDef></mat-header-cell>

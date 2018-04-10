@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'
+import { FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { TreeModule } from 'angular-tree-component';
 import { ChartModule } from 'angular2-chartjs';
 import { ResourceRoutingModule } from './resource-routing.module';
@@ -12,6 +12,7 @@ import { NodeDetailComponent } from './node-detail/node-detail.component';
 import { NodeHeatmapComponent } from './node-heatmap/node-heatmap.component';
 import { NewDiagnosticsComponent } from './new-diagnostics/new-diagnostics.component';
 import { NewCommandComponent } from './new-command/new-command.component';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 @NgModule({
   imports: [
@@ -19,11 +20,13 @@ import { NewCommandComponent } from './new-command/new-command.component';
     ResourceRoutingModule,
     MaterialsModule,
     FormsModule,
+    ReactiveFormsModule,
     TreeModule,
     WidgetsModule,
     ChartModule,
   ],
   declarations: [ResourceComponent, NodeListComponent, NodeDetailComponent, NodeHeatmapComponent, NewDiagnosticsComponent, NewCommandComponent],
   entryComponents: [NewDiagnosticsComponent, NewCommandComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ResourceModule { }

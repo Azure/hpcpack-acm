@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
-import { SelectionModel  } from '@angular/cdk/collections';
+import { SelectionModel } from '@angular/cdk/collections';
 import { ApiService } from '../../services/api.service';
 
 @Component({
@@ -12,7 +12,7 @@ import { ApiService } from '../../services/api.service';
 export class ResultListComponent {
 
   private dataSource = new MatTableDataSource();
-  private displayedColumns = ['select', 'testName', 'state', 'progress', 'startedAt', 'updatedAt', 'actions'];
+  private displayedColumns = ['select', 'testName', 'diagnostic', 'category', 'state', 'progress', 'actions'];
 
   private selection = new SelectionModel(true, []);
 
@@ -20,10 +20,14 @@ export class ResultListComponent {
     private router: Router,
     private route: ActivatedRoute,
     private api: ApiService
-  ) {}
+  ) { }
 
   ngOnInit() {
-    this.api.test.getAll().subscribe(results => {
+    // this.api.test.getAll().subscribe(results => {
+    //   this.dataSource.data = results;
+    // });
+
+    this.api.diag.getAll().subscribe(results => {
       this.dataSource.data = results;
     });
   }

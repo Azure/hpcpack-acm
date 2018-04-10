@@ -7,12 +7,10 @@ import { ApiService } from '../../services/api.service';
 import { Component, Directive, Input } from '@angular/core';
 import { MaterialsModule } from '../../materials.module';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({ selector: 'router-outlet', template: '' })
 class RouterOutletStubComponent { }
-
-// @Component({ selector: 'mat-select', template: '' })
-// class MatSelectStubComponent { }
 
 @Directive({
   selector: '[routerLink]',
@@ -112,6 +110,8 @@ fdescribe('NodeHeatmapComponent', () => {
       imports: [
         NoopAnimationsModule,
         MaterialsModule,
+        FormsModule,
+        ReactiveFormsModule
       ],
       providers: [
         { provide: ApiService, useValue: apiServiceStub },
@@ -132,29 +132,22 @@ fdescribe('NodeHeatmapComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should show select after component initilaized', fakeAsync(() => {
-    flush();
+  it('should show select after component initilaized', () => {
     fixture.detectChanges();
-    // const options = fixture.debugElement.queryAll(By.css('mat-select-value-text'));
+    // const options = fixture.nativeElement.querySelector('mat-select-value-text');
     const select = fixture.nativeElement.querySelector('mat-select');
-
-    expect(select.getAttribute('ng-reflect-value')).toEqual('cpu');
-  }));
-
-  it('should display expected nodes after get heamap nodes info', () => {
     fixture.detectChanges();
-
-    const tiles = fixture.debugElement.queryAll(By.css('.tile'));
-    // const tiles = fixture.nativeElement.querySelectorAll('.tile');
-    // expect(Array.from(tiles).length).toBe(12);
-    const testnode1 = tiles[8];
-
-    // expect(testnode1.getAttribute('class')).toContain('low');
-    // expect(testnode1.getAttribute('ng-reflect-message')).toEqual('testnode1 : 1.2 %');
-
-    // const evanc6 = tiles[6];
-    // expect(evanc6.getAttribute('class')).toContain('high');
-
+    expect(select.textContent).toEqual('Select Category');
+    // expect(options.textContent).toEqual('cpu');
   });
+
+  // it('should display expected nodes after get heamap nodes info', () => {
+  //   fixture.detectChanges();
+
+  //   const tiles = fixture.nativeElement.querySelectorAll('.tile');
+  //   // const tiles = fixture.nativeElement.querySelectorAll('.tile');
+  //   expect(tiles.length).toBe(12);
+
+  // });
 
 });

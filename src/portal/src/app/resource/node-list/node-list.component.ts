@@ -28,7 +28,7 @@ export class NodeListComponent {
     private api: ApiService,
     private router: Router,
     private route: ActivatedRoute
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.api.node.getAll().subscribe(nodes => {
@@ -46,7 +46,7 @@ export class NodeListComponent {
   }
 
   updateUrl() {
-    this.router.navigate(['.'], { relativeTo: this.route, queryParams: this.query});
+    this.router.navigate(['.'], { relativeTo: this.route, queryParams: this.query });
   }
 
   get selectedData(): any[] {
@@ -77,8 +77,17 @@ export class NodeListComponent {
     });
 
     //TODO: Run diagnostic tests on user selected nodes...
-    //dialogRef.afterClosed().subscribe(result => {
-    //});
+    dialogRef.afterClosed().subscribe(result => {
+      let targetNodes = this.selection.selected.map(e => e.name);
+      let diagTest = result['selectedTests'].map(e => e.name);
+      let name = result['diagTestName'];
+      this.api.diag.create(name, targetNodes, diagTest).subscribe(obj => {
+        let returnData = obj.headers.get('location').split('/');
+        let jobId = returnData[returnData.length - 1];
+        this.router.navigate([`/diagnostics/results`]);
+      });
+
+    });
   }
 
   runCommand() {

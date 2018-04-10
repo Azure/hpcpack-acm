@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateRef } from '@angular/core';
-import { TestResult } from '../../../models/test-result';
+
 
 @Component({
   selector: 'app-result-layout',
@@ -8,7 +8,10 @@ import { TestResult } from '../../../models/test-result';
 })
 export class ResultLayoutComponent implements OnInit {
   @Input()
-  result: TestResult = {} as TestResult;
+  result: any;
+
+  @Input()
+  tasks: any;
 
   @Output()
   filterNodes: EventEmitter<any> = new EventEmitter();
@@ -21,7 +24,7 @@ export class ResultLayoutComponent implements OnInit {
   overviewOption = {
     responsive: true,
     maintainAspectRatio: false,
-    legend : {
+    legend: {
       position: 'right',
     },
     onClick: (event, item) => {
@@ -36,7 +39,7 @@ export class ResultLayoutComponent implements OnInit {
     },
   };
 
-  constructor() {}
+  constructor() { }
 
   ngOnInit() {
     this.makeChartData();
@@ -46,36 +49,48 @@ export class ResultLayoutComponent implements OnInit {
     let success = 0;
     let failure = 0;
 
-    this.result.nodes.forEach(node => {
-      if (node.state == 'success')
+    this.tasks.forEach(task => {
+      if (task.state == 'Finished')
         success++;
       else
         failure++;
     });
+
+    console.log(this.tasks);
+    console.log(success);
+    console.log(failure);
     this.overviewData = {
-      labels: ['Success', 'Failure'],
+      labels: ['Finished', 'Running'],
       datasets: [{
         data: [success, failure],
         backgroundColor: [
-          '#44d42b',
-          '#ff4e4e',
+          '#3f51b5',
+          '#4B4F66',
         ]
       }],
     };
   }
 
   stateIcon(state) {
-    return state === 'success' ? 'check' : 'close';
+    switch (state) {
+      case 'Finished':
+        return 'check';
+      case 'Success':
+        return 'check';
+      case 'Error':
+        return 'close';
+      default: return 'close';
+    }
   }
 
   title(name, state) {
     let res = name;
-    if (state === 'success') {
-      res += ' Succeeded!';
-    }
-    else {
-      res += ' Failed!';
-    }
-    return res;
+    // if (state === 'success') {
+    //   res += ' Succeeded!';
+    // }
+    // else {
+    //   res += ' Failed!';
+    // }
+    return res = res + ' ' + state;
   }
 }
