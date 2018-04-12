@@ -32,15 +32,7 @@ RUN dotnet publish -c Release -o /app/TaskDispatcher
 WORKDIR /src/Services/NodeAgent
 RUN dotnet publish -c Release -o /app/NodeAgent
 
-FROM ubuntu AS angular
-RUN apt update
-RUN apt install -y apt-utils
-RUN apt install -y curl
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
-RUN apt-get install -y nodejs
-RUN npm install --unsafe-perm -g @angular/cli
-
-FROM angular AS portalbuild
+FROM evancui/angularbuild AS portalbuild
 WORKDIR /src
 COPY portal/ portal/
 WORKDIR /src/portal
