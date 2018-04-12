@@ -79,6 +79,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         [HttpPost()]
         public async Task<IActionResult> CreateJobAsync([FromBody] Job job, CancellationToken token)
         {
+            job.Type = JobType.ClusRun;
             int id = await this.provider.CreateJobAsync(job, token);
             return new CreatedResult($"/api/clusrun/{id}", null);
         }

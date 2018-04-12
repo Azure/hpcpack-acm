@@ -73,7 +73,7 @@
                 var taskResultBlob = await this.Utilities.CreateOrReplaceTaskOutputBlobAsync(task.JobType, task.JobId, nodeTaskResultKey, token);
 
                 var rawResult = new StringBuilder();
-                using (var monitor = this.Monitor.StartMonitorTask(taskKey, async (output, cancellationToken) =>
+                using (var monitor = string.IsNullOrEmpty(cmd) ? null : this.Monitor.StartMonitorTask(taskKey, async (output, cancellationToken) =>
                 {
                     try
                     {
@@ -114,7 +114,7 @@
                     if (!await this.PersistTaskResult(taskResultKey, taskResultArgs, token)) { return false; }
 
                     this.Logger.LogInformation("Wait for response for job {0}, task {1}", task.JobId, taskKey);
-                    taskResultArgs = await monitor.Execution;
+                    taskResultArgs = await (monitor?.Execution ?? Task.FromResult(taskResultArgs));
 
                     this.Logger.LogInformation("Saving result for job {0}, task {1}", task.JobId, taskKey);
 

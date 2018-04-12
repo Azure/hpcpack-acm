@@ -50,7 +50,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
 
         // GET api/diagnostics/5/results/resultkey?offset=25&pagesize=100&raw=true
         [HttpGet("{jobid}/results/{resultkey}")]
-        public async Task<IActionResult> GetClusRunResultAsync(
+        public async Task<IActionResult> GetResultAsync(
             int jobId,
             string resultKey,
             [FromQuery] long offset = -1000,
@@ -88,6 +88,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         [HttpPost()]
         public async Task<IActionResult> CreateJobAsync([FromBody] Job job, CancellationToken token)
         {
+            job.Type = JobType.Diagnostics;
             int id = await this.provider.CreateJobAsync(job, token);
             return new CreatedResult($"/api/diagnostics/{id}", null);
         }
