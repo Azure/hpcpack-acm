@@ -59,6 +59,7 @@
 
         public override async Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
         {
+            // TODO: make task processor transient and support cancel.
             var task = taskItem.GetMessage<InternalTask>();
             var nodeName = this.ServerOptions.HostName;
             Debug.Assert(nodeName == task.Node, "NodeName mismatch");
@@ -107,7 +108,8 @@
                          nodeName,
                          new StartJobAndTaskArg(new int[0], task.JobId, task.Id), task.UserName, task.Password,
                          new Common.ProcessStartInfo(cmd, "", "", $"{this.communicator.Options.AgentUriBase}/output/{taskKey}",
-                            "", new System.Collections.Hashtable(), new long[0], task.RequeueCount), token);
+                            "", new System.Collections.Hashtable(), new long[0], task.RequeueCount),
+                         task.PrivateKey, task.PublicKey, token);
 
                     taskResultArgs.State = TaskState.Running;
                     if (!await this.PersistTaskResult(nodeTaskResultKey, taskResultArgs, token)) { return false; }
