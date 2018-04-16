@@ -117,6 +117,7 @@
 
                     this.Logger.LogInformation("Wait for response for job {0}, task {1}", task.JobId, taskKey);
                     taskResultArgs = await (monitor?.Execution ?? Task.FromResult(taskResultArgs));
+                    taskResultArgs.CustomizedData = task.CustomizedData;
 
                     this.Logger.LogInformation("Saving result for job {0}, task {1}", task.JobId, taskKey);
 
@@ -134,7 +135,7 @@
                     {
                         JobId = task.JobId,
                         Id = task.Id,
-                        ExitCode = taskResultArgs.TaskInfo.ExitCode,
+                        ExitCode = taskResultArgs.TaskInfo?.ExitCode,
                         JobType = task.JobType,
                         RequeueCount = task.RequeueCount,
                     }, Formatting.Indented)), null, null, null, null, token);

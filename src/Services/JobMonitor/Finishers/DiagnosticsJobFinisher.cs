@@ -25,7 +25,7 @@
 
             if (diagTest != null)
             {
-                var aggregationResult = await PythonExecutor.ExecuteAsync(diagTest.AggregationScript, job);
+                var aggregationResult = await PythonExecutor.ExecuteAsync(diagTest.AggregationScript, new { Job = job, Tasks = taskResults });
                 job.AggregationResult = aggregationResult.Item1;
                 if (!string.IsNullOrEmpty(aggregationResult.Item2))
                 {

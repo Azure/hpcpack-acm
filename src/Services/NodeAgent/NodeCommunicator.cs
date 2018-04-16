@@ -34,10 +34,10 @@
             string userName, string password, ProcessStartInfo startInfo, string privateKey, string publicKey,
             CancellationToken token)
         {
-            if (IsAdmin(userName, password))
-            {
-                startInfo.environmentVariables[Constants.CcpAdminEnv] = "1";
-            }
+            //if (IsAdmin(userName, password))
+            //{
+            //    startInfo.environmentVariables[Constants.CcpAdminEnv] = "1";
+            //}
 
             await this.SendRequestAsync("startjobandtask",
                 this.GetCallbackUri(nodeName, "taskcompleted"),
