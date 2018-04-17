@@ -1,11 +1,11 @@
-﻿namespace Microsoft.HpcAcm.Services.JobDispatcher
+﻿namespace Microsoft.HpcAcm.Services.JobMonitor
 {
     using Microsoft.HpcAcm.Services.Common;
     using System;
     using System.Collections.Generic;
     using System.Text;
 
-    public class JobDispatcherOptions : TaskItemSourceOptions
+    public class JobEventWorkerOptions : TaskItemSourceOptions
     {
     }
 }

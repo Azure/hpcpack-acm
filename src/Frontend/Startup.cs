@@ -46,6 +46,7 @@ namespace Microsoft.HpcAcm.Frontend
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials()
+                  .WithExposedHeaders("Location")
             );
             app.UseMvc();
         }

@@ -14,7 +14,7 @@
             var serviceCollection = new Dictionary<string, string>()
             {
                 { "frontend", "/app/Frontend/Frontend.dll" },
-                { "jobdispatcher", "/app/JobDispatcher/JobDispatcher.dll" },
+                { "jobmonitor", "/app/JobMonitor/JobMonitor.dll" },
                 { "taskdispatcher", "/app/TaskDispatcher/TaskDispatcher.dll" },
                 { "nodeagent", "/app/NodeAgent/NodeAgent.dll" },
             };

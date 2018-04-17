@@ -21,7 +21,7 @@ namespace Microsoft.HpcAcm.Common.Dto
     {
         public string Content { get; set; }
 
-        public DateTimeOffset Time { get; set; }
+        public DateTimeOffset Time { get; set; } = DateTimeOffset.UtcNow;
 
         public EventType Type { get; set; }
 

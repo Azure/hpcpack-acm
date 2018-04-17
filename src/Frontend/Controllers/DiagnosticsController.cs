@@ -34,6 +34,13 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return this.provider.GetJobsAsync(lastId, count, JobType.Diagnostics, token);
         }
 
+        // GET api/diagnostics/5/tasks?lastid=0&count=10&requeueCount=0
+        [HttpGet("{jobid}/tasks")]
+        public Task<IEnumerable<ComputeNodeTaskCompletionEventArgs>> GetDiagnosticsTasksAsync(int jobId, [FromQuery] int lastId, [FromQuery] int count = 1000, [FromQuery] int requeueCount = 0, CancellationToken token = default(CancellationToken))
+        {
+            return this.provider.GetTasksAsync(jobId, requeueCount, lastId, count, JobType.Diagnostics, token);
+        }
+
         // GET api/diagnostics/5?lastNodeName=abc&nodeCount=10
         [HttpGet("{jobid}")]
         public Task<JobResult> GetDiagnosticsJobAsync(int jobId, [FromQuery] string lastNodeName, [FromQuery] int nodeCount = 1000, CancellationToken token = default(CancellationToken))
@@ -43,7 +50,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
 
         // GET api/diagnostics/5/results/resultkey?offset=25&pagesize=100&raw=true
         [HttpGet("{jobid}/results/{resultkey}")]
-        public async Task<IActionResult> GetClusRunResultAsync(
+        public async Task<IActionResult> GetResultAsync(
             int jobId,
             string resultKey,
             [FromQuery] long offset = -1000,
@@ -71,10 +78,19 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 State = JobState.Queued,
                 TargetNodes = new string[] { "evanc6", "evanclinuxdev", "testnode1", "testnode2" },
                 Type = JobType.Diagnostics,
-                DiagnosticTest = new DiagnosticsTest() { Category = "test", Name = "test" }
+                DiagnosticTest = new DiagnosticsTest() { Category = "test", Name = "test", Arguments = "some arg" }
             };
 
             return await this.provider.CreateJobAsync(job, token);
+        }
+
+        // POST api/diagnostics
+        [HttpPost()]
+        public async Task<IActionResult> CreateJobAsync([FromBody] Job job, CancellationToken token)
+        {
+            job.Type = JobType.Diagnostics;
+            int id = await this.provider.CreateJobAsync(job, token);
+            return new CreatedResult($"/api/diagnostics/{id}", null);
         }
 
         // POST api/clusrun/jobs/5/rerun

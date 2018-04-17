@@ -39,6 +39,10 @@
                         await (success ? taskItem.FinishAsync(token) : taskItem.ReturnAsync(token));
                     }
                 }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
                 catch (Exception ex)
                 {
                     this.Logger.LogError(ex, $"Exception happened in {nameof(DoWorkAsync)}");

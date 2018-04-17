@@ -25,6 +25,7 @@
         Dispatching,
         Running,
         Finished,
+        Failed,
     }
 
     /// <summary>
@@ -39,6 +40,7 @@
             this.TaskInfo = taskInfo;
         }
         public int JobId { get; set; }
+        public string CustomizedData { get; set; }
 
         public TaskState State { get; set; }
         public ComputeClusterTaskInformation TaskInfo { get; set; }

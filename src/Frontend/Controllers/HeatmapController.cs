@@ -92,6 +92,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         [HttpGet("categories", Order = 0)]
         public async Task<List<string>> GetCategoriesAsync(CancellationToken token)
         {
+            this.logger.LogInformation("Query categories");
             var partitionQuery = this.utilities.GetPartitionQueryString(this.utilities.MetricsCategoriesPartitionKey);
 
             var q = new TableQuery<DynamicTableEntity>()

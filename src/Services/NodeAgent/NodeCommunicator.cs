@@ -31,18 +31,18 @@
         public NodeAgentWorkerOptions Options { get; }
 
         public async Task StartJobAndTaskAsync(string nodeName, StartJobAndTaskArg arg,
-            string userName, string password, ProcessStartInfo startInfo,
+            string userName, string password, ProcessStartInfo startInfo, string privateKey, string publicKey,
             CancellationToken token)
         {
-            if (IsAdmin(userName, password))
-            {
-                startInfo.environmentVariables[Constants.CcpAdminEnv] = "1";
-            }
+            //if (IsAdmin(userName, password))
+            //{
+            //    startInfo.environmentVariables[Constants.CcpAdminEnv] = "1";
+            //}
 
             await this.SendRequestAsync("startjobandtask",
                 this.GetCallbackUri(nodeName, "taskcompleted"),
                 nodeName,
-                Tuple.Create(arg, startInfo, userName, password, "", ""),
+                Tuple.Create(arg, startInfo, userName, password, privateKey, publicKey),
                 0,
                 token);
         }

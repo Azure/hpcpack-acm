@@ -1,12 +1,15 @@
-﻿using Microsoft.HpcAcm.Common.Dto;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Microsoft.HpcAcm.Services.Common
+﻿namespace Microsoft.HpcAcm.Services.Common
 {
+    using Microsoft.HpcAcm.Common.Dto;
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+
     public class InternalTask
     {
+        public const string StartTaskMark = "Start";
+        public const string EndTaskMark = "End";
+
         public static InternalTask CreateFrom(Job job)
         {
             return new InternalTask()
@@ -31,5 +34,7 @@ namespace Microsoft.HpcAcm.Services.Common
         public string Password { get; set; }
         public string PrivateKey { get; set; }
         public string PublicKey { get; set; }
+
+        public string CustomizedData { get; set; }
     }
 }

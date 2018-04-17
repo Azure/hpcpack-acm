@@ -59,8 +59,8 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             }
         }
 
-        [HttpGet("testnewjob")]
-        public async Task<int> TestCreateJobAsync(CancellationToken token)
+        [HttpGet("testnewjob/{nodes}")]
+        public async Task<int> TestCreateJobAsync(string nodes, CancellationToken token)
         {
             var job = new Job()
             {
@@ -68,7 +68,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 Name = "hostname",
                 RequeueCount = 0,
                 State = JobState.Queued,
-                TargetNodes = new string[] { "evanc6", "evanclinuxdev", "testnode1", "testnode2" },
+                TargetNodes = nodes.Split(','),
                 Type = JobType.ClusRun,
             };
 
@@ -79,6 +79,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         [HttpPost()]
         public async Task<IActionResult> CreateJobAsync([FromBody] Job job, CancellationToken token)
         {
+            job.Type = JobType.ClusRun;
             int id = await this.provider.CreateJobAsync(job, token);
             return new CreatedResult($"/api/clusrun/{id}", null);
         }

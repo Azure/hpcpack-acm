@@ -15,7 +15,7 @@ COPY Frontend/Frontend.csproj Frontend/
 COPY Common/DTO/DTO.csproj Common/DTO/
 COPY Common/Utilities/Utilities.csproj Common/Utilities/
 COPY Services/Common/ServicesCommon.csproj Services/Common/
-COPY Services/JobDispatcher/JobDispatcher.csproj Services/JobDispatcher/
+COPY Services/JobMonitor/JobMonitor.csproj Services/JobMonitor/
 COPY Services/TaskDispatcher/TaskDispatcher.csproj Services/TaskDispatcher/
 COPY Services/NodeAgent/NodeAgent.csproj Services/NodeAgent/
 COPY Bootstrap/Bootstrap.csproj Bootstrap/
@@ -25,22 +25,14 @@ WORKDIR /src/Frontend
 RUN dotnet publish -c Release -o /app/Frontend
 WORKDIR /src/Bootstrap
 RUN dotnet publish -c Release -o /app/Bootstrap
-WORKDIR /src/Services/JobDispatcher
-RUN dotnet publish -c Release -o /app/JobDispatcher
+WORKDIR /src/Services/JobMonitor
+RUN dotnet publish -c Release -o /app/JobMonitor
 WORKDIR /src/Services/TaskDispatcher
 RUN dotnet publish -c Release -o /app/TaskDispatcher
 WORKDIR /src/Services/NodeAgent
 RUN dotnet publish -c Release -o /app/NodeAgent
 
-FROM ubuntu AS angular
-RUN apt update
-RUN apt install -y apt-utils
-RUN apt install -y curl
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
-RUN apt-get install -y nodejs
-RUN npm install --unsafe-perm -g @angular/cli
-
-FROM angular AS portalbuild
+FROM evancui/angularbuild AS portalbuild
 WORKDIR /src
 COPY portal/ portal/
 WORKDIR /src/portal

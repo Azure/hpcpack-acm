@@ -6,5 +6,9 @@ namespace Microsoft.HpcAcm.Common.Dto
     {
         public string Name { get; set; }
         public string Category { get; set; }
+        public string Arguments { get; set; }
+        public string Description { get; set; }
+        public ParameterDefinition[] Parameters { get; set; }
+
     }
 }

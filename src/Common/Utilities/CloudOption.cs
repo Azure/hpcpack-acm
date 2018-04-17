@@ -57,7 +57,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
 
         public string JobsTableName { get; set; } = "jobstable";
         public string JobEntryKey { get; internal set; } = "jobentry";
-        public string JobResultPattern { get; internal set; } = "nodejobresult-{0}-{1}";
+        public string NodeTaskResultPattern { get; internal set; } = "nodejobresult-{0}-{1}";
         public string JobPartitionPattern { get; internal set; } = "job-{0}-{1}";
         public string DiagnosticCategoryPattern { get; internal set; } = "diag-{0}";
 
@@ -72,7 +72,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
         #region Queue
 
         public string TaskCompletionQueueName { get; set; } = "taskcompletionqueue";
-        public string JobDispatchQueueName { get; set; } = "jobdispatchqueue";
+        public string JobEventQueueName { get; set; } = "jobeventqueue";
         public string NodeDispatchQueuePattern { get; set; } = "nodedispatchqueue-{0}";
 
         #endregion

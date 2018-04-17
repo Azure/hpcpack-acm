@@ -1,6 +1,7 @@
 ﻿namespace Microsoft.HpcAcm.Common.Utilities
 {
     using Microsoft.Extensions.Options;
+    using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -38,7 +39,7 @@
 
         public async Task InitializeAsync(CancellationToken token)
         {
-            await this.GetOrCreateJobDispatchQueueAsync(token);
+            await this.GetOrCreateJobEventQueueAsync(token);
             await this.GetOrCreateJobsTableAsync(token);
             await this.GetOrCreateNodesTableAsync(token);
             await this.GetOrCreateIdsTableAsync(token);
@@ -67,6 +68,7 @@
         public string GetPartitionQueryString(string partitionKey) =>
             TableQuery.GenerateFilterCondition(PartitionKeyName, QueryComparisons.Equal, partitionKey);
 
+        public string GetJobPartitionKey(JobType type, int jobId) => this.GetJobPartitionKey(type.ToString().ToLowerInvariant(), jobId);
         public string GetJobPartitionKey(string type, int jobId) => string.Format(this.Option.JobPartitionPattern, type, IntegerKey.ToStringKey(jobId));
         public string GetDiagPartitionKey(string category) => string.Format(this.Option.DiagnosticCategoryPattern, category);
         public string GetDiagCategoryName(string partitionKey) => partitionKey.Substring(5);
@@ -81,12 +83,14 @@
         public string MetricsValuesPartitionKey { get => this.Option.MetricsValuesPartitionKey; }
         public string MetricsCategoriesPartitionKey { get => this.Option.MetricsCategoriesPartitionKey; }
 
-        public string GetJobResultKey(string nodeKey, string taskKey) => string.Format(this.Option.JobResultPattern, nodeKey, taskKey);
-        public string GetMinimumJobResultKey() => string.Format(this.Option.JobResultPattern, this.MinString, null);
-        public string GetMaximumJobResultKey() => string.Format(this.Option.JobResultPattern, this.MaxString, null);
-        public string GetMinimumTaskKey(int jobId, int requeueCount) => $"{IntegerKey.ToStringKey(jobId)}-{IntegerKey.ToStringKey(requeueCount)}-{this.MinString}";
-        public string GetMaximumTaskKey(int jobId, int requeueCount) => $"{IntegerKey.ToStringKey(jobId)}-{IntegerKey.ToStringKey(requeueCount)}-{this.MaxString}";
-        public string GetTaskKey(int jobId, int taskId, int requeueCount) => $"{IntegerKey.ToStringKey(jobId)}-{IntegerKey.ToStringKey(requeueCount)}-{IntegerKey.ToStringKey(taskId)}";
+        public string GetNodeTaskResultKey(string nodeKey, int jobId, int requeueCount, int taskId) => string.Format(this.Option.NodeTaskResultPattern, nodeKey, this.GetRawTaskKey(jobId, taskId, requeueCount));
+        public string GetMinimumNodeTaskResultKey() => this.GetNodeTaskResultKey(this.MinString, 0, 0, 0);
+        public string GetMaximumNodeTaskResultKey() => this.GetNodeTaskResultKey(this.MaxString, int.MaxValue, int.MaxValue, int.MaxValue);
+        public string GetTaskKey(int jobId, int taskId, int requeueCount) => $"task-{this.GetRawTaskKey(jobId, taskId, requeueCount)}";
+        public string GetMinimumTaskKey(int jobId, int requeueCount) => this.GetTaskKey(jobId, 0, requeueCount);
+        public string GetMaximumTaskKey(int jobId, int requeueCount) => this.GetTaskKey(jobId, int.MaxValue, requeueCount);
+        public string GetRawTaskKey(int jobId, int taskId, int requeueCount) => $"{IntegerKey.ToStringKey(jobId)}-{IntegerKey.ToStringKey(requeueCount)}-{IntegerKey.ToStringKey(taskId)}";
+        public string GetTaskResultKey(int jobId, int taskId, int requeueCount) => $"taskresult-{this.GetRawTaskKey(jobId, taskId, requeueCount)}";
 
         public CloudQueue GetQueue(string queueName) => this.queueClient.GetQueueReference(queueName);
 
