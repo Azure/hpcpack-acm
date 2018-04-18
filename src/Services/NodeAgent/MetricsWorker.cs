@@ -14,6 +14,7 @@
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using System.IO;
 
     public class MetricsWorker : ServerObject, IWorker
     {
@@ -78,7 +79,7 @@
                             {
                                 this.Logger.LogDebug("Collect metrics for {0}", s.Item1);
 
-                                var scriptOutput = await PythonExecutor.ExecuteAsync(s.Item2);
+                                var scriptOutput = await PythonExecutor.ExecuteAsync(Path.GetTempFileName(), s.Item2, null, token);
                                 return (s.Item1, string.IsNullOrEmpty(scriptOutput.Item2) ? scriptOutput.Item1 : toErrorJson(scriptOutput.Item2));
                             }
                             catch (Exception ex)

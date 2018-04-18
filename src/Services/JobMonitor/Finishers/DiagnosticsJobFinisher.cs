@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Text;
     using System.Threading;
@@ -25,7 +26,10 @@
 
             if (diagTest != null)
             {
-                var aggregationResult = await PythonExecutor.ExecuteAsync(diagTest.AggregationScript, new { Job = job, Tasks = taskResults });
+                var scriptBlob = this.Utilities.GetBlob(diagTest.AggregationScript.ContainerName, diagTest.AggregationScript.Name);
+                var fileName = Path.GetTempFileName();
+
+                var aggregationResult = await PythonExecutor.ExecuteAsync(fileName, scriptBlob, new { Job = job, Tasks = taskResults }, token);
                 job.AggregationResult = aggregationResult.Item1;
                 if (!string.IsNullOrEmpty(aggregationResult.Item2))
                 {

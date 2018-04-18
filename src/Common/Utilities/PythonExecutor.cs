@@ -1,20 +1,32 @@
 ﻿namespace Microsoft.HpcAcm.Common.Utilities
 {
+    using Microsoft.WindowsAzure.Storage.Blob;
     using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
 
     public static class PythonExecutor
     {
-        public static async Task<(string, string)> ExecuteAsync(string script, object stdin = null)
+        public static async Task<(string, string)> ExecuteAsync(string path, CloudBlob blob, object stdin = null, CancellationToken token = default(CancellationToken))
         {
-            var psi = new System.Diagnostics.ProcessStartInfo(
-                @"python",
-                $"-c \"{script.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"")
+            await blob.DownloadToFileAsync(path, FileMode.Create, null, null, null, token);
+            return await ExecuteAsync(path, stdin, token);
+        }
+
+        public static async Task<(string, string)> ExecuteAsync(string path, string script, object stdin = null, CancellationToken token = default(CancellationToken))
+        {
+            File.WriteAllText(path, script);
+            return await ExecuteAsync(path, stdin, token);
+        }
+
+        public static async Task<(string, string)> ExecuteAsync(string path, object stdin = null, CancellationToken token = default(CancellationToken))
+        {
+            var psi = new ProcessStartInfo(@"python", path)
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
@@ -49,7 +61,7 @@
                             process.Kill();
                         }
                     }
-                    catch(Exception)
+                    catch (Exception)
                     {
                         // Deal with it
                     }

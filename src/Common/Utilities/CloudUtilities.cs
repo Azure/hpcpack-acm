@@ -102,6 +102,12 @@
         }
         public CloudBlobContainer GetContainer(string containerName) => this.blobClient.GetContainerReference(containerName);
 
+        public CloudBlob GetBlob(string containerName, string blobName)
+        {
+            var container = this.GetContainer(containerName);
+            return container.GetBlobReference(blobName);
+        }
+
         public CloudAppendBlob GetAppendBlob(string containerName, string blobName)
         {
             var jobContainer = this.blobClient.GetContainerReference(containerName);

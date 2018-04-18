@@ -7,7 +7,13 @@
 
     public class InternalDiagnosticsTest : DiagnosticsTest
     {
-        public string DispatchScript { get; set; }
-        public string AggregationScript { get; set; }
+        public class BlobName
+        {
+            public string ContainerName { get; set; }
+            public string Name { get; set; }
+        }
+
+        public BlobName DispatchScript { get; set; }
+        public BlobName AggregationScript { get; set; }
     }
 }
