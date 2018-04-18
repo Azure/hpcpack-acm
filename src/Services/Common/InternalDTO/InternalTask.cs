@@ -29,6 +29,7 @@
         public List<int> ChildIds { get; set; }
         public HashSet<int> RemainingParentIds { get; set; }
         public string CommandLine { get; set; }
+        public Dictionary<string, string> EnvironmentVariables { get; set; }
         public string Node { get; set; }
         public string UserName { get; set; }
         public string Password { get; set; }
