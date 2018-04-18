@@ -122,7 +122,7 @@
                     this.Logger.LogInformation("Saving result for job {0}, task {1}", task.JobId, taskKey);
 
                     taskResultArgs.State = TaskState.Finished;
-                    if (!string.IsNullOrEmpty(cmd))
+                    if (!string.IsNullOrEmpty(cmd) && taskResultArgs.TaskInfo != null)
                     {
                         taskResultArgs.TaskInfo.Message = rawResult.Length > MaxRawResultLength ? rawResult.ToString(0, MaxRawResultLength) : rawResult.ToString();
                     }
