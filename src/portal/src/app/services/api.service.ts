@@ -134,6 +134,12 @@ export class CommandApi extends Resource<CommandResult> {
   create(commandLine: string, targetNodes: string[]): any {
     return this.http.post<any>(this.url, { commandLine, targetNodes }, { observe: 'response', responseType: 'json' })
       .pipe(
+        map(res => {
+          let url = res.headers.get('Location');
+          let idx = url.substring(url.lastIndexOf('/') + 1);
+          let id = parseInt(idx);
+          return { id };
+        }),
         catchError((error: any): Observable<any> => {
           console.error(error);
           return new ErrorObservable(error);
@@ -142,7 +148,7 @@ export class CommandApi extends Resource<CommandResult> {
   }
 
   getOutput(id, key, next) {
-    let url = `${Resource.baseUrl}/taskoutput/getpage/${id}/${key}?offset=${next}`;
+    let url = `${this.url}/${id}/results/${key}?offset=${next}`;
     return this.http.get<any>(url)
       .pipe(
         catchError((error: any): Observable<any> => {

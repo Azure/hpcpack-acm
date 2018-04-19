@@ -43,7 +43,7 @@ class ApiServiceStub {
   }
 
   command = {
-    create: () => of({ body: 1 })
+    create: () => of({ id: 1 })
   }
 }
 

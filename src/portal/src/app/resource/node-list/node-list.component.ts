@@ -110,8 +110,7 @@ export class NodeListComponent {
       if (cmd) {
         let names = this.selection.selected.map(e => e.name);
         this.api.command.create(cmd, names).subscribe(obj => {
-          console.log(obj);
-          this.router.navigate([`/command/results/${obj.body}`]); //body is the new id.
+          this.router.navigate([`/command/results/${obj.id}`]);
         });
       }
     });
