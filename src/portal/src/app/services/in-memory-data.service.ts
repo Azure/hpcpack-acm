@@ -7,7 +7,7 @@ export class InMemoryDataService implements InMemoryDbService {
     { url: NodeApi.url, coll: 'nodes' },
     { url: CommandApi.url, coll: 'commands' },
     { url: TestApi.url, coll: 'tests' },
-    { url: HeatmapApi.url + '/values/cpu', coll: 'heatmapNodes' },
+    { url: HeatmapApi.url + '/cpu', coll: 'heatmapNodes' },
     { url: HeatmapApi.url + '/categories', coll: 'heatmapCategories' },
     { url: env.apiBase + '/commands/resetdb', coll: 'resetdb' },
     { url: NodeHistoryApi.url, coll: 'nodeHistory' }

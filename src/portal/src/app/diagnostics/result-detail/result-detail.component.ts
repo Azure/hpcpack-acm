@@ -10,7 +10,8 @@ import { PingPongTestComponent } from './pingpong-test/pingpong-test.component';
 const map = {
   'Service Running Test': ServiceRunningTestComponent,
   'Ping Test': PingTestComponent,
-  'test': PingPongTestComponent
+  'test': PingPongTestComponent,
+  'mpi': PingPongTestComponent
 }
 
 @Component({
@@ -36,7 +37,6 @@ export class ResultDetailComponent implements OnInit {
       let id = map.get('id');
       this.api.diag.getDiagJob(id).subscribe(result => {
         this.result = result;
-        console.log(this.result);
         this.loadComponent();
       });
     });

@@ -18,3 +18,42 @@
 .node {
   cursor: pointer;
 }
+
+.title {
+  display: flex;
+  align-items: center;
+  padding: 0 1em;
+  background-color: #fff;
+}
+
+.title.main {
+  clear: both;
+}
+
+.title.Failed{
+  color: #D84315;
+}
+
+
+.title.Finished {
+  color: #283593;;
+}
+
+.title.Running {
+  color: #2E7D32;
+}
+
+.title.Queued{
+  color: #FF8F00;
+}
+.title .name{
+  margin-left: 0.3em;
+}
+
+app-back-button {
+  float: right;
+}
+
+.message {
+  padding: 0 1em;
+}

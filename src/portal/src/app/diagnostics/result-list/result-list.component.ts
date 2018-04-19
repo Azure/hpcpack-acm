@@ -1,37 +1,58 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { SelectionModel } from '@angular/cdk/collections';
-import { ApiService } from '../../services/api.service';
+import { ApiService, Loop } from '../../services/api.service';
+import { DiagEventsComponent } from './diag-events/diag-events.component'
 
 @Component({
   selector: 'diagnostics-results',
   templateUrl: './result-list.component.html',
   styleUrls: ['./result-list.component.css']
 })
-export class ResultListComponent {
+export class ResultListComponent implements OnInit, OnDestroy {
 
   private dataSource = new MatTableDataSource();
-  private displayedColumns = ['select', 'testName', 'diagnostic', 'category', 'state', 'progress', 'actions'];
+  private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'events', 'result', 'actions'];
 
   private selection = new SelectionModel(true, []);
+  private interval: number;
+  private diagsLoop: Object;
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private api: ApiService
-  ) { }
-
-  ngOnInit() {
-    // this.api.test.getAll().subscribe(results => {
-    //   this.dataSource.data = results;
-    // });
-
-    this.api.diag.getAll().subscribe(results => {
-      this.dataSource.data = results;
-    });
+    private api: ApiService,
+    public dialog: MatDialog
+  ) {
+    this.interval = 5000000;
   }
 
+  ngOnInit() {
+    this.diagsLoop = this.getDiags();
+  }
+
+  ngOnDestroy() {
+    if (this.diagsLoop) {
+      Loop.stop(this.diagsLoop);
+    }
+  }
+
+  private getDiags(): any {
+    return Loop.start(
+      this.api.diag.getAll(),
+      {
+        next: (result) => {
+          this.dataSource.data = result.filter(e => {
+            return e.diagnosticTest != undefined && e.name != undefined;
+          });
+          return true;
+        }
+      },
+      this.interval
+    );
+  }
   private hasNoSelection(): boolean {
     return this.selection.selected.length == 0;
   }
@@ -51,5 +72,32 @@ export class ResultListComponent {
   private select(node) {
     this.selection.clear();
     this.selection.toggle(node);
+  }
+
+  private setIcon(state) {
+    switch (state) {
+      case 'Finished': return 'done';
+      case 'Queued': return 'blur_linear';
+      case 'Failed': return 'clear';
+      case 'Running': return 'blur_on';
+      case 'Canceled': return 'cancel';
+      default: return 'autonew';
+    }
+  }
+
+  private getResult(id) {
+    this.router.navigate(['/diagnostics/results/' + id]);
+  }
+
+  applyFilter(text: string): void {
+    this.dataSource.filter = text;
+  }
+
+  private showEvents(res) {
+    console.log(res);
+    this.dialog.open(DiagEventsComponent, {
+      width: '98%',
+      data: { job: res }
+    });
   }
 }

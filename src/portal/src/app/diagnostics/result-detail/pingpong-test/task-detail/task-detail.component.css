@@ -1,0 +1,13 @@
+.dialog-title{
+  display: flex;
+  justify-content: space-between;
+}
+
+.close-icon:hover{
+  cursor: pointer;
+}
+
+.msg-item{
+  white-space: pre;
+  font-family: "Courier New", Courier, monospace;
+}

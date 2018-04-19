@@ -1,5 +1,11 @@
+.filter mat-form-field {
+  width: 100%;
+  margin:1em 0;
+}
+
 mat-table {
   margin-top: 1em;
+  text-align: center;
 }
 
 .mat-column-select {
@@ -7,23 +13,48 @@ mat-table {
   flex: 0.3;
 }
 
-.mat-column-progress {
-  flex: 0.5;
+ .mat-column-progress {
+  flex: 0.8;
 }
 
-.mat-column-state {
-  flex: 0.5;
+.mat-column-events, .mat-column-result, .mat-column-actions {
+  flex: 0.3;
+  color:#616161;
 }
 
-.mat-column-actions {
+.mat-column-id,.mat-column-state{
   flex: 0.3;
 }
+
 
 .mat-row:hover {
   background: rgba(0,0,0,.04);
 }
 
-.mat-row a {
-  color: #3b46da;
+
+.Finished {
+  color: #2E7D32;
 }
 
+.Queued {
+  color: #FF8F00;
+}
+
+.Failed {
+  color: #D84315;
+}
+
+.Running {
+  color: #283593;
+}
+
+.test-name {
+  text-decoration-line: none;
+  color: #424242;
+  /* text-align: left; */
+}
+
+.mat-sort-header-container {
+  display:flex;
+  justify-content:center;
+}

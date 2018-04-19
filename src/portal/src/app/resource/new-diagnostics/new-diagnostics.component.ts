@@ -111,18 +111,34 @@ export class NewDiagnosticsComponent implements OnInit {
     this.selectedTestsWithParameters = this.selectedTests.filter(test => test.parameters);
   }
 
+  private stepperSelectionChange(e) {
+    if (e.selectedIndex == 1) {
+      this.selectTests();
+    }
+  }
   getTests() {
-    //To integrate selecedTests and selectedTestsWithParameters later
-    let selectedTests = this.getSelectedTests(this.tests[0]);
+    this.selectTests();
+    let testArgs = {};
+    for (let i = 0; i < this.selectedTestsWithParameters.length; i++) {
+      let name = this.selectedTestsWithParameters[i].name;
+      let args = this.selectedTests[i].parameters.map((item) => {
+        return {name: item.name, value: item.defaultValue};
+      });
+      testArgs[name] = args;
+    }
 
-    if (selectedTests.length == 0) {
+    this.selectedTests.forEach((item) => {
+      item['arguments'] = testArgs[item.name];
+    });
+
+    if (this.selectedTests.length == 0) {
       this.errorMessage = 'Please select at least one test to run in Step 1 !';
     }
-    else if(this.diagTestName == undefined){
+    else if (this.diagTestName == undefined) {
       this.errorMessage = 'Please enter the diagnostic name in step 3 ! ';
     }
     else {
-      let diagInfo = {selectedTests: selectedTests, diagTestName: this.diagTestName};
+      let diagInfo = { selectedTests: this.selectedTests, diagTestName: this.diagTestName };
       this.dialogRef.close(diagInfo);
     }
 

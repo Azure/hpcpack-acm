@@ -78,15 +78,25 @@ export class NodeListComponent {
 
     //TODO: Run diagnostic tests on user selected nodes...
     dialogRef.afterClosed().subscribe(result => {
-      let targetNodes = this.selection.selected.map(e => e.name);
-      let diagTest = result['selectedTests'].map(e => e.name);
-      let name = result['diagTestName'];
-      this.api.diag.create(name, targetNodes, diagTest).subscribe(obj => {
-        let returnData = obj.headers.get('location').split('/');
-        let jobId = returnData[returnData.length - 1];
-        this.router.navigate([`/diagnostics/results`]);
-      });
+      if (result) {
+        let targetNodes = this.selection.selected.map(e => e.name);
+        let diagnosticTest = result['selectedTests'].map(e => {
+          // return { name: e.name, category: e.category, arguments: JSON.stringify(e.arguments).replace(/\"/g, '\\"') }
+          return { name: e.name, category: e.category, arguments: JSON.stringify(e.arguments) }
+        });
+        let name = result['diagTestName'];
+        if (diagnosticTest.length > 0) {
+          diagnosticTest = diagnosticTest[0];
+        }
+        console.log(result);
 
+        console.log(diagnosticTest);
+        this.api.diag.create(name, targetNodes, diagnosticTest).subscribe(obj => {
+          let returnData = obj.headers.get('location').split('/');
+          let jobId = returnData[returnData.length - 1];
+          this.router.navigate([`/diagnostics/results`]);
+        });
+      }
     });
   }
 

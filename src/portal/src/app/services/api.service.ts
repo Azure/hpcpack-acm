@@ -201,7 +201,7 @@ export class HeatmapApi extends Resource<any> {
   }
 
   getMockData(category: string): Observable<any> {
-    let url = this.url + '/values/' + category;
+    let url = this.url + '/' + category;
     return this.http.post(env.apiBase + '/commands/resetdb', { clear: true })
       .concatMap(() => {
         return this.http.get<any>(url)
@@ -232,12 +232,12 @@ export class DiagApi extends Resource<any> {
         return item.name == result[i].category;
       });
       if (index != -1) {
-        data.children[index]['children'].push({ name: result[i].name, description: result[i].description });
+        data.children[index]['children'].push(result[i]);
       }
       else {
         data.children.push({
           name: result[i].category,
-          children: [{ name: result[i].name, description: result[i].description }]
+          children: [result[i]]
         });
       }
     }
@@ -269,11 +269,27 @@ export class DiagApi extends Resource<any> {
       );
   }
 
+
+  protected normalizeTasks(result: any): any {
+    for (let i = 0; i < result.length; i++) {
+      if (result[i].taskInfo == undefined) {
+        result[i].taskInfo = {};
+        result[i].taskInfo.message = { Latency: 'calculating', Throughput: 'calculating', Detail: '' };
+      }
+      else {
+        result[i].taskInfo.message = JSON.parse(result[i].taskInfo.message);
+      }
+    }
+  }
+
   getDiagTasks(id: string) {
     let url = this.url + '/' + id + '/tasks';
     return this.http.get<any>(url)
       .pipe(
-        map(e => e),
+        map(item => {
+          this.normalizeTasks(item);
+          return item;
+        }),
         catchError((error: any): Observable<any> => {
           console.error(error);
           return new ErrorObservable(error);
@@ -282,8 +298,8 @@ export class DiagApi extends Resource<any> {
 
   }
 
-  create(name: string, targetNodes: string[], diagTest: any) {
-    return this.http.post<any>(this.url, { name, targetNodes, diagTest }, { observe: 'response', responseType: 'json' })
+  create(name: string, targetNodes: string[], diagnosticTest: any, jobType = 'diagnostics') {
+    return this.http.post<any>(this.url, { name, targetNodes, diagnosticTest, jobType }, { observe: 'response', responseType: 'json' })
       .pipe(
         map(e => {
           return e;

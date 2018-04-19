@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateRef } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateRef, OnChanges, SimpleChange } from '@angular/core';
 
 
 @Component({
@@ -6,7 +6,7 @@ import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateR
   templateUrl: './result-layout.component.html',
   styleUrls: ['./result-layout.component.scss']
 })
-export class ResultLayoutComponent implements OnInit {
+export class ResultLayoutComponent implements OnInit, OnChanges {
   @Input()
   result: any;
 
@@ -43,29 +43,40 @@ export class ResultLayoutComponent implements OnInit {
 
   ngOnInit() {
     this.makeChartData();
+    console.log(this.result);
+  }
+
+  changeLog = [];
+  ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
+    this.makeChartData();
   }
 
   makeChartData() {
-    let success = 0;
-    let failure = 0;
+    let finished = 0;
+    let failed = 0;
+    let queued = 0;
+    let running = 0;
 
     this.tasks.forEach(task => {
       if (task.state == 'Finished')
-        success++;
-      else
-        failure++;
+        finished++;
+      else if (task.state == 'Failed')
+        failed++;
+      else if (task.state == 'Queued')
+        queued++;
+      else if (task.state == 'Running')
+        running++;
     });
 
-    console.log(this.tasks);
-    console.log(success);
-    console.log(failure);
     this.overviewData = {
-      labels: ['Finished', 'Running'],
+      labels: ['Finished', 'Failed', 'Queued', 'Running'],
       datasets: [{
-        data: [success, failure],
+        data: [finished, failed, queued, running],
         backgroundColor: [
-          '#3f51b5',
-          '#4B4F66',
+          '#4CAF50',
+          '#F44336',
+          '#FF9800',
+          '#3F51B5',
         ]
       }],
     };
@@ -73,24 +84,17 @@ export class ResultLayoutComponent implements OnInit {
 
   stateIcon(state) {
     switch (state) {
-      case 'Finished':
-        return 'check';
-      case 'Success':
-        return 'check';
-      case 'Error':
-        return 'close';
-      default: return 'close';
+      case 'Finished': return 'done';
+      case 'Queued': return 'blur_linear';
+      case 'Failed': return 'clear';
+      case 'Running': return 'blur_on';
+      case 'Canceled': return 'cancel';
+      default: return 'autonew';
     }
   }
 
   title(name, state) {
     let res = name;
-    // if (state === 'success') {
-    //   res += ' Succeeded!';
-    // }
-    // else {
-    //   res += ' Failed!';
-    // }
     return res = res + ' ' + state;
   }
 }

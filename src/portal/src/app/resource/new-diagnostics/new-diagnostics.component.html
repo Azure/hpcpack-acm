@@ -5,7 +5,7 @@
       {{errorMessage}}
     </span>
   </div>
-  <mat-vertical-stepper linear="true">
+  <mat-vertical-stepper linear="true" #stepper (selectionChange)="stepperSelectionChange($event)">
     <mat-step label="Select tests to run">
       <div class="select-tests">
         <tree-root #tree [nodes]="tests" (updateData)="onTreeLoad($event)" class="test-tree">
@@ -36,14 +36,14 @@
           <div class="parameters" *ngFor="let parameter of test.parameters">
             <mat-form-field>
               <div *ngIf="parameter.options; else noOptions">
-                <mat-select [placeholder]="parameter.name" [value]="parameter.defaultValue">
+                <mat-select [placeholder]="parameter.name" [(ngModel)]="parameter.defaultValue">
                   <mat-option *ngFor="let option of parameter.options" [value]="option">
                     {{option}}
                   </mat-option>
                 </mat-select>
               </div>
               <ng-template #noOptions>
-                <input matInput [placeholder]="parameter.name" [value]="parameter.defaultValue">
+                <input matInput [placeholder]="parameter.name" [(ngModel)]="parameter.defaultValue">
               </ng-template>
             </mat-form-field>
           </div>
@@ -55,9 +55,9 @@
     </mat-step>
     <mat-step label="Set test name">
       <div>
-          <mat-form-field class="diagTestName">
-              <input matInput placeholder="Test name" [(ngModel)] = 'diagTestName'/>
-          </mat-form-field>
+        <mat-form-field class="diagTestName">
+          <input matInput placeholder="Test name" [(ngModel)]='diagTestName' />
+        </mat-form-field>
       </div>
       <div>
         <button mat-raised-button matStepperPrevious>Back</button>

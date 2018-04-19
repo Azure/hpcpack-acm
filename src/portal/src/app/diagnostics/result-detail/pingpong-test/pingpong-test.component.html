@@ -1,4 +1,4 @@
-<app-result-layout [result]="result" *ngIf="tasks.length > 0" [tasks]="tasks" (filterNodes)="filterNodes($event)">
+<app-result-layout [result]="result" [tasks]="tasks" *ngIf="tasks.length > 0; else no_tasks" (filterNodes)="filterNodes($event)">
   <ng-template #nodes>
     <div class="filter">
       <mat-form-field>
@@ -23,19 +23,23 @@
         <mat-cell *matCellDef="let task">{{task.state}}</mat-cell>
       </ng-container>
 
-      <ng-container matColumnDef="message">
-        <mat-header-cell *matHeaderCellDef>Message</mat-header-cell>
-        <mat-cell *matCellDef="let task">{{task.taskInfo.message}}</mat-cell>
+      <ng-container matColumnDef="latency">
+        <mat-header-cell *matHeaderCellDef>Latency</mat-header-cell>
+        <mat-cell *matCellDef="let task">{{task.taskInfo.message.Latency}}</mat-cell>
       </ng-container>
 
-      <ng-container matColumnDef="primaryTask">
-        <mat-header-cell *matHeaderCellDef>Primary Task</mat-header-cell>
-        <mat-cell *matCellDef="let task">{{task.taskInfo.primaryTask}}</mat-cell>
+      <ng-container matColumnDef="throughput">
+        <mat-header-cell *matHeaderCellDef>Throughput</mat-header-cell>
+        <mat-cell *matCellDef="let task">{{task.taskInfo.message.Throughput}}</mat-cell>
       </ng-container>
 
-      <ng-container matColumnDef="exited">
-        <mat-header-cell *matHeaderCellDef>Exited</mat-header-cell>
-        <mat-cell *matCellDef="let task">{{task.taskInfo.exited}}</mat-cell>
+      <ng-container matColumnDef="detail">
+        <mat-header-cell *matHeaderCellDef>Detail</mat-header-cell>
+        <mat-cell *matCellDef="let task">
+          <button mat-icon-button (click)="showDetail(task.taskInfo.message)">
+            <i class="material-icons">settings_ethernet</i>
+          </button>
+        </mat-cell>
       </ng-container>
 
       <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
@@ -43,3 +47,14 @@
     </mat-table>
   </ng-template>
 </app-result-layout>
+<ng-template #no_tasks>
+  <app-back-button></app-back-button>
+  <div class="title main" [ngClass]="result.state">
+    <i class="material-icons">{{stateIcon(result.state)}}</i>
+    <h2 class="name">
+      {{result.name}} {{result.state}}</h2>
+  </div>
+  <p class="message">
+    There is no task to display.
+  </p>
+</ng-template>

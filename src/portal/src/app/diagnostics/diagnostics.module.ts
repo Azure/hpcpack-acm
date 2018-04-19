@@ -13,6 +13,8 @@ import { ServiceRunningTestComponent } from './result-detail/service-running-tes
 import { PingTestComponent } from './result-detail/ping-test/ping-test.component';
 import { PingTestNodeResultComponent } from './result-detail/ping-test/ping-test-node-result/ping-test-node-result.component';
 import { PingPongTestComponent } from './result-detail/pingpong-test/pingpong-test.component';
+import { DiagEventsComponent } from './result-list/diag-events/diag-events.component';
+import { TaskDetailComponent } from './result-detail/pingpong-test/task-detail/task-detail.component';
 
 @NgModule({
   imports: [
@@ -23,7 +25,7 @@ import { PingPongTestComponent } from './result-detail/pingpong-test/pingpong-te
     ChartModule,
     FormsModule,
   ],
-  declarations: [DiagnosticsComponent, ResultListComponent, ResultDetailComponent, ResultLayoutComponent, ServiceRunningTestComponent, PingTestComponent, PingTestNodeResultComponent, PingPongTestComponent],
-  entryComponents: [ServiceRunningTestComponent, PingTestComponent, PingTestNodeResultComponent, PingPongTestComponent]
+  declarations: [DiagnosticsComponent, ResultListComponent, ResultDetailComponent, ResultLayoutComponent, ServiceRunningTestComponent, PingTestComponent, PingTestNodeResultComponent, PingPongTestComponent, DiagEventsComponent, TaskDetailComponent],
+  entryComponents: [ServiceRunningTestComponent, PingTestComponent, PingTestNodeResultComponent, PingPongTestComponent, DiagEventsComponent, TaskDetailComponent]
 })
 export class DiagnosticsModule { }
