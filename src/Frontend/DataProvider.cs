@@ -114,27 +114,14 @@
 
             var registrationRangeQuery = this.utilities.GetRowKeyRangeString(lastRegistrationKey, registrationEnd);
 
-            var q = new TableQuery<JsonTableEntity>()
-                .Where(TableQuery.CombineFilters(
-                    partitionQuery,
-                    TableOperators.And,
-                    registrationRangeQuery))
-                .Take(count);
+            var q = TableQuery.CombineFilters(
+                partitionQuery,
+                TableOperators.And,
+                registrationRangeQuery);
 
             var nodes = this.utilities.GetNodesTable();
 
-            List<ComputeClusterRegistrationInformation> registrations = new List<ComputeClusterRegistrationInformation>();
-            TableContinuationToken conToken = null;
-
-            do
-            {
-                var result = await nodes.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-                registrations.AddRange(
-                    result.Results.Select(r => r.GetObject<ComputeClusterRegistrationInformation>()));
-
-                conToken = result.ContinuationToken;
-            }
-            while (conToken != null);
+            var registrations = (await nodes.QueryAsync<ComputeClusterRegistrationInformation>(q, count, token)).Select(r => r.Item3);
 
             if (!registrations.Any())
             {
@@ -149,27 +136,12 @@
                 TableOperators.And,
                 TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.LessThanOrEqual, lastHeartbeat));
 
-            q = new TableQuery<JsonTableEntity>()
-                .Where(TableQuery.CombineFilters(
-                    partitionQuery,
-                    TableOperators.And,
-                    heartbeatRangeQuery));
+            q = TableQuery.CombineFilters(
+                partitionQuery,
+                TableOperators.And,
+                heartbeatRangeQuery);
 
-            conToken = null;
-
-            var heartbeats = new Dictionary<string, (ComputeClusterNodeInformation, DateTimeOffset)>();
-
-            do
-            {
-                var result = await nodes.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-                foreach (var h in result.Results.Select(r => (r.GetObject<ComputeClusterNodeInformation>(), r.Timestamp)))
-                {
-                    heartbeats[h.Item1.Name.ToLowerInvariant()] = h;
-                }
-
-                conToken = result.ContinuationToken;
-            }
-            while (conToken != null);
+            var heartbeats = (await nodes.QueryAsync<ComputeClusterNodeInformation>(q, null, token)).ToDictionary(h => h.Item3.Name.ToLowerInvariant(), h => (h.Item3, h.Item4));
 
             return registrations.Select(r =>
             {
@@ -260,7 +232,7 @@
                 this.utilities.GetDiagPartitionKey(this.utilities.MinString),
                 this.utilities.GetDiagPartitionKey(this.utilities.MaxString));
 
-            var testsResult = await jobsTable.QueryAsync<DiagnosticsTest>(partitionString, null, token);
+            var testsResult = (await jobsTable.QueryAsync<DiagnosticsTest>(partitionString, null, token)).ToList();
 
             testsResult.ForEach(tr => { tr.Item3.Category = this.utilities.GetDiagCategoryName(tr.Item1); tr.Item3.Name = tr.Item2; });
 
@@ -282,27 +254,13 @@
             var partitionRange = this.utilities.GetPartitionKeyRangeString(lowJobPartitionKey, highJobPartitionKey);
             var rowKey = utilities.JobEntryKey;
 
-            var q = new TableQuery<JsonTableEntity>()
-                .Where(TableQuery.CombineFilters(
-                    partitionRange,
-                    TableOperators.And,
-                    TableQuery.GenerateFilterCondition(CloudUtilities.RowKeyName, QueryComparisons.Equal, rowKey)))
-                .Take(count);
+            var q = TableQuery.CombineFilters(
+                partitionRange,
+                TableOperators.And,
+                TableQuery.GenerateFilterCondition(CloudUtilities.RowKeyName, QueryComparisons.Equal, rowKey));
 
-            var jobs = new List<Job>(count);
-            TableContinuationToken conToken = null;
-
-            do
-            {
-                var queryResult = await jobTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-
-                jobs.AddRange(queryResult.Results.Select(r => r.GetObject<Job>()));
-
-                conToken = queryResult.ContinuationToken;
-            }
-            while (conToken != null);
-
-            return jobs;
+            var results = await jobTable.QueryAsync<Job>(q, count, token);
+            return results.Select(r => r.Item3);
         }
 
         public async Task<IEnumerable<ComputeNodeTaskCompletionEventArgs>> GetTasksAsync(
@@ -323,25 +281,9 @@
                 this.utilities.GetTaskResultKey(jobId, lastTaskId, requeueCount),
                 this.utilities.GetTaskResultKey(jobId, int.MaxValue, requeueCount));
 
-            var q = new TableQuery<JsonTableEntity>()
-                .Where(TableQuery.CombineFilters(partitionQuery, TableOperators.And, rowKeyRangeQuery))
-                .Take(count);
-
-            TableContinuationToken conToken = null;
-
-            var taskInfos = new List<ComputeNodeTaskCompletionEventArgs>(count);
-
-            do
-            {
-                var queryResult = await jobTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-
-                taskInfos.AddRange(queryResult.Results.Select(r => r.GetObject<ComputeNodeTaskCompletionEventArgs>()));
-
-                conToken = queryResult.ContinuationToken;
-            }
-            while (conToken != null);
-
-            return taskInfos;
+            var q = TableQuery.CombineFilters(partitionQuery, TableOperators.And, rowKeyRangeQuery);
+            var results = await jobTable.QueryAsync<ComputeNodeTaskCompletionEventArgs>(q, count, token);
+            return results.Select(r => r.Item3);
         }
 
         public async Task<JobResult> GetJobAsync(
@@ -380,27 +322,11 @@
             var partitionQuery = this.utilities.GetPartitionQueryString(jobPartitionKey);
             var rowKeyRangeQuery = this.utilities.GetRowKeyRangeString(lowResultKey, highResultKey);
 
-            var q = new TableQuery<JsonTableEntity>()
-                .Where(TableQuery.CombineFilters(partitionQuery, TableOperators.And, rowKeyRangeQuery))
-                .Take(nodeCount);
+            var q = TableQuery.CombineFilters(partitionQuery, TableOperators.And, rowKeyRangeQuery);
 
-            TableContinuationToken conToken = null;
+            var taskInfos = await jobTable.QueryAsync<ComputeNodeTaskCompletionEventArgs>(q, nodeCount, token);
 
-            j.Results = new List<NodeResult>(nodeCount);
-
-            var taskInfos = new List<(string, ComputeNodeTaskCompletionEventArgs)>();
-
-            do
-            {
-                var queryResult = await jobTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-
-                taskInfos.AddRange(queryResult.Results.Select(r => (r.RowKey, r.GetObject<ComputeNodeTaskCompletionEventArgs>())));
-
-                conToken = queryResult.ContinuationToken;
-            }
-            while (conToken != null);
-
-            j.Results = taskInfos.GroupBy(t => t.Item2.NodeName.ToLowerInvariant()).Select(g => new NodeResult()
+            j.Results = taskInfos.GroupBy(t => t.Item3.NodeName.ToLowerInvariant()).Select(g => new NodeResult()
             {
                 NodeName = g.Key,
                 JobId = jobId,
@@ -408,8 +334,8 @@
                 {
                     CommandLine = j.CommandLine,
                     NodeName = g.Key,
-                    ResultKey = e.Item1,
-                    TaskInfo = e.Item2.TaskInfo,
+                    ResultKey = e.Item2,
+                    TaskInfo = e.Item3.TaskInfo,
                     Test = j.DiagnosticTest,
                 }).ToList(),
             }).ToList();
