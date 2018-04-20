@@ -59,9 +59,9 @@ export class ResultListComponent implements OnInit, OnDestroy, OnChanges {
       this.api.diag.getAll(),
       {
         next: (result) => {
-          this.dataSource.data = result.filter(e => {
+          this.dataSource.data = (result.filter(e => {
             return e.diagnosticTest != undefined && e.name != undefined;
-          });
+          })).reverse();
           return true;
         }
       },

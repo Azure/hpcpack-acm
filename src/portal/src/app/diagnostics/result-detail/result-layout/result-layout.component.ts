@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateRef, OnChanges, SimpleChange } from '@angular/core';
-
+import { ApiService } from '../../../services/api.service'
 
 @Component({
   selector: 'app-result-layout',
@@ -39,16 +39,21 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
     },
   };
 
-  constructor() { }
+  constructor(
+    private api : ApiService
+  ) { }
 
   ngOnInit() {
     this.makeChartData();
-    console.log(this.result);
   }
 
   changeLog = [];
   ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
     this.makeChartData();
+    this.api.diag.getDiagJob(this.result.id).subscribe(res => {
+      this.result = res;
+    });
+
   }
 
   makeChartData() {
@@ -97,4 +102,5 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
     let res = name;
     return res = res + ' ' + state;
   }
+
 }

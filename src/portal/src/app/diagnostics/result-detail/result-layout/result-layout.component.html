@@ -1,14 +1,19 @@
 <app-back-button></app-back-button>
 
 <div class="title main">
-  <i class="material-icons" [ngClass]="result.state">{{stateIcon(result.state)}}</i>
+  <!-- <i class="material-icons" [ngClass]="result.state">{{stateIcon(result.state)}}</i> -->
   <h2 class="name">{{result.name}}</h2>
 </div>
 <!-- <div class="time">started at {{result.startedAt | date:'yyyy-MM-dd HH:mm:ss'}} updated at {{result.updatedAt | date:'yyyy-MM-dd HH:mm:ss'}}</div> -->
 
 <div class="overview">
   <h3>Overview</h3>
-  <chart type="doughnut" [data]="overviewData" [options]="overviewOption"></chart>
+  <div class="task-result-info">
+    <div class="aggregationResult">
+      {{result.aggregationResult}}
+    </div>
+    <chart type="doughnut" [data]="overviewData" [options]="overviewOption"></chart>
+  </div>
 </div>
 
 <div class="nodes">

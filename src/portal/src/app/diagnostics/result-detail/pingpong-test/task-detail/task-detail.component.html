@@ -2,11 +2,17 @@
   <div class="job-info">
     Task Detail
   </div>
+  <mat-divider></mat-divider>
   <div class="close-icon" (click)="close()">
     <i class="material-icons">close</i>
   </div>
 </div>
-
+<!-- <div class="task-detail allocated-nodes">
+  Allocated Nodes
+</div> -->
+<!-- <div class="task-detail raw-output">
+  Raw Output
+</div> -->
 <mat-dialog-content>
   <div [innerHTML]="message" class="msg-item" *ngFor="let message of msg">
     <!-- {{message}} -->

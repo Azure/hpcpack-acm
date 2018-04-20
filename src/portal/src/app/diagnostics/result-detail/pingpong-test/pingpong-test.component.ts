@@ -17,7 +17,7 @@ export class PingPongTestComponent implements OnInit {
   private filterInput;
 
   private dataSource = new MatTableDataSource();
-  private displayedColumns = ['node', 'state', 'latency', 'throughput', 'detail'];
+  private displayedColumns = ['nodes', 'state', 'latency', 'throughput', 'detail'];
   // private displayedColumns = ['node', 'state', 'message', 'primaryTask', 'exited'];
   private jobId: string;
   private interval: number;

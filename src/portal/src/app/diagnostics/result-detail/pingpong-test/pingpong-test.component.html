@@ -13,9 +13,9 @@
          Note that these columns can be defined in any order. The actual rendered
          columns are set as a property on the row definition, displayedColumns."
         -->
-      <ng-container matColumnDef="node">
-        <mat-header-cell *matHeaderCellDef>Node</mat-header-cell>
-        <mat-cell *matCellDef="let task">{{task.nodeName}}</mat-cell>
+      <ng-container matColumnDef="nodes">
+        <mat-header-cell *matHeaderCellDef>Nodes</mat-header-cell>
+        <mat-cell *matCellDef="let task">{{task.customizedData}}</mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="state">
@@ -24,12 +24,12 @@
       </ng-container>
 
       <ng-container matColumnDef="latency">
-        <mat-header-cell *matHeaderCellDef>Latency</mat-header-cell>
+        <mat-header-cell *matHeaderCellDef>Latency[usec]</mat-header-cell>
         <mat-cell *matCellDef="let task">{{task.taskInfo.message.Latency}}</mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="throughput">
-        <mat-header-cell *matHeaderCellDef>Throughput</mat-header-cell>
+        <mat-header-cell *matHeaderCellDef>Throughput[usec]</mat-header-cell>
         <mat-cell *matCellDef="let task">{{task.taskInfo.message.Throughput}}</mat-cell>
       </ng-container>
 

@@ -7,6 +7,7 @@ app-back-button {
   align-items: center;
   padding: 0 1em;
   background-color: #fff;
+  border-left: 4px solid #3f51b5;
 
   .name {
     margin-left: 0.3em;
@@ -56,4 +57,15 @@ h3 {
     height: 200px;
     max-width: 400px;
   }
+}
+
+.aggregationResult{
+  white-space: pre-line;
+  line-height: 2em;
+}
+
+.task-result-info{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
 }

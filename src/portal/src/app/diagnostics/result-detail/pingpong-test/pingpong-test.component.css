@@ -3,6 +3,10 @@
   margin-bottom: 1em;
 }
 
+mat-table{
+  text-align: center;
+}
+
 .mat-header-row {
   background-color: #e6e6e6;
 }
@@ -17,6 +21,11 @@
 
 .node {
   cursor: pointer;
+}
+
+.mat-column-nodes{
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .title {
