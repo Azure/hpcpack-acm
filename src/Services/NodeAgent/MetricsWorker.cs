@@ -36,22 +36,7 @@
         {
             var partitionQuery = this.Utilities.GetPartitionQueryString(this.Utilities.MetricsCategoriesPartitionKey);
 
-            var q = new TableQuery<JsonTableEntity>().Where(partitionQuery);
-
-            TableContinuationToken conToken = null;
-
-            var categories = new List<(string, string)>();
-
-            do
-            {
-                var result = await this.metricsTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-                categories.AddRange(result.Results.Select(r => (r.RowKey, r.GetObject<string>())));
-
-                conToken = result.ContinuationToken;
-            }
-            while (conToken != null);
-
-            return categories;
+            return (await this.metricsTable.QueryAsync<string>(partitionQuery, null, token)).Select(i => (i.Item2, i.Item3)).ToList();
         }
 
         public async Task DoWorkAsync(CancellationToken token)

@@ -44,42 +44,30 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                     partitionQuery,
                     TableOperators.And,
                     registrationRangeQuery))
-                .Select(new List<string>() { category })
-                .Take(count);
+                .Select(new List<string>() { category });
 
             var metricsTable = this.utilities.GetMetricsTable();
+            var entities = await metricsTable.QueryAsync(q, count, token);
 
-            TableContinuationToken conToken = null;
-
-            List<(string, Dictionary<string, double?>)> list = new List<(string, Dictionary<string, double?>)>();
-
-            do
+            var list = entities.Select(r =>
             {
-                var result = await metricsTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-
-                list.AddRange(result.Results.Select(r =>
+                if (r.Timestamp > DateTimeOffset.UtcNow - TimeSpan.FromSeconds(5.0)
+                    && r.Properties.TryGetValue(category, out EntityProperty values))
                 {
-                    if (r.Timestamp > DateTimeOffset.UtcNow - TimeSpan.FromSeconds(5.0)
-                        && r.Properties.TryGetValue(category, out EntityProperty values))
+                    try
                     {
-                        try
-                        {
-                            return (r.RowKey, JsonConvert.DeserializeObject<Dictionary<string, double?>>(values.StringValue));
-                        }
-                        catch (JsonReaderException)
-                        {
-                            return (r.RowKey, new Dictionary<string, double?>());
-                        }
+                        return (r.RowKey, JsonConvert.DeserializeObject<Dictionary<string, double?>>(values.StringValue));
                     }
-                    else
+                    catch (Exception)
                     {
                         return (r.RowKey, new Dictionary<string, double?>());
                     }
-                }));
-
-                conToken = result.ContinuationToken;
-            }
-            while (conToken != null);
+                }
+                else
+                {
+                    return (r.RowKey, new Dictionary<string, double?>());
+                }
+            });
 
             return new Heatmap()
             {
@@ -90,7 +78,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
 
         // GET api/heatmap/categories
         [HttpGet("categories", Order = 0)]
-        public async Task<List<string>> GetCategoriesAsync(CancellationToken token)
+        public async Task<IEnumerable<string>> GetCategoriesAsync(CancellationToken token)
         {
             this.logger.LogInformation("Query categories");
             var partitionQuery = this.utilities.GetPartitionQueryString(this.utilities.MetricsCategoriesPartitionKey);
@@ -101,20 +89,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
 
             var metricsTable = this.utilities.GetMetricsTable();
 
-            TableContinuationToken conToken = null;
-            List<string> list = new List<string>();
-
-            do
-            {
-                var result = await metricsTable.ExecuteQuerySegmentedAsync(q, conToken, null, null, token);
-
-                list.AddRange(result.Results.Select(r => r.RowKey));
-
-                conToken = result.ContinuationToken;
-            }
-            while (conToken != null);
-
-            return list;
+            return (await metricsTable.QueryAsync(q, null, token)).Select(r => r.RowKey);
         }
     }
 }
