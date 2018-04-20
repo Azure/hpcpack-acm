@@ -1,14 +1,17 @@
-import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateRef } from '@angular/core';
-import { TestResult } from '../../../models/test-result';
+import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateRef, OnChanges, SimpleChange } from '@angular/core';
+
 
 @Component({
   selector: 'app-result-layout',
   templateUrl: './result-layout.component.html',
   styleUrls: ['./result-layout.component.scss']
 })
-export class ResultLayoutComponent implements OnInit {
+export class ResultLayoutComponent implements OnInit, OnChanges {
   @Input()
-  result: TestResult = {} as TestResult;
+  result: any;
+
+  @Input()
+  tasks: any;
 
   @Output()
   filterNodes: EventEmitter<any> = new EventEmitter();
@@ -21,7 +24,7 @@ export class ResultLayoutComponent implements OnInit {
   overviewOption = {
     responsive: true,
     maintainAspectRatio: false,
-    legend : {
+    legend: {
       position: 'right',
     },
     onClick: (event, item) => {
@@ -36,46 +39,62 @@ export class ResultLayoutComponent implements OnInit {
     },
   };
 
-  constructor() {}
+  constructor() { }
 
   ngOnInit() {
+    this.makeChartData();
+    console.log(this.result);
+  }
+
+  changeLog = [];
+  ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
     this.makeChartData();
   }
 
   makeChartData() {
-    let success = 0;
-    let failure = 0;
+    let finished = 0;
+    let failed = 0;
+    let queued = 0;
+    let running = 0;
 
-    this.result.nodes.forEach(node => {
-      if (node.state == 'success')
-        success++;
-      else
-        failure++;
+    this.tasks.forEach(task => {
+      if (task.state == 'Finished')
+        finished++;
+      else if (task.state == 'Failed')
+        failed++;
+      else if (task.state == 'Queued')
+        queued++;
+      else if (task.state == 'Running')
+        running++;
     });
+
     this.overviewData = {
-      labels: ['Success', 'Failure'],
+      labels: ['Finished', 'Failed', 'Queued', 'Running'],
       datasets: [{
-        data: [success, failure],
+        data: [finished, failed, queued, running],
         backgroundColor: [
-          '#44d42b',
-          '#ff4e4e',
+          '#4CAF50',
+          '#F44336',
+          '#FF9800',
+          '#3F51B5',
         ]
       }],
     };
   }
 
   stateIcon(state) {
-    return state === 'success' ? 'check' : 'close';
+    switch (state) {
+      case 'Finished': return 'done';
+      case 'Queued': return 'blur_linear';
+      case 'Failed': return 'clear';
+      case 'Running': return 'blur_on';
+      case 'Canceled': return 'cancel';
+      default: return 'autonew';
+    }
   }
 
   title(name, state) {
     let res = name;
-    if (state === 'success') {
-      res += ' Succeeded!';
-    }
-    else {
-      res += ' Failed!';
-    }
-    return res;
+    return res = res + ' ' + state;
   }
 }

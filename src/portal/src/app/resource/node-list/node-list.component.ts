@@ -28,7 +28,7 @@ export class NodeListComponent {
     private api: ApiService,
     private router: Router,
     private route: ActivatedRoute
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.api.node.getAll().subscribe(nodes => {
@@ -46,7 +46,7 @@ export class NodeListComponent {
   }
 
   updateUrl() {
-    this.router.navigate(['.'], { relativeTo: this.route, queryParams: this.query});
+    this.router.navigate(['.'], { relativeTo: this.route, queryParams: this.query });
   }
 
   get selectedData(): any[] {
@@ -77,8 +77,27 @@ export class NodeListComponent {
     });
 
     //TODO: Run diagnostic tests on user selected nodes...
-    //dialogRef.afterClosed().subscribe(result => {
-    //});
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        let targetNodes = this.selection.selected.map(e => e.name);
+        let diagnosticTest = result['selectedTests'].map(e => {
+          // return { name: e.name, category: e.category, arguments: JSON.stringify(e.arguments).replace(/\"/g, '\\"') }
+          return { name: e.name, category: e.category, arguments: JSON.stringify(e.arguments) }
+        });
+        let name = result['diagTestName'];
+        if (diagnosticTest.length > 0) {
+          diagnosticTest = diagnosticTest[0];
+        }
+        console.log(result);
+
+        console.log(diagnosticTest);
+        this.api.diag.create(name, targetNodes, diagnosticTest).subscribe(obj => {
+          let returnData = obj.headers.get('location').split('/');
+          let jobId = returnData[returnData.length - 1];
+          this.router.navigate([`/diagnostics/results`]);
+        });
+      }
+    });
   }
 
   runCommand() {
@@ -91,8 +110,7 @@ export class NodeListComponent {
       if (cmd) {
         let names = this.selection.selected.map(e => e.name);
         this.api.command.create(cmd, names).subscribe(obj => {
-          console.log(obj);
-          this.router.navigate([`/command/results/${obj.body}`]); //body is the new id.
+          this.router.navigate([`/command/results/${obj.id}`]);
         });
       }
     });

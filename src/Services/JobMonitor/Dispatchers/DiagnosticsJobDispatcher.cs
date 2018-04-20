@@ -9,6 +9,7 @@
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.IO;
     using System.Linq;
     using System.Text;
     using System.Threading;
@@ -29,7 +30,10 @@
             {
                 var diagTest = entity.GetObject<InternalDiagnosticsTest>();
 
-                var dispatchTasks = await PythonExecutor.ExecuteAsync(diagTest.DispatchScript, job);
+                var scriptBlob = this.Utilities.GetBlob(diagTest.DispatchScript.ContainerName, diagTest.DispatchScript.Name);
+                var fileName = Path.GetTempFileName();
+
+                var dispatchTasks = await PythonExecutor.ExecuteAsync(fileName, scriptBlob, job, token);
 
                 if (!string.IsNullOrEmpty(dispatchTasks.Item2))
                 {

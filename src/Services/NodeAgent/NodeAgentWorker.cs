@@ -104,13 +104,15 @@
                     if (!await this.PersistTaskResult(nodeTaskResultKey, taskResultArgs, token)) { return false; }
                     if (!await this.PersistTaskResult(taskResultKey, taskResultArgs, token)) { return false; }
 
+                    // TODO: timeout the dispatch
                     await this.communicator.StartJobAndTaskAsync(
                          nodeName,
                          new StartJobAndTaskArg(new int[0], task.JobId, task.Id), task.UserName, task.Password,
                          new Common.ProcessStartInfo(cmd, "", "", $"{this.communicator.Options.AgentUriBase}/output/{taskKey}",
-                            "", new System.Collections.Hashtable(), new long[0], task.RequeueCount),
+                            "", task.EnvironmentVariables, new long[0], task.RequeueCount),
                          task.PrivateKey, task.PublicKey, token);
 
+                    // TODO: deal dispatch failure.
                     taskResultArgs.State = TaskState.Running;
                     if (!await this.PersistTaskResult(nodeTaskResultKey, taskResultArgs, token)) { return false; }
                     if (!await this.PersistTaskResult(taskResultKey, taskResultArgs, token)) { return false; }
@@ -122,7 +124,7 @@
                     this.Logger.LogInformation("Saving result for job {0}, task {1}", task.JobId, taskKey);
 
                     taskResultArgs.State = TaskState.Finished;
-                    if (!string.IsNullOrEmpty(cmd))
+                    if (!string.IsNullOrEmpty(cmd) && taskResultArgs.TaskInfo != null)
                     {
                         taskResultArgs.TaskInfo.Message = rawResult.Length > MaxRawResultLength ? rawResult.ToString(0, MaxRawResultLength) : rawResult.ToString();
                     }

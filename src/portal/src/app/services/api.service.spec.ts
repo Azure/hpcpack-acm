@@ -48,8 +48,14 @@ fdescribe('CommandApi', () => {
 
   it('should create', () => {
     let value = 1;
-    httpSpy.post.and.returnValue(of(value));
-    resource.create('a command', []).subscribe(res => expect(res).toBe(value));
+    let url = `basepart/${value}`;
+    let res = { headers: { get: () => url }};
+    spyOn(res.headers, 'get').and.callThrough();
+    httpSpy.post.and.returnValue(of(res));
+    resource.create('a command', []).subscribe(obj => {
+      expect(obj.id).toBe(value);
+      expect(res.headers.get).toHaveBeenCalledWith('Location');
+    });
   });
 
   it('should get output', () => {

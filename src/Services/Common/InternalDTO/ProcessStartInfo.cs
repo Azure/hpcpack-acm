@@ -5,6 +5,7 @@ namespace Microsoft.HpcAcm.Services.Common
     using System;
     using System.Diagnostics;
     using System.Collections;
+    using System.Collections.Generic;
 
     #endregion
 
@@ -21,7 +22,7 @@ namespace Microsoft.HpcAcm.Services.Common
         /// <summary>
         /// Search paths for files, directories for temporary files, application-specific options, and other similar information.
         /// </summary>
-        public IDictionary environmentVariables { get; set; }
+        public IDictionary<string, string> environmentVariables { get; set; }
 
         /// <summary>
         /// The initial directory for the process to be started.
@@ -62,7 +63,7 @@ namespace Microsoft.HpcAcm.Services.Common
                 string stdin,
                 string stdout,
                 string stderr,
-                Hashtable environmentVariables
+                IDictionary<string, string> environmentVariables
                 )
         {
             this.commandLine = commandLine;
@@ -84,7 +85,7 @@ namespace Microsoft.HpcAcm.Services.Common
                 string stdin,
                 string stdout,
                 string stderr,
-                Hashtable environmentVariables,
+                IDictionary<string, string> environmentVariables,
                 Int64[] affinity
                 ) : this(commandLine, workingDirectory, stdin, stdout, stderr, environmentVariables)
         {
@@ -97,7 +98,7 @@ namespace Microsoft.HpcAcm.Services.Common
                 string stdin,
                 string stdout,
                 string stderr,
-                Hashtable environmentVariables,
+                IDictionary<string, string> environmentVariables,
                 Int64[] affinity,
                 int taskRequeueCount
                 ) : this(commandLine, workingDirectory, stdin, stdout, stderr, environmentVariables, affinity)
