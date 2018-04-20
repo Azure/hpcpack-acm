@@ -10,7 +10,7 @@
       <div class="select-tests">
         <tree-root #tree [nodes]="tests" (updateData)="onTreeLoad($event)" class="test-tree">
           <ng-template #treeNodeTemplate let-node let-index="index">
-            <mat-checkbox (change)="check(node, $event.checked)" [checked]="node.data.checked">
+            <mat-checkbox (change)="check(node, $event.checked)" [checked]="node.data.checked" color="primary">
               <span>{{node.data.name}}</span>
             </mat-checkbox>
           </ng-template>
@@ -36,7 +36,7 @@
           <div class="parameters" *ngFor="let parameter of test.parameters">
             <mat-form-field>
               <div *ngIf="parameter.options; else noOptions">
-                <mat-select [placeholder]="parameter.name" [(ngModel)]="parameter.defaultValue">
+                <mat-select [placeholder]="parameter.name" [(ngModel)]="parameter.defaultValue" (ngModelChange)="whenChange($event, parameter, test)">
                   <mat-option *ngFor="let option of parameter.options" [value]="option">
                     {{option}}
                   </mat-option>

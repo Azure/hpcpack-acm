@@ -30,7 +30,7 @@
       </mat-checkbox>
     </mat-header-cell>
     <mat-cell *matCellDef="let node">
-      <mat-checkbox (click)="$event.stopPropagation()"
+      <mat-checkbox color="primary" (click)="$event.stopPropagation()"
                     (change)="$event ? selection.toggle(node) : null"
                     [checked]="selection.isSelected(node)">
       </mat-checkbox>

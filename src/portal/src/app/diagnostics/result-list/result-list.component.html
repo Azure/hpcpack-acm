@@ -4,12 +4,12 @@
 </div>
 
 <div class="filter">
-    <mat-form-field>
-      <input #filter matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter">
-      <mat-hint>Filter results by test name or state or category</mat-hint>
-      <mat-hint align="end">{{dataSource.filteredData.length}} results</mat-hint>
-    </mat-form-field>
-  </div>
+  <mat-form-field>
+    <input #filter matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter">
+    <mat-hint>Filter results by test name or state or category</mat-hint>
+    <mat-hint align="end">{{dataSource.filteredData.length}} results</mat-hint>
+  </mat-form-field>
+</div>
 
 <mat-table #table [dataSource]="dataSource">
 
@@ -105,3 +105,7 @@
   <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
   <mat-row *matRowDef="let result; columns: displayedColumns;" (click)="selection.toggle(result)"></mat-row>
 </mat-table>
+
+<mat-paginator #paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 100]" [showFirstLastButtons]="true"
+  (page)="changePage($event)">
+</mat-paginator>

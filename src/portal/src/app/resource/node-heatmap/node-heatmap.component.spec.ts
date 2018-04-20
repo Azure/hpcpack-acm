@@ -36,13 +36,6 @@ describe('NodeHeatmapComponent', () => {
   let categories = ['disk', 'cpu', 'memory'];
   let mockNodes = {
     values: {
-      "083868be320a": {},
-      "0c53129593a8": {},
-      "4916e2c1da8c": {},
-      "aabca9fb95e7": {},
-      "eb1efeae727b": {},
-      "efd3f58626e7": {},
-      "evanc6": {},
       "evanclinuxdev": {},
       "testnode1": {
         "_Total": 1.2,
@@ -62,28 +55,7 @@ describe('NodeHeatmapComponent', () => {
         "_12": 0,
         "_11": 0,
         "_10": 0
-      },
-      "testnode2": {
-        "_Total": 0.6,
-        "_9": 0,
-        "_8": 0,
-        "_7": 0,
-        "_6": 0,
-        "_5": 0,
-        "_4": 0,
-        "_3": 0,
-        "_2": 0,
-        "_1": 0,
-        "_0": 0,
-        "_15": 0,
-        "_14": 0,
-        "_13": 0,
-        "_12": 9.1,
-        "_11": 0,
-        "_10": 0
-      },
-      "testnode3": {},
-      "testnode4": {}
+      }
     },
     category: "cpu"
   };
@@ -132,22 +104,11 @@ describe('NodeHeatmapComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should show select after component initilaized', () => {
-    fixture.detectChanges();
-    // const options = fixture.nativeElement.querySelector('mat-select-value-text');
-    const select = fixture.nativeElement.querySelector('mat-select');
-    fixture.detectChanges();
-    expect(select.textContent).toEqual('Select Category');
-    // expect(options.textContent).toEqual('cpu');
-  });
-
-  // it('should display expected nodes after get heamap nodes info', () => {
+  // it('should show select after component initilaized', () => {
   //   fixture.detectChanges();
-
-  //   const tiles = fixture.nativeElement.querySelectorAll('.tile');
-  //   // const tiles = fixture.nativeElement.querySelectorAll('.tile');
-  //   expect(tiles.length).toBe(12);
-
+    // const options = fixture.nativeElement.querySelector('mat-select-value-text');
+    //const select = fixture.nativeElement.querySelector('mat-select');
+    //fixture.detectChanges();
+    //expect(select.textContent).toEqual('Select Category');
   // });
-
 });

@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, OnChanges } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { MatTableDataSource } from '@angular/material';
+import { MatTableDataSource, MatPaginator } from '@angular/material';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { SelectionModel } from '@angular/cdk/collections';
 import { ApiService, Loop } from '../../services/api.service';
@@ -11,7 +11,8 @@ import { DiagEventsComponent } from './diag-events/diag-events.component'
   templateUrl: './result-list.component.html',
   styleUrls: ['./result-list.component.css']
 })
-export class ResultListComponent implements OnInit, OnDestroy {
+export class ResultListComponent implements OnInit, OnDestroy, OnChanges {
+  @ViewChild(MatPaginator) paginator: MatPaginator;
 
   private dataSource = new MatTableDataSource();
   private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'events', 'result', 'actions'];
@@ -26,7 +27,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
     private api: ApiService,
     public dialog: MatDialog
   ) {
-    this.interval = 5000000;
+    this.interval = 5000;
   }
 
   ngOnInit() {
@@ -37,6 +38,20 @@ export class ResultListComponent implements OnInit, OnDestroy {
     if (this.diagsLoop) {
       Loop.stop(this.diagsLoop);
     }
+  }
+
+  ngAfterViewInit() {
+    this.dataSource.paginator = this.paginator;
+  }
+
+  ngOnChanges() {
+    this.dataSource.paginator = this.paginator;
+  }
+
+  private changePage(e) {
+    console.log("pageSize->" + e.pageSize);
+    console.log("pageIndex->" + e.pageIndex);
+    console.log("pageLength->" + e.length);
   }
 
   private getDiags(): any {

@@ -54,6 +54,20 @@ export class NewDiagnosticsComponent implements OnInit {
     this.updateParentNodeCheckbox(node.realParent);
   }
 
+  private whenChange(e, p, t) {
+    if (p.whenChanged != undefined) {
+      let selected = p.whenChanged[e];
+      for (let key in selected) {
+        let index = t.parameters.findIndex((item) => {
+          return item.name == key;
+        });
+        if (index != -1) {
+          t.parameters[index].defaultValue = selected[key];
+        }
+      }
+    }
+  }
+
   private updateChildNodeCheckbox(node, checked) {
     node.data.checked = checked;
     if (node.children) {
@@ -122,7 +136,7 @@ export class NewDiagnosticsComponent implements OnInit {
     for (let i = 0; i < this.selectedTestsWithParameters.length; i++) {
       let name = this.selectedTestsWithParameters[i].name;
       let args = this.selectedTests[i].parameters.map((item) => {
-        return {name: item.name, value: item.defaultValue};
+        return { name: item.name, value: item.defaultValue };
       });
       testArgs[name] = args;
     }
