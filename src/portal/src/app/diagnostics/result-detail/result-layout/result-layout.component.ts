@@ -40,11 +40,14 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
   };
 
   constructor(
-    private api : ApiService
+    private api: ApiService
   ) { }
 
   ngOnInit() {
     this.makeChartData();
+    if (this.result.aggregationResult == undefined) {
+      this.result.aggregationResult = "Wating for the aggregation result...";
+    }
   }
 
   changeLog = [];
@@ -52,6 +55,9 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
     this.makeChartData();
     this.api.diag.getDiagJob(this.result.id).subscribe(res => {
       this.result = res;
+      if (this.result.aggregationResult == undefined) {
+        this.result.aggregationResult = "Wating for the aggregation result...";
+      }
     });
 
   }
