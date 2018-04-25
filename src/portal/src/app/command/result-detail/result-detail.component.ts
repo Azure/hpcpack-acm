@@ -212,6 +212,10 @@ export class ResultDetailComponent implements OnInit {
     return this.nodeOutputs[this.selectedNode.name];
   }
 
+  get currentOutputUrl(): string {
+    return this.api.command.getDownloadUrl(this.id, this.selectedNode.key);
+  }
+
   scrollOutputToBottom(): void {
     let elem = this.output.nativeElement;
     elem.scrollTop = elem.scrollHeight;

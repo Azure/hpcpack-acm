@@ -84,8 +84,10 @@ pre {
   margin-top: 5px;
 }
 
-.control.autoload {
-  text-align: right;
+.control.bottom {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
 }
 
 .control.static {

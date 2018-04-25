@@ -155,6 +155,11 @@ export class CommandApi extends Resource<CommandResult> {
         })
       );
   }
+
+  getDownloadUrl(id, key): string {
+    let url = `${this.url}/${id}/results/${key}?raw=true`;
+    return url;
+  }
 }
 
 export class HeatmapApi extends Resource<any> {

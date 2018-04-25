@@ -60,7 +60,8 @@
           </button>
         </ng-template>
 
-        <div class="control autoload">
+        <div class="control bottom">
+          <a [href]="currentOutputUrl">Download the whole output</a>
           <mat-checkbox [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoload</mat-checkbox>
         </div>
       </div>
