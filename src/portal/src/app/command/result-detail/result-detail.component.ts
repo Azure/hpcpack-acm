@@ -213,7 +213,7 @@ export class ResultDetailComponent implements OnInit {
   }
 
   get currentOutputUrl(): string {
-    return this.api.command.getDownloadUrl(this.id, this.selectedNode.key);
+    return this.selectedNode ? this.api.command.getDownloadUrl(this.id, this.selectedNode.key) : '';
   }
 
   scrollOutputToBottom(): void {

@@ -61,7 +61,7 @@
         </ng-template>
 
         <div class="control bottom">
-          <a [href]="currentOutputUrl">Download the whole output</a>
+          <a [href]="currentOutputUrl" *ngIf="currentOutputUrl">Download the whole output</a>
           <mat-checkbox [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoload</mat-checkbox>
         </div>
       </div>
