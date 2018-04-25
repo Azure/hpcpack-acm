@@ -40,8 +40,8 @@
           Output Begin
         </div>
         <ng-template #prevButton>
-          <button class="control" [ngClass]="{ attention: !autoload }" (click)="loadPrev()"
-            mat-button [disabled]="autoload" matTooltip="Load more content backward">
+          <button class="control" [ngClass]="{ attention: isManualLoadEnabled }" (click)="loadPrev()"
+            mat-button [disabled]="!isManualLoadEnabled" matTooltip="Load more content backward">
             <i class="material-icons" *ngIf="!loadingPrev; else loadingPrevBlock">keyboard_arrow_up</i>
             <ng-template #loadingPrevBlock>Loading...</ng-template>
           </button>
@@ -53,8 +53,8 @@
           Output End
         </div>
         <ng-template #nextButton>
-          <button class="control" [ngClass]="{ attention: !autoload }" (click)="loadNext()"
-            mat-button [disabled]="autoload" matTooltip="Load more content forward">
+          <button class="control" [ngClass]="{ attention: isManualLoadEnabled }" (click)="loadNext()"
+            mat-button [disabled]="!isManualLoadEnabled" matTooltip="Load more content forward">
             <i class="material-icons" *ngIf="!loadingNext; else loadingNextBlock">keyboard_arrow_down</i>
             <ng-template #loadingNextBlock>Loading...</ng-template>
           </button>
@@ -62,7 +62,7 @@
 
         <div class="control bottom">
           <a [href]="currentOutputUrl" *ngIf="currentOutputUrl">Download the whole output</a>
-          <mat-checkbox [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoscroll</mat-checkbox>
+          <mat-checkbox [disabled]="!selectedNode" [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoscroll</mat-checkbox>
         </div>
       </div>
     </div>

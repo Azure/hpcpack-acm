@@ -259,6 +259,10 @@ export class ResultDetailComponent implements OnInit {
     }
   }
 
+  get isManualLoadEnabled(): boolean {
+    return !this.autoload && this.selectedNode;
+  }
+
   loadPrev() {
     let output = this.getNodeOutput(this.selectedNode)
     if (output.start === 0) {
