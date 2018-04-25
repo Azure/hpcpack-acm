@@ -60,6 +60,10 @@
           </button>
         </ng-template>
 
+        <div class="control" *ngIf="autoscroll && currentOutput && !currentOutput.end">
+          <mat-progress-bar mode="buffer"></mat-progress-bar>
+        </div>
+
         <div class="control bottom">
           <a [href]="currentOutputUrl" *ngIf="currentOutputUrl">Download the whole output</a>
           <mat-checkbox [disabled]="!selectedNode" [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoscroll</mat-checkbox>
@@ -70,8 +74,11 @@
 </ng-container>
 
 <ng-template #loading>
-  <p>
-    Loading...
-  </p>
-  <p>{{errorMsg}}</p>
+  <div class="loading">
+    <mat-spinner></mat-spinner>
+    <p>
+      Waiting for the command to get start...
+    </p>
+    <p>{{errorMsg}}</p>
+  </div>
 </ng-template>

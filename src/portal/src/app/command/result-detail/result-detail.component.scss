@@ -33,6 +33,13 @@ app-back-button {
   background-color: #d5ffd4;
 }
 
+.loading {
+  mat-spinner {
+    margin: 1em auto;
+  }
+  text-align: center;
+}
+
 .container-fluid {
   margin-top: 1em;
 }
