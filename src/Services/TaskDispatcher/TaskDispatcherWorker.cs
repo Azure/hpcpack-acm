@@ -16,6 +16,7 @@
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Options;
     using System.Diagnostics;
+    using System.IO;
 
     internal class TaskDispatcherWorker : TaskItemWorker, IWorker
     {
@@ -127,9 +128,43 @@
             {
                 var jobPartitionKey = this.Utilities.GetJobPartitionKey(message.JobType, message.JobId);
 
-                var job = await this.Utilities.GetJobsTable().RetrieveAsync<Job>(jobPartitionKey, this.Utilities.JobEntryKey, token);
+                var jobTable = this.Utilities.GetJobsTable();
+                var job = await jobTable.RetrieveAsync<Job>(jobPartitionKey, this.Utilities.JobEntryKey, token);
                 if (job != null && job.State == JobState.Running)
                 {
+                    if (job.Type == JobType.Diagnostics)
+                    {
+                        var diagTest = await jobTable.RetrieveAsync<InternalDiagnosticsTest>(
+                            this.Utilities.GetDiagPartitionKey(job.DiagnosticTest.Category),
+                            job.DiagnosticTest.Name,
+                            token);
+
+                        if (diagTest.TaskResultFilterScript?.Name != null)
+                        {
+                            var taskResultKey = this.Utilities.GetTaskResultKey(message.JobId, message.Id, message.RequeueCount);
+                            var taskResult = await jobTable.RetrieveAsync<ComputeNodeTaskCompletionEventArgs>(jobPartitionKey, taskResultKey, token);
+                            var scriptBlob = this.Utilities.GetBlob(diagTest.TaskResultFilterScript.ContainerName, diagTest.TaskResultFilterScript.Name);
+                            var fileName = Path.GetTempFileName();
+
+                            var filteredResult = await PythonExecutor.ExecuteAsync(fileName, scriptBlob, new { Job = job, Task = taskResult }, token);
+                            taskResult.FilteredResult = filteredResult.Item1;
+                            if (!string.IsNullOrEmpty(filteredResult.Item2))
+                            {
+                                (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
+                                {
+                                    Content = filteredResult.Item2,
+                                    Source = EventSource.Job,
+                                    Type = EventType.Alert,
+                                });
+
+                                job.State = JobState.Failed;
+                                return true;
+                            }
+
+                            if (!await jobTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, taskResultKey, taskResult, token)) { return false; }
+                        }
+                    }
+
                     await this.VisitAllTasksAsync(jobPartitionKey, message.JobId, message.RequeueCount, message.Id, async t =>
                     {
                         if (string.Equals(t.CustomizedData, InternalTask.EndTaskMark, StringComparison.OrdinalIgnoreCase))
