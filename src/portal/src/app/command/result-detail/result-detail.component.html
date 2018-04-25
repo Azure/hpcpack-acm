@@ -31,20 +31,54 @@
           </ng-container>
 
           <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-          <mat-row *matRowDef="let node; columns: displayedColumns;" (click)="selectNode(node)"></mat-row>
+          <mat-row *matRowDef="let node; columns: displayedColumns;" [ngClass]="{ selected: selectedNode === node }" (click)="selectNode(node)"></mat-row>
         </mat-table>
       </div>
 
       <div class="col-md-9 output">
-        <pre #output>{{currentOutput}}</pre>
+        <div class="control static" *ngIf="currentOutput?.start === 0; else prevButton">
+          Output Begin
+        </div>
+        <ng-template #prevButton>
+          <button class="control" [ngClass]="{ attention: isManualLoadEnabled }" (click)="loadPrev()"
+            mat-button [disabled]="!isManualLoadEnabled" matTooltip="Load more content backward">
+            <i class="material-icons" *ngIf="!loadingPrev; else loadingPrevBlock">keyboard_arrow_up</i>
+            <ng-template #loadingPrevBlock>Loading...</ng-template>
+          </button>
+        </ng-template>
+
+        <pre #output>{{currentOutput?.content}}</pre>
+
+        <div class="control static" *ngIf="currentOutput?.end; else nextButton">
+          Output End
+        </div>
+        <ng-template #nextButton>
+          <button class="control" [ngClass]="{ attention: isManualLoadEnabled }" (click)="loadNext()"
+            mat-button [disabled]="!isManualLoadEnabled" matTooltip="Load more content forward">
+            <i class="material-icons" *ngIf="!loadingNext; else loadingNextBlock">keyboard_arrow_down</i>
+            <ng-template #loadingNextBlock>Loading...</ng-template>
+          </button>
+        </ng-template>
+
+        <div class="control" *ngIf="autoscroll && currentOutput && !currentOutput.end">
+          <mat-progress-bar mode="buffer"></mat-progress-bar>
+        </div>
+
+        <div class="control bottom">
+          <a [href]="currentOutputUrl" *ngIf="currentOutputUrl">Download the whole output</a>
+          <mat-checkbox [disabled]="!selectedNode" [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoscroll</mat-checkbox>
+        </div>
       </div>
     </div>
   </div>
 </ng-container>
 
 <ng-template #loading>
-  <p>
-    Loading...
-  </p>
-  <p>{{errorMsg}}</p>
+  <div class="loading">
+    <mat-spinner></mat-spinner>
+    <p>
+      Waiting for the command to get start...
+    </p>
+    <p>{{errorMsg}}</p>
+  </div>
 </ng-template>

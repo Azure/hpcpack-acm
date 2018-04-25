@@ -81,9 +81,7 @@ fdescribe('AppComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
     fixture.detectChanges();
-    let text = fixture.nativeElement.querySelector('mat-toolbar').textContent;
-    expect(text).toContain(authServiceStub.user.name);
-    text = fixture.nativeElement.querySelector('mat-nav-list').textContent;
+    let text = fixture.nativeElement.querySelector('mat-nav-list').textContent;
     AppComponent.items.forEach(item => expect(text).toContain(item.title));
   });
 });

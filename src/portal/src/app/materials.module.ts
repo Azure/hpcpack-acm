@@ -19,6 +19,7 @@ import {
   MatMenuModule,
   MatExpansionModule,
   MatProgressBarModule,
+  MatProgressSpinnerModule,
   MatPaginatorModule
 } from '@angular/material';
 
@@ -42,6 +43,7 @@ const modules = [
   MatMenuModule,
   MatExpansionModule,
   MatProgressBarModule,
+  MatProgressSpinnerModule,
   MatPaginatorModule
 ];
 
