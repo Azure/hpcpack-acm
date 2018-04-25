@@ -42,6 +42,10 @@ app-back-button {
   margin-bottom: 1em;
 }
 
+.selection .selected {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
 mat-form-field {
   width: 100%;
 }
