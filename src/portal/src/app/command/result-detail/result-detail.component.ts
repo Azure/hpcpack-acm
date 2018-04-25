@@ -40,6 +40,16 @@ export class ResultDetailComponent implements OnInit {
 
   private nodeOutputs = {};
 
+  private autoload = true;
+
+  private loadingPrev = false;
+
+  private loadingNext = false;
+
+  private outputInitOffset = -2000;
+
+  private outputPageSize = 2000;
+
   constructor(
     private route: ActivatedRoute,
     private api: ApiService,
@@ -120,21 +130,62 @@ export class ResultDetailComponent implements OnInit {
     this.updateNodeResult(this.id, node);
   }
 
+  getNodeOutput(node): any {
+    let output = this.nodeOutputs[node.name];
+    if (!output) {
+      output = this.nodeOutputs[node.name] = { content: '', next: this.outputInitOffset, start: undefined, end: undefined };
+    }
+    return output;
+  }
+
+  updateNodeOutput(node, output, result): boolean {
+    //NOTE: There may be two inflight updates for the same piece of output, one
+    //by autoload and the other one by manual trigger. Drop the one arrives later.
+    if (output.next > result.offset) {
+      return false;
+    }
+    //Update start field when and only when it's not updated yet.
+    if (typeof(output.start) === 'undefined') {
+      output.start = result.offset;
+    }
+    output.end = result.size == 0 && this.isNodeOver(node);
+    if (output.end) {
+      return false;
+    }
+    if (result.content) {
+      output.content += result.content;
+    }
+    output.next = result.offset + result.size;
+    return result.content ? true : false;
+  }
+
+  updateNodeOutputBackward(output, result): boolean {
+    //Update next field when and only when it's not updated yet.
+    if (output.next === this.outputInitOffset) {
+      output.next = result.offset + result.size;
+    }
+    if (result.content) {
+      output.content = result.content + output.content;
+    }
+    output.start = result.offset;
+    return result.content ? true : false;
+  }
+
   updateNodeResult(id, node) {
     //Cancel previous loop if any
     if (this.nodeLoop) {
       Loop.stop(this.nodeLoop);
     }
-    let output = this.nodeOutputs[node.name];
-    if (!output) {
-      output = this.nodeOutputs[node.name] = { content: '', next: 0 };
-    }
+    let output = this.getNodeOutput(node)
     if (output.end) {
+      return;
+    }
+    if (!this.autoload && output.content) {
       return;
     }
     this.nodeLoop = Loop.start(
       //observable:
-      this.api.command.getOutput(id, node.key, node.next),
+      this.api.command.getOutput(id, node.key, output.next, this.outputPageSize),
       //observer:
       {
         next: (result) => {
@@ -143,14 +194,11 @@ export class ResultDetailComponent implements OnInit {
             //End the loop by returning a false value.
             return;
           }
-          //let output = this.nodeOutputs[node.name];
-          if (result.content) {
-            output.content += result.content;
+          if (this.updateNodeOutput(node, output, result)) {
             setTimeout(() => this.scrollOutputToBottom(), 0);
           }
-          output.next = result.offset + result.size;
-          output.end = result.size == 0 && this.isOver;
-          return output.end ? false : this.api.command.getOutput(id, node.key, output.next);
+          let over = output.end || !this.autoload;
+          return over ? false : this.api.command.getOutput(id, node.key, output.next, this.outputPageSize);
         }
       },
       //interval(in ms):
@@ -158,16 +206,20 @@ export class ResultDetailComponent implements OnInit {
     );
   }
 
-  get currentOutput(): string {
+  get currentOutput(): object {
     if (!this.selectedNode)
-      return '';
-    let output = this.nodeOutputs[this.selectedNode.name];
-    return output ? output.content : '';
+      return;
+    return this.nodeOutputs[this.selectedNode.name];
   }
 
   scrollOutputToBottom(): void {
     let elem = this.output.nativeElement;
     elem.scrollTop = elem.scrollHeight;
+  }
+
+  scrollOutputToTop(): void {
+    let elem = this.output.nativeElement;
+    elem.scrollTop = 0;
   }
 
   setResultState() {
@@ -189,5 +241,54 @@ export class ResultDetailComponent implements OnInit {
   get isOver(): boolean {
     let state = this.result.state;
     return state == 'finished' || state == 'failed';
+  }
+
+  isNodeOver(node): boolean {
+    let state = node.state;
+    return state == 'finished' || state == 'failed';
+  }
+
+  toggleAutoload(enabled) {
+    this.autoload = enabled;
+    if (enabled) {
+      this.updateNodeResult(this.id, this.selectedNode);
+    }
+  }
+
+  loadPrev() {
+    let output = this.getNodeOutput(this.selectedNode)
+    if (output.start === 0) {
+      return;
+    }
+    let prev;
+    if (output.start) {
+      prev = output.start - this.outputPageSize;
+      if (prev < 0)
+        prev = 0;
+    }
+    else {
+      prev = this.outputInitOffset;
+    }
+    this.loadingPrev = true;
+    this.api.command.getOutput(this.id, this.selectedNode.key, prev, this.outputPageSize).subscribe(result => {
+      this.loadingPrev = false;
+      if (this.updateNodeOutputBackward(output, result)) {
+        setTimeout(() => this.scrollOutputToTop(), 0);
+      }
+    });
+  }
+
+  loadNext() {
+    let output = this.getNodeOutput(this.selectedNode)
+    if (output.end) {
+      return;
+    }
+    this.loadingNext = true;
+    this.api.command.getOutput(this.id, this.selectedNode.key, output.next, this.outputPageSize).subscribe(result => {
+      this.loadingNext = false;
+      if (this.updateNodeOutput(this.selectedNode, output, result)) {
+        setTimeout(() => this.scrollOutputToBottom(), 0);
+      }
+    });
   }
 }

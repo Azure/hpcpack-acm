@@ -36,7 +36,33 @@
       </div>
 
       <div class="col-md-9 output">
-        <pre #output>{{currentOutput}}</pre>
+        <div class="control static" *ngIf="currentOutput?.start === 0; else prevButton">
+          Output Begin
+        </div>
+        <ng-template #prevButton>
+          <button class="control" [ngClass]="{ attention: !autoload }" (click)="loadPrev()"
+            mat-button [disabled]="autoload" matTooltip="Load more content before">
+            <i class="material-icons" *ngIf="!loadingPrev; else loadingPrevBlock">keyboard_arrow_up</i>
+            <ng-template #loadingPrevBlock>Loading...</ng-template>
+          </button>
+        </ng-template>
+
+        <pre #output>{{currentOutput?.content}}</pre>
+
+        <div class="control static" *ngIf="currentOutput?.end; else nextButton">
+          Output End
+        </div>
+        <ng-template #nextButton>
+          <button class="control" [ngClass]="{ attention: !autoload }" (click)="loadNext()"
+            mat-button [disabled]="autoload" matTooltip="Load more content after">
+            <i class="material-icons" *ngIf="!loadingNext; else loadingNextBlock">keyboard_arrow_down</i>
+            <ng-template #loadingNextBlock>Loading...</ng-template>
+          </button>
+        </ng-template>
+
+        <div class="control autoload">
+          <mat-checkbox [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoload</mat-checkbox>
+        </div>
       </div>
     </div>
   </div>

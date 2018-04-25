@@ -123,8 +123,6 @@ export class CommandApi extends Resource<CommandResult> {
           name: e.nodeName,
           state: odd.taskInfo ? (odd.taskInfo.exitCode == 0 ? 'finished' : 'failed') : 'running',
           key: odd.resultKey,
-          output: '',
-          next: 0,
         };
       }).sort((a, b) => (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)));
     }
@@ -147,8 +145,8 @@ export class CommandApi extends Resource<CommandResult> {
       );
   }
 
-  getOutput(id, key, next) {
-    let url = `${this.url}/${id}/results/${key}?offset=${next}`;
+  getOutput(id, key, next, size = 2000) {
+    let url = `${this.url}/${id}/results/${key}?offset=${next}&pageSize=${size}`;
     return this.http.get<any>(url)
       .pipe(
         catchError((error: any): Observable<any> => {

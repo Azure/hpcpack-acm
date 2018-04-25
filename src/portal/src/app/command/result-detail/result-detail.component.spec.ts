@@ -16,11 +16,14 @@ class BackButtonStubComponent {}
 class ApiServiceStub {
   static result = { command: 'TEST COMMAND', nodes: [{ name: 'TEST NODE', state: 'finished' }] };
 
-  static output = { content: 'TEST OUTPUT', size: 0 };
+  static outputContent = 'TEST CONTENT';
 
   command = {
     get: () => of(ApiServiceStub.result),
-    getOutput: () => of(ApiServiceStub.output),
+    getOutput: () => of(
+      { content: ApiServiceStub.outputContent, size: ApiServiceStub.outputContent.length, offset: 0 },
+      { size: 0, offset: ApiServiceStub.outputContent.length }
+    ),
   }
 }
 
@@ -64,7 +67,7 @@ fdescribe('ResultDetailComponent', () => {
     text = fixture.nativeElement.querySelector('.state').textContent;
     expect(text).toContain('Finished');
     text = fixture.nativeElement.querySelector('pre').textContent;
-    expect(text).toContain(ApiServiceStub.output.content);
+    expect(text).toContain(ApiServiceStub.outputContent);
     text = fixture.nativeElement.querySelector('.mat-cell.mat-column-name').textContent;
     expect(text).toContain(ApiServiceStub.result.nodes[0].name);
     text = fixture.nativeElement.querySelector('.mat-cell.mat-column-state').textContent;

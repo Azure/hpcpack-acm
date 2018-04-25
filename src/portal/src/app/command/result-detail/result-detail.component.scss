@@ -36,8 +36,7 @@ app-back-button {
 }
 
 .selection, .output {
-  max-height: 700px;
-  overflow: auto;
+  max-height: 800px;
   margin-bottom: 1em;
 }
 
@@ -53,12 +52,45 @@ mat-row:hover {
   background: rgba(0,0,0,.04);
 }
 
+.mat-column-state {
+  flex: 0.5;
+}
+
 pre {
   color: white;
   background-color: black;
   overflow: auto;
   box-sizing: border-box;
-  margin: 0;
+  margin: 5px 0;
   padding: 1em;
-  height: 100%;
+  height: 600px;
+}
+
+@keyframes blink {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.attention {
+  animation: blink 1s 5;
+}
+
+.output button {
+  width: 100%;
+  background-color: #eee;
+}
+
+.control + .control {
+  margin-top: 5px;
+}
+
+.control.autoload {
+  text-align: right;
+}
+
+.control.static {
+  text-align: center;
+  background-color: #eee;
+  padding: 8px;
+  border-radius: 5px;
 }
