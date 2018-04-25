@@ -46,9 +46,9 @@ export class ResultDetailComponent implements OnInit {
 
   private loadingNext = false;
 
-  private outputInitOffset = -2000;
+  private outputInitOffset = -4096;
 
-  private outputPageSize = 2000;
+  private outputPageSize = 4096;
 
   constructor(
     private route: ActivatedRoute,
@@ -77,6 +77,8 @@ export class ResultDetailComponent implements OnInit {
           if (id != this.id) {
             return; //A false value indicates the end of the loop
           }
+          //NOTE: this.result is replaced by a new object on each new GET so that
+          //the node info saved on this.result.nodes doesn't persist between GETs!
           this.result = result;
           if (result.nodes.length == 0) {
             return true;
@@ -148,7 +150,10 @@ export class ResultDetailComponent implements OnInit {
     if (typeof(output.start) === 'undefined') {
       output.start = result.offset;
     }
-    output.end = result.size == 0 && this.isNodeOver(node);
+    //NOTE: this.isNodeOver depends on the node info, which may be outdated because
+    //the node parameter may be a captured value in a closure, which captured an "old"
+    //value. So this.isOver is required and this.isNodeOver is an optimization.
+    output.end = result.size == 0 && (this.isNodeOver(node) || this.isOver);
     if (output.end) {
       return false;
     }
@@ -202,7 +207,7 @@ export class ResultDetailComponent implements OnInit {
         }
       },
       //interval(in ms):
-      500
+      200
     );
   }
 
