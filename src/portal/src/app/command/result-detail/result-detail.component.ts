@@ -274,16 +274,19 @@ export class ResultDetailComponent implements OnInit {
       return;
     }
     let prev;
+    let pageSize = this.outputPageSize;
     if (output.start) {
       prev = output.start - this.outputPageSize;
-      if (prev < 0)
+      if (prev < 0) {
         prev = 0;
+        pageSize = output.start;
+      }
     }
     else {
       prev = this.outputInitOffset;
     }
     this.loadingPrev = true;
-    this.api.command.getOutput(this.id, this.selectedNode.key, prev, this.outputPageSize).subscribe(result => {
+    this.api.command.getOutput(this.id, this.selectedNode.key, prev, pageSize).subscribe(result => {
       this.loadingPrev = false;
       if (this.updateNodeOutputBackward(output, result)) {
         setTimeout(() => this.scrollOutputToTop(), 0);
