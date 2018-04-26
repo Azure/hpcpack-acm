@@ -23,10 +23,7 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
   cpuOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    animation: {
-      duration: 1000,
-      easing: 'linear'
-    },
+    animation: false,
     legend: {
       display: false,
     },

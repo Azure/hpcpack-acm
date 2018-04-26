@@ -1,37 +1,59 @@
-import { Component, OnInit, OnDestroy, ViewChild, OnChanges } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, HostListener, ElementRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableDataSource, MatPaginator } from '@angular/material';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { SelectionModel } from '@angular/cdk/collections';
 import { ApiService, Loop } from '../../services/api.service';
-import { DiagEventsComponent } from './diag-events/diag-events.component'
+import { DiagEventsComponent } from './diag-events/diag-events.component';
 
 @Component({
   selector: 'diagnostics-results',
   templateUrl: './result-list.component.html',
-  styleUrls: ['./result-list.component.css']
+  styleUrls: ['./result-list.component.css'],
 })
-export class ResultListComponent implements OnInit, OnDestroy, OnChanges {
+export class ResultListComponent implements OnInit, OnDestroy {
   @ViewChild(MatPaginator) paginator: MatPaginator;
 
   private dataSource = new MatTableDataSource();
-  private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'events', 'result', 'actions'];
+  private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'result', 'actions'];
 
   private selection = new SelectionModel(true, []);
   private interval: number;
   private diagsLoop: Object;
+  private currentPageIndex = 0;
+  private currentPageSize = 50;
+  private scrolled = false;
+
+  throttle = 300;
+  scrollDistance = 1;
+  scrollUpDistance = 2;
+  loadFinish = false;
+
+
+  hasReceivedData = false;
+
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private api: ApiService,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    public el: ElementRef
   ) {
     this.interval = 5000;
   }
 
   ngOnInit() {
-    this.diagsLoop = this.getDiags();
+    this.diagsLoop = this.getDiags(this.currentPageIndex, this.currentPageSize);
+    /*configure filter*/
+    this.dataSource.filterPredicate = (data: any, filter: string) => {
+      return data.name.indexOf(filter) != -1 ||
+        data.state.indexOf(filter) != -1 ||
+        (data.id).toString() == filter.toString() ||
+        data.diagnosticTest.name.indexOf(filter) != -1 ||
+        data.diagnosticTest.category.indexOf(filter) != -1;
+    };
+
   }
 
   ngOnDestroy() {
@@ -40,34 +62,92 @@ export class ResultListComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-  }
-
-  ngOnChanges() {
-    this.dataSource.paginator = this.paginator;
-  }
-
-  private changePage(e) {
-    console.log("pageSize->" + e.pageSize);
-    console.log("pageIndex->" + e.pageIndex);
-    console.log("pageLength->" + e.length);
-  }
-
-  private getDiags(): any {
+  private getDiags(pageIndex: any, pageSize: any): any {
+    this.hasReceivedData = false;
     return Loop.start(
-      this.api.diag.getAll(),
+      this.api.diag.getDiagsByPage(pageIndex, pageSize),
       {
         next: (result) => {
-          this.dataSource.data = (result.filter(e => {
+          let diags = result.filter(e => {
             return e.diagnosticTest != undefined && e.name != undefined;
-          })).reverse();
+          });
+          this.hasReceivedData = true;
+          if (diags.length == 0) {
+            // this.currentPageIndex -= this.currentPageSize;
+            this.loadFinish = true;
+            return false;
+          }
+
+          let exsit = this.updateData(diags);
+          if (!exsit) {
+            this.dataSource.data = this.dataSource.data.concat(diags);
+            // this.dataSource.data = diags;
+          }
           return true;
         }
       },
       this.interval
     );
   }
+
+  updateData(data) {
+    let firstIndex = data[0].id;
+    let length = data.length;
+    let index = this.dataSource.data.findIndex(item => {
+      return item['id'] == firstIndex;
+    });
+    if (index == -1) {
+      return false;
+    }
+    let firstPart = this.dataSource.data.slice(0, index);
+    let lastPart = this.dataSource.data.slice(index + length);
+    this.dataSource.data = firstPart.concat(data).concat(lastPart);
+    return true;
+  }
+
+  onScrollDown(ev) {
+    console.log('scrolled down!!', ev);
+    let tableDiv = document.getElementsByTagName("mat-table");
+
+    if (this.loadFinish) {
+      console.log("Load finished!");
+    }
+    else if (this.hasReceivedData) {
+      //how to decide the last api has returned data and rendered
+      this.currentPageIndex = this.currentPageIndex + this.currentPageSize;
+      if (this.diagsLoop) {
+        Loop.stop(this.diagsLoop);
+      }
+      this.diagsLoop = this.getDiags(this.currentPageIndex, this.currentPageSize);
+    }
+  }
+
+  private scrollToTop() {
+    window.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
+  }
+
+  private scrollTimer = null;
+  @HostListener("window:scroll", ['$event']) onWndScroll(delay: number = 300) {
+    clearTimeout(this.scrollTimer);
+    let self = this;
+    this.scrollTimer = setTimeout(() => {
+      const componentPostion = this.el.nativeElement.offsetTop;
+      const scrollPostion = window.pageYOffset;
+      console.log(scrollPostion);
+      if (scrollPostion >= componentPostion) {
+        this.scrolled = true;
+      }
+      else {
+        this.scrolled = false;
+      }
+    }, delay);
+  }
+
+  onUp(ev) {
+    console.log('scrolled up!!', ev);
+    // console.log(document.documentElement.scrollTop);
+  }
+
   private hasNoSelection(): boolean {
     return this.selection.selected.length == 0;
   }
@@ -107,9 +187,7 @@ export class ResultListComponent implements OnInit, OnDestroy, OnChanges {
   applyFilter(text: string): void {
     this.dataSource.filter = text;
   }
-
   private showEvents(res) {
-    console.log(res);
     this.dialog.open(DiagEventsComponent, {
       width: '98%',
       data: { job: res }

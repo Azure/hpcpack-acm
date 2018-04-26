@@ -1,16 +1,15 @@
-import { Component, OnInit, Input, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, OnDestroy, OnChanges, SimpleChange } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
 import { ApiService, Loop } from '../../../services/api.service';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { TaskDetailComponent } from './task-detail/task-detail.component';
-
 
 @Component({
   selector: 'app-pingpong-test',
   templateUrl: './pingpong-test.component.html',
   styleUrls: ['./pingpong-test.component.css']
 })
-export class PingPongTestComponent implements OnInit {
+export class PingPongTestComponent implements OnInit, OnChanges {
   @Input() result: any;
 
   @ViewChild('filter')
@@ -22,6 +21,7 @@ export class PingPongTestComponent implements OnInit {
   private jobId: string;
   private interval: number;
   private tasksLoop: Object;
+  private jobState: string;
 
   tasks = [];
 
@@ -44,15 +44,21 @@ export class PingPongTestComponent implements OnInit {
         next: (result) => {
           this.dataSource.data = result;
           this.tasks = result;
-          let hasFinished = this.tasks.every((item) => {
-            return item.state == 'Finished';
-          });
-          return !hasFinished;
+          if (this.jobState == 'Finished') {
+            return false;
+          }
+          return true;
         }
       },
       this.interval
     );
   }
+
+  ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
+    console.log("test task loop");
+  }
+
+
 
   applyFilter(text: string): void {
     this.dataSource.filter = text;
@@ -88,4 +94,7 @@ export class PingPongTestComponent implements OnInit {
     }
   }
 
+  getJobState(state: any) {
+    this.jobState = state;
+  }
 }

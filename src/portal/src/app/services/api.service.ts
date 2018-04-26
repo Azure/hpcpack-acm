@@ -231,24 +231,24 @@ export class DiagApi extends Resource<any> {
   }
 
   protected normalizeTests(result: any): any {
-    let data = { name: 'All', children: [] };
+    let data = [];
     let tests = [];
     for (let i = 0; i < result.length; i++) {
-      let index = data.children.findIndex(item => {
+      let index = data.findIndex(item => {
         return item.name == result[i].category;
       });
       if (index != -1) {
-        data.children[index]['children'].push(result[i]);
+        data[index]['children'].push(result[i]);
       }
       else {
-        data.children.push({
+        data.push({
           name: result[i].category,
           children: [result[i]]
         });
       }
     }
-    tests.push(data);
-    return tests;
+    // tests.push(data);
+    return data;
   }
 
   getDiagTests() {
@@ -273,6 +273,20 @@ export class DiagApi extends Resource<any> {
           return new ErrorObservable(error);
         })
       );
+  }
+
+  getDiagsByPage(lastId: any, count: any) {
+    let url = this.url + '?lastid=' + lastId + '&count=' + count;
+    return this.http.get<any>(url)
+      .pipe(
+        map(e => {
+          return e;
+        }),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      )
   }
 
 

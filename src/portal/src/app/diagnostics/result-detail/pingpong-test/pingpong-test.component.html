@@ -1,4 +1,4 @@
-<app-result-layout [result]="result" [tasks]="tasks" *ngIf="tasks.length > 0; else no_tasks" (filterNodes)="filterNodes($event)">
+<app-result-layout [result]="result" [tasks]="tasks" (filterNodes)="filterNodes($event)" (getJobState)="getJobState($event)">
   <ng-template #nodes>
     <div class="filter">
       <mat-form-field>
@@ -47,7 +47,7 @@
     </mat-table>
   </ng-template>
 </app-result-layout>
-<ng-template #no_tasks>
+<!-- <ng-template #no_tasks>
   <app-back-button></app-back-button>
   <div class="title main" [ngClass]="result.state">
     <i class="material-icons">{{stateIcon(result.state)}}</i>
@@ -57,4 +57,4 @@
   <p class="message">
     There is no task to display.
   </p>
-</ng-template>
+</ng-template> -->

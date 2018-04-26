@@ -80,21 +80,14 @@ export class NodeListComponent {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         let targetNodes = this.selection.selected.map(e => e.name);
-        let diagnosticTest = result['selectedTests'].map(e => {
-          // return { name: e.name, category: e.category, arguments: JSON.stringify(e.arguments).replace(/\"/g, '\\"') }
-          return { name: e.name, category: e.category, arguments: JSON.stringify(e.arguments) }
-        });
+        let diagnosticTest = { name: result['selectedTest']['name'], category: result['selectedTest']['category'], arguments: JSON.stringify(result['selectedTest']['arguments']) };
         let name = result['diagTestName'];
-        if (diagnosticTest.length > 0) {
-          diagnosticTest = diagnosticTest[0];
-        }
-        console.log(result);
 
         console.log(diagnosticTest);
         this.api.diag.create(name, targetNodes, diagnosticTest).subscribe(obj => {
           let returnData = obj.headers.get('location').split('/');
           let jobId = returnData[returnData.length - 1];
-          this.router.navigate([`/diagnostics/results`]);
+          this.router.navigate([`/diagnostics/results/` + jobId]);
         });
       }
     });

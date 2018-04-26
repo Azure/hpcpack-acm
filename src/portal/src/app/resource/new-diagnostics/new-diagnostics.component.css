@@ -6,6 +6,14 @@ mat-vertical-stepper {
   clear: both;
 }
 
+.mat-vertical-content {
+  padding: 0 24px;
+}
+
+.step-btn {
+  margin-bottom: -24px
+}
+
 mat-radio-group {
   display: flex;
   flex-direction: column;
@@ -37,6 +45,7 @@ mat-radio-button {
 .select-tests {
   display: flex;
 }
+
 .diagTestName {
   width: 100%;
 }
@@ -56,12 +65,29 @@ mat-radio-button {
 }
 
 .error-message {
-  background: rgba(220, 54, 54, 0.9);
+  background: #f44336;
   color: #FFF;
   line-height: 2em;
+  height: 2em;
+  padding: 0 1em;
+  display: flex;
+  align-items: center;
+}
+
+.last-step {
+  display: flex;
+  justify-content: space-between;
 }
 
 .error-text {
-  padding: 0 1em;
+  padding-left: 0.5em;
 }
 
+.dialog-title {
+  display: flex;
+  justify-content: space-between;
+}
+
+.close-icon:hover {
+  cursor: pointer;
+}

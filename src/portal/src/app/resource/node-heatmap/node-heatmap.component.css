@@ -12,16 +12,40 @@ nav {
   cursor: pointer;
 }
 
-.tile.low {
-  background-color: #d7d9ff;
+.tile.ten {
+  background-color: #E8EAF6;
 }
 
-.tile.median {
-  background-color: #afb3ff;
+.tile.twenty {
+  background-color: #C5CAE9;
 }
 
-.tile.high {
-  background-color: #878bfb;
+.tile.thirty {
+  background-color: #9FA8DA;
+}
+
+.tile.forty {
+  background-color: #7986CB;
+}
+
+.title.fifty{
+  background-color: #5C6BC0;
+}
+
+.tile.sixty {
+  background-color: #3F51B5;
+}
+
+.tile.seventy{
+  background-color: #303F9F;
+}
+
+.tile.eighty {
+  background-color: #283593;
+}
+
+.tile.ninety{
+  background-color: #1A237E;
 }
 
 .selectedCategory {

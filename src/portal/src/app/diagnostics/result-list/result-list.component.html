@@ -11,101 +11,114 @@
   </mat-form-field>
 </div>
 
-<mat-table #table [dataSource]="dataSource">
-
-  <!--
+<div class="diags-table" data-infinite-scroll debounce [infiniteScrollDistance]="scrollDistance" [infiniteScrollUpDistance]="scrollUpDistance"
+  [infiniteScrollThrottle]="throttle" (scrolled)="onScrollDown($event)" (scrolledUp)="onUp()" (window:scroll)="onWndScroll()">
+  <mat-table #table [dataSource]="dataSource">
+    <!--
    Note that these columns can be defined in any order. The actual rendered
    columns are set as a property on the row definition, displayedColumns."
   -->
 
-  <ng-container matColumnDef="select">
-    <mat-header-cell *matHeaderCellDef>
-      <mat-checkbox color="primary" (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()"
-        [indeterminate]="false">
-      </mat-checkbox>
-    </mat-header-cell>
-    <mat-cell *matCellDef="let node">
-      <mat-checkbox color="primary" (click)="$event.stopPropagation()" (change)="$event ? selection.toggle(node) : null" [checked]="selection.isSelected(node)">
-      </mat-checkbox>
-    </mat-cell>
-  </ng-container>
+    <ng-container matColumnDef="select">
+      <mat-header-cell *matHeaderCellDef>
+        <mat-checkbox color="primary" (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()"
+          [indeterminate]="false">
+        </mat-checkbox>
+      </mat-header-cell>
+      <mat-cell *matCellDef="let node">
+        <mat-checkbox color="primary" (click)="$event.stopPropagation()" (change)="$event ? selection.toggle(node) : null" [checked]="selection.isSelected(node)">
+        </mat-checkbox>
+      </mat-cell>
+    </ng-container>
 
-  <ng-container matColumnDef="state">
-    <mat-header-cell *matHeaderCellDef></mat-header-cell>
-    <mat-cell *matCellDef="let result">
-      <i class="material-icons" [ngClass]="result.state" matTooltip="{{result.state}}">{{setIcon(result.state)}}</i>
-    </mat-cell>
-  </ng-container>
+    <ng-container matColumnDef="state">
+      <mat-header-cell *matHeaderCellDef></mat-header-cell>
+      <mat-cell *matCellDef="let result">
+        <i class="material-icons" [ngClass]="result.state" matTooltip="{{result.state}}">{{setIcon(result.state)}}</i>
+      </mat-cell>
+    </ng-container>
 
-  <ng-container matColumnDef="id">
-    <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
-    <mat-cell *matCellDef="let result">
-      {{result.id}}
-    </mat-cell>
-  </ng-container>
+    <ng-container matColumnDef="id">
+      <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
+      <mat-cell *matCellDef="let result">
+        {{result.id}}
+      </mat-cell>
+    </ng-container>
 
-  <ng-container matColumnDef="test">
-    <mat-header-cell *matHeaderCellDef> Test </mat-header-cell>
-    <mat-cell *matCellDef="let result">
-      <!-- <a class="test-name" [routerLink]="result.id"> -->
-      {{result.name}}
-      <!-- </a> -->
-    </mat-cell>
-  </ng-container>
+    <ng-container matColumnDef="test">
+      <mat-header-cell *matHeaderCellDef> Test </mat-header-cell>
+      <mat-cell *matCellDef="let result">
+        <!-- <a class="test-name" [routerLink]="result.id"> -->
+        {{result.name}}
+        <!-- </a> -->
+      </mat-cell>
+    </ng-container>
 
-  <ng-container matColumnDef="diagnostic">
-    <mat-header-cell *matHeaderCellDef> Diagnostic </mat-header-cell>
-    <mat-cell *matCellDef="let result">{{result.diagnosticTest.name}}</mat-cell>
-  </ng-container>
+    <ng-container matColumnDef="diagnostic">
+      <mat-header-cell *matHeaderCellDef> Diagnostic </mat-header-cell>
+      <mat-cell *matCellDef="let result">{{result.diagnosticTest.name}}</mat-cell>
+    </ng-container>
 
-  <ng-container matColumnDef="category">
-    <mat-header-cell *matHeaderCellDef> Category </mat-header-cell>
-    <mat-cell *matCellDef="let result">{{result.diagnosticTest.category}}</mat-cell>
-  </ng-container>
+    <ng-container matColumnDef="category">
+      <mat-header-cell *matHeaderCellDef> Category </mat-header-cell>
+      <mat-cell *matCellDef="let result">{{result.diagnosticTest.category}}</mat-cell>
+    </ng-container>
 
-  <ng-container matColumnDef="progress">
-    <mat-header-cell *matHeaderCellDef> Progress </mat-header-cell>
-    <mat-cell *matCellDef="let result" matTooltip="{{result.progress | percent}}">
-      <mat-progress-bar mode="determinate" [value]="result.progress"></mat-progress-bar>
-    </mat-cell>
-  </ng-container>
+    <ng-container matColumnDef="progress">
+      <mat-header-cell *matHeaderCellDef> Progress </mat-header-cell>
+      <mat-cell *matCellDef="let result" matTooltip="{{result.progress | percent}}">
+        <mat-progress-bar mode="determinate" [value]="result.progress"></mat-progress-bar>
+      </mat-cell>
+    </ng-container>
 
-  <ng-container matColumnDef="events">
-    <mat-header-cell *matHeaderCellDef></mat-header-cell>
-    <mat-cell *matCellDef="let result">
-      <button mat-icon-button matTooltip="Events" (click)="showEvents(result)">
-        <i class="material-icons">event_note</i>
-      </button>
-    </mat-cell>
-  </ng-container>
+    <ng-container matColumnDef="events">
+      <mat-header-cell *matHeaderCellDef></mat-header-cell>
+      <mat-cell *matCellDef="let result">
+        <button mat-icon-button matTooltip="Events" (click)="showEvents(result)">
+          <i class="material-icons">event_note</i>
+        </button>
+      </mat-cell>
+    </ng-container>
 
-  <ng-container matColumnDef="result">
-    <mat-header-cell *matHeaderCellDef></mat-header-cell>
-    <mat-cell *matCellDef="let result">
-      <button mat-icon-button (click)="getResult(result.id)" matTooltip="Result">
-        <i class="material-icons">wrap_text</i>
-      </button>
-    </mat-cell>
-  </ng-container>
+    <ng-container matColumnDef="result">
+      <mat-header-cell *matHeaderCellDef></mat-header-cell>
+      <mat-cell *matCellDef="let result">
+        <button mat-icon-button (click)="getResult(result.id)" matTooltip="Result">
+          <i class="material-icons">wrap_text</i>
+        </button>
+      </mat-cell>
+    </ng-container>
 
-  <ng-container matColumnDef="actions">
-    <mat-header-cell *matHeaderCellDef></mat-header-cell>
-    <mat-cell *matCellDef="let result">
-      <button mat-icon-button [matMenuTriggerFor]="appMenu" (click)="$event.stopPropagation(); select(result)">
-        <i class="material-icons">more_horiz</i>
-      </button>
-    </mat-cell>
-  </ng-container>
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef></mat-header-cell>
+      <mat-cell *matCellDef="let result">
+        <button mat-icon-button [matMenuTriggerFor]="appMenu" (click)="$event.stopPropagation(); select(result)">
+          <i class="material-icons">more_horiz</i>
+        </button>
+      </mat-cell>
+    </ng-container>
 
-  <mat-menu #appMenu="matMenu">
-    <button mat-menu-item>Rerun</button>
-    <button mat-menu-item>Cancel</button>
-  </mat-menu>
+    <mat-menu #appMenu="matMenu">
+      <button mat-menu-item>Rerun</button>
+      <button mat-menu-item>Cancel</button>
+    </mat-menu>
 
-  <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-  <mat-row *matRowDef="let result; columns: displayedColumns;" (click)="selection.toggle(result)"></mat-row>
-</mat-table>
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let result; columns: displayedColumns;" (click)="selection.toggle(result)"></mat-row>
+  </mat-table>
+</div>
 
-<mat-paginator #paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 100]" [showFirstLastButtons]="true"
+<div class="loading">
+  <!-- <mat-spinner *ngIf="!hasReceivedData"></mat-spinner> -->
+  <mat-progress-bar *ngIf="!hasReceivedData" mode="indeterminate"></mat-progress-bar>
+  <div class="load-finish" *ngIf="loadFinish">
+    No more data.
+  </div>
+</div>
+
+<div class="up-to-top" *ngIf="scrolled" (click)="scrollToTop()">
+  <i class="material-icons upward">arrow_upward</i>
+</div>
+<!-- <mat-paginator #paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 100]" [showFirstLastButtons]="true"
   (page)="changePage($event)">
-</mat-paginator>
+</mat-paginator> -->

@@ -16,6 +16,9 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
   @Output()
   filterNodes: EventEmitter<any> = new EventEmitter();
 
+  @Output()
+  getJobState: EventEmitter<any> = new EventEmitter();
+
   @ContentChild('nodes')
   nodesTemplate: TemplateRef<any>;
 
@@ -46,15 +49,19 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
   ngOnInit() {
     this.makeChartData();
     if (this.result.aggregationResult == undefined) {
+      this.getJobState.emit(this.result.state);
       this.result.aggregationResult = "Wating for the aggregation result...";
     }
   }
 
   changeLog = [];
   ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
+    console.log("chart changes.");
     this.makeChartData();
     this.api.diag.getDiagJob(this.result.id).subscribe(res => {
+      console.log("test request loop");
       this.result = res;
+      this.getJobState.emit(res.state);
       if (this.result.aggregationResult == undefined) {
         this.result.aggregationResult = "Wating for the aggregation result...";
       }

@@ -65,14 +65,32 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (node.value < 5) {
-      res = 'low';
+    if (node.value < 10) {
+      res = 'ten';
     }
-    else if (node.value < 10) {
-      res = 'median';
+    else if (node.value < 20) {
+      res = 'twenty';
     }
-    else {
-      res = 'high';
+    else if (node.value < 30) {
+      res = 'thirty';
+    }
+    else if (node.value < 40) {
+      res = 'forty';
+    }
+    else if (node.value < 50) {
+      res = 'fifty';
+    }
+    else if (node.value < 60) {
+      res = 'sixty';
+    }
+    else if (node.value < 70) {
+      res = 'seventy';
+    }
+    else if (node.value < 80) {
+      res = 'eighty';
+    }
+    else if (node.value < 90) {
+      res = 'ninety';
     }
     return res;
   }

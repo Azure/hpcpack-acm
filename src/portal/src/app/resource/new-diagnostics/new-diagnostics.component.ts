@@ -1,6 +1,5 @@
-import { Component, OnInit, ViewChild, Inject } from '@angular/core';
+import { Component, OnInit, ViewChild, Inject, HostListener } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
-// import { TreeComponent } from 'angular-tree-component';
 import { NodeFilterBuilderComponent } from '../../widgets/node-filter-builder/node-filter-builder.component';
 import { ApiService } from '../../services/api.service';
 
@@ -13,13 +12,13 @@ export class NewDiagnosticsComponent implements OnInit {
   @ViewChild('tree') tree;
 
   private tests = [];
-  private selectedTests = [];
-  private selectedTestsWithParameters = []
   private nodeFilter: string = '';
   private selectedDescription: string;
   private testInfoLink: string;
   private errorMessage: string;
   private diagTestName: string;
+  private selectedTest: any;
+  private selectedTestWithParameters: any;
 
   constructor(
     private api: ApiService,
@@ -50,11 +49,26 @@ export class NewDiagnosticsComponent implements OnInit {
       this.selectedDescription = '';
       this.testInfoLink = '';
     }
-    this.updateChildNodeCheckbox(node, checked);
-    this.updateParentNodeCheckbox(node.realParent);
+    if (checked) {
+      this.updateCheckedNode(node);
+    }
   }
 
+  private updateCheckedNode(node: any) {
+    let allNodes = node.treeModel.nodes;
+    for (let i = 0; i < allNodes.length; i++) {
+      for (let j = 0; j < allNodes[i].children.length; j++) {
+        allNodes[i].children[j].checked = false;
+      }
+    }
+
+    node.data.checked = true;
+    this.selectedTest = node.data;
+  }
+
+  // function to handle default value when one linked property's value changes
   private whenChange(e, p, t) {
+    //e is element of parameters, p is parameters. t is the selected test
     if (p.whenChanged != undefined) {
       let selected = p.whenChanged[e];
       for (let key in selected) {
@@ -68,93 +82,32 @@ export class NewDiagnosticsComponent implements OnInit {
     }
   }
 
-  private updateChildNodeCheckbox(node, checked) {
-    node.data.checked = checked;
-    if (node.children) {
-      node.children.forEach((child) => this.updateChildNodeCheckbox(child, checked));
-    }
-  }
-
-  private updateParentNodeCheckbox(node) {
-    if (!node) {
-      return;
-    }
-
-    let allChildrenChecked = true;
-    let noChildChecked = true;
-
-    for (const child of node.children) {
-      if (!child.data.checked || child.data.indeterminate) {
-        allChildrenChecked = false;
-      }
-      if (child.data.checked) {
-        noChildChecked = false;
-      }
-    }
-
-    if (allChildrenChecked) {
-      node.data.checked = true;
-      node.data.indeterminate = false;
-    }
-    else if (noChildChecked) {
-      node.data.checked = false;
-      node.data.indeterminate = false;
-    }
-    else {
-      node.data.checked = true;
-      node.data.indeterminate = true;
-    }
-    this.updateParentNodeCheckbox(node.parent);
-  }
-
-  private getSelectedTests(node: any): string[] {
-    if (!node.checked) {
-      return [];
-    }
-    let array = [];
-    if (node.children) {
-      for (let i = 0; i < node.children.length; i++) {
-        array = array.concat(this.getSelectedTests(node.children[i]));
-      }
-    }
-    return array.length > 0 ? array : [node];
-  }
-
-  private selectTests(): void {
-    this.selectedTests = this.getSelectedTests(this.tests[0]);
-    this.selectedTestsWithParameters = this.selectedTests.filter(test => test.parameters);
-  }
-
-  private stepperSelectionChange(e) {
-    if (e.selectedIndex == 1) {
-      this.selectTests();
-    }
-  }
-  getTests() {
-    this.selectTests();
-    let testArgs = {};
-    for (let i = 0; i < this.selectedTestsWithParameters.length; i++) {
-      let name = this.selectedTestsWithParameters[i].name;
-      let args = this.selectedTests[i].parameters.map((item) => {
-        return { name: item.name, value: item.defaultValue };
-      });
-      testArgs[name] = args;
-    }
-
-    this.selectedTests.forEach((item) => {
-      item['arguments'] = testArgs[item.name];
-    });
-
-    if (this.selectedTests.length == 0) {
-      this.errorMessage = 'Please select at least one test to run in Step 1 !';
+  getTest() {
+    if (this.selectedTest == undefined) {
+      this.errorMessage = 'Please select one test to run in Step 1 !';
     }
     else if (this.diagTestName == undefined) {
       this.errorMessage = 'Please enter the diagnostic name in step 3 ! ';
     }
     else {
-      let diagInfo = { selectedTests: this.selectedTests, diagTestName: this.diagTestName };
+      let args = this.selectedTest.parameters.map((item) => {
+        return { name: item.name, value: item.defaultValue };
+      });
+      this.selectedTest.arguments = args;
+
+      let diagInfo = { selectedTest: this.selectedTest, diagTestName: this.diagTestName };
       this.dialogRef.close(diagInfo);
     }
+  }
 
+  @HostListener('window:keyup', ['$event'])
+  keyEvent(event: KeyboardEvent) {
+    if (event.key == 'Enter') {
+      this.getTest();
+    }
+  }
+
+  close() {
+    this.dialogRef.close();
   }
 }
