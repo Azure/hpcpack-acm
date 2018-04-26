@@ -64,7 +64,11 @@
             var startTask = InternalTask.CreateFrom(job);
             startTask.Id = 0;
             startTask.CustomizedData = InternalTask.StartTaskMark;
-            tasks.ForEach(t => (t.ParentIds ?? (t.ParentIds = new List<int>())).Add(startTask.Id));
+            tasks.ForEach(t =>
+            {
+                (t.ParentIds ?? (t.ParentIds = new List<int>())).Add(startTask.Id);
+                t.ChildIds?.Clear();
+            });
 
             var endTask = InternalTask.CreateFrom(job);
             endTask.Id = tasks.Max(t => t.Id) + 1;
@@ -78,7 +82,7 @@
             if (!success)
             {
                 this.Logger.LogError(msg);
-                await this.Utilities.UpdateJobAsync(this.Utilities.GetJobPartitionKey(job.Type, job.Id), j =>
+                await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                 {
                     j.State = JobState.Failed;
                     (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
@@ -108,8 +112,7 @@
                 throw new InvalidOperationException("Not all tasks dispatched successfully");
             }
 
-            job.State = JobState.Running;
-            await jobTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, this.Utilities.JobEntryKey, job, token);
+            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.State = JobState.Running, token);
 
             var taskCompletionQueue = await this.Utilities.GetOrCreateTaskCompletionQueueAsync(token);
             await taskCompletionQueue.AddMessageAsync(new CloudQueueMessage(

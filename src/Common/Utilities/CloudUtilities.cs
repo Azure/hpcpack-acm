@@ -68,8 +68,9 @@
         public string GetPartitionQueryString(string partitionKey) =>
             TableQuery.GenerateFilterCondition(PartitionKeyName, QueryComparisons.Equal, partitionKey);
 
-        public string GetJobPartitionKey(JobType type, int jobId) => this.GetJobPartitionKey(type.ToString().ToLowerInvariant(), jobId);
-        public string GetJobPartitionKey(string type, int jobId) => string.Format(this.Option.JobPartitionPattern, type, IntegerKey.ToStringKey(jobId));
+        public string GetJobPartitionKey(JobType type, int jobId, bool reverse = false) => this.GetJobPartitionKey(type.ToString().ToLowerInvariant(), jobId, reverse);
+        public string GetJobPartitionKey(string type, int jobId, bool reverse = false) =>
+            reverse ? string.Format(this.Option.JobReversePartitionPattern, type, IntegerKey.ToStringKey(int.MaxValue - jobId)) : string.Format(this.Option.JobPartitionPattern, type, IntegerKey.ToStringKey(jobId));
         public string GetDiagPartitionKey(string category) => string.Format(this.Option.DiagnosticCategoryPattern, category);
         public string GetDiagCategoryName(string partitionKey) => partitionKey.Substring(5);
         public string GetNodePartitionKey(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);

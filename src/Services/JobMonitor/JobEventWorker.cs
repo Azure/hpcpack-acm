@@ -75,29 +75,32 @@
                         else
                         {
                             this.Logger.LogWarning("No processors found for job type {0}, {1}, {2}", job.Type, job.Id, message.EventVerb);
-                            job.State = JobState.Failed;
-                            (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
-                            {
-                                Content = $"No processors found for job type {job.Type}, event {message.EventVerb}",
-                                Source = EventSource.Job,
-                                Type = EventType.Alert,
-                            });
 
-                            await this.jobsTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, jobEntryKey, job, token);
+                            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
+                            {
+                                j.State = JobState.Failed;
+                                (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                                {
+                                    Content = $"No processors found for job type {j.Type}, event {message.EventVerb}",
+                                    Source = EventSource.Job,
+                                    Type = EventType.Alert,
+                                });
+                            }, token);
                         }
                     }
                     catch (Exception ex)
                     {
                         this.Logger.LogError("Exception occurred when process job {0}, {1}, {2}", job.Id, job.Type, message.EventVerb);
-                        job.State = JobState.Failed;
-                        (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
+                        await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                         {
-                            Content = $"Exception occurred when process job {job.Id} {job.Type} {message.EventVerb}. {ex}",
-                            Source = EventSource.Job,
-                            Type = EventType.Alert
-                        });
-
-                        await this.jobsTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, jobEntryKey, job, token);
+                            j.State = JobState.Failed;
+                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                            {
+                                Content = $"Exception occurred when process job {job.Id} {job.Type} {message.EventVerb}. {ex}",
+                                Source = EventSource.Job,
+                                Type = EventType.Alert,
+                            });
+                        }, token);
                     }
 
                     return true;

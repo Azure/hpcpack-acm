@@ -29,9 +29,9 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
 
         // GET api/diagnostics?lastid=3&count=10
         [HttpGet()]
-        public Task<IEnumerable<Job>> GetDiagnosticsJobsAsync([FromQuery] int lastId, [FromQuery] int count = 1000, CancellationToken token = default(CancellationToken))
+        public Task<IEnumerable<Job>> GetDiagnosticsJobsAsync([FromQuery] int lastId, [FromQuery] int count = 1000, [FromQuery] bool reverse = false, CancellationToken token = default(CancellationToken))
         {
-            return this.provider.GetJobsAsync(lastId, count, JobType.Diagnostics, token);
+            return this.provider.GetJobsAsync(lastId, count, JobType.Diagnostics, reverse, token);
         }
 
         // GET api/diagnostics/5/tasks?lastid=0&count=10&requeueCount=0

@@ -42,82 +42,48 @@
         }
 
         private async Task VisitAllTasksAsync(
-            string jobPartitionKey,
-            int jobId,
-            int jobRequeueCount,
+            Job job,
             int taskId,
             Func<InternalTask, Task> action,
             CancellationToken token)
         {
-            var result = await this.jobsTable.ExecuteAsync(
-                TableOperation.Retrieve<JsonTableEntity>(
-                    jobPartitionKey,
-                    this.Utilities.GetTaskKey(jobId, taskId, jobRequeueCount)),
-                null,
-                null,
+            var jobPartitionKey = this.Utilities.GetJobPartitionKey(job.Type, job.Id);
+            var internalTask = await this.jobsTable.RetrieveAsync<InternalTask>(
+                jobPartitionKey,
+                this.Utilities.GetTaskKey(job.Id, taskId, job.RequeueCount),
                 token);
 
-            this.Logger.LogInformation("Queried job table for task id {0}, result {1}", taskId, result.HttpStatusCode);
-
-            if (result.Result is JsonTableEntity entity)
+            foreach (var childId in internalTask.ChildIds)
             {
-                var internalTask = entity.GetObject<InternalTask>();
-
-                foreach (var childId in internalTask.ChildIds)
+                do
                 {
-                    do
+                    var childTaskKey = this.Utilities.GetTaskKey(job.Id, childId, job.RequeueCount);
+                    var childTask = await this.jobsTable.RetrieveAsync<InternalTask>(
+                        jobPartitionKey,
+                        childTaskKey,
+                        token);
+                    childTask.RemainingParentIds.Remove(taskId);
+
+                    if (childTask.RemainingParentIds.Count == 0)
                     {
-                        var taskResult = await this.jobsTable.ExecuteAsync(
-                            TableOperation.Retrieve<JsonTableEntity>(
-                                jobPartitionKey,
-                                this.Utilities.GetTaskKey(jobId, childId, jobRequeueCount)),
-                            null,
-                            null,
-                            token);
-
-                        this.Logger.LogInformation("Queried job table for task id {0}, result {1}", taskId, taskResult.HttpStatusCode);
-
-                        if (taskResult.Result is JsonTableEntity taskEntity)
-                        {
-                            var childTask = taskEntity.GetObject<InternalTask>();
-                            childTask.RemainingParentIds.Remove(taskId);
-
-                            if (childTask.RemainingParentIds.Count == 0)
-                            {
-                                await action(childTask);
-                            }
-
-                            taskEntity.PutObject(childTask);
-                            var updateResult = await this.jobsTable.ExecuteAsync(TableOperation.InsertOrReplace(taskEntity), null, null, token);
-
-                            // conflict
-                            if (updateResult.HttpStatusCode == 409) { continue; }
-
-                            if (!updateResult.IsSuccessfulStatusCode())
-                            {
-                                await this.Utilities.UpdateJobAsync(jobPartitionKey, j =>
-                                {
-                                    j.State = JobState.Failed;
-                                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                                    {
-                                        Content = $"Unable to update task record {childId}, status {updateResult.HttpStatusCode}",
-                                        Source = EventSource.Job,
-                                        Type = EventType.Alert
-                                    });
-                                }, token);
-                            }
-                        }
-                        else
-                        {
-                            Debug.Assert(false, "not JsonTableEntity type");
-                        }
+                        await action(childTask);
                     }
-                    while (false);
+
+                    if (!await this.jobsTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, childTaskKey, childTask, token))
+                    {
+                        await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
+                        {
+                            j.State = JobState.Failed;
+                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                            {
+                                Content = $"Unable to update task record {childId}",
+                                Source = EventSource.Job,
+                                Type = EventType.Alert
+                            });
+                        }, token);
+                    }
                 }
-            }
-            else
-            {
-                Debug.Assert(false, "not JsonTableEntity type");
+                while (false);
             }
         }
 
@@ -130,6 +96,12 @@
 
                 var jobTable = this.Utilities.GetJobsTable();
                 var job = await jobTable.RetrieveAsync<Job>(jobPartitionKey, this.Utilities.JobEntryKey, token);
+                if (job.RequeueCount != message.RequeueCount)
+                {
+                    this.Logger.LogWarning("The job {0} is already requeued, job requeueCount {1}, message requeueCount {2}", job.Id, job.RequeueCount, message.RequeueCount);
+                    return true;
+                }
+
                 if (job != null && job.State == JobState.Running)
                 {
                     if (job.Type == JobType.Diagnostics)
@@ -165,11 +137,11 @@
                         }
                     }
 
-                    await this.VisitAllTasksAsync(jobPartitionKey, message.JobId, message.RequeueCount, message.Id, async t =>
+                    await this.VisitAllTasksAsync(job, message.Id, async t =>
                     {
                         if (string.Equals(t.CustomizedData, InternalTask.EndTaskMark, StringComparison.OrdinalIgnoreCase))
                         {
-                            await this.Utilities.UpdateJobAsync(jobPartitionKey, j => j.State = j.State == JobState.Running ? JobState.Finishing : j.State, token);
+                            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.State = j.State == JobState.Running ? JobState.Finishing : j.State, token);
                             var jobEventQueue = await this.Utilities.GetOrCreateJobEventQueueAsync(token);
                             await jobEventQueue.AddMessageAsync(
                                 new CloudQueueMessage(JsonConvert.SerializeObject(new JobEventMessage() { Id = job.Id, EventVerb = "finish", Type = job.Type })),
@@ -179,7 +151,8 @@
                             return;
                         }
 
-                        var queue = await this.Utilities.GetOrCreateNodeDispatchQueueAsync(t.Node, token);
+                    // TODO: skip the finished tasks.
+                    var queue = await this.Utilities.GetOrCreateNodeDispatchQueueAsync(t.Node, token);
                         await queue.AddMessageAsync(
                             new CloudQueueMessage(JsonConvert.SerializeObject(t, Formatting.Indented)),
                             null,

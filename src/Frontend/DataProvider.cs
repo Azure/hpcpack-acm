@@ -243,13 +243,14 @@
             int lastId,
             int count = 1000,
             JobType type = JobType.ClusRun,
+            bool reverse = false,
             CancellationToken token = default(CancellationToken))
         {
             this.logger.LogInformation("Get {type} jobs called, lastId {id}, jobCount {count}", type, lastId, count);
             var jobTable = this.utilities.GetJobsTable();
 
-            var lowJobPartitionKey = this.utilities.GetJobPartitionKey(type, lastId);
-            var highJobPartitionKey = this.utilities.GetJobPartitionKey(type, int.MaxValue);
+            var lowJobPartitionKey = this.utilities.GetJobPartitionKey(type, lastId, reverse);
+            var highJobPartitionKey = this.utilities.GetJobPartitionKey(type, reverse ? 0 : int.MaxValue, reverse);
 
             var partitionRange = this.utilities.GetPartitionKeyRangeString(lowJobPartitionKey, highJobPartitionKey);
             var rowKey = utilities.JobEntryKey;
@@ -350,18 +351,15 @@
 
             job.Id = await this.utilities.GetNextId("Jobs", job.Type.ToString().ToLowerInvariant(), token);
             this.logger.LogInformation("generated new job id {0}", job.Id);
-
-            var partitionName = utilities.GetJobPartitionKey(job.Type, job.Id);
             var rowKey = utilities.JobEntryKey;
 
-            var result = await jobTable.ExecuteAsync(
-                TableOperation.Insert(new JsonTableEntity(partitionName, rowKey, job)),
-                null, null, token);
+            var partitionName = utilities.GetJobPartitionKey(job.Type, job.Id);
+            var result = await jobTable.InsertOrReplaceAsJsonAsync(partitionName, rowKey, job, token);
+            this.logger.LogInformation("create job result {0}", result);
 
-            this.logger.LogInformation("create job result {0}", result.HttpStatusCode);
-
-            HttpResponseMessage response = new HttpResponseMessage((HttpStatusCode)result.HttpStatusCode);
-            response.EnsureSuccessStatusCode();
+            partitionName = utilities.GetJobPartitionKey(job.Type, job.Id, true);
+            result = await jobTable.InsertOrReplaceAsJsonAsync(partitionName, rowKey, job, token);
+            this.logger.LogInformation("create job result {0}", result);
 
             this.logger.LogInformation("Creating job dispatch message");
             var jobEventQueue = this.utilities.GetJobEventQueue();
