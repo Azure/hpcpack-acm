@@ -60,7 +60,7 @@
           </button>
         </ng-template>
 
-        <div class="control" *ngIf="autoscroll && currentOutput && !currentOutput.end">
+        <div class="control" *ngIf="showProgress">
           <mat-progress-bar mode="buffer"></mat-progress-bar>
         </div>
 

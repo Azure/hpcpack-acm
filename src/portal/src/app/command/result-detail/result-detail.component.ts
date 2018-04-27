@@ -42,6 +42,8 @@ export class ResultDetailComponent implements OnInit {
 
   private autoload = true;
 
+  private loading = false;
+
   private loadingPrev = false;
 
   private loadingNext = false;
@@ -129,7 +131,10 @@ export class ResultDetailComponent implements OnInit {
       return;
     }
     this.selectedNode = node;
-    this.updateNodeResult(this.id, node);
+    if (this.autoload)
+      this.autoupdateNodeResult(this.id, node);
+    else
+      this.updateNodeResult(this.id, node);
   }
 
   getNodeOutput(node): any {
@@ -171,16 +176,13 @@ export class ResultDetailComponent implements OnInit {
     return result.content ? true : false;
   }
 
-  updateNodeResult(id, node) {
+  autoupdateNodeResult(id, node) {
     //Cancel previous loop if any
     if (this.nodeLoop) {
       Loop.stop(this.nodeLoop);
     }
     let output = this.getNodeOutput(node)
     if (output.end) {
-      return;
-    }
-    if (!this.autoload && output.content) {
       return;
     }
     let opt = { over: () => this.isOutputOver(node) };
@@ -205,6 +207,31 @@ export class ResultDetailComponent implements OnInit {
       //interval(in ms):
       200
     );
+  }
+
+  updateNodeResult(id, node) {
+    let output = this.getNodeOutput(node)
+    if (output.end) {
+      return;
+    }
+    let opt = { fulfill: true, over: () => this.isOutputOver(node) };
+    this.loading = true;
+    this.api.command.getOutput(id, node.key, output.next, this.outputPageSize, opt as any).subscribe(
+      result => {
+        this.loading = false;
+        //id and/or node may change when result arrives in some time later.
+        if (this.id != id || this.selectedNode.name != node.name) {
+          return;
+        }
+        if (this.updateNodeOutput(output, result)) {
+          setTimeout(() => this.scrollOutputToBottom(), 0);
+        }
+      }
+    );
+  }
+
+  get showProgress(): boolean {
+    return (this.loading || this.autoscroll) && this.currentOutput && (this.currentOutput.end !== false);
   }
 
   get currentOutput(): object {
@@ -263,12 +290,12 @@ export class ResultDetailComponent implements OnInit {
   toggleAutoload(enabled) {
     this.autoload = enabled;
     if (enabled) {
-      this.updateNodeResult(this.id, this.selectedNode);
+      this.autoupdateNodeResult(this.id, this.selectedNode);
     }
   }
 
   get isManualLoadEnabled(): boolean {
-    return !this.autoload && this.selectedNode;
+    return !this.autoload && !this.loading && this.selectedNode;
   }
 
   loadPrev() {
