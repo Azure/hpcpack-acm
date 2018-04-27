@@ -58,11 +58,41 @@ fdescribe('CommandApi', () => {
     });
   });
 
-  it('should get output', () => {
-    let value = 1;
+  it('should get output', fakeAsync(() => {
+    let content = 'TEST CONTENT';
+    let size = content.length;
+    let offset = 0;
+    let value = { content, offset, size };
     httpSpy.get.and.returnValue(of(value));
-    resource.getOutput('id', 'key', 0).subscribe(res => expect(res).toBe(value));
-  });
+    resource.getOutput('id', 'key', 0, size * 2).subscribe(res =>  {
+      expect(res.content).toEqual(value.content);
+      expect(res.size).toEqual(value.size);
+      expect(res.offset).toEqual(value.offset);
+      expect(res.end).toBe(false);
+    })
+
+    flush();
+  }));
+
+  it('should get output with fulfill', fakeAsync(() => {
+    let content = 'TEST CONTENT';
+    let size = content.length;
+    let offset = 0;
+    let value = { content, offset, size };
+    let content2 = ' MORE';
+    let size2 = content2.length;
+    let value2 = { content: content2, offset: size, size: size2 };
+    let value3 = { offset: size + size2, size: 0 };
+    httpSpy.get.and.returnValues(of(value), of(value2), of(value3));
+    let opt = { fulfill: true, over: () => true }
+    resource.getOutput('id', 'key', 0, (size + size2) * 2, opt).subscribe(res =>  {
+      expect(res.content).toEqual(content + content2);
+      expect(res.offset).toEqual(offset);
+      expect(res.size).toEqual(size + size2);
+    });
+
+    flush();
+  }));
 });
 
 fdescribe('ApiService', () => {

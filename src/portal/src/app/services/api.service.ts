@@ -145,15 +145,45 @@ export class CommandApi extends Resource<CommandResult> {
       );
   }
 
-  getOutput(id, key, next, size = 2000) {
-    let url = `${this.url}/${id}/results/${key}?offset=${next}&pageSize=${size}`;
-    return this.http.get<any>(url)
-      .pipe(
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
+  //You can't tell if the output reaches EOF by one simple GET API. You have
+  //to call another API to get to know if the command generating the output is
+  //over. When opt.fulfill is set to true, DO provide callback opt.over, otherwise
+  //the method may never ends since it doesn't know EOF without opt.over!
+  getOutput(id, key, offset, size = 1024, opt = { fulfill: false, over: undefined }) {
+    return Observable.create(observer => {
+      let res = { content: '', size: 0 };
+      let url = `${this.url}/${id}/results/${key}?offset=${offset}&pageSize=${size}`;
+      Loop.start(
+        this.http.get<any>(url),
+        {
+          next: result => {
+            if (result.content) {
+              res.content += result.content;
+            }
+            res.size += result.size;
+            if (typeof((res as any).offset) === 'undefined') {
+              (res as any).offset = result.offset;
+            }
+            let eof = result.size === 0 && opt.over && opt.over();
+            if (!opt.fulfill || res.size == size || eof) {
+              (res as any).end = eof;
+              observer.next(res);
+              observer.complete();
+              return false;
+            }
+            let nextOffset = result.offset + result.size;
+            let nextSize = size - res.size;
+            let nextUrl = `${this.url}/${id}/results/${key}?offset=${nextOffset}&pageSize=${nextSize}`;
+            return this.http.get<any>(nextUrl);
+          },
+          error: err => {
+            console.error(err);
+            observer.error(err);
+          }
+        },
+        0
       );
+    });
   }
 
   getDownloadUrl(id, key): string {

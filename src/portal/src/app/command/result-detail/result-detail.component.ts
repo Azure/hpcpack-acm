@@ -140,7 +140,7 @@ export class ResultDetailComponent implements OnInit {
     return output;
   }
 
-  updateNodeOutput(node, output, result): boolean {
+  updateNodeOutput(output, result): boolean {
     //NOTE: There may be two inflight updates for the same piece of output, one
     //by autoload and the other one by manual trigger. Drop the one arrives later.
     if (output.next > result.offset) {
@@ -150,13 +150,8 @@ export class ResultDetailComponent implements OnInit {
     if (typeof(output.start) === 'undefined') {
       output.start = result.offset;
     }
-    //NOTE: this.isNodeOver depends on the node info, which may be outdated because
-    //the node parameter may be a captured value in a closure, which captured an "old"
-    //value. So this.isOver is required and this.isNodeOver is an optimization.
-    output.end = result.size == 0 && (this.isNodeOver(node) || this.isOver);
-    if (output.end) {
-      return false;
-    }
+    //NOTE: result.end depends on passing an opt.over parameter to API getOutput.
+    output.end = result.end;
     if (result.content) {
       output.content += result.content;
     }
@@ -188,9 +183,10 @@ export class ResultDetailComponent implements OnInit {
     if (!this.autoload && output.content) {
       return;
     }
+    let opt = { over: () => this.isOutputOver(node) };
     this.nodeLoop = Loop.start(
       //observable:
-      this.api.command.getOutput(id, node.key, output.next, this.outputPageSize),
+      this.api.command.getOutput(id, node.key, output.next, this.outputPageSize, opt as any),
       //observer:
       {
         next: (result) => {
@@ -199,11 +195,11 @@ export class ResultDetailComponent implements OnInit {
             //End the loop by returning a false value.
             return;
           }
-          if (this.updateNodeOutput(node, output, result)) {
+          if (this.updateNodeOutput(output, result)) {
             setTimeout(() => this.scrollOutputToBottom(), 0);
           }
           let over = output.end || !this.autoload;
-          return over ? false : this.api.command.getOutput(id, node.key, output.next, this.outputPageSize);
+          return over ? false : this.api.command.getOutput(id, node.key, output.next, this.outputPageSize, opt as any);
         }
       },
       //interval(in ms):
@@ -257,6 +253,13 @@ export class ResultDetailComponent implements OnInit {
     return state == 'finished' || state == 'failed';
   }
 
+  isOutputOver(node): boolean {
+    //NOTE: this.isNodeOver depends on the node info, which may be outdated because
+    //the node parameter may be a captured value in a closure, which captured an "old"
+    //value. So this.isOver is required and this.isNodeOver is just an optimization.
+    return this.isNodeOver(this.selectedNode) || this.isOver;
+  }
+
   toggleAutoload(enabled) {
     this.autoload = enabled;
     if (enabled) {
@@ -286,12 +289,14 @@ export class ResultDetailComponent implements OnInit {
       prev = this.outputInitOffset;
     }
     this.loadingPrev = true;
-    this.api.command.getOutput(this.id, this.selectedNode.key, prev, pageSize).subscribe(result => {
-      this.loadingPrev = false;
-      if (this.updateNodeOutputBackward(output, result)) {
-        setTimeout(() => this.scrollOutputToTop(), 0);
-      }
-    });
+    let opt = { fulfill: true, over: () => this.isOutputOver(this.selectedNode) };
+    this.api.command.getOutput(this.id, this.selectedNode.key, prev, pageSize, opt)
+      .subscribe(result => {
+        this.loadingPrev = false;
+        if (this.updateNodeOutputBackward(output, result)) {
+          setTimeout(() => this.scrollOutputToTop(), 0);
+        }
+      });
   }
 
   loadNext() {
@@ -300,11 +305,13 @@ export class ResultDetailComponent implements OnInit {
       return;
     }
     this.loadingNext = true;
-    this.api.command.getOutput(this.id, this.selectedNode.key, output.next, this.outputPageSize).subscribe(result => {
-      this.loadingNext = false;
-      if (this.updateNodeOutput(this.selectedNode, output, result)) {
-        setTimeout(() => this.scrollOutputToBottom(), 0);
-      }
-    });
+    let opt = { fulfill: true, over: () => this.isOutputOver(this.selectedNode) };
+    this.api.command.getOutput(this.id, this.selectedNode.key, output.next, this.outputPageSize, opt)
+      .subscribe(result => {
+        this.loadingNext = false;
+        if (this.updateNodeOutput(output, result)) {
+          setTimeout(() => this.scrollOutputToBottom(), 0);
+        }
+      });
   }
 }
