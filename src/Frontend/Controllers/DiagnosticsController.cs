@@ -76,7 +76,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 Name = "diag-test-test",
                 RequeueCount = 0,
                 State = JobState.Queued,
-                TargetNodes = new string[] { "evanc6", "evanclinuxdev", "testnode1", "testnode2" },
+                TargetNodes = new string[] { "evancvmss000001", "evancvmss000002" },
                 Type = JobType.Diagnostics,
                 DiagnosticTest = new DiagnosticsTest() { Category = "test", Name = "test", Arguments = "some arg" }
             };

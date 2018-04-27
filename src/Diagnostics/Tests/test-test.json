@@ -1,0 +1,7 @@
+{ "Name": "test",
+	"Category": "test",
+	"Description": "The test diagnostic",
+	"DispatchScript": { "ContainerName": "diagnosticscripts", "Name": "testdispatch.py" },
+	"AggregationScript": { "ContainerName": "diagnosticscripts", "Name": "testaggregation.py" },
+	"TaskResultFilterScript": { "ContainerName": "diagnosticscripts", "Name": "testfilter.py" }
+}
