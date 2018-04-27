@@ -249,6 +249,7 @@
             this.logger.LogInformation("Get {type} jobs called, lastId {id}, jobCount {count}", type, lastId, count);
             var jobTable = this.utilities.GetJobsTable();
 
+            lastId = reverse && lastId == 0 ? int.MaxValue : lastId;
             var lowJobPartitionKey = this.utilities.GetJobPartitionKey(type, lastId, reverse);
             var highJobPartitionKey = this.utilities.GetJobPartitionKey(type, reverse ? 0 : int.MaxValue, reverse);
 
