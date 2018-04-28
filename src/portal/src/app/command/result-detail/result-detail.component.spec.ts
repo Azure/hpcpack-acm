@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { async, fakeAsync, flush, ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { _throw } from 'rxjs/observable/throw';
@@ -13,45 +13,29 @@ import { ResultDetailComponent } from './result-detail.component';
 @Component({ selector: 'app-back-button', template: '' })
 class BackButtonStubComponent {}
 
-class CommandApiStub {
-  private counter = 0;
-
-  constructor(public result, public content) {}
-
-  get() {
-    return of(this.result);
-  }
-
-  getOutput() {
-    let res = null;
-    switch(this.counter++) {
-      case 0:
-        res = of({ content: this.content, size: this.content.length, offset: 0 });
-        break;
-      case 1:
-        of({ content: undefined, size: 0, offset: this.content.length });
-        break;
-    }
-    return res;
-  }
-}
-
 class ApiServiceStub {
   static result = { command: 'TEST COMMAND', nodes: [{ name: 'TEST NODE', state: 'finished' }] };
 
   static outputContent = 'TEST CONTENT';
 
-  command = new CommandApiStub(ApiServiceStub.result, ApiServiceStub.outputContent);
+  static outputUrl = 'TESTURL';
+
+  command: any;
+
+  constructor() {
+    this.command = jasmine.createSpyObj('Command', ['get', 'getOutput', 'getDownloadUrl']);
+    this.command.get.and.returnValue(of(ApiServiceStub.result));
+    let value = { content: ApiServiceStub.outputContent, size: ApiServiceStub.outputContent.length, offset: 0, end: true };
+    this.command.getOutput.and.returnValues(of(value));
+    this.command.getDownloadUrl.and.returnValue(ApiServiceStub.outputUrl);
+  }
 }
 
 const activatedRouteStub = {
   paramMap: of({ get: () => 1 })
 }
 
-//TODO: Enable it when the error is fixed
-//Uncaught TypeError: Cannot read property 'nativeElement' of undefined
-// at .../src/app/command/result-detail/result-detail.component.ts.ResultDetailComponent.scrollOutputToBottom (_karma_webpack_/webpack:/opt/app/src/app/command/result-detail/result-detail.component.ts:225)
-describe('ResultDetailComponent', () => {
+fdescribe('ResultDetailComponent', () => {
   let component: ResultDetailComponent;
   let fixture: ComponentFixture<ResultDetailComponent>;
 
@@ -80,7 +64,9 @@ describe('ResultDetailComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('should create', fakeAsync(() => {
+    flush();
+
     expect(component).toBeTruthy();
     let text = fixture.nativeElement.querySelector('.command').textContent;
     expect(text).toContain(ApiServiceStub.result.command);
@@ -92,5 +78,5 @@ describe('ResultDetailComponent', () => {
     expect(text).toContain(ApiServiceStub.result.nodes[0].name);
     text = fixture.nativeElement.querySelector('.mat-cell.mat-column-state').textContent;
     expect(text).toContain('Finished');
-  });
+  }));
 });
