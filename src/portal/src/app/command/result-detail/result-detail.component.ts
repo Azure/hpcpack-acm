@@ -42,12 +42,6 @@ export class ResultDetailComponent implements OnInit {
 
   private autoload = true;
 
-  private loading = false;
-
-  private loadingPrev = false;
-
-  private loadingNext = false;
-
   private outputInitOffset = -4096;
 
   private outputPageSize = 4096;
@@ -65,7 +59,7 @@ export class ResultDetailComponent implements OnInit {
     });
   }
 
-  isLoaded(): boolean {
+  get isLoaded(): boolean {
     return this.result && this.result.nodes.length > 0;
   }
 
@@ -123,24 +117,31 @@ export class ResultDetailComponent implements OnInit {
   }
 
   selectNode(node) {
-    if (!node) {
-      this.selectedNode = node;
+    if ((node && this.selectedNode && node.name == this.selectedNode.name)
+      || (!node && !this.selectedNode)) {
       return;
     }
-    if (this.selectedNode && node.name == this.selectedNode.name) {
-      return;
+    if (this.selectedNode) {
+      this.stopAutoload(this.selectedNode);
     }
     this.selectedNode = node;
-    if (this.autoload)
-      this.autoupdateNodeResult(this.id, node);
-    else
-      this.updateNodeResult(this.id, node);
+    if (!node) {
+      return;
+    }
+    if (this.autoload) {
+      this.startAutoload(node);
+    }
+    else {
+      this.loadOnce(node);
+    }
   }
 
   getNodeOutput(node): any {
     let output = this.nodeOutputs[node.name];
     if (!output) {
-      output = this.nodeOutputs[node.name] = { content: '', next: this.outputInitOffset, start: undefined, end: undefined };
+      output = this.nodeOutputs[node.name] = {
+        content: '', next: this.outputInitOffset, start: undefined, end: undefined, loading: false,
+      };
     }
     return output;
   }
@@ -176,32 +177,37 @@ export class ResultDetailComponent implements OnInit {
     return result.content ? true : false;
   }
 
-  autoupdateNodeResult(id, node) {
-    //Cancel previous loop if any
+  stopAutoload(node): void {
+    let output = this.getNodeOutput(node)
+    output.loading = false;
     if (this.nodeLoop) {
       Loop.stop(this.nodeLoop);
+      this.nodeLoop = null;
     }
+  }
+
+  startAutoload(node): void {
     let output = this.getNodeOutput(node)
     if (output.end) {
       return;
     }
+    output.loading = 'auto';
     let opt = { over: () => this.isOutputOver(node) };
     this.nodeLoop = Loop.start(
       //observable:
-      this.api.command.getOutput(id, node.key, output.next, this.outputPageSize, opt as any),
+      this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt as any),
       //observer:
       {
         next: (result) => {
-          //id and/or node may change when result arrives in some time later.
-          if (this.id != id || this.selectedNode.name != node.name) {
-            //End the loop by returning a false value.
-            return;
-          }
           if (this.updateNodeOutput(output, result)) {
             setTimeout(() => this.scrollOutputToBottom(), 0);
           }
           let over = output.end || !this.autoload;
-          return over ? false : this.api.command.getOutput(id, node.key, output.next, this.outputPageSize, opt as any);
+          if (over) {
+            output.loading = false;
+          }
+          return over ? false :
+            this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt as any);
         }
       },
       //interval(in ms):
@@ -209,35 +215,33 @@ export class ResultDetailComponent implements OnInit {
     );
   }
 
-  updateNodeResult(id, node) {
+  loadOnce(node) {
     let output = this.getNodeOutput(node)
     if (output.end) {
       return;
     }
+    output.loading = 'once';
     let opt = { fulfill: true, over: () => this.isOutputOver(node) };
-    this.loading = true;
-    this.api.command.getOutput(id, node.key, output.next, this.outputPageSize, opt as any).subscribe(
+    this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt as any).subscribe(
       result => {
-        this.loading = false;
-        //id and/or node may change when result arrives in some time later.
-        if (this.id != id || this.selectedNode.name != node.name) {
-          return;
-        }
-        if (this.updateNodeOutput(output, result)) {
+        output.loading = false;
+        if (this.updateNodeOutput(output, result) && this.selectedNode &&
+          this.selectedNode.name == node.name) {
           setTimeout(() => this.scrollOutputToBottom(), 0);
         }
       }
     );
   }
 
-  get showProgress(): boolean {
-    return (this.loading || this.autoscroll) && this.currentOutput && (this.currentOutput.end !== false);
+  get loading(): boolean {
+    let output = this.currentOutput;
+    return output && output.loading;
   }
 
-  get currentOutput(): object {
+  get currentOutput(): any {
     if (!this.selectedNode)
       return;
-    return this.nodeOutputs[this.selectedNode.name];
+    return this.getNodeOutput(this.selectedNode);
   }
 
   get currentOutputUrl(): string {
@@ -290,16 +294,15 @@ export class ResultDetailComponent implements OnInit {
   toggleAutoload(enabled) {
     this.autoload = enabled;
     if (enabled) {
-      this.autoupdateNodeResult(this.id, this.selectedNode);
+      this.startAutoload(this.selectedNode);
+    }
+    else {
+      this.stopAutoload(this.selectedNode);
     }
   }
 
-  get isManualLoadEnabled(): boolean {
-    return !this.autoload && !this.loading && this.selectedNode;
-  }
-
-  loadPrev() {
-    let output = this.getNodeOutput(this.selectedNode)
+  loadPrev(node) {
+    let output = this.getNodeOutput(node)
     if (output.start === 0) {
       return;
     }
@@ -315,30 +318,33 @@ export class ResultDetailComponent implements OnInit {
     else {
       prev = this.outputInitOffset;
     }
-    this.loadingPrev = true;
-    let opt = { fulfill: true, over: () => this.isOutputOver(this.selectedNode) };
-    this.api.command.getOutput(this.id, this.selectedNode.key, prev, pageSize, opt)
+    output.loading = 'prev';
+    let opt = { fulfill: true, over: () => this.isOutputOver(node) };
+    this.api.command.getOutput(this.id, node.key, prev, pageSize, opt)
       .subscribe(result => {
-        this.loadingPrev = false;
-        if (this.updateNodeOutputBackward(output, result)) {
+        output.loading = false;
+        if (this.updateNodeOutputBackward(output, result) && this.selectedNode &&
+          this.selectedNode.name == node.name) {
           setTimeout(() => this.scrollOutputToTop(), 0);
         }
       });
   }
 
-  loadNext() {
-    let output = this.getNodeOutput(this.selectedNode)
+  loadNext(node) {
+    let output = this.getNodeOutput(node)
     if (output.end) {
       return;
     }
-    this.loadingNext = true;
-    let opt = { fulfill: true, over: () => this.isOutputOver(this.selectedNode) };
-    this.api.command.getOutput(this.id, this.selectedNode.key, output.next, this.outputPageSize, opt)
+    output.loading = 'next';
+    let opt = { fulfill: true, over: () => this.isOutputOver(node) };
+    this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt)
       .subscribe(result => {
-        this.loadingNext = false;
-        if (this.updateNodeOutput(output, result)) {
+        output.loading = false;
+        if (this.updateNodeOutput(output, result) && this.selectedNode &&
+          this.selectedNode.name == node.name) {
           setTimeout(() => this.scrollOutputToBottom(), 0);
         }
       });
   }
+
 }
