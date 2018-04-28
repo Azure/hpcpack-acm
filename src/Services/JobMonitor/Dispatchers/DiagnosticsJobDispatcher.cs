@@ -37,7 +37,7 @@
 
                 if (!string.IsNullOrEmpty(dispatchTasks.Item2))
                 {
-                    await this.Utilities.UpdateJobAsync(this.Utilities.GetJobPartitionKey(job.Type, job.Id), j =>
+                    await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                     {
                         j.State = JobState.Failed;
                         (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
@@ -58,7 +58,7 @@
             }
             else
             {
-                await this.Utilities.UpdateJobAsync(this.Utilities.GetJobPartitionKey(job.Type, job.Id), j =>
+                await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                 {
                     j.State = JobState.Failed;
                     (j.Events ?? (j.Events = new List<Event>())).Add(new Event()

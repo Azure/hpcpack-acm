@@ -5,6 +5,7 @@ RUN apt install -y apt-utils
 RUN apt install -y nginx
 RUN apt install python-pip -y
 RUN pip install psutil
+RUN pip install numpy
 EXPOSE 80
 EXPOSE 5000
 

@@ -10,15 +10,6 @@
         <span class="notification-num" [ngClass]="{hidden: notifications.length == 0}">{{notifications.length}}</span>
         <i class="material-icons">event_note</i>
       </a>
-      <button mat-button [matMenuTriggerFor]="userMenu">{{userName}}</button>
-      <mat-menu id="app-user-menu" [overlapTrigger]="false" #userMenu>
-        <button mat-menu-item (click)="logout()">
-          <i class="material-icons">exit_to_app</i><span class="menu-item-text">Log out</span>
-        </button>
-        <button mat-menu-item>
-          <i class="material-icons">account_box</i><span class="menu-item-text">My account</span>
-        </button>
-      </mat-menu>
     </div>
   </mat-toolbar>
 

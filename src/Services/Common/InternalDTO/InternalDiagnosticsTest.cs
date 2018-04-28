@@ -15,5 +15,6 @@
 
         public BlobName DispatchScript { get; set; }
         public BlobName AggregationScript { get; set; }
+        public BlobName TaskResultFilterScript { get; set; }
     }
 }

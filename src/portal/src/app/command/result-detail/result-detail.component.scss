@@ -4,8 +4,9 @@ app-back-button {
 
 .title {
   clear: both;
-  font-size: 150%;
+  font-size: 120%;
   padding: 0.5em;
+  border-radius: 0.5em;
 
   .command {
     font-weight: bold;
@@ -13,10 +14,11 @@ app-back-button {
 
   .state {
     font-size: small;
+    font-style: italic;
   }
 }
 
-.title.failure {
+.title.failed {
   color: red;
   background-color: #ffdada;
 }
@@ -26,9 +28,16 @@ app-back-button {
   background-color: #b3c4ff;
 }
 
-.title.success {
+.title.finished {
   color: green;
   background-color: #d5ffd4;
+}
+
+.waiting {
+  mat-spinner {
+    margin: 1em auto;
+  }
+  text-align: center;
 }
 
 .container-fluid {
@@ -36,9 +45,12 @@ app-back-button {
 }
 
 .selection, .output {
-  max-height: 700px;
-  overflow: auto;
+  max-height: 800px;
   margin-bottom: 1em;
+}
+
+.selection .selected {
+  background-color: rgba(0, 0, 0, 0.08);
 }
 
 mat-form-field {
@@ -53,12 +65,47 @@ mat-row:hover {
   background: rgba(0,0,0,.04);
 }
 
+.mat-column-state {
+  flex: 0.5;
+}
+
 pre {
   color: white;
   background-color: black;
   overflow: auto;
   box-sizing: border-box;
-  margin: 0;
+  margin: 5px 0;
   padding: 1em;
-  height: 100%;
+  height: 600px;
+}
+
+@keyframes blink {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.attention {
+  animation: blink 1s 5;
+}
+
+.output button {
+  width: 100%;
+  background-color: #e4e4e4;
+}
+
+.control + .control {
+  margin-top: 5px;
+}
+
+.control.bottom {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
+}
+
+.control.static {
+  text-align: center;
+  background-color: #e4e4e4;
+  padding: 8px;
+  border-radius: 5px;
 }

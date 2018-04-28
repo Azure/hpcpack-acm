@@ -27,9 +27,9 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
 
         // GET api/clusrun?lastid=3&count=10
         [HttpGet()]
-        public Task<IEnumerable<Job>> GetClusRunJobsAsync([FromQuery] int lastId, [FromQuery] int count = 1000, CancellationToken token = default(CancellationToken))
+        public Task<IEnumerable<Job>> GetClusRunJobsAsync([FromQuery] int lastId, [FromQuery] int count = 1000, [FromQuery] bool reverse = false, CancellationToken token = default(CancellationToken))
         {
-            return this.provider.GetJobsAsync(lastId, count, JobType.ClusRun, token);
+            return this.provider.GetJobsAsync(lastId, count, JobType.ClusRun, reverse, token);
         }
 
         // GET api/clusrun/5?lastNodeName=abc&nodeCount=10

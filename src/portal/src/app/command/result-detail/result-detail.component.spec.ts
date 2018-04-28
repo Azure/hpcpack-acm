@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { async, fakeAsync, flush, ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { _throw } from 'rxjs/observable/throw';
@@ -16,11 +16,18 @@ class BackButtonStubComponent {}
 class ApiServiceStub {
   static result = { command: 'TEST COMMAND', nodes: [{ name: 'TEST NODE', state: 'finished' }] };
 
-  static output = { content: 'TEST OUTPUT', size: 0 };
+  static outputContent = 'TEST CONTENT';
 
-  command = {
-    get: () => of(ApiServiceStub.result),
-    getOutput: () => of(ApiServiceStub.output),
+  static outputUrl = 'TESTURL';
+
+  command: any;
+
+  constructor() {
+    this.command = jasmine.createSpyObj('Command', ['get', 'getOutput', 'getDownloadUrl']);
+    this.command.get.and.returnValue(of(ApiServiceStub.result));
+    let value = { content: ApiServiceStub.outputContent, size: ApiServiceStub.outputContent.length, offset: 0, end: true };
+    this.command.getOutput.and.returnValues(of(value));
+    this.command.getDownloadUrl.and.returnValue(ApiServiceStub.outputUrl);
   }
 }
 
@@ -57,17 +64,19 @@ fdescribe('ResultDetailComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('should create', fakeAsync(() => {
+    flush();
+
     expect(component).toBeTruthy();
     let text = fixture.nativeElement.querySelector('.command').textContent;
     expect(text).toContain(ApiServiceStub.result.command);
     text = fixture.nativeElement.querySelector('.state').textContent;
     expect(text).toContain('Finished');
     text = fixture.nativeElement.querySelector('pre').textContent;
-    expect(text).toContain(ApiServiceStub.output.content);
+    expect(text).toContain(ApiServiceStub.outputContent);
     text = fixture.nativeElement.querySelector('.mat-cell.mat-column-name').textContent;
     expect(text).toContain(ApiServiceStub.result.nodes[0].name);
     text = fixture.nativeElement.querySelector('.mat-cell.mat-column-state').textContent;
     expect(text).toContain('Finished');
-  });
+  }));
 });

@@ -7,6 +7,12 @@ mat-table {
   flex: 0.3;
 }
 
+.mat-column-command {
+  flex: 2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .mat-column-progress {
   flex: 0.5;
 }

@@ -42,7 +42,6 @@
                 .Select(t => t.Item3)
                 .ToList();
 
-
             await this.AggregateTasksAsync(job, allTasks, token);
 
             if (job.State == JobState.Finishing)
@@ -56,7 +55,7 @@
                 job.State = finalState;
             }
 
-            await this.Utilities.UpdateJobAsync(jobPartitionKey, j =>
+            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
                 j.State = job.State;
                 j.AggregationResult = job.AggregationResult;

@@ -44,6 +44,8 @@
 
         public TaskState State { get; set; }
         public ComputeClusterTaskInformation TaskInfo { get; set; }
+
+        public string FilteredResult { get; set; }
     }
 
     #endregion

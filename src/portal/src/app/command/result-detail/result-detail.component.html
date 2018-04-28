@@ -5,7 +5,7 @@
   <div class="state">{{result?.state | titlecase }}</div>
 </div>
 
-<ng-container *ngIf="isLoaded(); else loading">
+<ng-container *ngIf="isLoaded; else waiting">
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-3 selection">
@@ -31,20 +31,54 @@
           </ng-container>
 
           <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-          <mat-row *matRowDef="let node; columns: displayedColumns;" (click)="selectNode(node)"></mat-row>
+          <mat-row *matRowDef="let node; columns: displayedColumns;" [ngClass]="{ selected: selectedNode === node }" (click)="selectNode(node)"></mat-row>
         </mat-table>
       </div>
 
       <div class="col-md-9 output">
-        <pre #output>{{currentOutput}}</pre>
+        <div class="control static" *ngIf="currentOutput?.start === 0; else prevButton">
+          Output Begin
+        </div>
+        <ng-template #prevButton>
+          <button class="control" [ngClass]="{ attention: !loading && selectedNode }" (click)="loadPrev(selectedNode)"
+            mat-button [disabled]="loading || !selectedNode" matTooltip="Load more content backward">
+            <span *ngIf="loading == 'prev'; else upArrow">Loading...</span>
+            <ng-template #upArrow><i class="material-icons">keyboard_arrow_up</i></ng-template>
+          </button>
+        </ng-template>
+
+        <pre #output>{{currentOutput?.content}}</pre>
+
+        <div class="control static" *ngIf="currentOutput?.end; else nextButton">
+          Output End
+        </div>
+        <ng-template #nextButton>
+          <button class="control" [ngClass]="{ attention: !loading && selectedNode }" (click)="loadNext(selectedNode)"
+            mat-button [disabled]="loading || !selectedNode" matTooltip="Load more content forward">
+            <span *ngIf="loading == 'next'; else downArrow">Loading...</span>
+            <ng-template #downArrow><i class="material-icons">keyboard_arrow_down</i></ng-template>
+          </button>
+        </ng-template>
+
+        <div class="control" *ngIf="loading">
+          <mat-progress-bar mode="buffer"></mat-progress-bar>
+        </div>
+
+        <div class="control bottom">
+          <a [href]="currentOutputUrl" *ngIf="currentOutputUrl">Download the whole output</a>
+          <mat-checkbox [disabled]="loading && loading != 'auto'" [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoscroll</mat-checkbox>
+        </div>
       </div>
     </div>
   </div>
 </ng-container>
 
-<ng-template #loading>
-  <p>
-    Loading...
-  </p>
-  <p>{{errorMsg}}</p>
+<ng-template #waiting>
+  <div class="waiting">
+    <mat-spinner></mat-spinner>
+    <p>
+      Waiting...
+    </p>
+    <p>{{errorMsg}}</p>
+  </div>
 </ng-template>
