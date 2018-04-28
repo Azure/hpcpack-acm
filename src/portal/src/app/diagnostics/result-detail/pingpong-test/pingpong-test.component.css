@@ -3,12 +3,12 @@
   margin-bottom: 1em;
 }
 
-mat-table{
+mat-table {
   text-align: center;
 }
 
-.mat-header-row {
-  background-color: #e6e6e6;
+mat-header-cell {
+  font-size: .8em;
 }
 
 .node.success {
@@ -23,7 +23,7 @@ mat-table{
   cursor: pointer;
 }
 
-.mat-column-nodes{
+.mat-column-nodes {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -39,23 +39,24 @@ mat-table{
   clear: both;
 }
 
-.title.Failed{
+.title.Failed {
   color: #D84315;
 }
 
-
 .title.Finished {
-  color: #283593;;
+  color: #283593;
+  ;
 }
 
 .title.Running {
   color: #2E7D32;
 }
 
-.title.Queued{
+.title.Queued {
   color: #FF8F00;
 }
-.title .name{
+
+.title .name {
   margin-left: 0.3em;
 }
 

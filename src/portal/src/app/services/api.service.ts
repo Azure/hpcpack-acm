@@ -267,7 +267,13 @@ export class DiagApi extends Resource<any> {
     let url = this.url + '/' + id;
     return this.http.get<any>(url)
       .pipe(
-        map(e => e),
+        map(e => {
+          if (e.aggregationResult != undefined) {
+            e.aggregationResult = JSON.parse(e.aggregationResult);
+          }
+          console.log(e.aggregationResult);
+          return e;
+        }),
         catchError((error: any): Observable<any> => {
           console.error(error);
           return new ErrorObservable(error);
