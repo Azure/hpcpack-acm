@@ -26,12 +26,12 @@
         {
             do
             {
-                this.Logger.LogInformation("Fetching task item from queue {0}", this.queue.Name);
+                this.Logger.LogDebug("Fetching task item from queue {0}", this.queue.Name);
 
                 var message = await this.queue.GetMessageAsync(visibleTimeout, null, null, token);
                 if (message == null)
                 {
-                    this.Logger.LogInformation("No tasks fetched. Sleep for {0} seconds", this.retryInterval.TotalSeconds);
+                    this.Logger.LogDebug("No tasks fetched. Sleep for {0} seconds", this.retryInterval.TotalSeconds);
                     await Task.Delay(this.retryInterval, token);
                 }
                 else

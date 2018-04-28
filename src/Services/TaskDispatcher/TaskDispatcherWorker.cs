@@ -69,8 +69,10 @@
                     var fileName = Path.GetTempFileName();
 
                     var filteredResult = await PythonExecutor.ExecuteAsync(fileName, scriptBlob, new { Job = job, Task = taskResult }, token);
-                    taskResult.FilteredResult = filteredResult.Item1;
+                    taskResult.FilteredResult = filteredResult.Item1 ?? filteredResult.Item2;
+
                     await this.jobsTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, taskResultKey, taskResult, token);
+
                     if (!string.IsNullOrEmpty(filteredResult.Item2))
                     {
                         await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
