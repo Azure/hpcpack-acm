@@ -280,7 +280,6 @@ export class DiagApi extends Resource<any> {
         });
       }
     }
-    // tests.push(data);
     return data;
   }
 
@@ -304,7 +303,6 @@ export class DiagApi extends Resource<any> {
           if (e.aggregationResult != undefined) {
             e.aggregationResult = JSON.parse(e.aggregationResult);
           }
-          console.log(e.aggregationResult);
           return e;
         }),
         catchError((error: any): Observable<any> => {

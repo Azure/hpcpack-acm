@@ -9,60 +9,153 @@
 </div>
 <mat-tab-group>
   <mat-tab label="Latency">
-    <div class="chart-type">
-      <div class="chart-btn" [class.active]="activeMode == 'total'" (click)="setActiveMode('total')">Total</div>
-      <div class="chart-btn" [class.active]="activeMode == 'node'" (click)="setActiveMode('node')">By Node</div>
-    </div>
-    <div class="select-node" *ngIf="activeMode == 'node'">
-      <mat-form-field>
-        <mat-select placeholder="Select Node" [(ngModel)]="selectedNode">
-          <mat-option *ngFor="let node of nodes" [value]="node" style="font-size: .9em;">
-            {{ node }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+    <div class="overview-header">
+      <div class="chart-type">
+        <div class="chart-btn" [class.active]="activeLatencyMode == 'total'" (click)="setLatencyActiveMode('total')">Total</div>
+        <div class="chart-btn" [class.active]="activeLatencyMode == 'node'" (click)="setLatencyActiveMode('node')">By Node</div>
+      </div>
+      <div class="select-node" *ngIf="activeLatencyMode == 'node'">
+        <mat-form-field>
+          <mat-select placeholder="Select Node" [(ngModel)]="selectedNode" (selectionChange)="changeLatencyNode()">
+            <mat-option *ngFor="let node of nodes" [value]="node" style="font-size: .9em;">
+              {{ node }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
     </div>
     <div class="overview-chart">
-      <chart type="horizontalBar" class="col-lg-5" [data]="overviewLatencyData" [options]="overviewLatencyOption">
+      <chart type="horizontalBar" class="col-lg-6" [data]="latencyData" [options]="latencyOption">
       </chart>
+
+      <div class="result-detail col-lg-2">
+        <div class="overview-info">
+          <div class="overview-title"> Passed </div>
+          <div>
+            <i class="material-icons passed" *ngIf="latencyPassed == true">done</i>
+            <i class="material-icons not-passed" *ngIf="latencyPassed == false">clear</i>
+            <!-- {{latencyPassed}} -->
+          </div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Packet Size </div>
+          <div>{{latencyPacketSize}}</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Average </div>
+          <div>{{latencyAverage | number: '1.2-2'}} us</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Median </div>
+          <div>{{latencyMedian | number: '1.2-2'}} us</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Standard Deviation </div>
+          <div>{{latencyStandardDeviation | number: '1.2-2'}} us</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Variability </div>
+          <div>{{latencyVariability}}</div>
+        </div>
+      </div>
+
       <div class="result-pair col-lg-4">
         <div class="overview-info">
           <div class="overview-title"> Best Pairs </div>
-          <div class="pair-list" *ngFor="let p of totalBestPairs">
-            {{p}}
+          <div class="pair-list" *ngFor="let p of latencyBestPairs">
+            <div>{{p}}</div>
+            <div>{{latencyBestPairsValue | number: '1.2-2'}} us</div>
+          </div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Worst Pairs </div>
+          <div class="pair-list" *ngFor="let p of latencyWorstPairs">
+            <div>{{p}}</div>
+            <div>{{latencyWorstPairsValue | number: '1.2-2'}} us</div>
           </div>
         </div>
         <div class="overview-info">
           <div class="overview-title"> Bad Pairs </div>
-          <div class="pair-list" *ngFor="let p of totalBadPairs">
+          <div class="pair-list" *ngFor="let p of latencyBadPairs">
             <div>{{p.Pair}}</div>
-            <div>{{p.Value}} us</div>
+            <div>{{p.Value | number: '1.2-2'}} us</div>
           </div>
-        </div>
-      </div>
-      <div class="result-detail col-lg-3">
-        <div class="overview-info">
-          <div class="overview-title"> Average </div>
-          <div>{{average}} us</div>
-        </div>
-        <div class="overview-info">
-          <div class="overview-title"> Median </div>
-          <div>{{median}} us</div>
-        </div>
-        <div class="overview-info">
-          <div class="overview-title"> Passed </div>
-          <div>{{passed}}</div>
-        </div>
-        <div class="overview-info">
-          <div class="overview-title"> Standard Deviation </div>
-          <div>{{standardDeviation}}</div>
         </div>
       </div>
     </div>
   </mat-tab>
   <mat-tab label="Throughput">
-    <chart type="horizontalBar" class="bar-chart" [data]="overviewLatencyData" [options]="overviewLatencyOption">
-    </chart>
+    <div class="overview-header">
+      <div class="chart-type">
+        <div class="chart-btn" [class.active]="activeThroughputMode == 'total'" (click)="setThroughputActiveMode('total')">Total</div>
+        <div class="chart-btn" [class.active]="activeThroughputMode == 'node'" (click)="setThroughputActiveMode('node')">By Node</div>
+      </div>
+      <div class="select-node" *ngIf="activeThroughputMode == 'node'">
+        <mat-form-field>
+          <mat-select placeholder="Select Node" [(ngModel)]="selectedNode" (selectionChange)="changeThroughputNode()">
+            <mat-option *ngFor="let node of nodes" [value]="node" style="font-size: .9em;">
+              {{ node }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="overview-chart">
+      <chart type="horizontalBar" class="col-lg-5" [data]="throughputData" [options]="throughputOption">
+      </chart>
+
+      <div class="result-detail col-lg-2">
+        <div class="overview-info">
+          <div class="overview-title"> Passed </div>
+          <i class="material-icons passed" *ngIf="throughputPassed == true">done</i>
+          <i class="material-icons not-passed" *ngIf="throughputPassed == false">clear</i>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Packet Size </div>
+          <div>{{throughputPacketSize}}</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Average </div>
+          <div>{{throughputAverage | number: '1.2-2'}} us</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Median </div>
+          <div>{{throughputMedian | number: '1.2-2'}} us</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Standard Deviation </div>
+          <div>{{throughputStandardDeviation | number: '1.2-2'}} us</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Variability </div>
+          <div>{{throughputVariability}}</div>
+        </div>
+      </div>
+
+      <div class="result-pair col-lg-5">
+        <div class="overview-info">
+          <div class="overview-title"> Best Pairs </div>
+          <div class="pair-list" *ngFor="let p of throughputBestPairs">
+            <div>{{p}}</div>
+            <div>{{throughputBestPairsValue | number: '1.2-2'}} us</div>
+          </div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Worst Pairs </div>
+          <div class="pair-list" *ngFor="let p of throughputWorstPairs">
+            <div>{{p}}</div>
+            <div>{{throughputWorstPairsValue | number: '1.2-2'}} us</div>
+          </div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Bad Pairs </div>
+          <div class="pair-list" *ngFor="let p of throughputBadPairs">
+            <div>{{p.Pair}}</div>
+            <div>{{p.Value | number: '1.2-2'}} us</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </mat-tab>
 </mat-tab-group>
 

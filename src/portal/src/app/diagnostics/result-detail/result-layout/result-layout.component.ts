@@ -24,7 +24,8 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
 
   overviewData: any = {};
 
-  activeMode = "total";
+  activeLatencyMode = "total";
+  activeThroughputMode = "total";
 
   overviewOption = {
     responsive: true,
@@ -45,9 +46,10 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
     },
   };
 
-  overviewLatencyData: any = {};
+  latencyData: any = {};
+  throughputData: any = {};
 
-  overviewLatencyOption = {
+  latencyOption = {
     responsive: true,
     maintainAspectRatio: true,
     scaleOverride: true,
@@ -59,7 +61,36 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
       xAxes: [{
         display: true,
         ticks: {
+          min: 0,
           beginAtZero: true,   // minimum value will be 0.
+          callback: function (value, index, values) {
+            if (Math.floor(value) === value) {
+              return value;
+            }
+          }
+        }
+      }]
+    }
+  };
+  throughputOption = {
+    responsive: true,
+    maintainAspectRatio: true,
+    scaleOverride: true,
+    animation: false,
+    legend: {
+      display: false
+    },
+    scales: {
+      xAxes: [{
+        display: true,
+        ticks: {
+          min: 0,
+          beginAtZero: true,   // minimum value will be 0.
+          callback: function (value, index, values) {
+            if (Math.floor(value) === value) {
+              return value;
+            }
+          }
         }
       }]
     }
@@ -69,55 +100,125 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
     private api: ApiService
   ) { }
 
-  totalBestPairs = [];
-  totalBadPairs = [];
-  nodeBestPairs = [];
+  latencyBestPairs = [];
+  latencyBestPairsValue: number;
+  latencyBadPairs = [];
+  latencyWorstPairs = [];
+  latencyWorstPairsValue: number;
+  overviewLatencyResult: any;
+
+  latencyAverage: number;
+  latencyMedian: number;
+  latencyPassed: boolean;
+  latencyPacketSize: string;
+  latencyStandardDeviation: number;
+  latencyVariability: string;
+  overviewLatencyData: any;
+  nodeLatencyData: any;
+
+  throughputBestPairs = [];
+  throughputBestPairsValue: number;
+  throughputBadPairs = [];
+  throughputWorstPairs = [];
+  throughputWorstPairsValue: number;
+  overviewThroughputResult: any;
+
+  throughputAverage: number;
+  throughputMedian: number;
+  throughputPassed: boolean;
+  throughputPacketSize: string;
+  throughputStandardDeviation: number;
+  throughputVariability: string;
+  overviewThroughputData: any;
+  nodeThroughputData: any;
+
   nodes = [];
   selectedNode: string;
-  average: number;
-  median: number;
-  passed: boolean;
-  standardDeviation: number;
 
   ngOnInit() {
+    this.updateAggregationResult();
+  }
+
+  updateAggregationResult() {
     this.makeChartData();
+    this.getJobState.emit(this.result.state);
     if (this.result.aggregationResult == undefined) {
-      this.getJobState.emit(this.result.state);
       this.result.aggregationResult = "Waiting for the aggregation result...";
     }
     else {
-      this.overviewLatencyData = {
-        labels: this.result.aggregationResult.Latency.Result.Histogram[1],
-        datasets: [{
-          borderColor: 'rgb(63, 81, 181)',
-          borderWidth: 1,
-          data: this.result.aggregationResult.Latency.Result.Histogram[0],
-          backgroundColor: 'rgba(63, 81, 181, .5)'
-        }]
-      };
-
-      this.nodes = Object.keys(this.result.aggregationResult.Latency.ResultByNode);
-      this.selectedNode = this.nodes[0];
-      this.totalBestPairs = this.result.aggregationResult.Latency.Result['Best_pairs']['Pairs'];
-      this.totalBadPairs = this.result.aggregationResult.Latency.Result['Bad_pairs'];
-      this.average = this.result.aggregationResult.Latency.Result['Average'];
-      this.median = this.result.aggregationResult.Latency.Result['Median'];
-      this.passed = this.result.aggregationResult.Latency.Result['Passed'];
-      this.standardDeviation = this.result.aggregationResult.Latency.Result['Standard_deviation'];
+      let res = this.result.aggregationResult;
+      this.getAggregationResult(res);
     }
-
   }
+
+  updateLatencyView(data) {
+    this.overviewLatencyData = {
+      labels: data.Histogram[1],
+      datasets: [{
+        borderColor: 'rgb(63, 81, 181)',
+        borderWidth: 1,
+        data: data.Histogram[0],
+        backgroundColor: 'rgba(63, 81, 181, .5)'
+      }]
+    };
+    this.latencyData = this.overviewLatencyData;
+
+    this.latencyBadPairs = data['Bad_pairs'];
+    this.latencyBestPairs = data['Best_pairs']['Pairs'];
+    this.latencyBestPairsValue = data['Best_pairs']['Value'];
+    this.latencyAverage = data['Average'];
+    this.latencyMedian = data['Median'];
+    this.latencyPassed = data['Passed'];
+    this.latencyWorstPairs = data['Worst_pairs']['Pairs'];
+    this.latencyWorstPairsValue = data['Worst_pairs']['Value'];
+    this.latencyStandardDeviation = data['Standard_deviation'];
+    this.latencyVariability = data['Variability'];
+  }
+
+  updateThroughputView(data) {
+    this.overviewThroughputData = {
+      labels: data.Histogram[1],
+      datasets: [{
+        borderColor: 'rgb(63, 81, 181)',
+        borderWidth: 1,
+        data: data.Histogram[0],
+        backgroundColor: 'rgba(63, 81, 181, .5)'
+      }]
+    };
+    this.throughputData = this.overviewThroughputData;
+
+    this.throughputBadPairs = data['Bad_pairs'];
+    this.throughputBestPairs = data['Best_pairs']['Pairs'];
+    this.throughputBestPairsValue = data['Best_pairs']['Value'];
+    this.throughputAverage = data['Average'];
+    this.throughputMedian = data['Median'];
+    this.throughputPassed = data['Passed'];
+    this.throughputWorstPairs = data['Worst_pairs']['Pairs'];
+    this.throughputWorstPairsValue = data['Worst_pairs']['Value'];
+    this.throughputStandardDeviation = data['Standard_deviation'];
+    this.throughputVariability = data['Variability'];
+  }
+
+  getAggregationResult(result) {
+    this.nodes = Object.keys(result.Latency.ResultByNode);
+    this.nodeLatencyData = result.Latency.ResultByNode;
+    this.nodeThroughputData = result.Throughput.ResultByNode;
+    this.latencyPacketSize = result.Latency['Packet_size'];
+    this.throughputPacketSize = result.Throughput['Packet_size'];
+
+    this.selectedNode = this.nodes[0];
+    this.overviewLatencyResult = result.Latency.Result;
+    this.overviewThroughputResult = result.Throughput.Result;
+    this.updateLatencyView(this.overviewLatencyResult);
+    this.updateThroughputView(this.overviewThroughputResult);
+  }
+
 
   changeLog = [];
   ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
-    console.log("chart changes.");
-    this.makeChartData();
     this.api.diag.getDiagJob(this.result.id).subscribe(res => {
       this.result = res;
-      this.getJobState.emit(res.state);
-      if (this.result.aggregationResult == undefined) {
-        this.result.aggregationResult = "Wating for the aggregation result...";
-      }
+      this.updateAggregationResult();
     });
   }
 
@@ -168,8 +269,38 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
     return res = res + ' ' + state;
   }
 
-  setActiveMode(mode: string) {
-    this.activeMode = mode;
+  setLatencyActiveMode(mode: string) {
+    this.activeLatencyMode = mode;
+    let data;
+    if (mode == 'node') {
+      data = this.nodeLatencyData[this.selectedNode];
+    }
+    else if (mode == 'total') {
+      data = this.overviewLatencyResult;
+    }
+    this.updateLatencyView(data);
+  }
+
+  setThroughputActiveMode(mode: string) {
+    this.activeThroughputMode = mode;
+    let data;
+    if (mode == 'node') {
+      data = this.nodeThroughputData[this.selectedNode];
+    }
+    else if (mode == 'total') {
+      data = this.overviewThroughputResult;
+    }
+    this.updateThroughputView(data);
+  }
+
+  changeLatencyNode() {
+    let data = this.nodeLatencyData[this.selectedNode];
+    this.updateLatencyView(data);
+  }
+
+  changeThroughputNode() {
+    let data = this.nodeLatencyData[this.selectedNode];
+    this.updateThroughputView(data);
   }
 
 }

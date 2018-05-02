@@ -124,6 +124,12 @@ app-back-button {
   justify-content: space-between;
 }
 
+.overview-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
 .overview-title{
   font-size: .9em;
   color:rgba(63, 81, 181, 0.9);
@@ -154,4 +160,12 @@ md-select, .mat-select-placeholder, .mat-select-trigger {
 
 .overview-info {
   margin-bottom: .5em;
+}
+
+.passed{
+  color: green;
+}
+
+.not-passed{
+  color: red;
 }
