@@ -4,6 +4,7 @@
 </nav>
 
 <div class="actions">
+  <button mat-raised-button (click)="customizeTable()">Customize Columns...</button>
   <button mat-raised-button [disabled]="hasNoSelection()" (click)="runDiagnostics()">Run Diagnostics...</button>
   <button mat-raised-button [disabled]="hasNoSelection()" (click)="runCommand()">Run Command...</button>
 </div>

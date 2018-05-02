@@ -5,6 +5,7 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { Subscription } from 'rxjs/Subscription';
 import { NewDiagnosticsComponent } from '../new-diagnostics/new-diagnostics.component';
 import { NewCommandComponent } from '../new-command/new-command.component';
+import { TableOptionComponent } from './table-option/table-option.component';
 import { ApiService } from '../../services/api.service';
 
 @Component({
@@ -19,7 +20,14 @@ export class NodeListComponent {
 
   private dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
-  private displayedColumns = ['select', 'name', 'health', 'state', 'runningJobCount', 'actions'];
+  private availableColumns = [
+    { name: 'name',   displayName: 'Name',    displayed: true,  required: true },
+    { name: 'health', displayName: 'Health',  displayed: true,  },
+    { name: 'state',  displayName: 'State',   displayed: true,  },
+    { name: 'runningJobCount',  displayName: 'Running Jobs',  displayed: true,  order: 40 },
+  ];
+
+  private displayedColumns = this.getDisplayedColumns(this.availableColumns);
 
   private selection = new SelectionModel(true, []);
 
@@ -111,5 +119,29 @@ export class NodeListComponent {
 
   hasNoSelection(): boolean {
     return this.selectedData.length == 0;
+  }
+
+  getDisplayedColumns(availableColumns: any[]): string[] {
+    let columns = availableColumns.filter(e => e.displayed).map(e => e.name);
+    columns.unshift('select');
+    columns.push('actions');
+    return columns;
+  }
+
+  clone(src: any): any {
+    return JSON.parse(JSON.stringify(src));
+  }
+
+  customizeTable(): void {
+    let dialogRef = this.dialog.open(TableOptionComponent, {
+      width: '98%',
+      data: { availableColumns: this.availableColumns }
+    });
+    dialogRef.afterClosed().subscribe(res => {
+      if (res) {
+        this.availableColumns = res;
+        this.displayedColumns = this.getDisplayedColumns(res);
+      }
+    });
   }
 }

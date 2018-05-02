@@ -1,0 +1,13 @@
+<h2 mat-dialog-title>Customize Columns</h2>
+<mat-dialog-content>
+  <mat-selection-list #list>
+    <mat-list-option *ngFor="let column of data.availableColumns"
+      [selected]="column.displayed" [disabled]="column.required" [value]="column.name">
+      {{column.displayName}}
+    </mat-list-option>
+  </mat-selection-list>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+  <button mat-raised-button [mat-dialog-close]="data.availableColumns" (click)="apply(list.selectedOptions)">Apply</button>
+</mat-dialog-actions>
