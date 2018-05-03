@@ -21,10 +21,9 @@ export class NodeListComponent {
   private dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
   private availableColumns = [
-    { name: 'name',   displayName: 'Name',    displayed: true,  required: true },
     { name: 'health', displayName: 'Health',  displayed: true,  },
     { name: 'state',  displayName: 'State',   displayed: true,  },
-    { name: 'runningJobCount',  displayName: 'Running Jobs',  displayed: true,  order: 40 },
+    { name: 'runningJobCount',  displayName: 'Running Jobs',  displayed: true },
   ];
 
   private displayedColumns = this.getDisplayedColumns(this.availableColumns);
@@ -123,9 +122,8 @@ export class NodeListComponent {
 
   getDisplayedColumns(availableColumns: any[]): string[] {
     let columns = availableColumns.filter(e => e.displayed).map(e => e.name);
-    columns.unshift('select');
     columns.push('actions');
-    return columns;
+    return ['select', 'name'].concat(columns);
   }
 
   clone(src: any): any {
@@ -139,8 +137,8 @@ export class NodeListComponent {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.availableColumns = res;
-        this.displayedColumns = this.getDisplayedColumns(res);
+        this.availableColumns = res.selected.concat(res.options);
+        this.displayedColumns = this.getDisplayedColumns(this.availableColumns);
       }
     });
   }

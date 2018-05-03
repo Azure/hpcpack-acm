@@ -1,13 +1,21 @@
 <h2 mat-dialog-title>Customize Columns</h2>
 <mat-dialog-content>
-  <mat-selection-list #list>
-    <mat-list-option *ngFor="let column of data.availableColumns"
-      [selected]="column.displayed" [disabled]="column.required" [value]="column.name">
-      {{column.displayName}}
-    </mat-list-option>
-  </mat-selection-list>
+  <div class="content">
+    <div class='column'>
+      <div class="label">Options</div>
+      <div class='box' [dragula]='"columns"' [dragulaModel]='options'>
+        <div *ngFor='let item of options' class="name">{{item.displayName}}</div>
+      </div>
+    </div>
+    <div class='column'>
+      <div class="label">Selected</div>
+      <div class='box' [dragula]='"columns"' [dragulaModel]='selected'>
+        <div *ngFor='let item of selected' class="name">{{item.displayName}}</div>
+      </div>
+    </div>
+  </div>
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
-  <button mat-raised-button [mat-dialog-close]="data.availableColumns" (click)="apply(list.selectedOptions)">Apply</button>
+  <button mat-raised-button [mat-dialog-close]="result">Apply</button>
 </mat-dialog-actions>
