@@ -12,6 +12,8 @@ import { AuthGuardService } from './services/auth-guard.service';
 import { AuthService } from './services/auth.service';
 import { LoginGuardService } from './services/login-guard.service';
 import { ApiService } from './services/api.service';
+import { UserSettingsService } from './services/user-settings.service';
+import { LocalStorageService } from './services/local-storage.service';
 import { InMemoryDataService }  from './services/in-memory-data.service';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
@@ -40,7 +42,8 @@ import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
     MaterialsModule,
     AppRoutingModule,
   ],
-  providers: [AuthGuardService, AuthService, LoginGuardService, ApiService],
+  providers: [AuthGuardService, AuthService, LoginGuardService, ApiService,
+    UserSettingsService, LocalStorageService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

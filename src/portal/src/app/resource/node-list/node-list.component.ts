@@ -7,6 +7,7 @@ import { NewDiagnosticsComponent } from '../new-diagnostics/new-diagnostics.comp
 import { NewCommandComponent } from '../new-command/new-command.component';
 import { TableOptionComponent } from './table-option/table-option.component';
 import { ApiService } from '../../services/api.service';
+import { UserSettingsService } from '../../services/user-settings.service';
 
 @Component({
   selector: 'resource-node-list',
@@ -20,7 +21,7 @@ export class NodeListComponent {
 
   private dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
-  private availableColumns = [
+  static customizableColumns = [
     { name: 'health', displayName: 'Health',  displayed: true,  },
     { name: 'state',  displayName: 'State',   displayed: true,  },
     { name: 'runningJobCount',  displayName: 'Jobs',  displayed: true },
@@ -29,7 +30,9 @@ export class NodeListComponent {
     { name: 'os',       displayName: 'OS',    displayed: true },
   ];
 
-  private displayedColumns = this.getDisplayedColumns(this.availableColumns);
+  private availableColumns;
+
+  private displayedColumns;
 
   private selection = new SelectionModel(true, []);
 
@@ -37,10 +40,13 @@ export class NodeListComponent {
     private dialog: MatDialog,
     private api: ApiService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private settings: UserSettingsService,
   ) { }
 
   ngOnInit() {
+    this.loadSettings();
+    this.getDisplayedColumns();
     this.api.node.getAll().subscribe(nodes => {
       this.dataSource.data = nodes;
     });
@@ -123,14 +129,10 @@ export class NodeListComponent {
     return this.selectedData.length == 0;
   }
 
-  getDisplayedColumns(availableColumns: any[]): string[] {
-    let columns = availableColumns.filter(e => e.displayed).map(e => e.name);
+  getDisplayedColumns(): void {
+    let columns = this.availableColumns.filter(e => e.displayed).map(e => e.name);
     columns.push('actions');
-    return ['select', 'name'].concat(columns);
-  }
-
-  clone(src: any): any {
-    return JSON.parse(JSON.stringify(src));
+    this.displayedColumns = ['select', 'name'].concat(columns);
   }
 
   customizeTable(): void {
@@ -141,8 +143,31 @@ export class NodeListComponent {
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
         this.availableColumns = res.selected.concat(res.options);
-        this.displayedColumns = this.getDisplayedColumns(this.availableColumns);
+        this.getDisplayedColumns();
+        this.saveSettings();
       }
     });
+  }
+
+  saveSettings(): void {
+    let options = this.availableColumns.filter(e => !e.displayed).map(e => e.name);
+    let selected = this.availableColumns.filter(e => e.displayed).map(e => e.name);
+    this.settings.set('NodeListComponent', { options, selected });
+    this.settings.save();
+  }
+
+  loadSettings(): void {
+    let availableColumns = NodeListComponent.customizableColumns;
+    let data = this.settings.get('NodeListComponent');
+    if (data) {
+      let selected = data.selected.map(name => availableColumns.find(col => col.name === name));
+      selected.forEach(e => e.displayed = true);
+      let options = data.options.map(name => availableColumns.find(col => col.name === name));
+      options.forEach(e => e.displayed = false);
+      this.availableColumns = selected.concat(options);
+    }
+    else {
+      this.availableColumns = availableColumns ;
+    }
   }
 }
