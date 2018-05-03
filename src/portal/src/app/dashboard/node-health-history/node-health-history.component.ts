@@ -26,7 +26,7 @@ export class NodeHealthHistoryComponent implements OnInit {
 
   history = {};
 
-  constructor() {}
+  constructor() { }
 
   ngOnInit() {
     this.changeHistory('2h');
@@ -41,21 +41,21 @@ export class NodeHealthHistoryComponent implements OnInit {
   }
 
   formatTime(d, withDay = false) {
-    let h:any = d.getHours();
+    let h: any = d.getHours();
     if (h < 10)
       h = '0' + h;
-    let m:any = d.getMinutes();
+    let m: any = d.getMinutes();
     if (m < 10)
       m = '0' + m;
     let time = '' + h + ':' + m;
     if (withDay) {
-      let day:any = d.getDate();
+      let day: any = d.getDate();
       if (day < 10)
         day = '0' + day;
-      let mon:any = d.getMonth() + 1;
+      let mon: any = d.getMonth() + 1;
       if (mon < 10)
         mon = '0' + mon;
-      let md:any = '' + mon + '/' + day;
+      let md: any = '' + mon + '/' + day;
       time = md + ' ' + time;
     }
     return time;
@@ -74,17 +74,17 @@ export class NodeHealthHistoryComponent implements OnInit {
   generateChartData(span, columns) {
     const labels = [
       'OK',
-      'Warning',
-      'Error',
       'Transitional',
       'Unapproved',
+      'Warning',
+      'Error',
     ]
     const colors = [
-      '#44d42b',
-      '#ffee0a',
-      '#ff4e4e',
-      '#20f5ed',
-      '#6d6e71',
+      'rgba(47, 196, 134, .8)',
+      'rgba(63, 81, 181, .8)',
+      'rgba(206, 206, 206, .8)',
+      'rgba(232, 199, 37, .8)',
+      'rgba(229, 83, 57, .8)',
     ]
     let now = new Date().getTime();
     let values = [];

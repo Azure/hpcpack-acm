@@ -1,0 +1,40 @@
+.card {
+    border: 1px solid rgb(177, 181, 188, .3);
+    display: flex;
+    justify-content: space-around;
+    background-color: #FFF;
+    padding: 1em .5em;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+    color: rgba(0, 0, 0, .7);
+}
+
+.icon {
+    width: 3em;
+    height: 3em;
+    border-radius: 50%;
+    background-color: rgba(45, 168, 117, .9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ffffff;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.info-title {
+    font-size: .65em;
+    font-weight: 400;
+}
+
+.info-content {
+    font-size: 1.2em;
+    font-weight: 500;
+}
+
+.info-content .active {
+    color: rgba(45, 168, 117, .9);
+}

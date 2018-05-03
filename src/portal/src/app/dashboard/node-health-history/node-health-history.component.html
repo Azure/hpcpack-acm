@@ -1,7 +1,36 @@
-<h2>Node Health History</h2>
-<mat-button-toggle-group (change)="changeHistory($event.value)">
-  <mat-button-toggle value="2h" [checked]="true">2 hours</mat-button-toggle>
-  <mat-button-toggle value="24h" >24 hours</mat-button-toggle>
-  <mat-button-toggle value="7d">7 days</mat-button-toggle>
-</mat-button-toggle-group>
-<chart type="bar" [data]="chartData" [options]="chartOption"></chart>
+<div class="card">
+  <div class="total-info col-lg-5">
+    <div class="icon">
+      <i class="material-icons">gradient</i>
+    </div>
+    <div class="info">
+      <div class="info-title">
+        ACTIVE NODES / TOTAL
+      </div>
+      <div class="info-content-total">
+        <span class="active"> 3600</span>
+        /
+        <span class="total"> 4000</span>
+      </div>
+    </div>
+  </div>
+  <div class="info-content">
+    <span class="health-item OK"> 3580</span>
+    <span class="health-item Transitional"> 10</span>
+    <span class="health-item Unapproved"> 5</span>
+    <span class="health-item Warning"> 3</span>
+    <span class="health-item Error"> 2</span>
+  </div>
+  <div class="detail">
+    <i class="material-icons">autorenew</i>
+  </div>
+</div>
+<div class="node-health">
+  <mat-button-toggle-group (change)="changeHistory($event.value)" style="font-size: .9em; box-shadow: none">
+    <mat-button-toggle value="2h" [checked]="true">2 hours</mat-button-toggle>
+    <mat-button-toggle value="24h">24 hours</mat-button-toggle>
+    <mat-button-toggle value="7d">7 days</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <chart type="bar" [data]="chartData" [options]="chartOption"></chart>
+</div>

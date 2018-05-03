@@ -12,10 +12,10 @@ export class NodeHealthComponent implements OnInit {
     datasets: [{
       data: [257, 33, 20, 18, 12],
       backgroundColor: [
-        '#44d42b',
-        '#ffee0a',
-        '#ff4e4e',
-        '#20f5ed',
+        '#2da875',
+        '#d19317',
+        '#ce5039',
+        '#0daeba',
         '#6d6e71',
       ]
     }],
