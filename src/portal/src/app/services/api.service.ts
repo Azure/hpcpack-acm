@@ -54,12 +54,18 @@ export class NodeApi extends Resource<Node> {
   protected normalize(node: any): Node {
     if (node.nodeInfo)
       node = node.nodeInfo;
+    let reg = node.nodeRegistrationInfo;
     return {
       id: node.name,
       name: node.name,
       state: node.state,
       health: node.health,
       runningJobCount: node.runningJobCount,
+      system: {
+        coreCount: reg.coreCount,
+        memory: reg.memoryMegabytes,
+        os: reg.distroInfo,
+      },
     } as Node;
   }
 }

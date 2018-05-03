@@ -36,7 +36,7 @@ const matDialogStub = {
 }
 
 class ApiServiceStub {
-  static nodes = [{ id: 'a node', name: 'a node', state: 'Ok'}]
+  static nodes = [{ id: 'a node', name: 'a node', state: 'Ok', system: {} }]
 
   node = {
     getAll: () => of(ApiServiceStub.nodes),
