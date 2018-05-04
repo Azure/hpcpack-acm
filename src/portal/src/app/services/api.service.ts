@@ -21,8 +21,8 @@ export abstract class Resource<T> {
 
   protected normalize(e: any): T { return e as T; }
 
-  getAll(): Observable<T[]> {
-    return this.http.get<T[]>(this.url)
+  getAll(params?: any): Observable<T[]> {
+    return this.http.get<T[]>(this.url, params ? { params } : {})
       .pipe(
         map(array => array.map(e => this.normalize(e))),
         catchError((error: any): Observable<T[]> => {

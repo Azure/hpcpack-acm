@@ -3,7 +3,7 @@
   <button mat-raised-button [disabled]="hasNoSelection()">Cancel</button>
 </div>
 
-<mat-table #table [dataSource]="dataSource">
+<mat-table #table [dataSource]="dataSource" infiniteScroll (scrolled)="onScroll()" id="table">
 
   <!--
    Note that these columns can be defined in any order. The actual rendered
@@ -72,3 +72,13 @@
   <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
   <mat-row *matRowDef="let result; columns: displayedColumns;" (click)="selection.toggle(result)"></mat-row>
 </mat-table>
+
+<div class="control" *ngIf="loading">
+  <mat-progress-bar mode="buffer"></mat-progress-bar>
+</div>
+
+<div class="up-to-top">
+  <!-- It seems a known issue about hash in URL. Anyway, it works here except a console error. Just ignore it. -->
+  <a href="#table"><i class="material-icons upward">arrow_upward</i></a>
+</div>
+
