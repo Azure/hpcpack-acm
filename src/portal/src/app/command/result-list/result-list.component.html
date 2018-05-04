@@ -25,9 +25,14 @@
     </mat-cell>
   </ng-container>
 
+  <ng-container matColumnDef="id">
+    <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
+    <mat-cell *matCellDef="let result"><a [routerLink]="result.id">{{result.id}}</a></mat-cell>
+  </ng-container>
+
   <ng-container matColumnDef="command">
     <mat-header-cell *matHeaderCellDef> Command </mat-header-cell>
-    <mat-cell *matCellDef="let result"><a [routerLink]="result.id" [title]="result.command">{{result.command}}</a></mat-cell>
+    <mat-cell *matCellDef="let result" [title]="result.command">{{result.command}}</mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="state">

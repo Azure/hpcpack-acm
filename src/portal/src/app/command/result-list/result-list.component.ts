@@ -11,7 +11,7 @@ import { ApiService } from '../../services/api.service';
 export class ResultListComponent implements OnInit {
 
   private dataSource = new MatTableDataSource();
-  private displayedColumns = ['select', 'command', 'state', 'progress', 'startedAt', 'updatedAt', 'actions'];
+  private displayedColumns = ['select', 'id', 'command', 'state', 'progress', 'actions'];
 
   private selection = new SelectionModel(true, []);
 

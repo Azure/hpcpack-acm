@@ -2,19 +2,30 @@ mat-table {
   margin-top: 1em;
 }
 
+.mat-cell, .mat-header-cell {
+  text-align: center;
+  padding: 0 2px;
+}
+
 .mat-column-select {
   overflow: initial;
   flex: 0.3;
 }
 
+.mat-column-id {
+  flex: 0.3;
+  text-align: right;
+}
+
 .mat-column-command {
-  flex: 2;
+  flex: 2.5;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
 .mat-column-progress {
   flex: 0.5;
+  text-align: right;
 }
 
 .mat-column-state {
