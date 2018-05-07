@@ -9,12 +9,11 @@ mat-table {
 
 .mat-column-select {
   overflow: initial;
-  flex: 0.3;
+  flex: 0;
 }
 
 .mat-column-id {
   flex: 0.3;
-  text-align: right;
 }
 
 .mat-column-command {
