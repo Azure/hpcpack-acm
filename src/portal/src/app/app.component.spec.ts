@@ -16,6 +16,9 @@ class NotificationStubComponent {
   @Input() items = [];
 }
 
+@Component({ selector: 'app-back-button', template: '' })
+class BackButtonStubComponent {}
+
 @Component({ selector: 'router-outlet', template: '' })
 class RouterOutletStubComponent {}
 
@@ -56,6 +59,7 @@ fdescribe('AppComponent', () => {
         AppComponent,
         BreadcrumStubComponent,
         NotificationStubComponent,
+        BackButtonStubComponent,
         RouterOutletStubComponent,
         RouterLinkDirectiveStub,
       ],

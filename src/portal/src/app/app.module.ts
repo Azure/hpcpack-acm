@@ -19,6 +19,7 @@ import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
 import { NotificationComponent } from './notification/notification.component';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
+import { WidgetsModule } from './widgets/widgets.module';
 
 
 @NgModule({
@@ -40,6 +41,7 @@ import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
     //  }
     //),
     MaterialsModule,
+    WidgetsModule,
     AppRoutingModule,
   ],
   providers: [AuthGuardService, AuthService, LoginGuardService, ApiService,
