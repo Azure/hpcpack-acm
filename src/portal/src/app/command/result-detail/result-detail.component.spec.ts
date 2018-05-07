@@ -10,9 +10,6 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MaterialsModule } from '../../materials.module';
 import { ResultDetailComponent } from './result-detail.component';
 
-@Component({ selector: 'app-back-button', template: '' })
-class BackButtonStubComponent {}
-
 class ApiServiceStub {
   static result = { command: 'TEST COMMAND', nodes: [{ name: 'TEST NODE', state: 'finished' }] };
 
@@ -43,7 +40,6 @@ fdescribe('ResultDetailComponent', () => {
     TestBed.configureTestingModule({
       declarations: [
         ResultDetailComponent,
-        BackButtonStubComponent,
       ],
       imports: [
         NoopAnimationsModule,

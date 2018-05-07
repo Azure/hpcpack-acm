@@ -4,7 +4,6 @@
     <div class="node-tag" [ngClass]="node.health == 'Error' ? 'error-tag' : 'healthy-tag'"> {{node.health}} </div>
     <div class="node-tag" [ngClass]="node.state == 'Online' ? 'online-tag' : 'offline-tag'"> {{node.state}} </div>
   </div>
-  <app-back-button></app-back-button>
 </div>
 <mat-tab-group [dynamicHeight]="true">
   <mat-tab label="Basic Info">

@@ -1,7 +1,3 @@
-.detail-header app-back-button {
-  float: right;
-}
-
 .detail-header {
   display: flex;
   justify-content: space-between;
