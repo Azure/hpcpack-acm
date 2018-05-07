@@ -1,22 +1,9 @@
-app-back-button {
-  float: right;
-}
-
 mat-vertical-stepper {
   clear: both;
 }
 
-mat-radio-group {
-  display: flex;
-  flex-direction: column;
-}
-
-mat-radio-button {
-  margin: 0.2em;
-}
-
-.filter {
-  min-width: 20em;
+mat-dialog-actions {
+  justify-content: flex-end;
 }
 
 .cmd-line {

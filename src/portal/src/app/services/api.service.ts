@@ -21,8 +21,8 @@ export abstract class Resource<T> {
 
   protected normalize(e: any): T { return e as T; }
 
-  getAll(): Observable<T[]> {
-    return this.http.get<T[]>(this.url)
+  getAll(params?: any): Observable<T[]> {
+    return this.http.get<T[]>(this.url, params ? { params } : {})
       .pipe(
         map(array => array.map(e => this.normalize(e))),
         catchError((error: any): Observable<T[]> => {
@@ -54,12 +54,18 @@ export class NodeApi extends Resource<Node> {
   protected normalize(node: any): Node {
     if (node.nodeInfo)
       node = node.nodeInfo;
+    let reg = node.nodeRegistrationInfo;
     return {
       id: node.name,
       name: node.name,
       state: node.state,
       health: node.health,
       runningJobCount: node.runningJobCount,
+      system: {
+        coreCount: reg.coreCount,
+        memory: reg.memoryMegabytes,
+        os: reg.distroInfo,
+      },
     } as Node;
   }
 }

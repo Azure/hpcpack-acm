@@ -3,6 +3,7 @@ import { Component, Directive, Input } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../services/api.service';
+import { UserSettingsService } from '../../services/user-settings.service';
 import { FormsModule } from '@angular/forms'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material';
@@ -36,7 +37,7 @@ const matDialogStub = {
 }
 
 class ApiServiceStub {
-  static nodes = [{ id: 'a node', name: 'a node', state: 'Ok'}]
+  static nodes = [{ id: 'a node', name: 'a node', state: 'Ok', system: {} }]
 
   node = {
     getAll: () => of(ApiServiceStub.nodes),
@@ -45,6 +46,14 @@ class ApiServiceStub {
   command = {
     create: () => of({ id: 1 })
   }
+}
+
+const userSettingsStub = {
+  save: () => {},
+
+  get: (key) => null,
+
+  set: (key, val) => {},
 }
 
 fdescribe('NodeListComponent', () => {
@@ -66,6 +75,7 @@ fdescribe('NodeListComponent', () => {
         { provide: ApiService, useClass: ApiServiceStub },
         { provide: Router, useValue: routerStub },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
+        { provide: UserSettingsService, useValue: userSettingsStub },
       ]
     })
     //We want to stub out MatDialog only for this component.

@@ -27,3 +27,30 @@ nav {
 .mat-column-actions {
   flex: 0.3;
 }
+
+.mat-column-runningJobCount, .mat-column-coreCount, .mat-column-memory,
+.mat-column-health, .mat-column-state {
+  flex: 0.5;
+}
+
+.mat-column-os {
+  flex: 2;
+}
+
+.mat-cell.mat-column-os {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.mat-cell, .mat-header-cell {
+  padding: 0 2px;
+  text-align: center;
+}
+
+.mat-column-name {
+  text-align: left;
+}
+
+.mat-column-runningJobCount, .mat-column-coreCount, .mat-column-memory {
+  text-align: right;
+}

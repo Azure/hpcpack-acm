@@ -11,17 +11,33 @@ import { ApiService } from '../../services/api.service';
 export class ResultListComponent implements OnInit {
 
   private dataSource = new MatTableDataSource();
-  private displayedColumns = ['select', 'command', 'state', 'progress', 'startedAt', 'updatedAt', 'actions'];
+
+  private displayedColumns = ['select', 'id', 'command', 'state', 'progress', 'actions'];
 
   private selection = new SelectionModel(true, []);
+
+  private lastId = 0;
+
+  private pageSize = 25;
+
+  private loading = false;
 
   constructor(
     private api: ApiService
   ) {}
 
   ngOnInit() {
-    this.api.command.getAll().subscribe(results => {
-      this.dataSource.data = results;
+    this.loadMoreResults();
+  }
+
+  private loadMoreResults() {
+    this.loading = true;
+    this.api.command.getAll({ lastId: this.lastId, count: this.pageSize }).subscribe(results => {
+      this.loading = false;
+      if (results.length > 0) {
+        this.dataSource.data = this.dataSource.data.concat(results);
+        this.lastId = results[results.length - 1].id;
+      }
     });
   }
 
@@ -44,5 +60,9 @@ export class ResultListComponent implements OnInit {
   private select(node) {
     this.selection.clear();
     this.selection.toggle(node);
+  }
+
+  private onScroll() {
+    this.loadMoreResults();
   }
 }

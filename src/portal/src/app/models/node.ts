@@ -4,6 +4,12 @@ export class Node {
   state: string;
   health: string;
   runningJobCount: number;
+  system: {
+    coreCount: number;
+    memory: number;
+    os: string;
+  }
+  //Below are legacy fields and to be deleted.
   cpuUsage: any;
   networkUsage: any;
   diskUsage: any;

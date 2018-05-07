@@ -12,6 +12,7 @@ import { NodeDetailComponent } from './node-detail/node-detail.component';
 import { NodeHeatmapComponent } from './node-heatmap/node-heatmap.component';
 import { NewDiagnosticsComponent } from './new-diagnostics/new-diagnostics.component';
 import { NewCommandComponent } from './new-command/new-command.component';
+import { TableOptionComponent } from './node-list/table-option/table-option.component';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 @NgModule({
@@ -25,8 +26,8 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
     WidgetsModule,
     ChartModule,
   ],
-  declarations: [ResourceComponent, NodeListComponent, NodeDetailComponent, NodeHeatmapComponent, NewDiagnosticsComponent, NewCommandComponent],
-  entryComponents: [NewDiagnosticsComponent, NewCommandComponent],
+  declarations: [ResourceComponent, NodeListComponent, NodeDetailComponent, NodeHeatmapComponent, NewDiagnosticsComponent, NewCommandComponent, TableOptionComponent],
+  entryComponents: [NewDiagnosticsComponent, NewCommandComponent, TableOptionComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ResourceModule { }

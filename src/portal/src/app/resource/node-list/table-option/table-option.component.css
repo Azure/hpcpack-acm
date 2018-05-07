@@ -1,0 +1,34 @@
+.content {
+  display: flex;
+  justify-content: center;
+}
+
+.column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  flex: 0;
+  margin: 0.5em;
+  font-weight: bold;
+}
+
+.box {
+  flex: 1;
+  border: 2px dashed;
+  margin: 0 0.5em;
+}
+
+.name {
+  background-color: #4d6bd6;
+  padding: 6px;
+  margin: 6px;
+  border-radius: 6px;
+}
+
+mat-dialog-actions {
+  justify-content: flex-end;
+}
+

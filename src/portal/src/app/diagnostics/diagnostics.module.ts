@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'
 import { ChartModule } from 'angular2-chartjs';
 import { MaterialsModule } from '../materials.module';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { WidgetsModule } from '../widgets/widgets.module';
 import { DiagnosticsRoutingModule } from './diagnostics-routing.module';
 import { DiagnosticsComponent } from './diagnostics.component';
@@ -25,7 +24,6 @@ import { TaskDetailComponent } from './result-detail/pingpong-test/task-detail/t
     WidgetsModule,
     ChartModule,
     FormsModule,
-    InfiniteScrollModule
   ],
   declarations: [DiagnosticsComponent, ResultListComponent, ResultDetailComponent, ResultLayoutComponent, ServiceRunningTestComponent, PingTestComponent, PingTestNodeResultComponent, PingPongTestComponent, DiagEventsComponent, TaskDetailComponent],
   entryComponents: [ServiceRunningTestComponent, PingTestComponent, PingTestNodeResultComponent, PingPongTestComponent, DiagEventsComponent, TaskDetailComponent]

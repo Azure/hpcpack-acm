@@ -211,7 +211,7 @@ export class ResultDetailComponent implements OnInit {
         }
       },
       //interval(in ms):
-      200
+      0,
     );
   }
 
