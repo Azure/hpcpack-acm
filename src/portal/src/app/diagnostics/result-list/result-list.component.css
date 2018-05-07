@@ -31,6 +31,10 @@ mat-table {
   background: rgba(0, 0, 0, .04);
 }
 
+.mat-row a {
+  color: #3b46da;
+}
+
 .Finished {
   color: #2E7D32;
 }

@@ -15,7 +15,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
   @ViewChild(MatPaginator) paginator: MatPaginator;
 
   private dataSource = new MatTableDataSource();
-  private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'result', 'actions'];
+  private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'actions'];
 
   private selection = new SelectionModel(true, []);
   private interval: number;
@@ -178,10 +178,6 @@ export class ResultListComponent implements OnInit, OnDestroy {
       case 'Canceled': return 'cancel';
       default: return 'autonew';
     }
-  }
-
-  private getResult(id) {
-    this.router.navigate(['/diagnostics/results/' + id]);
   }
 
   applyFilter(text: string): void {
