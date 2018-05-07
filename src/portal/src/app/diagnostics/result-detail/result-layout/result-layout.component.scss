@@ -138,8 +138,13 @@ app-back-button {
   align-items: center;
 }
 
+.overview-value {
+  font-size: .9em;
+}
+
 .select-node{
   margin-top: .7em;
+  margin-left: 1em;
 }
 
 .mat-form-field-hide-placeholder .mat-select-placeholder{

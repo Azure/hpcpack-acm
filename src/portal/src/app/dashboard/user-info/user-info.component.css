@@ -1,11 +1,15 @@
 .card {
     border: 1px solid rgb(177, 181, 188, .3);
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     background-color: #FFF;
-    padding: 1em .5em;
+    padding: 1em;
     font-family: Roboto, "Helvetica Neue", sans-serif;
     color: rgba(0, 0, 0, .7);
+}
+
+.outline {
+    display: flex;
 }
 
 .icon {
@@ -23,6 +27,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    padding-left: 1.2em;
 }
 
 .info-title {

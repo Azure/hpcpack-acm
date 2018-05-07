@@ -41,7 +41,7 @@
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
       <mat-cell *matCellDef="let result">
-        {{result.id}}
+        <div class="id" (click)="getResult(result.id)"> {{result.id}} </div>
       </mat-cell>
     </ng-container>
 

@@ -2,15 +2,15 @@
   border: 1px solid rgb(177, 181, 188, .3);
   display: flex;
   justify-content: space-between;
+  align-items: center;
   background-color: #FFF;
-  padding: .5em;
+  padding: .5em 1em;
   font-family: Roboto, "Helvetica Neue", sans-serif;
   color: rgba(0, 0, 0, .7);
 }
 
 .total-info {
   display: flex;
-  justify-content: space-between;
 }
 
 .icon {
@@ -30,6 +30,7 @@
   align-items: center;
   font-size: 1em;
   font-weight: 500;
+  padding-left: 1.2em;
 }
 
 .info-title {
@@ -59,30 +60,4 @@
 
 .info-content .active {
   color: rgba(28, 86, 188, .9);
-}
-
-.OK {
-  border-left-color: rgba(47, 196, 134, .8);
-}
-
-.Transitional {
-  border-left-color: rgba(63, 81, 181, .8);
-}
-
-.Unapproved {
-  border-left-color: rgba(206, 206, 206, .8);
-}
-
-.Warning {
-  border-left-color: rgba(232, 199, 37, .8);
-}
-
-.Error {
-  border-left-color: rgba(229, 83, 57, .8);
-}
-
-.node-health {
-  background: #FFF;
-  border: 1px solid rgb(177, 181, 188, .3);
-  border-top: none;
 }

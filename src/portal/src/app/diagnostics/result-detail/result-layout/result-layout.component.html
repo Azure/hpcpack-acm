@@ -1,6 +1,6 @@
 <div class="title main">
   <!-- <i class="material-icons" [ngClass]="result.state">{{stateIcon(result.state)}}</i> -->
-  <div class="name">{{result.name}}</div>
+  <div class="name">{{result.id}} - {{result.name}}</div>
   <app-back-button></app-back-button>
 </div>
 <div class="area-title">
@@ -25,7 +25,7 @@
       </div>
     </div>
     <div class="overview-chart">
-      <chart type="horizontalBar" class="col-lg-6" [data]="latencyData" [options]="latencyOption">
+      <chart type="horizontalBar" class="col-lg-4" [data]="latencyData" [options]="latencyOption">
       </chart>
 
       <div class="result-detail col-lg-2">
@@ -39,23 +39,23 @@
         </div>
         <div class="overview-info">
           <div class="overview-title"> Packet Size </div>
-          <div>{{latencyPacketSize}}</div>
+          <div class="overview-value">{{latencyPacketSize}}</div>
         </div>
         <div class="overview-info">
           <div class="overview-title"> Average </div>
-          <div>{{latencyAverage | number: '1.2-2'}} us</div>
+          <div class="overview-value">{{latencyAverage | number: '1.2-2'}} us</div>
         </div>
         <div class="overview-info">
           <div class="overview-title"> Median </div>
-          <div>{{latencyMedian | number: '1.2-2'}} us</div>
+          <div class="overview-value">{{latencyMedian | number: '1.2-2'}} us</div>
         </div>
         <div class="overview-info">
           <div class="overview-title"> Standard Deviation </div>
-          <div>{{latencyStandardDeviation | number: '1.2-2'}} us</div>
+          <div class="overview-value">{{latencyStandardDeviation | number: '1.2-2'}} us</div>
         </div>
         <div class="overview-info">
           <div class="overview-title"> Variability </div>
-          <div>{{latencyVariability}}</div>
+          <div class="overview-value">{{latencyVariability}}</div>
         </div>
       </div>
 
@@ -101,7 +101,7 @@
       </div>
     </div>
     <div class="overview-chart">
-      <chart type="horizontalBar" class="col-lg-5" [data]="throughputData" [options]="throughputOption">
+      <chart type="horizontalBar" class="col-lg-4" [data]="throughputData" [options]="throughputOption">
       </chart>
 
       <div class="result-detail col-lg-2">
@@ -112,23 +112,23 @@
         </div>
         <div class="overview-info">
           <div class="overview-title"> Packet Size </div>
-          <div>{{throughputPacketSize}}</div>
+          <div class="overview-value">{{throughputPacketSize}}</div>
         </div>
         <div class="overview-info">
           <div class="overview-title"> Average </div>
-          <div>{{throughputAverage | number: '1.2-2'}} us</div>
+          <div class="overview-value">{{throughputAverage | number: '1.2-2'}} us</div>
         </div>
         <div class="overview-info">
           <div class="overview-title"> Median </div>
-          <div>{{throughputMedian | number: '1.2-2'}} us</div>
+          <div class="overview-value">{{throughputMedian | number: '1.2-2'}} us</div>
         </div>
         <div class="overview-info">
           <div class="overview-title"> Standard Deviation </div>
-          <div>{{throughputStandardDeviation | number: '1.2-2'}} us</div>
+          <div class="overview-value">{{throughputStandardDeviation | number: '1.2-2'}} us</div>
         </div>
         <div class="overview-info">
           <div class="overview-title"> Variability </div>
-          <div>{{throughputVariability}}</div>
+          <div class="overview-value">{{throughputVariability}}</div>
         </div>
       </div>
 
