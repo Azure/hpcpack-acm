@@ -63,7 +63,9 @@
         </div>
 
         <div class="control bottom">
-          <a [href]="currentOutputUrl" *ngIf="currentOutputUrl">Download the whole output</a>
+          <a [href]="currentOutputUrl" *ngIf="currentOutputUrl">
+            <i class="material-icons">file_download</i> Download the whole output
+          </a>
           <mat-checkbox [disabled]="loading && loading != 'auto'" [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoscroll</mat-checkbox>
         </div>
       </div>

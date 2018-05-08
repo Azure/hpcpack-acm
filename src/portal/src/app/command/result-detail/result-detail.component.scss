@@ -97,6 +97,14 @@ pre {
   display: flex;
   justify-content: space-between;
   padding: 5px;
+
+  a {
+    color: inherit;
+  }
+
+  a .material-icons {
+    vertical-align: top;
+  }
 }
 
 .control.static {
