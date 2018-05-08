@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, AfterViewInit, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
@@ -12,7 +12,7 @@ import { ChartComponent } from 'angular2-chartjs';
   styleUrls: ['./node-detail.component.css']
 })
 
-export class NodeDetailComponent implements AfterViewInit, OnDestroy {
+export class NodeDetailComponent implements OnInit, OnDestroy {
   @ViewChild('cpuChart') cpuChart: ChartComponent;
 
   nodeProperties: any = {};
@@ -125,9 +125,17 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
     },
   };
 
-  events: MatTableDataSource<any> = new MatTableDataSource();
+  events = [{
+    time: new Date(),
+    content: 'test event by JJ'
+  }, {
+    time: new Date(),
+    content: 'test event by JJ'
+  }];
 
-  eventColumns = ['id', 'type', 'resourceType', 'resources', 'status', 'notBefore'];
+  // events: MatTableDataSource<any> = new MatTableDataSource();
+
+  // eventColumns = ['id', 'type', 'resourceType', 'resources', 'status', 'notBefore'];
 
   private subcription: Subscription;
 
@@ -178,36 +186,6 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
       );
     });
   }
-
-  // ngAfterViewInit() {
-  //   this.subcription = this.route.paramMap.subscribe(map => {
-  //     let id = map.get('id');
-  //     this.api.node.get(id).subscribe(node => {
-
-  //       this.nodeInfo = node;
-  //       console.log(this.nodeInfo);
-  //       this.nodeProperties = node.properties;
-  //       this.events.data = node.events;
-  //     });
-
-  //     this.historyLoop = Loop.start(
-  //       //in-memory-web-api to mock cpu usage history
-  //       // this.api.nodeHistory.getMockData(id),
-  //       this.api.nodeHistory.get(id),
-  //       {
-  //         next: (res) => {
-  //           this.labels = this.makeLabels(res.history);
-  //           this.nodeInfo = res.nodeInfo;
-  //           console.log(res.nodeInfo);
-  //           let cpuTotal = this.makeCpuTotalData(res.history);
-  //           this.cpuData = { labels: this.labels, datasets: [{ label: 'CPU usage', data: cpuTotal, borderColor: '#215ebb' }] };
-  //           return true;
-  //         }
-  //       },
-  //       this.interval
-  //     );
-  //   });
-  // }
 
   ngOnDestroy() {
     if (this.subcription)

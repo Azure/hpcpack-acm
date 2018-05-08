@@ -34,6 +34,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
+  padding-top: 1em;
 }
 
 .area-title {
@@ -154,4 +155,54 @@ hr {
   background-color: #fff;
   height: 1px;
   width: 90%;
+}
+
+.event {
+  display: flex;
+  align-items: center;
+  font-size: .9rem;
+  padding: 0 10px;
+}
+
+.event-time {
+  font-size: .8rem;
+  min-width: 7.4rem;
+  color: rgba(63, 81, 181, .8);
+}
+
+.time-line {
+  border-right: .1em solid rgba(63, 81, 181, .8);
+  padding: 1em;
+  position: relative;
+}
+
+.time-line::after {
+  position: absolute;
+  content: '';
+  width: .65em;
+  height: .65em;
+  right: -.35em;
+  top: 1.3em;
+  border: .05em rgba(63, 81, 181, .8) solid;
+  border-radius: .6em;
+  background-color: #FFF;
+}
+
+.event-info {
+  display: flex;
+  padding-left: 1em;
+}
+
+.event-type .material-icons {
+  font-size: 1.2rem;
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+.event-source {
+  margin-right: 5px;
+}
+
+.event-content {
+  color: rgba(0, 0, 0, .7);
 }

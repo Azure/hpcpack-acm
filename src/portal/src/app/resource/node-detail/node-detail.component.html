@@ -64,7 +64,7 @@
         <div class="area-title">NETWORK INFO</div>
         <div class="network" *ngFor="let n of nodeRegistrationInfo.networksInfo">
           <div class="info-item">
-            <div class="overview-title">name</div>
+            <div class="overview-title">Name</div>
             <div class="overview-value">{{n.name}}</div>
           </div>
           <div class="info-item">
@@ -72,15 +72,15 @@
             <div class="overview-value">{{n.macAddress}}</div>
           </div>
           <div class="info-item">
-            <div class="overview-title">ipV4</div>
+            <div class="overview-title">IPV4</div>
             <div class="overview-value">{{n.ipV4}}</div>
           </div>
           <div class="info-item">
-            <div class="overview-title">ipV6</div>
+            <div class="overview-title">IPV6</div>
             <div class="overview-value">{{n.ipV6}}</div>
           </div>
           <div class="info-item">
-            <div class="overview-title">isIB</div>
+            <div class="overview-title">IsIB</div>
             <div class="overview-value">{{n.isIB}}</div>
           </div>
           <hr/>
@@ -89,108 +89,18 @@
     </div>
   </mat-tab>
   <mat-tab label="Events">
-    <!-- mat-table #table [dataSource]="events">
-      <ng-container matColumnDef="id">
-        <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
-        <mat-cell *matCellDef="let event">{{event.id}}</mat-cell>
-      </ng-container>
-
-      <ng-container matColumnDef="type">
-        <mat-header-cell *matHeaderCellDef> Type </mat-header-cell>
-        <mat-cell *matCellDef="let event"> {{event.type}} </mat-cell>
-      </ng-container>
-
-      <ng-container matColumnDef="resourceType">
-        <mat-header-cell *matHeaderCellDef> Resource Type </mat-header-cell>
-        <mat-cell *matCellDef="let event"> {{event.resourceType}} </mat-cell>
-      </ng-container>
-
-      <ng-container matColumnDef="resources">
-        <mat-header-cell *matHeaderCellDef> Resources </mat-header-cell>
-        <mat-cell *matCellDef="let event"> {{event.resources?.join(', ')}} </mat-cell>
-      </ng-container>
-
-      <ng-container matColumnDef="status">
-        <mat-header-cell *matHeaderCellDef> Status </mat-header-cell>
-        <mat-cell *matCellDef="let event"> {{event.status}} </mat-cell>
-      </ng-container>
-
-      <ng-container matColumnDef="notBefore">
-        <mat-header-cell *matHeaderCellDef> Not Before </mat-header-cell>
-        <mat-cell *matCellDef="let event"> {{event.notBefore | date:'yyyy-MM-dd HH:mm:ss'}} </mat-cell>
-      </ng-container>
-
-      <mat-header-row *matHeaderRowDef="eventColumns"></mat-header-row>
-      <mat-row *matRowDef="let event; columns: eventColumns;"></mat-row>
-    </mat-table -->
-  </mat-tab>
-  <mat-tab label="Jobs">
-  </mat-tab>
-  <mat-tab label="Properties">
-    <div class="row">
-      <!-- div class="col-lg-6">
-        <h3>Basics</h3>
-        <table>
-          <tr>
-            <td class="name">CPU</td>
-            <td class="value">{{nodeProperties.cpu}}</td>
-          </tr>
-          <tr>
-            <td class="name">Memory</td>
-            <td class="value">{{nodeProperties.memory}} MB</td>
-          </tr>
-          <tr>
-            <td class="name">OS</td>
-            <td class="value">{{nodeProperties.os}}</td>
-          </tr>
-        </table>
+    <div class="event" *ngFor="let event of events">
+      <div class="time-line">
+        <div class="event-time">{{event.time | date: 'yyyy-MM-dd HH:mm:ss'}}</div>
       </div>
-      <div class="col-lg-6">
-        <h3>Network</h3>
-        <table>
-          <tr>
-            <td class="name">IP Address</td>
-            <td class="value">{{nodeProperties.network?.ip}}</td>
-          </tr>
-          <tr>
-            <td class="name">Subnet Mask</td>
-            <td class="value">{{nodeProperties.network?.subnet}}</td>
-          </tr>
-          <tr>
-            <td class="name">Mac Address</td>
-            <td class="value">{{nodeProperties.network?.mac}}</td>
-          </tr>
-          <tr>
-            <td class="name">Network Name</td>
-            <td class="value">{{nodeProperties.network?.name}}</td>
-          </tr>
-          <tr>
-            <td class="name">Domain</td>
-            <td class="value">{{nodeProperties.network?.domain}}</td>
-          </tr>
-        </table>
-      </div -->
-      <div class="col-lg-6">
-        <h3>HPC Node</h3>
-        <table>
-          <tr>
-            <td class="name">State</td>
-            <td class="value">{{nodeInfo.state}}</td>
-          </tr>
-          <tr>
-            <td class="name">Health</td>
-            <td class="value">{{nodeInfo.health}}</td>
-          </tr>
-          <!-- tr>
-            <td class="name">Groups</td>
-            <td class="value">{{nodeProperties.nodeGroup?.join(', ')}}</td>
-          </tr>
-          <tr>
-            <td class="name">Template</td>
-            <td class="value">{{nodeProperties.nodeTemplate}}</td>
-          </tr -->
-        </table>
+      <div class="event-info" [ngClass]="event.type">
+        <div class="event-content">{{event.content}}</div>
       </div>
     </div>
+    <div class="event" *ngIf="events.length < 1">
+      {{message}}
+    </div>
+  </mat-tab>
+  <mat-tab label="Jobs">
   </mat-tab>
 </mat-tab-group>
