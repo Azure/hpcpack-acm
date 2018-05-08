@@ -21,7 +21,7 @@ nav {
 
 .mat-column-select {
   overflow: initial;
-  flex: 0.3;
+  flex: 0;
 }
 
 .mat-column-actions {
@@ -45,14 +45,6 @@ nav {
 .mat-cell, .mat-header-cell {
   padding: 0 2px;
   text-align: center;
-}
-
-.mat-column-name {
-  text-align: left;
-}
-
-.mat-column-select {
-  text-align: left;
 }
 
 .mat-column-runningJobCount, .mat-column-coreCount, .mat-column-memory {

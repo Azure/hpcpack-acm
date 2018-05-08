@@ -1,25 +1,90 @@
 <div class="detail-header">
   <div class="header-info">
-    <div class="node-name">{{node.name}}</div>
-    <div class="node-tag" [ngClass]="node.health == 'Error' ? 'error-tag' : 'healthy-tag'"> {{node.health}} </div>
-    <div class="node-tag" [ngClass]="node.state == 'Online' ? 'online-tag' : 'offline-tag'"> {{node.state}} </div>
+    <div class="node-name">{{nodeInfo.name}}</div>
+    <div class="node-tag" [ngClass]="nodeInfo.health == 'Error' ? 'error-tag' : 'healthy-tag'"> {{nodeInfo.health}} </div>
+    <div class="node-tag" [ngClass]="nodeInfo.state == 'Online' ? 'online-tag' : 'offline-tag'"> {{nodeInfo.state}} </div>
   </div>
-  <app-back-button></app-back-button>
 </div>
 <mat-tab-group [dynamicHeight]="true">
   <mat-tab label="Basic Info">
-    <div class="row">
-      <div class="col-lg-4">
-        <h5>CPU</h5>
-        <chart #cpuChart type="line" [data]="cpuData" [options]="cpuOptions"></chart>
+    <div class="basic-info">
+      <div class="charts">
+        <div class="chart">
+          <div class="area-title">
+            <!-- <i class="material-icons title-icon">grid_on</i> -->
+            <div>CPU</div>
+          </div>
+          <chart #cpuChart type="line" [data]="cpuData" [options]="cpuOptions"></chart>
+        </div>
+        <div class="chart">
+          <div class="area-title">
+            <!-- <i class="material-icons title-icon">grid_on</i> -->
+            <div>GPU</div>
+          </div>
+          <chart #gpuChart type="line" [data]="gpuData" [options]="gpuOptions"></chart>
+
+        </div>
+        <div class="chart">
+          <div class="area-title">
+            <!-- <i class="material-icons title-icon">network_check</i> -->
+            <div>NETWORK</div>
+          </div>
+          <chart type="line" [data]="networkData" [options]="networkOptions"></chart>
+        </div>
+        <div class="chart">
+          <div class="area-title">
+            <!-- <i class="material-icons title-icon">hd</i> -->
+            <div>DISK BYTES</div>
+          </div>
+          <chart type="line" [data]="diskData" [options]="diskOptions"></chart>
+        </div>
       </div>
-      <div class="col-lg-4">
-        <h5>Network</h5>
-        <chart type="line" [data]="networkData" [options]="networkOptions"></chart>
-      </div>
-      <div class="col-lg-4">
-        <h5>Disk</h5>
-        <chart type="line" [data]="diskData" [options]="diskOptions"></chart>
+      <div class="node-info">
+        <div class="area-title">
+          <!-- <i class="material-icons title-icon">grid_on</i> -->
+          <div>NODE REGISTRATION INFO</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Core Number</div>
+          <div class="overview-value">{{nodeRegistrationInfo.coreCount}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Memory</div>
+          <div class="overview-value">{{nodeRegistrationInfo.memoryMegabytes}} (Megabytes)</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Socket Count</div>
+          <div class="overview-value">{{nodeRegistrationInfo.socketCount}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Distro Info</div>
+          <div class="overview-value">{{nodeRegistrationInfo.distroInfo}}</div>
+        </div>
+
+        <div class="area-title">NETWORK INFO</div>
+        <div class="network" *ngFor="let n of nodeRegistrationInfo.networksInfo">
+          <div class="info-item">
+            <div class="overview-title">name</div>
+            <div class="overview-value">{{n.name}}</div>
+          </div>
+          <div class="info-item">
+            <div class="overview-title">MAC Address</div>
+            <div class="overview-value">{{n.macAddress}}</div>
+          </div>
+          <div class="info-item">
+            <div class="overview-title">ipV4</div>
+            <div class="overview-value">{{n.ipV4}}</div>
+          </div>
+          <div class="info-item">
+            <div class="overview-title">ipV6</div>
+            <div class="overview-value">{{n.ipV6}}</div>
+          </div>
+          <div class="info-item">
+            <div class="overview-title">isIB</div>
+            <div class="overview-value">{{n.isIB}}</div>
+          </div>
+          <hr/>
+        </div>
       </div>
     </div>
   </mat-tab>
@@ -110,11 +175,11 @@
         <table>
           <tr>
             <td class="name">State</td>
-            <td class="value">{{node.state}}</td>
+            <td class="value">{{nodeInfo.state}}</td>
           </tr>
           <tr>
             <td class="name">Health</td>
-            <td class="value">{{node.health}}</td>
+            <td class="value">{{nodeInfo.health}}</td>
           </tr>
           <!-- tr>
             <td class="name">Groups</td>

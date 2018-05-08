@@ -176,10 +176,6 @@ export class ResultListComponent implements OnInit, OnDestroy {
     }
   }
 
-  private getResult(id) {
-    this.router.navigate(['/diagnostics/results/' + id]);
-  }
-
   applyFilter(text: string): void {
     this.dataSource.filter = text;
   }

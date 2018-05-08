@@ -14,7 +14,6 @@ import { ChartComponent } from 'angular2-chartjs';
 
 export class NodeDetailComponent implements AfterViewInit, OnDestroy {
   @ViewChild('cpuChart') cpuChart: ChartComponent;
-  node: Node = {} as Node;
 
   nodeProperties: any = {};
 
@@ -102,6 +101,30 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
     },
   };
 
+  gpuData: any = {};
+
+  gpuOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      yAxes: [{
+        ticks: {
+          min: 0,
+          max: 100,
+          stepSize: 25,
+        },
+        scaleLabel: {
+          display: true,
+          labelString: 'Percentage'
+        }
+      }]
+    },
+    tooltips: {
+      mode: 'index',
+      intersect: false,
+    },
+  };
+
   events: MatTableDataSource<any> = new MatTableDataSource();
 
   eventColumns = ['id', 'type', 'resourceType', 'resources', 'status', 'notBefore'];
@@ -115,6 +138,10 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
   private labels: string[];
 
   private cpuCoresName = [];
+
+  private nodeInfo = {};
+
+  private nodeRegistrationInfo = {};
 
   // private cpuUsage = [];
 
@@ -130,26 +157,20 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
     this.labels = [];
   }
 
-  ngAfterViewInit() {
+  ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
       let id = map.get('id');
-      this.api.node.get(id).subscribe(node => {
-        this.node = node;
-        this.nodeProperties = node.properties;
-        this.events.data = node.events;
-      });
-
       this.historyLoop = Loop.start(
         //in-memory-web-api to mock cpu usage history
         // this.api.nodeHistory.getMockData(id),
         this.api.nodeHistory.get(id),
         {
-          next: (history) => {
-            this.labels = this.makeLabels(history);
-            let cpuTotal = this.makeCpuTotalData(history);
-            // this.makeCpuUsageData(history);
+          next: (res) => {
+            this.labels = this.makeLabels(res.history);
+            this.nodeInfo = res.nodeInfo;
+            this.nodeRegistrationInfo = res.nodeInfo.nodeRegistrationInfo;
+            let cpuTotal = this.makeCpuTotalData(res.history);
             this.cpuData = { labels: this.labels, datasets: [{ label: 'CPU usage', data: cpuTotal, borderColor: '#215ebb' }] };
-            // this.cpuData = { labels: this.labels, datasets: this.cpuUsage };
             return true;
           }
         },
@@ -157,6 +178,36 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
       );
     });
   }
+
+  // ngAfterViewInit() {
+  //   this.subcription = this.route.paramMap.subscribe(map => {
+  //     let id = map.get('id');
+  //     this.api.node.get(id).subscribe(node => {
+
+  //       this.nodeInfo = node;
+  //       console.log(this.nodeInfo);
+  //       this.nodeProperties = node.properties;
+  //       this.events.data = node.events;
+  //     });
+
+  //     this.historyLoop = Loop.start(
+  //       //in-memory-web-api to mock cpu usage history
+  //       // this.api.nodeHistory.getMockData(id),
+  //       this.api.nodeHistory.get(id),
+  //       {
+  //         next: (res) => {
+  //           this.labels = this.makeLabels(res.history);
+  //           this.nodeInfo = res.nodeInfo;
+  //           console.log(res.nodeInfo);
+  //           let cpuTotal = this.makeCpuTotalData(res.history);
+  //           this.cpuData = { labels: this.labels, datasets: [{ label: 'CPU usage', data: cpuTotal, borderColor: '#215ebb' }] };
+  //           return true;
+  //         }
+  //       },
+  //       this.interval
+  //     );
+  //   });
+  // }
 
   ngOnDestroy() {
     if (this.subcription)
@@ -166,7 +217,6 @@ export class NodeDetailComponent implements AfterViewInit, OnDestroy {
       Loop.stop(this.historyLoop);
     }
   }
-
 
   dateFormat(value): string {
     return value >= 10 ? value.toString() : '0' + value;

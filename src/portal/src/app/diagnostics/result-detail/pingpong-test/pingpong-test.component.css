@@ -60,10 +60,6 @@ mat-header-cell {
   margin-left: 0.3em;
 }
 
-app-back-button {
-  float: right;
-}
-
 .message {
   padding: 0 1em;
 }

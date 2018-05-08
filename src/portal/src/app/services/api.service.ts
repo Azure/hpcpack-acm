@@ -100,7 +100,8 @@ export class NodeHistoryApi extends Resource<any> {
         historyData.push({ label: key, data: node.history.data[key] });
       }
     }
-    return historyData;
+    node.history = historyData;
+    return node;
   }
 }
 

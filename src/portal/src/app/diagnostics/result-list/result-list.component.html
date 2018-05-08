@@ -41,7 +41,7 @@
     <ng-container matColumnDef="id">
       <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
       <mat-cell *matCellDef="let result">
-        <div class="id" (click)="getResult(result.id)"> {{result.id}} </div>
+        <a [routerLink]="result.id">{{result.id}}</a>
       </mat-cell>
     </ng-container>
 
@@ -80,15 +80,6 @@
       </mat-cell>
     </ng-container>
 
-    <ng-container matColumnDef="result">
-      <mat-header-cell *matHeaderCellDef></mat-header-cell>
-      <mat-cell *matCellDef="let result">
-        <button mat-icon-button (click)="getResult(result.id)" matTooltip="Result">
-          <i class="material-icons">wrap_text</i>
-        </button>
-      </mat-cell>
-    </ng-container>
-
     <ng-container matColumnDef="actions">
       <mat-header-cell *matHeaderCellDef></mat-header-cell>
       <mat-cell *matCellDef="let result">
@@ -110,7 +101,7 @@
 
 <div class="loading">
   <!-- <mat-spinner *ngIf="!hasReceivedData"></mat-spinner> -->
-  <mat-progress-bar *ngIf="!hasReceivedData" mode="indeterminate"></mat-progress-bar>
+  <mat-progress-bar *ngIf="!hasReceivedData" mode="buffer"></mat-progress-bar>
   <div class="load-finish" *ngIf="loadFinish">
     No more data.
   </div>
