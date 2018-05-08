@@ -34,11 +34,11 @@
       </div>
 
       <div class="col-md-9 output">
-        <div class="control static" *ngIf="currentOutput?.start === 0; else prevButton">
+        <div class="control static up" *ngIf="currentOutput?.start === 0; else prevButton">
           Output Begin
         </div>
         <ng-template #prevButton>
-          <button class="control" [ngClass]="{ attention: !loading && selectedNode }" (click)="loadPrev(selectedNode)"
+          <button class="control up" [ngClass]="{ attention: !loading && selectedNode }" (click)="loadPrev(selectedNode)"
             mat-button [disabled]="loading || !selectedNode" matTooltip="Load more content backward">
             <span *ngIf="loading == 'prev'; else upArrow">Loading...</span>
             <ng-template #upArrow><i class="material-icons">keyboard_arrow_up</i></ng-template>
@@ -47,11 +47,11 @@
 
         <pre #output>{{currentOutput?.content}}</pre>
 
-        <div class="control static" *ngIf="currentOutput?.end; else nextButton">
+        <div class="control static down" *ngIf="currentOutput?.end; else nextButton">
           Output End
         </div>
         <ng-template #nextButton>
-          <button class="control" [ngClass]="{ attention: !loading && selectedNode }" (click)="loadNext(selectedNode)"
+          <button class="control down" [ngClass]="{ attention: !loading && selectedNode }" (click)="loadNext(selectedNode)"
             mat-button [disabled]="loading || !selectedNode" matTooltip="Load more content forward">
             <span *ngIf="loading == 'next'; else downArrow">Loading...</span>
             <ng-template #downArrow><i class="material-icons">keyboard_arrow_down</i></ng-template>
@@ -63,7 +63,9 @@
         </div>
 
         <div class="control bottom">
-          <a [href]="currentOutputUrl" *ngIf="currentOutputUrl">Download the whole output</a>
+          <a [href]="currentOutputUrl" *ngIf="currentOutputUrl">
+            <i class="material-icons">file_download</i> Download the whole output
+          </a>
           <mat-checkbox [disabled]="loading && loading != 'auto'" [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoscroll</mat-checkbox>
         </div>
       </div>

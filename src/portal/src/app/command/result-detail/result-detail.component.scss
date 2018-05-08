@@ -97,11 +97,27 @@ pre {
   display: flex;
   justify-content: space-between;
   padding: 5px;
+
+  a {
+    color: inherit;
+  }
+
+  a .material-icons {
+    vertical-align: top;
+  }
 }
 
 .control.static {
   text-align: center;
   background-color: #e4e4e4;
   padding: 8px;
-  border-radius: 5px;
 }
+
+.control.static.up, button.control.up {
+  border-radius: 8px 8px 0 0;
+}
+
+.control.static.down, button.control.down {
+  border-radius: 0 0 8px 8px;
+}
+
