@@ -29,7 +29,7 @@ mat-table {
 
 .mat-column-events, .mat-column-result, .mat-column-actions {
   flex: 0.3;
-  color: #616161;
+  /* color: #616161; */
 }
 
 .mat-column-id, .mat-column-state {
@@ -58,13 +58,7 @@ mat-table {
 
 .test-name {
   text-decoration-line: none;
-  color: #424242;
-  /* text-align: left; */
-}
-
-.mat-sort-header-container {
-  display: flex;
-  justify-content: center;
+  /* color: #424242; */
 }
 
 .loading {

@@ -20,7 +20,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
   private selection = new SelectionModel(true, []);
   private interval: number;
   private diagsLoop: Object;
-  private currentPageIndex = 0;
+  private lastId = 0;
   private currentPageSize = 50;
   private scrolled = false;
 
@@ -44,7 +44,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.diagsLoop = this.getDiags(this.currentPageIndex, this.currentPageSize);
+    this.diagsLoop = this.getDiags(this.lastId, this.currentPageSize);
     /*configure filter*/
     this.dataSource.filterPredicate = (data: any, filter: string) => {
       return data.name.indexOf(filter) != -1 ||
@@ -68,6 +68,9 @@ export class ResultListComponent implements OnInit, OnDestroy {
       this.api.diag.getDiagsByPage(pageIndex, pageSize),
       {
         next: (result) => {
+          if (result.length > 0) {
+            this.lastId = result[result.length - 1].id;
+          }
           let diags = result.filter(e => {
             return e.diagnosticTest != undefined && e.name != undefined;
           });
@@ -106,19 +109,12 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   onScrollDown(ev) {
-    console.log('scrolled down!!', ev);
-    let tableDiv = document.getElementsByTagName("mat-table");
-
-    if (this.loadFinish) {
-      console.log("Load finished!");
-    }
-    else if (this.hasReceivedData) {
+    if (!this.loadFinish && this.hasReceivedData) {
       //how to decide the last api has returned data and rendered
-      this.currentPageIndex = this.currentPageIndex + this.currentPageSize;
       if (this.diagsLoop) {
         Loop.stop(this.diagsLoop);
       }
-      this.diagsLoop = this.getDiags(this.currentPageIndex, this.currentPageSize);
+      this.diagsLoop = this.getDiags(this.lastId, this.currentPageSize);
     }
   }
 
