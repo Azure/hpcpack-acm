@@ -218,9 +218,6 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
       this.updateLatencyView(this.overviewLatencyResult);
       this.updateThroughputView(this.overviewThroughputResult);
     }
-    else if(result.Error != undefined) {
-      
-    }
   }
 
 
@@ -284,12 +281,16 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
     let data;
     if (this.result.aggregationResult !== undefined) {
       if (mode == 'node') {
-        data = this.nodeLatencyData[this.selectedNode];
+        if (this.nodeLatencyData != undefined) {
+          data = this.nodeLatencyData[this.selectedNode];
+        }
       }
       else if (mode == 'total') {
         data = this.overviewLatencyResult;
       }
-      this.updateLatencyView(data);
+      if (data != undefined) {
+        this.updateLatencyView(data);
+      }
     }
   }
 
@@ -298,12 +299,16 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
     let data;
     if (this.result.aggregationResult !== undefined) {
       if (mode == 'node') {
-        data = this.nodeThroughputData[this.selectedNode];
+        if (this.nodeThroughputData != undefined) {
+          data = this.nodeThroughputData[this.selectedNode];
+        }
       }
       else if (mode == 'total') {
         data = this.overviewThroughputResult;
       }
-      this.updateThroughputView(data);
+      if (data != undefined) {
+        this.updateThroughputView(data);
+      }
     }
   }
 
