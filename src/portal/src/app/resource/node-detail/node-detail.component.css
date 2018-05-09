@@ -4,13 +4,14 @@
   background: #FFF;
   align-items: center;
   font-family: Roboto, "Helvetica Neue", sans-serif;
+  border-left: 4px solid #3f51b5;
+  padding: 1em;
 }
 
 .header-info {
   display: flex;
   align-items: center;
-  border-left: 4px solid #3f51b5;
-  padding: 1em;
+  margin-left: 0.3em;
 }
 
 .basic-info {
@@ -93,7 +94,7 @@ td {
 .node-tag {
   color: white;
   margin: 0 0.4em 0 0;
-  padding: 0.3em 0.4em;
+  padding: 0.3em 0.6em;
   font-size: 0.8em;
 }
 
@@ -161,28 +162,29 @@ hr {
   display: flex;
   align-items: center;
   font-size: .9rem;
-  padding: 0 10px;
+  padding: 0 1em;
 }
 
 .event-time {
-  font-size: .8rem;
-  min-width: 7.4rem;
-  color: rgba(63, 81, 181, .8);
+  color: rgba(0, 0, 0, .6);
 }
 
 .time-line {
   border-right: .1em solid rgba(63, 81, 181, .8);
   padding: 1em;
   position: relative;
+  width: 13em;
+  text-align: right;
+  font-size: .8rem;
 }
 
 .time-line::after {
   position: absolute;
   content: '';
-  width: .65em;
-  height: .65em;
+  width: .7em;
+  height: .7em;
   right: -.35em;
-  top: 1.3em;
+  top: 1.7em;
   border: .05em rgba(63, 81, 181, .8) solid;
   border-radius: .6em;
   background-color: #FFF;
@@ -191,6 +193,18 @@ hr {
 .event-info {
   display: flex;
   padding-left: 1em;
+}
+
+.event-type {
+  color: rgba(63, 81, 181, 0.8);
+}
+
+.node-event {
+  color: rgba(0, 150, 136, .8);
+}
+
+.azure-event {
+  color: rgba(63, 81, 181, .8);
 }
 
 .event-type .material-icons {

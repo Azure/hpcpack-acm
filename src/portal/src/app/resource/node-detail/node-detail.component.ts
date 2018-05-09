@@ -127,10 +127,28 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
   events = [{
     time: new Date(),
-    content: 'test event by JJ'
+    content: 'test event by JJ',
+    type: 'node event'
   }, {
     time: new Date(),
-    content: 'test event by JJ'
+    content: 'test event by JJ',
+    type: 'Azure scheduled event'
+  }, {
+    time: new Date(),
+    content: 'test event by JJ',
+    type: 'node event'
+  }, {
+    time: new Date(),
+    content: 'test event by JJ',
+    type: 'Azure scheduled event'
+  }, {
+    time: new Date(),
+    content: 'test event by JJ',
+    type: 'node event'
+  }, {
+    time: new Date(),
+    content: 'test event by JJ',
+    type: 'Azure scheduled event'
   }];
 
   // events: MatTableDataSource<any> = new MatTableDataSource();
@@ -324,4 +342,13 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
   //     ]
   //   };
   // }
+
+  eventType(type) {
+    if (type == 'node event') {
+      return 'node-event';
+    }
+    else if (type == 'Azure scheduled event') {
+      return 'azure-event';
+    }
+  }
 }
