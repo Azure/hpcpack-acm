@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { ApiService } from './services/api.service';
@@ -62,12 +62,28 @@ export class AppComponent {
     },
   ];
 
+  @ViewChild('side')
+  private sidePane;
+
   constructor(
     public authService: AuthService,
     public router: Router,
     public route: ActivatedRoute,
     public api: ApiService
   ) {}
+
+  ngAfterViewInit(): void {
+    //Open the side nav with one second delay, otherwise there may be a
+    //big virtical gap between the side nav and main content. It seems to be
+    //an issue from Angular Material and/or Bootstrap Grid system. The delay
+    //is not the ultimate way to fix the problem. It just reduces the chance
+    //of the gap, and it seems good enough now. The ultimate way may be to
+    //replace the Bootstrap Grid system with something else, which involves
+    //a lot more work.
+    setTimeout(() => {
+      this.sidePane.toggle();
+    }, 1000);
+  }
 
   private get isLoggedIn(): boolean {
     return this.authService.isLoggedIn;

@@ -15,7 +15,7 @@
   </mat-toolbar>
 
   <mat-sidenav-container class="app-container">
-    <mat-sidenav #side mode="side" opened="true">
+    <mat-sidenav #side mode="side" opened="false">
       <mat-nav-list>
         <a *ngFor="let item of items" class="nav-list" mat-list-item routerLinkActive="active" [routerLink]="item.link">
           <i class="material-icons">{{item.icon}}</i><span class="title">{{item.title}}</span>
