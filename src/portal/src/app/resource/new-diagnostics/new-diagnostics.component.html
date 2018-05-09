@@ -39,7 +39,7 @@
         Please select one test in step 1!
       </div>
       <ng-template #testsWithParameters>
-        <div *ngIf="selectedTest.parameters.length == 0; else showParameters" class="no-params">
+        <div *ngIf="selectedTest.paramerers == undefined || selectedTest.parameters.length == 0; else showParameters" class="no-params">
           No parameters for the selected tests.
         </div>
         <ng-template #showParameters>

@@ -90,10 +90,12 @@ export class NewDiagnosticsComponent implements OnInit {
       this.errorMessage = 'Please enter the diagnostic name in step 3 ! ';
     }
     else {
-      let args = this.selectedTest.parameters.map((item) => {
-        return { name: item.name, value: item.defaultValue };
-      });
-      this.selectedTest.arguments = args;
+      if (this.selectedTest.parameters != undefined) {
+        let args = this.selectedTest.parameters.map((item) => {
+          return { name: item.name, value: item.defaultValue };
+        });
+        this.selectedTest.arguments = args;
+      }
 
       let diagInfo = { selectedTest: this.selectedTest, diagTestName: this.diagTestName };
       this.dialogRef.close(diagInfo);

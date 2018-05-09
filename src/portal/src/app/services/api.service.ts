@@ -168,7 +168,7 @@ export class CommandApi extends Resource<CommandResult> {
               res.content += result.content;
             }
             res.size += result.size;
-            if (typeof((res as any).offset) === 'undefined') {
+            if (typeof ((res as any).offset) === 'undefined') {
               (res as any).offset = result.offset;
             }
             let eof = result.size === 0 && opt.over && opt.over();
@@ -290,6 +290,24 @@ export class DiagApi extends Resource<any> {
     return data;
   }
 
+  isJSON(item) {
+    item = typeof item !== "string"
+      ? JSON.stringify(item)
+      : item;
+
+    try {
+      item = JSON.parse(item);
+    } catch (e) {
+      return false;
+    }
+
+    if (typeof item === "object" && item !== null) {
+      return true;
+    }
+
+    return false;
+  }
+
   getDiagTests() {
     let url = this.url + '/tests';
     return this.http.get<any>(url)
@@ -307,7 +325,7 @@ export class DiagApi extends Resource<any> {
     return this.http.get<any>(url)
       .pipe(
         map(e => {
-          if (e.aggregationResult != undefined) {
+          if (e.aggregationResult != undefined && this.isJSON(e.aggregationResult)) {
             e.aggregationResult = JSON.parse(e.aggregationResult);
           }
           return e;

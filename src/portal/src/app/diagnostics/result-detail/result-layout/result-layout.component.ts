@@ -142,10 +142,15 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
   updateAggregationResult() {
     this.makeChartData();
     this.getJobState.emit(this.result.state);
-    if (this.result.aggregationResult == undefined) {
-      this.result.aggregationResult = "Waiting for the aggregation result...";
-    }
-    else {
+    // if (this.result.aggregationResult == undefined) {
+    //   this.result.aggregationResult = "Waiting for the aggregation result...";
+    // }
+    // else {
+    //   let res = this.result.aggregationResult;
+    //   this.getAggregationResult(res);
+    // }
+
+    if ((this.result.aggregationResult !== undefined && this.api.diag.isJSON(this.result.aggregationResult))) {
       let res = this.result.aggregationResult;
       this.getAggregationResult(res);
     }
@@ -200,17 +205,22 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
   }
 
   getAggregationResult(result) {
-    this.nodes = Object.keys(result.Latency.ResultByNode);
-    this.nodeLatencyData = result.Latency.ResultByNode;
-    this.nodeThroughputData = result.Throughput.ResultByNode;
-    this.latencyPacketSize = result.Latency['Packet_size'];
-    this.throughputPacketSize = result.Throughput['Packet_size'];
+    if (result.Latency != undefined && result.Throughput != undefined) {
+      this.nodes = Object.keys(result.Latency.ResultByNode);
+      this.nodeLatencyData = result.Latency.ResultByNode;
+      this.nodeThroughputData = result.Throughput.ResultByNode;
+      this.latencyPacketSize = result.Latency['Packet_size'];
+      this.throughputPacketSize = result.Throughput['Packet_size'];
 
-    this.selectedNode = this.nodes[0];
-    this.overviewLatencyResult = result.Latency.Result;
-    this.overviewThroughputResult = result.Throughput.Result;
-    this.updateLatencyView(this.overviewLatencyResult);
-    this.updateThroughputView(this.overviewThroughputResult);
+      this.selectedNode = this.nodes[0];
+      this.overviewLatencyResult = result.Latency.Result;
+      this.overviewThroughputResult = result.Throughput.Result;
+      this.updateLatencyView(this.overviewLatencyResult);
+      this.updateThroughputView(this.overviewThroughputResult);
+    }
+    else if(result.Error != undefined) {
+      
+    }
   }
 
 
@@ -272,25 +282,29 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
   setLatencyActiveMode(mode: string) {
     this.activeLatencyMode = mode;
     let data;
-    if (mode == 'node') {
-      data = this.nodeLatencyData[this.selectedNode];
+    if (this.result.aggregationResult !== undefined) {
+      if (mode == 'node') {
+        data = this.nodeLatencyData[this.selectedNode];
+      }
+      else if (mode == 'total') {
+        data = this.overviewLatencyResult;
+      }
+      this.updateLatencyView(data);
     }
-    else if (mode == 'total') {
-      data = this.overviewLatencyResult;
-    }
-    this.updateLatencyView(data);
   }
 
   setThroughputActiveMode(mode: string) {
     this.activeThroughputMode = mode;
     let data;
-    if (mode == 'node') {
-      data = this.nodeThroughputData[this.selectedNode];
+    if (this.result.aggregationResult !== undefined) {
+      if (mode == 'node') {
+        data = this.nodeThroughputData[this.selectedNode];
+      }
+      else if (mode == 'total') {
+        data = this.overviewThroughputResult;
+      }
+      this.updateThroughputView(data);
     }
-    else if (mode == 'total') {
-      data = this.overviewThroughputResult;
-    }
-    this.updateThroughputView(data);
   }
 
   changeLatencyNode() {
