@@ -20,7 +20,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
   private selection = new SelectionModel(true, []);
   private interval: number;
   private diagsLoop: Object;
-  private lastId = 0;
+  private lastId = Number.MAX_VALUE;
   private currentPageSize = 50;
   private scrolled = false;
 

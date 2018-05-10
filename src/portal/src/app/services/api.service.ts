@@ -338,7 +338,7 @@ export class DiagApi extends Resource<any> {
   }
 
   getDiagsByPage(lastId: any, count: any) {
-    let url = this.url + '?lastid=' + lastId + '&count=' + count;
+    let url = this.url + '?lastid=' + lastId + '&count=' + count + '&reverse=true';
     return this.http.get<any>(url)
       .pipe(
         map(e => {
