@@ -18,7 +18,7 @@
     <mat-sidenav #side mode="side" opened="false">
       <mat-nav-list>
         <a *ngFor="let item of items" class="nav-list" mat-list-item routerLinkActive="active" [routerLink]="item.link">
-          <i class="material-icons">{{item.icon}}</i><span class="title">{{item.title}}</span>
+          <i class="material-icons nav-icon">{{item.icon}}</i><span class="title">{{item.title}}</span>
         </a>
       </mat-nav-list>
     </mat-sidenav>
