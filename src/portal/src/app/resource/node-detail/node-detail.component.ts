@@ -31,7 +31,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
         ticks: {
           min: 0,
           max: 100,
-          stepSize: 25,
+          stepSize: 20,
         },
         scaleLabel: {
           display: true,
@@ -111,7 +111,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
         ticks: {
           min: 0,
           max: 100,
-          stepSize: 25,
+          stepSize: 20,
         },
         scaleLabel: {
           display: true,
@@ -127,27 +127,27 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
   events = [{
     time: new Date(),
-    content: 'test event by JJ',
+    content: 'This is node event, test event by JJ',
     type: 'node event'
   }, {
     time: new Date(),
-    content: 'test event by JJ',
+    content: 'This is node event, test event by JJ',
+    type: 'node event'
+  }, {
+    time: new Date(),
+    content: 'This is node event, test event by JJ',
+    type: 'node event'
+  }, {
+    time: new Date(),
+    content: 'This is Azure scheduled event, test event by JJ',
     type: 'Azure scheduled event'
   }, {
     time: new Date(),
-    content: 'test event by JJ',
+    content: 'This is node event, test event by JJ',
     type: 'node event'
   }, {
     time: new Date(),
-    content: 'test event by JJ',
-    type: 'Azure scheduled event'
-  }, {
-    time: new Date(),
-    content: 'test event by JJ',
-    type: 'node event'
-  }, {
-    time: new Date(),
-    content: 'test event by JJ',
+    content: 'This is Azure scheduled event, test event by JJ',
     type: 'Azure scheduled event'
   }];
 

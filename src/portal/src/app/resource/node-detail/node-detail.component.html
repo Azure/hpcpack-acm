@@ -2,7 +2,7 @@
   <div class="header-info">
     <div class="node-name">{{nodeInfo.name}}</div>
     <div class="node-tag" [ngClass]="nodeInfo.health == 'Error' ? 'error-tag' : 'healthy-tag'"> {{nodeInfo.health}} </div>
-    <div class="node-tag" [ngClass]="nodeInfo.state == 'Online' ? 'online-tag' : 'offline-tag'"> {{nodeInfo.state}} </div>
+    <!-- <div class="node-tag" [ngClass]="nodeInfo.state == 'Online' ? 'online-tag' : 'offline-tag'"> {{nodeInfo.state}} </div> -->
   </div>
   <app-back-button></app-back-button>
 </div>
@@ -23,7 +23,6 @@
             <div>GPU</div>
           </div>
           <chart #gpuChart type="line" [data]="gpuData" [options]="gpuOptions"></chart>
-
         </div>
         <div class="chart">
           <div class="area-title">
@@ -61,7 +60,8 @@
           <div class="overview-title">Distro Info</div>
           <div class="overview-value">{{nodeRegistrationInfo.distroInfo}}</div>
         </div>
-
+      </div>
+      <div class="node-info">
         <div class="area-title">NETWORK INFO</div>
         <div class="network" *ngFor="let n of nodeRegistrationInfo.networksInfo">
           <div class="info-item">
@@ -93,9 +93,9 @@
     <div class="event" *ngFor="let event of events">
       <div class="time-line">
         <div class="event-time">{{event.time | date: 'yyyy-MM-dd HH:mm:ss'}}</div>
-        <div class="event-type" [ngClass]="eventType(event.type)">{{event.type}}</div>
+        <!-- <div class="event-type" [ngClass]="eventType(event.type)">{{event.type}}</div> -->
       </div>
-      <div class="event-info">
+      <div class="event-info" [ngClass]="eventType(event.type)">
         <div class="event-content">{{event.content}}</div>
       </div>
     </div>
