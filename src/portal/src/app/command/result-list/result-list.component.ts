@@ -46,7 +46,7 @@ export class ResultListComponent implements OnInit {
 
   private loadMoreResults() {
     this.loading = true;
-    this.api.command.getAll({ lastId: this.lastId, count: this.pageSize }).subscribe(results => {
+    this.api.command.getAll({ lastId: this.lastId, count: this.pageSize, reverse: true }).subscribe(results => {
       this.loading = false;
       if (results.length > 0) {
         this.dataSource.data = this.dataSource.data.concat(results);
