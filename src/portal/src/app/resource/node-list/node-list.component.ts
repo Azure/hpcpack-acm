@@ -7,7 +7,7 @@ import { NewDiagnosticsComponent } from '../new-diagnostics/new-diagnostics.comp
 import { NewCommandComponent } from '../new-command/new-command.component';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { ApiService } from '../../services/api.service';
-import { UserSettingsService } from '../../services/user-settings.service';
+import { TableSettingsService } from '../../services/table-settings.service';
 
 @Component({
   selector: 'resource-node-list',
@@ -41,7 +41,7 @@ export class NodeListComponent {
     private api: ApiService,
     private router: Router,
     private route: ActivatedRoute,
-    private settings: UserSettingsService,
+    private settings: TableSettingsService,
   ) { }
 
   ngOnInit() {
@@ -150,24 +150,10 @@ export class NodeListComponent {
   }
 
   saveSettings(): void {
-    let options = this.availableColumns.filter(e => !e.displayed).map(e => e.name);
-    let selected = this.availableColumns.filter(e => e.displayed).map(e => e.name);
-    this.settings.set('NodeListComponent', { options, selected });
-    this.settings.save();
+    this.settings.save('NodeListComponent', this.availableColumns);
   }
 
   loadSettings(): void {
-    let availableColumns = NodeListComponent.customizableColumns;
-    let data = this.settings.get('NodeListComponent');
-    if (data) {
-      let selected = data.selected.map(name => availableColumns.find(col => col.name === name));
-      selected.forEach(e => e.displayed = true);
-      let options = data.options.map(name => availableColumns.find(col => col.name === name));
-      options.forEach(e => e.displayed = false);
-      this.availableColumns = selected.concat(options);
-    }
-    else {
-      this.availableColumns = availableColumns ;
-    }
+    this.availableColumns = this.settings.load('NodeListComponent', NodeListComponent.customizableColumns);
   }
 }

@@ -12,6 +12,7 @@ import { AuthGuardService } from './services/auth-guard.service';
 import { AuthService } from './services/auth.service';
 import { LoginGuardService } from './services/login-guard.service';
 import { ApiService } from './services/api.service';
+import { TableSettingsService } from './services/table-settings.service';
 import { UserSettingsService } from './services/user-settings.service';
 import { LocalStorageService } from './services/local-storage.service';
 import { InMemoryDataService }  from './services/in-memory-data.service';
@@ -45,7 +46,7 @@ import { WidgetsModule } from './widgets/widgets.module';
     AppRoutingModule,
   ],
   providers: [AuthGuardService, AuthService, LoginGuardService, ApiService,
-    UserSettingsService, LocalStorageService],
+    TableSettingsService, UserSettingsService, LocalStorageService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
