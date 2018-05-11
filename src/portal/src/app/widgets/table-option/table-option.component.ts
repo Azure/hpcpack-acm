@@ -6,13 +6,13 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
   styleUrls: ['./table-option.component.css']
 })
 export class TableOptionComponent implements OnInit {
-  private options: string[];
+  private options: any[];
 
-  private selected: string[];
+  private selected: any[];
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any) {
-    this.options = data.availableColumns.filter(e => !e.displayed);
-    this.selected = data.availableColumns.filter(e => e.displayed);
+    this.options = data.columns.filter(e => !e.displayed);
+    this.selected = data.columns.filter(e => e.displayed);
   }
 
   ngOnInit() {
@@ -21,6 +21,6 @@ export class TableOptionComponent implements OnInit {
   get result() {
     this.options.forEach(e => (e as any).displayed = false);
     this.selected.forEach(e => (e as any).displayed = true);
-    return { options: this.options, selected: this.selected };
+    return { columns: this.selected.concat(this.options) };
   }
 }

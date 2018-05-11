@@ -138,11 +138,11 @@ export class NodeListComponent {
   customizeTable(): void {
     let dialogRef = this.dialog.open(TableOptionComponent, {
       width: '98%',
-      data: { availableColumns: this.availableColumns }
+      data: { columns: this.availableColumns }
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.availableColumns = res.selected.concat(res.options);
+        this.availableColumns = res.columns;
         this.getDisplayedColumns();
         this.saveSettings();
       }
