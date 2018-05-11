@@ -6,12 +6,14 @@ import { ApiService } from '../../services/api.service';
 import { ServiceRunningTestComponent } from './service-running-test/service-running-test.component';
 import { PingTestComponent } from './ping-test/ping-test.component';
 import { PingPongTestComponent } from './pingpong-test/pingpong-test.component';
+import { RingTestComponent } from './ring-test/ring-test.component';
 
 const map = {
   'Service Running Test': ServiceRunningTestComponent,
-  'Ping Test': PingTestComponent,
+  'ping': PingTestComponent,
   'test': PingPongTestComponent,
-  'mpi': PingPongTestComponent
+  'pingpong': PingPongTestComponent,
+  'ring': RingTestComponent
 }
 
 @Component({
@@ -30,7 +32,7 @@ export class ResultDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private api: ApiService,
     private componentFactoryResolver: ComponentFactoryResolver
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
@@ -51,7 +53,7 @@ export class ResultDetailComponent implements OnInit {
     //Revmoe previously created component.
     this.resultViewRef.remove();
 
-    let comp = map[this.result.diagnosticTest.category];
+    let comp = map[this.result.diagnosticTest.name];
     let compFactory = this.componentFactoryResolver.resolveComponentFactory(comp);
     let compRef = this.resultViewRef.createComponent(compFactory);
     (compRef.instance as any).result = this.result;

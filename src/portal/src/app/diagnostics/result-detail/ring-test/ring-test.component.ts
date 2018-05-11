@@ -5,11 +5,12 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { TaskDetailComponent } from '../task-detail/task-detail.component';
 
 @Component({
-  selector: 'app-pingpong-test',
-  templateUrl: './pingpong-test.component.html',
-  styleUrls: ['./pingpong-test.component.css']
+  selector: 'app-ring-test',
+  templateUrl: './ring-test.component.html',
+  styleUrls: ['./ring-test.component.css']
 })
-export class PingPongTestComponent implements OnInit, OnChanges {
+export class RingTestComponent implements OnInit {
+
   @Input() result: any;
 
   @ViewChild('filter')
@@ -97,4 +98,5 @@ export class PingPongTestComponent implements OnInit, OnChanges {
   getJobState(state: any) {
     this.jobState = state;
   }
+
 }

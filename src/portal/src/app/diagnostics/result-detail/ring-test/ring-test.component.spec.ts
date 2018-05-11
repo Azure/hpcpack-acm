@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ResultLayoutComponent } from './result-layout.component';
+import { RingTestComponent } from './ring-test.component';
 
-describe('ResultLayoutComponent', () => {
-  let component: ResultLayoutComponent;
-  let fixture: ComponentFixture<ResultLayoutComponent>;
+describe('RingTestComponent', () => {
+  let component: RingTestComponent;
+  let fixture: ComponentFixture<RingTestComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ResultLayoutComponent ]
+      declarations: [ RingTestComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ResultLayoutComponent);
+    fixture = TestBed.createComponent(RingTestComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

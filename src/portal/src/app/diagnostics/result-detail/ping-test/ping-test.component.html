@@ -1,4 +1,4 @@
-<app-result-layout [result]="result" (filterNodes)="filterNodes($event)">
+<app-pingpong-result-layout [result]="result" (filterNodes)="filterNodes($event)">
   <ng-template #nodes>
     <div class="filter">
       <mat-form-field>
@@ -22,5 +22,5 @@
       <mat-row *matRowDef="let node; columns: displayedColumns;" [ngClass]="node['State']" class="node" (click)="viewDetail(node)"></mat-row>
     </mat-table>
   </ng-template>
-</app-result-layout>
+</app-pingpong-result-layout>
 

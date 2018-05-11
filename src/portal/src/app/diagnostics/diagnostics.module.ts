@@ -8,13 +8,15 @@ import { DiagnosticsRoutingModule } from './diagnostics-routing.module';
 import { DiagnosticsComponent } from './diagnostics.component';
 import { ResultListComponent } from './result-list/result-list.component';
 import { ResultDetailComponent } from './result-detail/result-detail.component';
-import { ResultLayoutComponent } from './result-detail/result-layout/result-layout.component';
+import { PingPongResultLayoutComponent } from './result-detail/pingpong-result-layout/pingpong-result-layout.component';
 import { ServiceRunningTestComponent } from './result-detail/service-running-test/service-running-test.component';
 import { PingTestComponent } from './result-detail/ping-test/ping-test.component';
 import { PingTestNodeResultComponent } from './result-detail/ping-test/ping-test-node-result/ping-test-node-result.component';
 import { PingPongTestComponent } from './result-detail/pingpong-test/pingpong-test.component';
 import { DiagEventsComponent } from './result-list/diag-events/diag-events.component';
-import { TaskDetailComponent } from './result-detail/pingpong-test/task-detail/task-detail.component';
+import { TaskDetailComponent } from './result-detail/task-detail/task-detail.component';
+import { RingResultLayoutComponent } from './result-detail/ring-result-layout/ring-result-layout.component';
+import { RingTestComponent } from './result-detail/ring-test/ring-test.component';
 
 @NgModule({
   imports: [
@@ -25,7 +27,7 @@ import { TaskDetailComponent } from './result-detail/pingpong-test/task-detail/t
     ChartModule,
     FormsModule,
   ],
-  declarations: [DiagnosticsComponent, ResultListComponent, ResultDetailComponent, ResultLayoutComponent, ServiceRunningTestComponent, PingTestComponent, PingTestNodeResultComponent, PingPongTestComponent, DiagEventsComponent, TaskDetailComponent],
-  entryComponents: [ServiceRunningTestComponent, PingTestComponent, PingTestNodeResultComponent, PingPongTestComponent, DiagEventsComponent, TaskDetailComponent]
+  declarations: [DiagnosticsComponent, ResultListComponent, ResultDetailComponent, PingPongResultLayoutComponent, ServiceRunningTestComponent, PingTestComponent, PingTestNodeResultComponent, PingPongTestComponent, DiagEventsComponent, TaskDetailComponent, RingResultLayoutComponent, RingTestComponent],
+  entryComponents: [ServiceRunningTestComponent, PingTestComponent, PingTestNodeResultComponent, RingTestComponent, PingPongTestComponent, DiagEventsComponent, TaskDetailComponent]
 })
 export class DiagnosticsModule { }

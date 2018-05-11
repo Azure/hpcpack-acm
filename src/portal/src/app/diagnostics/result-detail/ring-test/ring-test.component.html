@@ -1,4 +1,4 @@
-<app-pingpong-result-layout [result]="result" [tasks]="tasks" (filterNodes)="filterNodes($event)" (getJobState)="getJobState($event)">
+<app-ring-result-layout [result]="result" [tasks]="tasks" (filterNodes)="filterNodes($event)" (getJobState)="getJobState($event)">
   <ng-template #nodes>
     <div class="filter">
       <mat-form-field>
@@ -46,7 +46,7 @@
       <mat-row *matRowDef="let task; columns: displayedColumns;"></mat-row>
     </mat-table>
   </ng-template>
-</app-pingpong-result-layout>
+</app-ring-result-layout>
 <!-- <ng-template #no_tasks>
   <div class="title main" [ngClass]="result.state">
     <i class="material-icons">{{stateIcon(result.state)}}</i>

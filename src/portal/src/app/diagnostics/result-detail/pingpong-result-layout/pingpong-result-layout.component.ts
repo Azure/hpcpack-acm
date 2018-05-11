@@ -2,11 +2,11 @@ import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateR
 import { ApiService } from '../../../services/api.service'
 
 @Component({
-  selector: 'app-result-layout',
-  templateUrl: './result-layout.component.html',
-  styleUrls: ['./result-layout.component.scss']
+  selector: 'app-pingpong-result-layout',
+  templateUrl: './pingpong-result-layout.component.html',
+  styleUrls: ['./pingpong-result-layout.component.scss']
 })
-export class ResultLayoutComponent implements OnInit, OnChanges {
+export class PingPongResultLayoutComponent implements OnInit, OnChanges {
   @Input()
   result: any;
 
@@ -69,6 +69,14 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
             }
           }
         }
+      }],
+      yAxes: [{
+        display: true,
+        ticks: {
+          callback: function (value, index, values) {
+            return value + ' us';
+          }
+        }
       }]
     }
   };
@@ -92,6 +100,14 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
             }
           }
         }
+      }],
+      yAxes: [{
+        display: true,
+        ticks: {
+          callback: function (value, index, values) {
+            return value + ' MB/s';
+          }
+        }
       }]
     }
   };
@@ -106,6 +122,8 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
   latencyWorstPairs = [];
   latencyWorstPairsValue: number;
   overviewLatencyResult: any;
+  latencyUnit: any;
+  latencyThreshold: any;
 
   latencyAverage: number;
   latencyMedian: number;
@@ -122,6 +140,8 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
   throughputWorstPairs = [];
   throughputWorstPairsValue: number;
   overviewThroughputResult: any;
+  throughputUnit: any;
+  throughputThreshold: any;
 
   throughputAverage: number;
   throughputMedian: number;
@@ -142,13 +162,6 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
   updateAggregationResult() {
     this.makeChartData();
     this.getJobState.emit(this.result.state);
-    // if (this.result.aggregationResult == undefined) {
-    //   this.result.aggregationResult = "Waiting for the aggregation result...";
-    // }
-    // else {
-    //   let res = this.result.aggregationResult;
-    //   this.getAggregationResult(res);
-    // }
 
     if ((this.result.aggregationResult !== undefined && this.api.diag.isJSON(this.result.aggregationResult))) {
       let res = this.result.aggregationResult;
@@ -211,6 +224,10 @@ export class ResultLayoutComponent implements OnInit, OnChanges {
       this.nodeThroughputData = result.Throughput.ResultByNode;
       this.latencyPacketSize = result.Latency['Packet_size'];
       this.throughputPacketSize = result.Throughput['Packet_size'];
+      this.latencyUnit = result.Latency['Unit'];
+      this.latencyThreshold = result.Latency['Threshold'];
+      this.throughputUnit = result.Throughput['Unit'];
+      this.throughputThreshold = result.Throughput['Threshold'];
 
       this.selectedNode = this.nodes[0];
       this.overviewLatencyResult = result.Latency.Result;

@@ -1,0 +1,40 @@
+<div class="title main">
+  <!-- <i class="material-icons" [ngClass]="result.state">{{stateIcon(result.state)}}</i> -->
+  <div class="name">{{result.id}} - {{result.name}} {{result.state}}</div>
+</div>
+<div class="area-title">
+  <i class="material-icons title-icon">equalizer</i>
+  <div>OVERVIEW</div>
+</div>
+
+<div class="error-message" *ngIf="result.aggregationResult != undefined && result.aggregationResult.Error != undefined;else jobOverview">
+  {{result.aggregationResult.Error}}
+</div>
+<ng-template #jobOverview>
+  <div class="result-detail">
+    <div class="overview-info">
+      <div class="overview-title"> Passed </div>
+      <div>
+        <i class="material-icons passed" *ngIf="result.aggregationResult.Passed == true">done</i>
+        <i class="material-icons not-passed" *ngIf="result.aggregationResult.Passed == false">clear</i>
+        <!-- {{latencyPassed}} -->
+      </div>
+    </div>
+    <div class="overview-info">
+      <div class="overview-title"> Latency / Threshold </div>
+      <div class="overview-value">{{result.aggregationResult.Latency.Value | number: '1.2-2'}} / {{result.aggregationResult.Latency.Threshold}} {{result.aggregationResult.Latency.Unit}}</div>
+    </div>
+    <div class="overview-info">
+      <div class="overview-title"> Throughput / Threshold </div>
+      <div class="overview-value">{{result.aggregationResult.Throughput.Value | number: '1.2-2'}} / {{result.aggregationResult.Latency.Threshold}} {{result.aggregationResult.Throughput.Unit}}</div>
+    </div>
+  </div>
+</ng-template>
+
+<div class="area-title">
+  <i class="material-icons title-icon">widgets</i>
+  <div>TASKS</div>
+</div>
+<div class="nodes">
+  <ng-container *ngTemplateOutlet="nodesTemplate; context: result"></ng-container>
+</div>
