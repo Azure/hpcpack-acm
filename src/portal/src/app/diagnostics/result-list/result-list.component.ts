@@ -4,6 +4,8 @@ import { MatTableDataSource, MatPaginator } from '@angular/material';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { SelectionModel } from '@angular/cdk/collections';
 import { ApiService, Loop } from '../../services/api.service';
+import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
+import { TableSettingsService } from '../../services/table-settings.service';
 import { DiagEventsComponent } from './diag-events/diag-events.component';
 
 @Component({
@@ -13,6 +15,16 @@ import { DiagEventsComponent } from './diag-events/diag-events.component';
 })
 export class ResultListComponent implements OnInit, OnDestroy {
   @ViewChild(MatPaginator) paginator: MatPaginator;
+
+  static customizableColumns = [
+    { name: 'test',       displayName: 'Test',      displayed: true },
+    { name: 'diagnostic', displayName: 'Diagnostic',displayed: true },
+    { name: 'category',   displayName: 'Category',  displayed: true },
+    { name: 'progress',   displayName: 'Progress',  displayed: true },
+    { name: 'state',      displayName: 'State',     displayed: true },
+  ];
+
+  private availableColumns;
 
   private dataSource = new MatTableDataSource();
   private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'actions'];
@@ -37,6 +49,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private api: ApiService,
+    private settings: TableSettingsService,
     public dialog: MatDialog,
     public el: ElementRef
   ) {
@@ -44,6 +57,8 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.loadSettings();
+    this.getDisplayedColumns();
     this.diagsLoop = this.getDiags(this.lastId, this.currentPageSize);
     /*configure filter*/
     this.dataSource.filterPredicate = (data: any, filter: string) => {
@@ -184,5 +199,33 @@ export class ResultListComponent implements OnInit, OnDestroy {
       width: '98%',
       data: { job: res }
     });
+  }
+
+  getDisplayedColumns(): void {
+    let columns = this.availableColumns.filter(e => e.displayed).map(e => e.name);
+    columns.push('actions');
+    this.displayedColumns = ['select', 'id'].concat(columns);
+  }
+
+  customizeTable(): void {
+    let dialogRef = this.dialog.open(TableOptionComponent, {
+      width: '98%',
+      data: { columns: this.availableColumns }
+    });
+    dialogRef.afterClosed().subscribe(res => {
+      if (res) {
+        this.availableColumns = res.columns;
+        this.getDisplayedColumns();
+        this.saveSettings();
+      }
+    });
+  }
+
+  saveSettings(): void {
+    this.settings.save('DiagList', this.availableColumns);
+  }
+
+  loadSettings(): void {
+    this.availableColumns = this.settings.load('DiagList', ResultListComponent.customizableColumns);
   }
 }

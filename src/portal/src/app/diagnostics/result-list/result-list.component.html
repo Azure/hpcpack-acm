@@ -1,4 +1,5 @@
 <div class="actions">
+  <button mat-raised-button (click)="customizeTable()">Customize Columns...</button>
   <button mat-raised-button [disabled]="hasNoSelection()">Rerun</button>
   <button mat-raised-button [disabled]="hasNoSelection()">Cancel</button>
 </div>
@@ -32,7 +33,7 @@
     </ng-container>
 
     <ng-container matColumnDef="state">
-      <mat-header-cell *matHeaderCellDef></mat-header-cell>
+      <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
       <mat-cell *matCellDef="let result">
         <i class="material-icons" [ngClass]="result.state" matTooltip="{{result.state}}">{{setIcon(result.state)}}</i>
       </mat-cell>
