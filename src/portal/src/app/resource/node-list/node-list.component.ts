@@ -5,7 +5,7 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { Subscription } from 'rxjs/Subscription';
 import { NewDiagnosticsComponent } from '../new-diagnostics/new-diagnostics.component';
 import { NewCommandComponent } from '../new-command/new-command.component';
-import { TableOptionComponent } from './table-option/table-option.component';
+import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { ApiService } from '../../services/api.service';
 import { UserSettingsService } from '../../services/user-settings.service';
 
