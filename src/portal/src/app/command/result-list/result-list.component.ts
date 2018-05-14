@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { MatTableDataSource } from '@angular/material';
+import { MatTableDataSource, MatDialog } from '@angular/material';
 import { SelectionModel  } from '@angular/cdk/collections';
+import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { ApiService } from '../../services/api.service';
+import { TableSettingsService } from '../../services/table-settings.service';
 
 @Component({
   selector: 'app-result-list',
@@ -12,7 +14,15 @@ export class ResultListComponent implements OnInit {
 
   private dataSource = new MatTableDataSource();
 
-  private displayedColumns = ['select', 'id', 'command', 'state', 'progress', 'actions'];
+  static customizableColumns = [
+    { name: 'command',  displayName: 'Command',   displayed: true },
+    { name: 'state',    displayName: 'State',     displayed: true },
+    { name: 'progress', displayName: 'Progress',  displayed: true },
+  ];
+
+  private availableColumns;
+
+  private displayedColumns;
 
   private selection = new SelectionModel(true, []);
 
@@ -23,16 +33,20 @@ export class ResultListComponent implements OnInit {
   private loading = false;
 
   constructor(
-    private api: ApiService
+    private api: ApiService,
+    private dialog: MatDialog,
+    private settings: TableSettingsService,
   ) {}
 
   ngOnInit() {
+    this.loadSettings();
+    this.getDisplayedColumns();
     this.loadMoreResults();
   }
 
   private loadMoreResults() {
     this.loading = true;
-    this.api.command.getAll({ lastId: this.lastId, count: this.pageSize }).subscribe(results => {
+    this.api.command.getAll({ lastId: this.lastId, count: this.pageSize, reverse: true }).subscribe(results => {
       this.loading = false;
       if (results.length > 0) {
         this.dataSource.data = this.dataSource.data.concat(results);
@@ -64,5 +78,33 @@ export class ResultListComponent implements OnInit {
 
   private onScroll() {
     this.loadMoreResults();
+  }
+
+  getDisplayedColumns(): void {
+    let columns = this.availableColumns.filter(e => e.displayed).map(e => e.name);
+    columns.push('actions');
+    this.displayedColumns = ['select', 'id'].concat(columns);
+  }
+
+  customizeTable(): void {
+    let dialogRef = this.dialog.open(TableOptionComponent, {
+      width: '98%',
+      data: { columns: this.availableColumns }
+    });
+    dialogRef.afterClosed().subscribe(res => {
+      if (res) {
+        this.availableColumns = res.columns;
+        this.getDisplayedColumns();
+        this.saveSettings();
+      }
+    });
+  }
+
+  saveSettings(): void {
+    this.settings.save('CommandList', this.availableColumns);
+  }
+
+  loadSettings(): void {
+    this.availableColumns = this.settings.load('CommandList', ResultListComponent.customizableColumns);
   }
 }

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MaterialsModule } from '../../materials.module';
 import { ApiService } from '../../services/api.service';
+import { TableSettingsService } from '../../services/table-settings.service';
 
 import { ResultListComponent } from './result-list.component';
 
@@ -29,6 +30,12 @@ class ApiServiceStub {
   }
 }
 
+const tableSettingsStub = {
+  load: (key, initVal) => initVal,
+
+  save: (key, val) => undefined,
+}
+
 fdescribe('ResultListComponent', () => {
   let component: ResultListComponent;
   let fixture: ComponentFixture<ResultListComponent>;
@@ -46,6 +53,7 @@ fdescribe('ResultListComponent', () => {
       ],
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
+        { provide: TableSettingsService, useValue: tableSettingsStub },
       ]
     })
     .compileComponents();

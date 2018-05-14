@@ -4,10 +4,12 @@ import { FormsModule } from '@angular/forms'
 import { MaterialsModule } from '../materials.module';
 import { NodeFilterBuilderComponent } from './node-filter-builder/node-filter-builder.component';
 import { BackButtonComponent } from './back-button/back-button.component';
+import { TableOptionComponent } from './table-option/table-option.component';
 
 const components = [
   NodeFilterBuilderComponent,
   BackButtonComponent,
+  TableOptionComponent,
 ];
 
 @NgModule({
