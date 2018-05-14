@@ -89,18 +89,7 @@
     </div>
   </mat-tab>
   <mat-tab label="Events">
-    <div class="event" *ngFor="let event of events">
-      <div class="time-line">
-        <div class="event-time">{{event.time | date: 'yyyy-MM-dd HH:mm:ss'}}</div>
-        <!-- <div class="event-type" [ngClass]="eventType(event.type)">{{event.type}}</div> -->
-      </div>
-      <div class="event-info" [ngClass]="eventType(event.type)">
-        <div class="event-content">{{event.content}}</div>
-      </div>
-    </div>
-    <div class="event" *ngIf="events.length < 1">
-      {{message}}
-    </div>
+    <app-event-list [events]="events"></app-event-list>
   </mat-tab>
   <mat-tab label="Jobs">
   </mat-tab>

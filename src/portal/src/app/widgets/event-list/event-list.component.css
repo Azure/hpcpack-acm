@@ -1,0 +1,69 @@
+.event {
+  display: flex;
+  align-items: baseline;
+  font-size: .9rem;
+  padding: 0 1em;
+}
+
+.event-time {
+  color: rgba(0, 0, 0, .6);
+}
+
+.time-line {
+  width: 13em;
+  text-align: right;
+  font-size: .7rem;
+  padding: 0em 2em 0em 1em;
+  flex: 1;
+}
+
+.azure-event::before, .node-event::before {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Material Icons';
+  width: 2.2em;
+  height: 2.2em;
+  left: -1.1em;
+  top: 1.5em;
+  color: #fff;
+  border-radius: 50%;
+  /* background-color: #FFF; */
+}
+
+.azure-event::before {
+  content: '\e2c2';
+  background-color: #5C6BC0;
+}
+
+.node-event::before {
+  content: '\e1b1';
+  background-color: #4DB6AC;
+}
+
+.event-info {
+  display: flex;
+  position: relative;
+  border-left: .1em solid rgba(63, 81, 181, .8);
+  padding: 2em 1.5em 2em 2em;
+  flex: 10;
+}
+
+.azure-event {
+  color: rgba(63, 81, 181, .8);
+}
+
+.event-type .material-icons {
+  font-size: 1.2rem;
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+.event-source {
+  margin-right: 5px;
+}
+
+.event-content {
+  color: rgba(0, 0, 0, .7);
+}
