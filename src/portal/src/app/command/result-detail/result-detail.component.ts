@@ -221,7 +221,7 @@ export class ResultDetailComponent implements OnInit {
 
   loadOnce(node) {
     let output = this.getNodeOutput(node)
-    if (output.end) {
+    if (output.content || output.end) {
       return;
     }
     output.loading = 'once';
