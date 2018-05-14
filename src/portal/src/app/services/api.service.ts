@@ -359,7 +359,12 @@ export class DiagApi extends Resource<any> {
         result[i].taskInfo.message = { Latency: 'calculating', Throughput: 'calculating', Detail: '' };
       }
       else {
-        result[i].taskInfo.message = JSON.parse(result[i].taskInfo.message);
+        if (this.isJSON(result[i].taskInfo.message)) {
+          result[i].taskInfo.message = JSON.parse(result[i].taskInfo.message);
+        }
+        else {
+          result[i].taskInfo.message = { Latency: 'no result', Throughput: 'no result', Detail: '' };
+        }
       }
     }
   }

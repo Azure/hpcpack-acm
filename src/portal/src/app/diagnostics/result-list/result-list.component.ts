@@ -29,9 +29,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
   scrollUpDistance = 2;
   loadFinish = false;
 
-
   hasReceivedData = false;
-
 
   constructor(
     private router: Router,
@@ -44,7 +42,8 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.diagsLoop = this.getDiags(this.lastId, this.currentPageSize);
+    // this.diagsLoop = this.getDiags(this.lastId, this.currentPageSize);
+    this.getDiags(this.lastId, this.currentPageSize);
     /*configure filter*/
     this.dataSource.filterPredicate = (data: any, filter: string) => {
       return data.name.indexOf(filter) != -1 ||
@@ -57,64 +56,80 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.diagsLoop) {
-      Loop.stop(this.diagsLoop);
-    }
+    //   if (this.diagsLoop) {
+    //     Loop.stop(this.diagsLoop);
+    //   }
   }
 
   private getDiags(pageIndex: any, pageSize: any): any {
     this.hasReceivedData = false;
-    return Loop.start(
-      this.api.diag.getDiagsByPage(pageIndex, pageSize),
-      {
-        next: (result) => {
-          if (result.length > 0) {
-            this.lastId = result[result.length - 1].id;
-          }
-          let diags = result.filter(e => {
-            return e.diagnosticTest != undefined && e.name != undefined;
-          });
-          this.hasReceivedData = true;
-          if (diags.length == 0) {
-            // this.currentPageIndex -= this.currentPageSize;
-            this.loadFinish = true;
-            return false;
-          }
-
-          let exsit = this.updateData(diags);
-          if (!exsit) {
-            this.dataSource.data = this.dataSource.data.concat(diags);
-            // this.dataSource.data = diags;
-          }
-          return true;
-        }
-      },
-      this.interval
-    );
-  }
-
-  updateData(data) {
-    let firstIndex = data[0].id;
-    let length = data.length;
-    let index = this.dataSource.data.findIndex(item => {
-      return item['id'] == firstIndex;
+    this.api.diag.getDiagsByPage(pageIndex, pageSize).subscribe(result => {
+      if (result.length > 0) {
+        this.lastId = result[result.length - 1].id;
+      }
+      let diags = result.filter(e => {
+        return e.diagnosticTest != undefined && e.name != undefined;
+      });
+      this.hasReceivedData = true;
+      if (diags.length == 0) {
+        this.loadFinish = true;
+        return false;
+      }
+      this.dataSource.data = this.dataSource.data.concat(diags);
     });
-    if (index == -1) {
-      return false;
-    }
-    let firstPart = this.dataSource.data.slice(0, index);
-    let lastPart = this.dataSource.data.slice(index + length);
-    this.dataSource.data = firstPart.concat(data).concat(lastPart);
-    return true;
+
+    // return Loop.start(
+    // this.api.diag.getDiagsByPage(pageIndex, pageSize),
+    // {
+    //   next: (result) => {
+    //     if (result.length > 0) {
+    //       this.lastId = result[result.length - 1].id;
+    //     }
+    //     let diags = result.filter(e => {
+    //       return e.diagnosticTest != undefined && e.name != undefined;
+    //     });
+    //     this.hasReceivedData = true;
+    //     if (diags.length == 0) {
+    //       // this.currentPageIndex -= this.currentPageSize;
+    //       this.loadFinish = true;
+    //       return false;
+    //     }
+
+    //     let exsit = this.updateData(diags);
+    //     if (!exsit) {
+    //       this.dataSource.data = this.dataSource.data.concat(diags);
+    //       // this.dataSource.data = diags;
+    //     }
+    //     return true;
+    //   }
+    // },
+    // this.interval
+    // );
   }
+
+  // updateData(data) {
+  //   let firstIndex = data[0].id;
+  //   let length = data.length;
+  //   let index = this.dataSource.data.findIndex(item => {
+  //     return item['id'] == firstIndex;
+  //   });
+  //   if (index == -1) {
+  //     return false;
+  //   }
+  //   let firstPart = this.dataSource.data.slice(0, index);
+  //   let lastPart = this.dataSource.data.slice(index + length);
+  //   this.dataSource.data = firstPart.concat(data).concat(lastPart);
+  //   return true;
+  // }
 
   onScrollDown(ev) {
     if (!this.loadFinish && this.hasReceivedData) {
       //how to decide the last api has returned data and rendered
-      if (this.diagsLoop) {
-        Loop.stop(this.diagsLoop);
-      }
-      this.diagsLoop = this.getDiags(this.lastId, this.currentPageSize);
+      // if (this.diagsLoop) {
+      //   Loop.stop(this.diagsLoop);
+      // }
+      // this.diagsLoop = this.getDiags(this.lastId, this.currentPageSize);
+      this.getDiags(this.lastId, this.currentPageSize);
     }
   }
 
@@ -129,7 +144,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
     this.scrollTimer = setTimeout(() => {
       const componentPostion = this.el.nativeElement.offsetTop;
       const scrollPostion = window.pageYOffset;
-      console.log(scrollPostion);
+
       if (scrollPostion >= componentPostion) {
         this.scrolled = true;
       }
@@ -179,6 +194,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
   applyFilter(text: string): void {
     this.dataSource.filter = text;
   }
+
   private showEvents(res) {
     this.dialog.open(DiagEventsComponent, {
       width: '98%',

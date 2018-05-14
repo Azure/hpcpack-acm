@@ -59,8 +59,6 @@ export class RingTestComponent implements OnInit {
     console.log("test task loop");
   }
 
-
-
   applyFilter(text: string): void {
     this.dataSource.filter = text;
   }

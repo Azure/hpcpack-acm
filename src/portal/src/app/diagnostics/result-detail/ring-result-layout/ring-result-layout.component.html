@@ -21,12 +21,20 @@
       </div>
     </div>
     <div class="overview-info">
-      <div class="overview-title"> Latency / Threshold </div>
-      <div class="overview-value">{{result.aggregationResult.Latency.Value | number: '1.2-2'}} / {{result.aggregationResult.Latency.Threshold}} {{result.aggregationResult.Latency.Unit}}</div>
+      <div class="overview-title"> Latency </div>
+      <div class="overview-value">{{result.aggregationResult.Latency.Value | number: '1.2-2'}} {{result.aggregationResult.Latency.Unit}}</div>
     </div>
     <div class="overview-info">
-      <div class="overview-title"> Throughput / Threshold </div>
-      <div class="overview-value">{{result.aggregationResult.Throughput.Value | number: '1.2-2'}} / {{result.aggregationResult.Latency.Threshold}} {{result.aggregationResult.Throughput.Unit}}</div>
+      <div class="overview-title"> Latency Threshold </div>
+      <div class="overview-value"> {{result.aggregationResult.Latency.Threshold}} {{result.aggregationResult.Latency.Unit}}</div>
+    </div>
+    <div class="overview-info">
+      <div class="overview-title"> Throughput </div>
+      <div class="overview-value">{{result.aggregationResult.Throughput.Value | number: '1.2-2'}} {{result.aggregationResult.Throughput.Unit}}</div>
+    </div>
+    <div class="overview-info">
+      <div class="overview-title"> Throughput Threshold </div>
+      <div class="overview-value"> {{result.aggregationResult.Latency.Threshold}} {{result.aggregationResult.Throughput.Unit}}</div>
     </div>
   </div>
 </ng-template>
