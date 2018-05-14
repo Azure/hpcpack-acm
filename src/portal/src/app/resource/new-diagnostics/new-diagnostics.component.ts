@@ -64,7 +64,7 @@ export class NewDiagnosticsComponent implements OnInit {
 
     node.data.checked = true;
     this.selectedTest = node.data;
-    console.log(this.selectedTest);
+    this.diagTestName = this.selectedTest.name;
   }
 
   // function to handle default value when one linked property's value changes
