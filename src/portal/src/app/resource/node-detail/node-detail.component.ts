@@ -342,13 +342,4 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
   //     ]
   //   };
   // }
-
-  eventType(type) {
-    if (type == 'node event') {
-      return 'node-event';
-    }
-    else if (type == 'Azure scheduled event') {
-      return 'azure-event';
-    }
-  }
 }
