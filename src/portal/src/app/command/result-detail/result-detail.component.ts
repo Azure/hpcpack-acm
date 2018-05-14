@@ -192,7 +192,7 @@ export class ResultDetailComponent implements OnInit {
 
   startAutoload(node): void {
     let output = this.getNodeOutput(node)
-    if (output.end) {
+    if (output.end || output.loading) {
       return;
     }
     output.loading = 'auto';
@@ -221,7 +221,7 @@ export class ResultDetailComponent implements OnInit {
 
   loadOnce(node) {
     let output = this.getNodeOutput(node)
-    if (output.content || output.end) {
+    if (output.content || output.end || output.loading) {
       return;
     }
     output.loading = 'once';
@@ -229,10 +229,7 @@ export class ResultDetailComponent implements OnInit {
     this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt as any).subscribe(
       result => {
         output.loading = false;
-        if (this.updateNodeOutput(output, result) && this.selectedNode &&
-          this.selectedNode.name == node.name) {
-          setTimeout(() => this.scrollOutputToBottom(), 0);
-        }
+        this.updateNodeOutput(output, result);
       }
     );
   }
@@ -255,6 +252,12 @@ export class ResultDetailComponent implements OnInit {
   scrollOutputToBottom(): void {
     let elem = this.output.nativeElement;
     elem.scrollTop = elem.scrollHeight;
+  }
+
+  scrollOutputUp(): void {
+    let elem = this.output.nativeElement;
+    //Set scrollTop to a proper position for next "scroll and load"
+    elem.scrollTop = Math.ceil(elem.scrollHeight * this.scrollThreshold) + 8;
   }
 
   scrollOutputToTop(): void {
@@ -307,7 +310,7 @@ export class ResultDetailComponent implements OnInit {
 
   loadPrev(node) {
     let output = this.getNodeOutput(node)
-    if (output.start === 0) {
+    if (output.start === 0 || output.loading) {
       return;
     }
     let prev;
@@ -329,14 +332,14 @@ export class ResultDetailComponent implements OnInit {
         output.loading = false;
         if (this.updateNodeOutputBackward(output, result) && this.selectedNode &&
           this.selectedNode.name == node.name) {
-          setTimeout(() => this.scrollOutputToTop(), 0);
+          setTimeout(() => this.scrollOutputUp(), 0);
         }
       });
   }
 
   loadNext(node) {
     let output = this.getNodeOutput(node)
-    if (output.end) {
+    if (output.end || output.loading) {
       return;
     }
     output.loading = 'next';
@@ -344,11 +347,45 @@ export class ResultDetailComponent implements OnInit {
     this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt)
       .subscribe(result => {
         output.loading = false;
-        if (this.updateNodeOutput(output, result) && this.selectedNode &&
-          this.selectedNode.name == node.name) {
-          setTimeout(() => this.scrollOutputToBottom(), 0);
-        }
+        this.updateNodeOutput(output, result);
       });
   }
 
+  private scrollPos = 0;
+
+  private scrollTimer;
+
+  private scrollDelay = 150;
+
+  private scrollThreshold = 0.15;
+
+  onScroll($event, debounced = false, downward = undefined) {
+    if (!debounced) {
+      if (this.scrollTimer) {
+        clearTimeout(this.scrollTimer);
+      }
+      let top = $event.srcElement.scrollTop;
+      let downward = top >= this.scrollPos;
+      this.scrollTimer = setTimeout(() => this.onScroll($event, true, downward), this.scrollDelay);
+      this.scrollPos = top;
+    }
+    else {
+      clearTimeout(this.scrollTimer);
+      this.scrollTimer = null;
+
+      let elem = $event.srcElement;
+      let up = elem.scrollTop / elem.scrollHeight;
+      let mid = elem.clientHeight / elem.scrollHeight;
+      let down = 1 - up - mid;
+
+      if (downward) {
+        if (down <= this.scrollThreshold) {
+          this.loadNext(this.selectedNode);
+        }
+      }
+      else if (up <= this.scrollThreshold) {
+        this.loadPrev(this.selectedNode);
+      }
+    }
+  }
 }

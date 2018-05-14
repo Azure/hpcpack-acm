@@ -45,7 +45,7 @@
           </button>
         </ng-template>
 
-        <pre #output>{{currentOutput?.content}}</pre>
+        <pre (scroll)="onScroll($event)" #output>{{currentOutput?.content}}</pre>
 
         <div class="control static down" *ngIf="currentOutput?.end; else nextButton">
           Output End
