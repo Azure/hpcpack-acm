@@ -225,7 +225,7 @@ export class ResultDetailComponent implements OnInit {
       return;
     }
     output.loading = 'once';
-    let opt = { fulfill: true, over: () => this.isOutputOver(node) };
+    let opt = { fulfill: true, over: () => this.isOutputOver(node), timeout: 2000 };
     this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt as any).subscribe(
       result => {
         output.loading = false;
@@ -324,7 +324,7 @@ export class ResultDetailComponent implements OnInit {
     }
     output.loading = 'prev';
     let opt = { fulfill: true, over: () => this.isOutputOver(node) };
-    this.api.command.getOutput(this.id, node.key, prev, pageSize, opt)
+    this.api.command.getOutput(this.id, node.key, prev, pageSize, opt as any)
       .subscribe(result => {
         output.loading = false;
         if (this.updateNodeOutputBackward(output, result) && this.selectedNode &&
@@ -340,7 +340,7 @@ export class ResultDetailComponent implements OnInit {
       return;
     }
     output.loading = 'next';
-    let opt = { fulfill: true, over: () => this.isOutputOver(node) };
+    let opt = { fulfill: true, over: () => this.isOutputOver(node), timeout: 2000 };
     this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt)
       .subscribe(result => {
         output.loading = false;

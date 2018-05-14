@@ -156,10 +156,11 @@ export class CommandApi extends Resource<CommandResult> {
   //to call another API to get to know if the command generating the output is
   //over. When opt.fulfill is set to true, DO provide callback opt.over, otherwise
   //the method may never ends since it doesn't know EOF without opt.over!
-  getOutput(id, key, offset, size = 1024, opt = { fulfill: false, over: undefined }) {
+  getOutput(id, key, offset, size = 1024, opt = { fulfill: false, over: undefined, timeout: undefined }) {
     return Observable.create(observer => {
       let res = { content: '', size: 0 };
       let url = `${this.url}/${id}/results/${key}?offset=${offset}&pageSize=${size}`;
+      let ts = new Date().getTime();
       Loop.start(
         this.http.get<any>(url),
         {
@@ -172,7 +173,8 @@ export class CommandApi extends Resource<CommandResult> {
               (res as any).offset = result.offset;
             }
             let eof = result.size === 0 && opt.over && opt.over();
-            if (!opt.fulfill || res.size == size || eof) {
+            let elapse = new Date().getTime() - ts;
+            if (!opt.fulfill || res.size == size || eof || (opt.timeout && elapse >= opt.timeout)) {
               (res as any).end = eof;
               observer.next(res);
               observer.complete();
