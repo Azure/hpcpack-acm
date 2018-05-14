@@ -136,6 +136,10 @@ export class ResultDetailComponent implements OnInit {
     }
   }
 
+  isSelected(node) {
+    return node && this.selectedNode && node.name === this.selectedNode.name;
+  }
+
   getNodeOutput(node): any {
     let output = this.nodeOutputs[node.name];
     if (!output) {

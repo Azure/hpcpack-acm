@@ -29,7 +29,7 @@
           </ng-container>
 
           <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-          <mat-row *matRowDef="let node; columns: displayedColumns;" [ngClass]="{ selected: selectedNode === node }" (click)="selectNode(node)"></mat-row>
+          <mat-row *matRowDef="let node; columns: displayedColumns;" [ngClass]="{ selected: isSelected(node) }" (click)="selectNode(node)"></mat-row>
         </mat-table>
       </div>
 
