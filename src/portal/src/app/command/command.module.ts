@@ -8,6 +8,7 @@ import { CommandRoutingModule } from './command-routing.module';
 import { CommandComponent } from './command.component';
 import { ResultListComponent } from './result-list/result-list.component';
 import { ResultDetailComponent } from './result-detail/result-detail.component';
+import { CommandOutputComponent } from './command-output/command-output.component';
 
 @NgModule({
   imports: [
@@ -18,6 +19,6 @@ import { ResultDetailComponent } from './result-detail/result-detail.component';
     FormsModule,
     ChartModule,
   ],
-  declarations: [CommandComponent, ResultListComponent, ResultDetailComponent],
+  declarations: [CommandComponent, ResultListComponent, ResultDetailComponent, CommandOutputComponent],
 })
 export class CommandModule { }

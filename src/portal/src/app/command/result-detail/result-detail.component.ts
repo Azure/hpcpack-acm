@@ -4,6 +4,7 @@ import { MatTableDataSource } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { CommandResult } from '../../models/command-result';
 import { ApiService, Loop } from '../../services/api.service';
+import { CommandOutputComponent } from '../command-output/command-output.component';
 
 @Component({
   selector: 'app-result-detail',
@@ -11,8 +12,8 @@ import { ApiService, Loop } from '../../services/api.service';
   styleUrls: ['./result-detail.component.scss']
 })
 export class ResultDetailComponent implements OnInit {
-  @ViewChild('output')
-  private output: ElementRef;
+  @ViewChild(CommandOutputComponent)
+  private output: CommandOutputComponent;
 
   private id: string;
 
@@ -250,13 +251,7 @@ export class ResultDetailComponent implements OnInit {
   }
 
   scrollOutputToBottom(): void {
-    let elem = this.output.nativeElement;
-    elem.scrollTop = elem.scrollHeight;
-  }
-
-  scrollOutputToTop(): void {
-    let elem = this.output.nativeElement;
-    elem.scrollTop = 0;
+    this.output.scrollToBottom();
   }
 
   setResultState() {
@@ -302,8 +297,7 @@ export class ResultDetailComponent implements OnInit {
     }
   }
 
-  loadPrevAndScroll(node) {
-    let elem = this.output.nativeElement;
+  loadPrevAndScroll(node, elem) {
     let top = elem.scrollTop;
     let height = elem.scrollHeight;
     this.loadPrev(node, () => elem.scrollTop = elem.scrollHeight - height + top);
@@ -350,44 +344,5 @@ export class ResultDetailComponent implements OnInit {
         output.loading = false;
         this.updateNodeOutput(output, result);
       });
-  }
-
-  private scrollPos = 0;
-
-  private scrollTimer;
-
-  private scrollDelay = 200;
-
-  private scrollThreshold = 0.15;
-
-  onScroll($event, debounced = false, downward = undefined) {
-    if (!debounced) {
-      if (this.scrollTimer) {
-        clearTimeout(this.scrollTimer);
-      }
-      let top = $event.srcElement.scrollTop;
-      let downward = top >= this.scrollPos;
-      this.scrollTimer = setTimeout(() => this.onScroll($event, true, downward), this.scrollDelay);
-      this.scrollPos = top;
-    }
-    else {
-      clearTimeout(this.scrollTimer);
-      this.scrollTimer = null;
-
-      let elem = $event.srcElement;
-      let height = elem.scrollHeight;
-      let up = elem.scrollTop / height;
-      let mid = elem.clientHeight / height;
-      let down = 1 - up - mid;
-
-      if (downward) {
-        if (down <= this.scrollThreshold) {
-          this.loadNext(this.selectedNode);
-        }
-      }
-      else if (up <= this.scrollThreshold) {
-        this.loadPrevAndScroll(this.selectedNode);
-      }
-    }
   }
 }

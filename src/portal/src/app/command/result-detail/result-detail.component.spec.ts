@@ -1,5 +1,5 @@
 import { async, fakeAsync, flush, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { _throw } from 'rxjs/observable/throw';
 
@@ -9,6 +9,32 @@ import { FormsModule } from '@angular/forms'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MaterialsModule } from '../../materials.module';
 import { ResultDetailComponent } from './result-detail.component';
+
+@Component({ selector: 'command-output', template: '' })
+class CommandOutputStubComponent {
+  @Output()
+  loadPrev = new EventEmitter<any>();
+
+  @Output()
+  loadNext = new EventEmitter<any>();
+
+  @Input()
+  content: string = '';
+
+  @Input()
+  disabled: boolean = false;
+
+  @Input()
+  loading: string | boolean = false;
+
+  //Got Begin of File
+  @Input()
+  bof: boolean = false;
+
+  //Got End of File
+  @Input()
+  eof: boolean = false;
+}
 
 class ApiServiceStub {
   static result = { command: 'TEST COMMAND', nodes: [{ name: 'TEST NODE', state: 'finished' }] };
@@ -39,6 +65,7 @@ fdescribe('ResultDetailComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
+        CommandOutputStubComponent,
         ResultDetailComponent,
       ],
       imports: [
@@ -68,8 +95,9 @@ fdescribe('ResultDetailComponent', () => {
     expect(text).toContain(ApiServiceStub.result.command);
     text = fixture.nativeElement.querySelector('.state').textContent;
     expect(text).toContain('Finished');
-    text = fixture.nativeElement.querySelector('pre').textContent;
-    expect(text).toContain(ApiServiceStub.outputContent);
+
+    expect(component.currentOutput.content).toEqual(ApiServiceStub.outputContent);
+
     text = fixture.nativeElement.querySelector('.mat-cell.mat-column-name').textContent;
     expect(text).toContain(ApiServiceStub.result.nodes[0].name);
     text = fixture.nativeElement.querySelector('.mat-cell.mat-column-state').textContent;
