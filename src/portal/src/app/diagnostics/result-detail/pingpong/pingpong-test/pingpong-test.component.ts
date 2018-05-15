@@ -1,8 +1,8 @@
 import { Component, OnInit, Input, ViewChild, OnDestroy, OnChanges, SimpleChange } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
-import { ApiService, Loop } from '../../../services/api.service';
+import { ApiService, Loop } from '../../../../services/api.service';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
-import { TaskDetailComponent } from '../task-detail/task-detail.component';
+import { TaskDetailComponent } from '../../task-detail/task-detail.component';
 
 @Component({
   selector: 'app-pingpong-test',
