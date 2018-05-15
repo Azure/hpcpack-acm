@@ -38,7 +38,7 @@
           Output Begin
         </div>
         <ng-template #prevButton>
-          <button class="control up" [ngClass]="{ attention: !loading && selectedNode }" (click)="loadPrev(selectedNode)"
+          <button class="control up" [ngClass]="{ attention: !loading && selectedNode }" (click)="loadPrevAndScroll(selectedNode)"
             mat-button [disabled]="loading || !selectedNode" matTooltip="Load more content backward">
             <span *ngIf="loading == 'prev'; else upArrow">Loading...</span>
             <ng-template #upArrow><i class="material-icons">keyboard_arrow_up</i></ng-template>

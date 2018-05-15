@@ -254,12 +254,6 @@ export class ResultDetailComponent implements OnInit {
     elem.scrollTop = elem.scrollHeight;
   }
 
-  scrollOutputUp(): void {
-    let elem = this.output.nativeElement;
-    //Set scrollTop to a proper position for next "scroll and load"
-    elem.scrollTop = Math.ceil(elem.scrollHeight * this.scrollThreshold) + 8;
-  }
-
   scrollOutputToTop(): void {
     let elem = this.output.nativeElement;
     elem.scrollTop = 0;
@@ -308,7 +302,14 @@ export class ResultDetailComponent implements OnInit {
     }
   }
 
-  loadPrev(node) {
+  loadPrevAndScroll(node) {
+    let elem = this.output.nativeElement;
+    let top = elem.scrollTop;
+    let height = elem.scrollHeight;
+    this.loadPrev(node, () => elem.scrollTop = elem.scrollHeight - height + top);
+  }
+
+  loadPrev(node, onload = undefined) {
     let output = this.getNodeOutput(node)
     if (output.start === 0 || output.loading) {
       return;
@@ -330,9 +331,9 @@ export class ResultDetailComponent implements OnInit {
     this.api.command.getOutput(this.id, node.key, prev, pageSize, opt as any)
       .subscribe(result => {
         output.loading = false;
-        if (this.updateNodeOutputBackward(output, result) && this.selectedNode &&
-          this.selectedNode.name == node.name) {
-          setTimeout(() => this.scrollOutputUp(), 0);
+        if (this.updateNodeOutputBackward(output, result) && onload
+          && this.selectedNode && this.selectedNode.name == node.name) {
+          setTimeout(onload, 0);
         }
       });
   }
@@ -355,7 +356,7 @@ export class ResultDetailComponent implements OnInit {
 
   private scrollTimer;
 
-  private scrollDelay = 150;
+  private scrollDelay = 200;
 
   private scrollThreshold = 0.15;
 
@@ -374,8 +375,9 @@ export class ResultDetailComponent implements OnInit {
       this.scrollTimer = null;
 
       let elem = $event.srcElement;
-      let up = elem.scrollTop / elem.scrollHeight;
-      let mid = elem.clientHeight / elem.scrollHeight;
+      let height = elem.scrollHeight;
+      let up = elem.scrollTop / height;
+      let mid = elem.clientHeight / height;
       let down = 1 - up - mid;
 
       if (downward) {
@@ -384,7 +386,7 @@ export class ResultDetailComponent implements OnInit {
         }
       }
       else if (up <= this.scrollThreshold) {
-        this.loadPrev(this.selectedNode);
+        this.loadPrevAndScroll(this.selectedNode);
       }
     }
   }
