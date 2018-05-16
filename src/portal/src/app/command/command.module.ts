@@ -9,6 +9,7 @@ import { CommandComponent } from './command.component';
 import { ResultListComponent } from './result-list/result-list.component';
 import { ResultDetailComponent } from './result-detail/result-detail.component';
 import { CommandOutputComponent } from './command-output/command-output.component';
+import { NodeSelectorComponent } from './node-selector/node-selector.component';
 
 @NgModule({
   imports: [
@@ -19,6 +20,6 @@ import { CommandOutputComponent } from './command-output/command-output.componen
     FormsModule,
     ChartModule,
   ],
-  declarations: [CommandComponent, ResultListComponent, ResultDetailComponent, CommandOutputComponent],
+  declarations: [CommandComponent, ResultListComponent, ResultDetailComponent, CommandOutputComponent, NodeSelectorComponent],
 })
 export class CommandModule { }

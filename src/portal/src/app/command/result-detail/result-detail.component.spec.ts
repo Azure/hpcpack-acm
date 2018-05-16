@@ -1,5 +1,5 @@
 import { async, fakeAsync, flush, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { _throw } from 'rxjs/observable/throw';
 
@@ -36,6 +36,25 @@ class CommandOutputStubComponent {
   eof: boolean = false;
 }
 
+@Component({ selector: 'node-selector', template: '' })
+class NodeSelectorStubComponent {
+  @Input()
+  nodes: any[];
+
+  @Output()
+  select = new EventEmitter();
+
+  selectedNode: any;
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.nodes) {
+      let prevNode = this.selectedNode;
+      this.selectedNode = this.nodes[0];
+      this.select.emit({ node: this.nodes[0], prevNode });
+    }
+  }
+}
+
 class ApiServiceStub {
   static result = { command: 'TEST COMMAND', nodes: [{ name: 'TEST NODE', state: 'finished' }] };
 
@@ -65,6 +84,7 @@ fdescribe('ResultDetailComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
+        NodeSelectorStubComponent,
         CommandOutputStubComponent,
         ResultDetailComponent,
       ],
@@ -98,9 +118,8 @@ fdescribe('ResultDetailComponent', () => {
 
     expect(component.currentOutput.content).toEqual(ApiServiceStub.outputContent);
 
-    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-name').textContent;
-    expect(text).toContain(ApiServiceStub.result.nodes[0].name);
-    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-state').textContent;
-    expect(text).toContain('Finished');
+    let selectedNode = component.selectedNode;
+    expect(selectedNode.name).toEqual(ApiServiceStub.result.nodes[0].name);
+    expect(selectedNode.state).toEqual(ApiServiceStub.result.nodes[0].state);
   }));
 });

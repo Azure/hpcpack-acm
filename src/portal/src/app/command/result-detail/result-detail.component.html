@@ -7,30 +7,8 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-3 selection">
-        <mat-form-field>
-          <mat-select placeholder="State" [(ngModel)]="state" (change)="filter()">
-            <mat-option *ngFor="let opt of states" [value]="opt">
-              {{ opt | titlecase }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field>
-          <input matInput placeholder="Name" [(ngModel)]="name" (keyup)="filter()">
-        </mat-form-field>
-        <mat-table #table [dataSource]="dataSource">
-          <ng-container matColumnDef="name">
-            <mat-header-cell *matHeaderCellDef> Node </mat-header-cell>
-            <mat-cell *matCellDef="let node">{{node.name}}</mat-cell>
-          </ng-container>
-
-          <ng-container matColumnDef="state">
-            <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
-            <mat-cell *matCellDef="let node">{{node.state | titlecase }}</mat-cell>
-          </ng-container>
-
-          <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-          <mat-row *matRowDef="let node; columns: displayedColumns;" [ngClass]="{ selected: isSelected(node) }" (click)="selectNode(node)"></mat-row>
-        </mat-table>
+        <node-selector [nodes]="result.nodes" (select)="selectNode($event)">
+        </node-selector>
       </div>
 
       <div class="col-md-9 output">

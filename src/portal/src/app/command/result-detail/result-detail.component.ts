@@ -4,6 +4,7 @@ import { MatTableDataSource } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { CommandResult } from '../../models/command-result';
 import { ApiService, Loop } from '../../services/api.service';
+import { NodeSelectorComponent } from '../node-selector/node-selector.component';
 import { CommandOutputComponent } from '../command-output/command-output.component';
 
 @Component({
@@ -12,22 +13,13 @@ import { CommandOutputComponent } from '../command-output/command-output.compone
   styleUrls: ['./result-detail.component.scss']
 })
 export class ResultDetailComponent implements OnInit {
+  @ViewChild(NodeSelectorComponent)
+  private selector: NodeSelectorComponent;
+
   @ViewChild(CommandOutputComponent)
   private output: CommandOutputComponent;
 
   private id: string;
-
-  private states = ['all', 'queued', 'running', 'finished', 'failed', 'canceled'];
-
-  private state = 'all';
-
-  private name = '';
-
-  private dataSource = new MatTableDataSource();
-
-  private displayedColumns = ['name', 'state'];
-
-  private selectedNode: any;
 
   private result: CommandResult;
 
@@ -80,9 +72,9 @@ export class ResultDetailComponent implements OnInit {
           if (result.nodes.length == 0) {
             return true;
           }
-          //filter depends on this.result.state, which is set by setResultState.
+          //NOTE: this.result.state, which is set by setResultState, is used to
+          //determin the end of a node output.
           this.setResultState();
-          this.filter();
           return !this.isOver;
         },
         error: (err) => {
@@ -104,28 +96,21 @@ export class ResultDetailComponent implements OnInit {
     }
   }
 
-  filter() {
-    let res = this.result.nodes.filter(e => {
-      if (this.state != 'all' && e.state != this.state)
-        return false;
-      if (e.name.toLowerCase().indexOf(this.name.toLowerCase()) < 0)
-        return false;
-      return true;
-    });
-    this.dataSource.data = res;
-    if (!this.selectedNode || res.findIndex((e) => e.name == this.selectedNode.name) < 0)
-      this.selectNode(res[0]);
-  }
+  //This should work but not in fact! Because this.selector is set later than
+  //selectNode is called. That seems the NodeSelectorComponent can fire events
+  //before Angular captures it in this.selector. A surprise!
+  //
+  //get selectedNode(): any {
+  //  return this.selector ? this.selector.selectedNode : null;
+  //}
 
-  selectNode(node) {
-    if ((node && this.selectedNode && node.name == this.selectedNode.name)
-      || (!node && !this.selectedNode)) {
-      return;
-    }
-    if (this.selectedNode) {
-      this.stopAutoload(this.selectedNode);
-    }
+  selectedNode: any;
+
+  selectNode({ node, prevNode }) {
     this.selectedNode = node;
+    if (prevNode) {
+      this.stopAutoload(prevNode);
+    }
     if (!node) {
       return;
     }
