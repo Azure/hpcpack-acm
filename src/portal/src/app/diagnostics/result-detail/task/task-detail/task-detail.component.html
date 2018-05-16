@@ -1,0 +1,13 @@
+<div class="dialog-title" mat-dialog-title>
+  <div class="job-info">
+    Task Detail
+  </div>
+  <mat-divider></mat-divider>
+  <div class="close-icon" (click)="close()">
+    <i class="material-icons">close</i>
+  </div>
+</div>
+<mat-dialog-content>
+  <div [innerHTML]="message" class="msg-item" *ngFor="let message of msg">
+  </div>
+</mat-dialog-content>

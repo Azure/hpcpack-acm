@@ -1,0 +1,18 @@
+<div class="title main">
+  <div class="name">{{result.id}} - {{result.name}} {{result.state}}</div>
+</div>
+<div class="area-title">
+  <i class="material-icons title-icon">equalizer</i>
+  <div>OVERVIEW</div>
+</div>
+<div class="overview">
+  <ng-container *ngTemplateOutlet="overviewTemplate"></ng-container>
+</div>
+
+<div class="area-title">
+  <i class="material-icons title-icon">widgets</i>
+  <div>TASKS</div>
+</div>
+<div class="tasks">
+  <ng-container *ngTemplateOutlet="taskTemplate"></ng-container>
+</div>

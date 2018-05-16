@@ -1,0 +1,49 @@
+<div class="actions">
+  <button mat-raised-button (click)="customizeTable()">Customize Columns...</button>
+</div>
+
+<div class="filter">
+  <mat-form-field>
+    <input #filter matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter">
+    <mat-hint>Filter results by node name or state</mat-hint>
+    <mat-hint align="end">{{dataSource.filteredData.length}} results</mat-hint>
+  </mat-form-field>
+</div>
+
+<mat-table #table [dataSource]="dataSource">
+  <!--
+       Note that these columns can be defined in any order. The actual rendered
+       columns are set as a property on the row definition, displayedColumns."
+      -->
+  <ng-container matColumnDef="nodes">
+    <mat-header-cell *matHeaderCellDef>Nodes</mat-header-cell>
+    <mat-cell *matCellDef="let task">{{task.customizedData}}</mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="state">
+    <mat-header-cell *matHeaderCellDef>State</mat-header-cell>
+    <mat-cell *matCellDef="let task">{{task.state}}</mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="latency">
+    <mat-header-cell *matHeaderCellDef>Latency [usec]</mat-header-cell>
+    <mat-cell *matCellDef="let task">{{task.taskInfo.message.Latency}}</mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="throughput">
+    <mat-header-cell *matHeaderCellDef>Throughput [usec]</mat-header-cell>
+    <mat-cell *matCellDef="let task">{{task.taskInfo.message.Throughput}}</mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="detail">
+    <mat-header-cell *matHeaderCellDef>Detail</mat-header-cell>
+    <mat-cell *matCellDef="let task">
+      <button mat-icon-button (click)="showDetail(task.taskInfo.message)">
+        <i class="material-icons">settings_ethernet</i>
+      </button>
+    </mat-cell>
+  </ng-container>
+
+  <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+  <mat-row *matRowDef="let task; columns: displayedColumns;"></mat-row>
+</mat-table>

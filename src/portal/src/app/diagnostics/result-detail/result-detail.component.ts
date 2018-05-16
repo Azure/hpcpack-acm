@@ -3,17 +3,13 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TestResult } from '../../models/test-result';
 import { ApiService } from '../../services/api.service';
-import { ServiceRunningTestComponent } from './service-running-test/service-running-test.component';
-import { PingTestComponent } from './ping-test/ping-test.component';
-import { PingPongTestComponent } from './pingpong/pingpong-test/pingpong-test.component';
-import { RingTestComponent } from './ring-test/ring-test.component';
+import { PingPongReportComponent } from './diags/pingpong/pingpong-report/pingpong-report.component';
+import { RingReportComponent } from './diags/ring/ring-report/ring-report.component';
 
 const map = {
-  'Service Running Test': ServiceRunningTestComponent,
-  'ping': PingTestComponent,
-  'test': PingPongTestComponent,
-  'pingpong': PingPongTestComponent,
-  'ring': RingTestComponent
+  'test': PingPongReportComponent,
+  'pingpong': PingPongReportComponent,
+  'ring': RingReportComponent
 }
 
 @Component({

@@ -1,0 +1,22 @@
+<app-result-layout [result]="result">
+  <ng-template #overview>
+    <div class="error-message" *ngIf="result.aggregationResult != undefined && result.aggregationResult.Error != undefined;else jobOverview">
+      {{result.aggregationResult.Error}}
+    </div>
+    <ng-template #jobOverview>
+      <mat-tab-group>
+        <mat-tab label="Latency">
+          <pingpong-overview-result [result]="latencyData"></pingpong-overview-result>
+        </mat-tab>
+        <mat-tab label="Throughput">
+          <pingpong-overview-result [result]="throughputData"></pingpong-overview-result>
+        </mat-tab>
+      </mat-tab-group>
+    </ng-template>
+  </ng-template>
+
+  <ng-template #task>
+    <diag-task-table [dataSource]="dataSource" [customizableColumns]="customizableColumns" [displayedColumns]="displayedColumns"
+      [tableName]="componentName"></diag-task-table>
+  </ng-template>
+</app-result-layout>
