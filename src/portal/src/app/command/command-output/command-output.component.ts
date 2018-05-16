@@ -43,7 +43,7 @@ export class CommandOutputComponent implements OnInit {
 
   private scrollDelay = 200;
 
-  private scrollThreshold = 0.15;
+  private scrollThreshold = 0.20;
 
   onScroll($event, debounced = false, downward = undefined) {
     if (this.disabled) {

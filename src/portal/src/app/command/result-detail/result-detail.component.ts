@@ -282,10 +282,15 @@ export class ResultDetailComponent implements OnInit {
     }
   }
 
+  private scrollTop;
+
+  private scrollHeight;
+
   loadPrevAndScroll(node, elem) {
-    let top = elem.scrollTop;
-    let height = elem.scrollHeight;
-    this.loadPrev(node, () => elem.scrollTop = elem.scrollHeight - height + top);
+    this.scrollTop = elem.scrollTop;
+    this.scrollHeight = elem.scrollHeight;
+    this.loadPrev(node,
+      () => elem.scrollTop = elem.scrollHeight - this.scrollHeight + this.scrollTop);
   }
 
   loadPrev(node, onload = undefined) {
