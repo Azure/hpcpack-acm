@@ -4,6 +4,7 @@ import { MatTableDataSource } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { CommandResult } from '../../models/command-result';
 import { ApiService, Loop } from '../../services/api.service';
+import { CommandOutputComponent } from '../command-output/command-output.component';
 
 @Component({
   selector: 'app-result-detail',
@@ -11,8 +12,8 @@ import { ApiService, Loop } from '../../services/api.service';
   styleUrls: ['./result-detail.component.scss']
 })
 export class ResultDetailComponent implements OnInit {
-  @ViewChild('output')
-  private output: ElementRef;
+  @ViewChild(CommandOutputComponent)
+  private output: CommandOutputComponent;
 
   private id: string;
 
@@ -250,19 +251,7 @@ export class ResultDetailComponent implements OnInit {
   }
 
   scrollOutputToBottom(): void {
-    let elem = this.output.nativeElement;
-    elem.scrollTop = elem.scrollHeight;
-  }
-
-  scrollOutputUp(): void {
-    let elem = this.output.nativeElement;
-    //Set scrollTop to a proper position for next "scroll and load"
-    elem.scrollTop = Math.ceil(elem.scrollHeight * this.scrollThreshold) + 8;
-  }
-
-  scrollOutputToTop(): void {
-    let elem = this.output.nativeElement;
-    elem.scrollTop = 0;
+    this.output.scrollToBottom();
   }
 
   setResultState() {
@@ -308,7 +297,13 @@ export class ResultDetailComponent implements OnInit {
     }
   }
 
-  loadPrev(node) {
+  loadPrevAndScroll(node, elem) {
+    let top = elem.scrollTop;
+    let height = elem.scrollHeight;
+    this.loadPrev(node, () => elem.scrollTop = elem.scrollHeight - height + top);
+  }
+
+  loadPrev(node, onload = undefined) {
     let output = this.getNodeOutput(node)
     if (output.start === 0 || output.loading) {
       return;
@@ -330,9 +325,9 @@ export class ResultDetailComponent implements OnInit {
     this.api.command.getOutput(this.id, node.key, prev, pageSize, opt as any)
       .subscribe(result => {
         output.loading = false;
-        if (this.updateNodeOutputBackward(output, result) && this.selectedNode &&
-          this.selectedNode.name == node.name) {
-          setTimeout(() => this.scrollOutputUp(), 0);
+        if (this.updateNodeOutputBackward(output, result) && onload
+          && this.selectedNode && this.selectedNode.name == node.name) {
+          setTimeout(onload, 0);
         }
       });
   }
@@ -349,43 +344,5 @@ export class ResultDetailComponent implements OnInit {
         output.loading = false;
         this.updateNodeOutput(output, result);
       });
-  }
-
-  private scrollPos = 0;
-
-  private scrollTimer;
-
-  private scrollDelay = 150;
-
-  private scrollThreshold = 0.15;
-
-  onScroll($event, debounced = false, downward = undefined) {
-    if (!debounced) {
-      if (this.scrollTimer) {
-        clearTimeout(this.scrollTimer);
-      }
-      let top = $event.srcElement.scrollTop;
-      let downward = top >= this.scrollPos;
-      this.scrollTimer = setTimeout(() => this.onScroll($event, true, downward), this.scrollDelay);
-      this.scrollPos = top;
-    }
-    else {
-      clearTimeout(this.scrollTimer);
-      this.scrollTimer = null;
-
-      let elem = $event.srcElement;
-      let up = elem.scrollTop / elem.scrollHeight;
-      let mid = elem.clientHeight / elem.scrollHeight;
-      let down = 1 - up - mid;
-
-      if (downward) {
-        if (down <= this.scrollThreshold) {
-          this.loadNext(this.selectedNode);
-        }
-      }
-      else if (up <= this.scrollThreshold) {
-        this.loadPrev(this.selectedNode);
-      }
-    }
   }
 }

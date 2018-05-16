@@ -65,38 +65,11 @@ mat-row:hover {
   flex: 0.5;
 }
 
-pre {
-  color: white;
-  background-color: black;
-  overflow: auto;
-  box-sizing: border-box;
-  margin: 5px 0;
-  padding: 1em;
-  height: 600px;
-}
-
-@keyframes blink {
-  0%   { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-.attention {
-  animation: blink 1s 5;
-}
-
-.output button {
-  width: 100%;
-  background-color: #e4e4e4;
-}
-
-.control + .control {
-  margin-top: 5px;
-}
-
 .control.bottom {
   display: flex;
   justify-content: space-between;
   padding: 5px;
+  margin-top: 0.5em;
 
   a {
     color: inherit;
@@ -106,18 +79,3 @@ pre {
     vertical-align: top;
   }
 }
-
-.control.static {
-  text-align: center;
-  background-color: #e4e4e4;
-  padding: 8px;
-}
-
-.control.static.up, button.control.up {
-  border-radius: 8px 8px 0 0;
-}
-
-.control.static.down, button.control.down {
-  border-radius: 0 0 8px 8px;
-}
-

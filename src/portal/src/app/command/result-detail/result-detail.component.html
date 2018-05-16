@@ -34,33 +34,10 @@
       </div>
 
       <div class="col-md-9 output">
-        <div class="control static up" *ngIf="currentOutput?.start === 0; else prevButton">
-          Output Begin
-        </div>
-        <ng-template #prevButton>
-          <button class="control up" [ngClass]="{ attention: !loading && selectedNode }" (click)="loadPrev(selectedNode)"
-            mat-button [disabled]="loading || !selectedNode" matTooltip="Load more content backward">
-            <span *ngIf="loading == 'prev'; else upArrow">Loading...</span>
-            <ng-template #upArrow><i class="material-icons">keyboard_arrow_up</i></ng-template>
-          </button>
-        </ng-template>
-
-        <pre (scroll)="onScroll($event)" #output>{{currentOutput?.content}}</pre>
-
-        <div class="control static down" *ngIf="currentOutput?.end; else nextButton">
-          Output End
-        </div>
-        <ng-template #nextButton>
-          <button class="control down" [ngClass]="{ attention: !loading && selectedNode }" (click)="loadNext(selectedNode)"
-            mat-button [disabled]="loading || !selectedNode" matTooltip="Load more content forward">
-            <span *ngIf="loading == 'next'; else downArrow">Loading...</span>
-            <ng-template #downArrow><i class="material-icons">keyboard_arrow_down</i></ng-template>
-          </button>
-        </ng-template>
-
-        <div class="control" *ngIf="loading">
-          <mat-progress-bar mode="buffer"></mat-progress-bar>
-        </div>
+        <command-output (loadPrev)="loadPrevAndScroll(selectedNode, $event)" (loadNext)="loadNext(selectedNode)"
+          [content]="currentOutput?.content" [disabled]="!selectedNode" [loading]="loading"
+          [bof]="currentOutput?.start === 0" [eof]="currentOutput?.end">
+        </command-output>
 
         <div class="control bottom">
           <a [href]="currentOutputUrl" *ngIf="currentOutputUrl">

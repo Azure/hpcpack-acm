@@ -1,0 +1,29 @@
+<div class="control static up" *ngIf="bof; else prevButton">
+  Output Begin
+</div>
+<ng-template #prevButton>
+  <button mat-button class="control up" [ngClass]="{ attention: !loading && !disabled }"
+    (click)="loadPrev.emit(output)" [disabled]="loading || disabled"
+    matTooltip="Load more content before">
+    <span *ngIf="loading == 'prev'; else upArrow">Loading...</span>
+    <ng-template #upArrow><i class="material-icons">keyboard_arrow_up</i></ng-template>
+  </button>
+</ng-template>
+
+<pre (scroll)="onScroll($event)" #output>{{content}}</pre>
+
+<div class="control static down" *ngIf="eof; else nextButton">
+  Output End
+</div>
+<ng-template #nextButton>
+  <button mat-button class="control down" [ngClass]="{ attention: !loading && !disabled }"
+    (click)="loadNext.emit(output)" [disabled]="loading || disabled"
+    matTooltip="Load more content after">
+    <span *ngIf="loading == 'next'; else downArrow">Loading...</span>
+    <ng-template #downArrow><i class="material-icons">keyboard_arrow_down</i></ng-template>
+  </button>
+</ng-template>
+
+<div class="control" *ngIf="loading">
+  <mat-progress-bar mode="buffer"></mat-progress-bar>
+</div>
