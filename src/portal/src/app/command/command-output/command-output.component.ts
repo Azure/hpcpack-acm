@@ -46,6 +46,9 @@ export class CommandOutputComponent implements OnInit {
   private scrollThreshold = 0.15;
 
   onScroll($event, debounced = false, downward = undefined) {
+    if (this.disabled) {
+      return;
+    }
     if (!debounced) {
       if (this.scrollTimer) {
         clearTimeout(this.scrollTimer);
