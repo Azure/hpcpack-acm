@@ -10,7 +10,7 @@
     using System.Collections.Generic;
     using System.Text;
     using System.Threading;
-    using System.Threading.Tasks;
+    using T = System.Threading.Tasks;
 
     public static class CloudUtilitiesExtensions
     {
@@ -18,11 +18,11 @@
         {
             return u.GetTable(u.Option.IdsTableName);
         }
-        public static async Task<CloudTable> GetOrCreateIdsTableAsync(this CloudUtilities u, CancellationToken token)
+        public static async T.Task<CloudTable> GetOrCreateIdsTableAsync(this CloudUtilities u, CancellationToken token)
         {
             return await u.GetOrCreateTableAsync(u.Option.IdsTableName, token);
         }
-        public static async Task<int> GetNextId(this CloudUtilities u, string category, string usage, CancellationToken token)
+        public static async T.Task<int> GetNextId(this CloudUtilities u, string category, string usage, CancellationToken token)
         {
             var idsTable = u.GetIdsTable();
 
@@ -70,52 +70,99 @@
             return u.GetTable(u.Option.JobsTableName);
         }
 
-        public static async Task<CloudTable> GetOrCreateJobsTableAsync(this CloudUtilities u, CancellationToken token)
+        public static async T.Task<CloudTable> GetOrCreateJobsTableAsync(this CloudUtilities u, CancellationToken token)
         {
             return await u.GetOrCreateTableAsync(u.Option.JobsTableName, token);
         }
 
-        public static async Task<CloudAppendBlob> CreateOrReplaceTaskOutputBlobAsync(this CloudUtilities u, JobType jobType, int jobId, string key, CancellationToken token)
+        public static async T.Task<CloudAppendBlob> CreateOrReplaceTaskOutputBlobAsync(this CloudUtilities u, JobType jobType, string key, CancellationToken token)
         {
             return await u.GetOrCreateAppendBlobAsync(
-                string.Format(u.Option.JobResultContainerPattern, jobType.ToString().ToLowerInvariant(), IntegerKey.ToStringKey(jobId)),
+                string.Format(u.Option.JobResultContainerPattern, jobType.ToString().ToLowerInvariant()),
                 key,
                 token);
         }
 
-        public static CloudAppendBlob GetTaskOutputBlob(this CloudUtilities u, string jobType, int jobId, string key) => u.GetAppendBlob(
-            string.Format(u.Option.JobResultContainerPattern, jobType, IntegerKey.ToStringKey(jobId)),
+        public static CloudAppendBlob GetTaskOutputBlob(this CloudUtilities u, string jobType, string key) => u.GetAppendBlob(
+            string.Format(u.Option.JobResultContainerPattern, jobType),
             key);
 
         public static CloudQueue GetJobEventQueue(this CloudUtilities u) => u.GetQueue(u.Option.JobEventQueueName);
 
-        public static async Task<CloudQueue> GetOrCreateTaskCompletionQueueAsync(this CloudUtilities u, CancellationToken token)
+        public static async T.Task<CloudQueue> GetOrCreateTaskCompletionQueueAsync(this CloudUtilities u, CancellationToken token)
         {
             return await u.GetOrCreateQueueAsync(u.Option.TaskCompletionQueueName, token);
         }
 
-        public static async Task<CloudQueue> GetOrCreateJobEventQueueAsync(this CloudUtilities u, CancellationToken token)
+        public static async T.Task<CloudQueue> GetOrCreateJobEventQueueAsync(this CloudUtilities u, CancellationToken token)
         {
             return await u.GetOrCreateQueueAsync(u.Option.JobEventQueueName, token);
         }
 
-        public static async Task<CloudQueue> GetOrCreateNodeDispatchQueueAsync(this CloudUtilities u, string nodeName, CancellationToken token)
+        public static async T.Task<CloudQueue> GetOrCreateNodeDispatchQueueAsync(this CloudUtilities u, string nodeName, CancellationToken token)
         {
             return await u.GetOrCreateQueueAsync(string.Format(u.Option.NodeDispatchQueuePattern, nodeName), token);
         }
 
+        public static async T.Task<CloudQueue> GetOrCreateNodeCancelQueueAsync(this CloudUtilities u, string nodeName, CancellationToken token)
+        {
+            return await u.GetOrCreateQueueAsync(string.Format(u.Option.NodeCancelQueuePattern, nodeName), token);
+        }
+
         public static CloudTable GetMetricsTable(this CloudUtilities u) => u.GetTable(u.Option.MetricsTableName);
 
-        public static async Task<CloudTable> GetOrCreateMetricsTableAsync(this CloudUtilities u, CancellationToken token) => await u.GetOrCreateTableAsync(u.Option.MetricsTableName, token);
+        public static async T.Task<CloudTable> GetOrCreateMetricsTableAsync(this CloudUtilities u, CancellationToken token) => await u.GetOrCreateTableAsync(u.Option.MetricsTableName, token);
 
         public static CloudTable GetNodesTable(this CloudUtilities u)
         {
             return u.GetTable(u.Option.NodesTableName);
         }
 
-        public static async Task<CloudTable> GetOrCreateNodesTableAsync(this CloudUtilities u, CancellationToken token)
+        public static async T.Task<CloudTable> GetOrCreateNodesTableAsync(this CloudUtilities u, CancellationToken token)
         {
             return await u.GetOrCreateTableAsync(u.Option.NodesTableName, token);
+        }
+
+        public static async T.Task UpdateTaskAsync(this CloudUtilities u, string jobPartitionKey, string taskKey, Action<Task> action, CancellationToken token)
+        {
+            var jobTable = u.GetJobsTable();
+
+            var task = await jobTable.RetrieveAsync<Task>(jobPartitionKey, taskKey, token);
+            if (task != null)
+            {
+                action(task);
+                await jobTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, taskKey, task, token);
+            }
+        }
+
+        public static async T.Task<bool> UpdateJobAsync(this CloudUtilities u, JobType type, int jobId, Action<Job> action, CancellationToken token)
+        {
+            var pKey = u.GetJobPartitionKey(type, jobId, true);
+            bool result1 = await u.UpdateJobAsync(pKey, action, token);
+
+            pKey = u.GetJobPartitionKey(type, jobId, false);
+            bool result2 = await u.UpdateJobAsync(pKey, action, token);
+
+            return result1 && result2;
+        }
+
+        private static async T.Task<bool> UpdateJobAsync(this CloudUtilities u, string jobPartitionKey, Action<Job> action, CancellationToken token)
+        {
+            var jobRowKey = u.JobEntryKey;
+
+            var jobTable = u.GetJobsTable();
+
+            var job = await jobTable.RetrieveAsync<Job>(jobPartitionKey, jobRowKey, token);
+            if (job != null)
+            {
+                action(job);
+                await jobTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, jobRowKey, job, token);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }

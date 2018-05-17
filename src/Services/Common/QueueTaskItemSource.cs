@@ -12,14 +12,12 @@
     public class QueueTaskItemSource : ServerObject, ITaskItemSource
     {
         private readonly CloudQueue queue;
-        private readonly TimeSpan visibleTimeout;
-        private readonly TimeSpan retryInterval;
+        private readonly TaskItemSourceOptions options;
 
-        public QueueTaskItemSource(CloudQueue queue, TimeSpan visibleTimeout, TimeSpan retryInterval)
+        public QueueTaskItemSource(CloudQueue queue, TaskItemSourceOptions options)
         {
             this.queue = queue;
-            this.visibleTimeout = visibleTimeout;
-            this.retryInterval = retryInterval;
+            this.options = options;
         }
 
         public async Task<TaskItem> FetchTaskItemAsync(CancellationToken token)
@@ -28,15 +26,21 @@
             {
                 this.Logger.LogDebug("Fetching task item from queue {0}", this.queue.Name);
 
-                var message = await this.queue.GetMessageAsync(visibleTimeout, null, null, token);
+                var message = await this.queue.GetMessageAsync(TimeSpan.FromSeconds(this.options.VisibleTimeoutSeconds), null, null, token);
                 if (message == null)
                 {
-                    this.Logger.LogDebug("No tasks fetched. Sleep for {0} seconds", this.retryInterval.TotalSeconds);
-                    await Task.Delay(this.retryInterval, token);
+                    this.Logger.LogDebug("No tasks fetched. Sleep for {0} seconds", this.options.RetryIntervalSeconds);
+                    await Task.Delay(TimeSpan.FromSeconds(this.options.RetryIntervalSeconds), token);
                 }
                 else
                 {
-                    return new QueueTaskItem(message, this.queue, this.visibleTimeout, this.Logger, token);
+                    return new QueueTaskItem(
+                        message,
+                        this.queue,
+                        TimeSpan.FromSeconds(this.options.VisibleTimeoutSeconds),
+                        TimeSpan.FromSeconds(this.options.ReturnInvisibleSeconds),
+                        this.Logger,
+                        token);
                 }
             }
             while (true);

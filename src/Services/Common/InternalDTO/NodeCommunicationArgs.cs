@@ -17,7 +17,7 @@
     /// </summary>
     public class NodeCommunicatorCallBackArg
     {
-        IEnumerable<int> resIds;
+        private readonly IEnumerable<int> resIds;
 
         public NodeCommunicatorCallBackArg(IEnumerable<int> resIds)
         {
@@ -34,7 +34,7 @@
 
     //delegate for callbacks methods used by the node communicator
     // to report completion of operations initiated by the scheduler
-    public delegate void NodeCommunicatorCallBack<ArgT>(string nodeName, ArgT arg, Exception exception) where ArgT : NodeCommunicatorCallBackArg;
+    public delegate void NodeCommunicatorCallBack<in ArgT>(string nodeName, ArgT arg, Exception exception) where ArgT : NodeCommunicatorCallBackArg;
 
     /// <summary>
     /// Argument for the StartJob operation issued by the scheduler
@@ -65,30 +65,17 @@
     /// </summary>
     public class EndJobArg : NodeCommunicatorCallBackArg
     {
-        int jobId;
-        ComputeClusterJobInformation jobInfo;
-
         public EndJobArg(IEnumerable<int> resIds, int jobId)
             : base(resIds)
         {
-            this.jobId = jobId;
+            this.JobId = jobId;
         }
 
-        public int JobId
-        {
-            get { return jobId; }
-        }
+        public int JobId { get; }
 
-        public ComputeClusterJobInformation JobInfo
-        {
-            get { return jobInfo; }
-            set { jobInfo = value; }
-        }
+        public ComputeClusterJobInformation JobInfo { get; set; }
 
-        public override string ToString()
-        {
-            return "End job " + jobId;
-        }
+        public override string ToString() => $"End job {this.JobId}";
     }
 
     /// <summary>
@@ -130,15 +117,13 @@
     /// </summary>
     public class EndTaskArg : NodeCommunicatorCallBackArg
     {
-        int jobId;
         int taskId;
         int gracePeriod;
-        ComputeClusterTaskInformation taskInfo;
 
         public EndTaskArg(IEnumerable<int> resIds, int jobId, int taskId)
             : base(resIds)
         {
-            this.jobId = jobId;
+            this.JobId = jobId;
             this.taskId = taskId;
             this.gracePeriod = 0;
         }
@@ -146,15 +131,12 @@
         public EndTaskArg(IEnumerable<int> resIds, int jobId, int taskId, int gracePeriod)
             : base(resIds)
         {
-            this.jobId = jobId;
+            this.JobId = jobId;
             this.taskId = taskId;
             this.gracePeriod = gracePeriod;
         }
 
-        public int JobId
-        {
-            get { return jobId; }
-        }
+        public int JobId { get; }
 
         public int TaskId
         {
@@ -166,15 +148,11 @@
             get { return gracePeriod; }
         }
 
-        public ComputeClusterTaskInformation TaskInfo
-        {
-            get { return taskInfo; }
-            set { taskInfo = value; }
-        }
+        public ComputeClusterTaskInformation TaskInfo { get; set; }
 
         public override string ToString()
         {
-            return "End task " + jobId + "." + taskId;
+            return "End task " + this.JobId + "." + taskId;
         }
     }
 

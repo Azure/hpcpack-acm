@@ -24,7 +24,7 @@
                 var server = builder.BuildAsync().GetAwaiter().GetResult();
                 server.Start(builder.CancelToken);
 
-                while (Console.In.Peek() == -1) { Task.Delay(1000).Wait(); }
+                while (Console.In.Peek() == -1) { System.Threading.Tasks.Task.Delay(1000).Wait(); }
                 var logger = builder.LoggerFactory.CreateLogger<Program>();
                 logger.LogInformation("Stop message received, stopping");
 
@@ -36,10 +36,12 @@
             .ConfigServiceCollection((svc, config, token) =>
             {
                 svc.Configure<JobEventWorkerOptions>(config.GetSection(nameof(JobEventWorkerOptions)));
-                svc.AddSingleton<IJobEventProcessor, ClusrunJobDispatcher>();
+                svc.AddSingleton<IJobEventProcessor, ClusRunJobDispatcher>();
                 svc.AddSingleton<IJobEventProcessor, DiagnosticsJobDispatcher>();
                 svc.AddSingleton<IJobEventProcessor, DiagnosticsJobFinisher>();
                 svc.AddSingleton<IJobEventProcessor, ClusRunJobFinisher>();
+                svc.AddSingleton<IJobEventProcessor, DiagnosticsJobCanceler>();
+                svc.AddSingleton<IJobEventProcessor, ClusRunJobCanceler>();
                 svc.AddSingleton<IWorker, JobEventWorker>();
             });
     }

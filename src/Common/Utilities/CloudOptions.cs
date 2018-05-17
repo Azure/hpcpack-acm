@@ -5,7 +5,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
     public class CloudOptions
     {
         #region Credential
-       // public string StorageKeyOrSas { get; set; } = "?sv=2017-07-29&ss=bfqt&srt=sco&sp=rwdlacup&se=2019-04-02T18:35:39Z&st=2018-03-05T10:35:39Z&spr=https&sig=MO2wFOAcvGCQr7h1sasw8SWQAWME%2BfM58XKdJgKkOuY%3D";
+        //public string StorageKeyOrSas { get; set; } = "?sv=2017-07-29&ss=bfqt&srt=sco&sp=rwdlacup&se=2019-04-02T18:35:39Z&st=2018-03-05T10:35:39Z&spr=https&sig=MO2wFOAcvGCQr7h1sasw8SWQAWME%2BfM58XKdJgKkOuY%3D";
         //public string AccountName { get; set; } = "evanc";
 
         public string StorageKeyOrSas { get; set; } = "?sv=2017-07-29&ss=bfqt&srt=sco&sp=rwdlacup&se=2019-04-24T18:19:28Z&st=2018-04-25T10:19:28Z&spr=https&sig=pYCVmT40eW54msV7P9F%2BMhBwPUbHr0HYGHvogafCs1I%3D";
@@ -68,7 +68,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
 
         #region Blobs
 
-        public string JobResultContainerPattern { get; set; } = "jobresults-{0}-{1}";
+        public string JobResultContainerPattern { get; set; } = "jobresults-{0}";
 
         #endregion
 
@@ -77,6 +77,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
         public string TaskCompletionQueueName { get; set; } = "taskcompletionqueue";
         public string JobEventQueueName { get; set; } = "jobeventqueue";
         public string NodeDispatchQueuePattern { get; set; } = "nodedispatchqueue-{0}";
+        public string NodeCancelQueuePattern { get; set; } = "nodecancelqueue-{0}";
 
         #endregion
     }

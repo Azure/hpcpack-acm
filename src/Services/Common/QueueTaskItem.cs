@@ -17,24 +17,26 @@
         private CancellationTokenSource cts = new CancellationTokenSource();
 
         private readonly TimeSpan invisibleTimeout;
+        private readonly TimeSpan returnInvisible;
 
         private readonly Task ensureInvisibilityTask;
 
         private readonly ILogger logger;
 
-        public QueueTaskItem(CloudQueueMessage message, CloudQueue queue, TimeSpan invisibleTimeout, ILogger logger, CancellationToken token)
+        public QueueTaskItem(CloudQueueMessage message, CloudQueue queue, TimeSpan invisibleTimeout, TimeSpan returnInvisible, ILogger logger, CancellationToken token)
         {
             this.logger = logger;
             this.QueueMessage = message;
             this.Queue = queue;
             this.invisibleTimeout = invisibleTimeout;
+            this.returnInvisible = returnInvisible;
 
             this.ensureInvisibilityTask = this.EnsureInvisible(token);
         }
 
         private async Task MakeVisible(CancellationToken token)
         {
-            await this.Queue.UpdateMessageAsync(this.QueueMessage, TimeSpan.Zero, MessageUpdateFields.Visibility, null, null, token);
+            await this.Queue.UpdateMessageAsync(this.QueueMessage, this.returnInvisible, MessageUpdateFields.Visibility, null, null, token);
         }
 
         private async Task EnsureInvisible(CancellationToken token)

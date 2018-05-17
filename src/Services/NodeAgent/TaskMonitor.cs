@@ -8,7 +8,7 @@
     using System.Linq;
     using System.Text;
     using System.Threading;
-    using System.Threading.Tasks;
+    using T = System.Threading.Tasks;
 
     public class TaskMonitor
     {
@@ -23,14 +23,15 @@
                 this.monitor = monitor;
             }
 
-            internal TaskCompletionSource<ComputeNodeTaskCompletionEventArgs> commandResult = new TaskCompletionSource<ComputeNodeTaskCompletionEventArgs>();
-            public Task<ComputeNodeTaskCompletionEventArgs> Execution { get => this.commandResult.Task; }
+            internal T.TaskCompletionSource<ComputeNodeTaskCompletionEventArgs> commandResult = new T.TaskCompletionSource<ComputeNodeTaskCompletionEventArgs>();
+            public T.Task<ComputeNodeTaskCompletionEventArgs> Execution { get => this.commandResult.Task; }
 
             protected virtual void Dispose(bool isDisposing)
             {
                 if (isDisposing)
                 {
                     this.monitor.taskResults.TryRemove(this.key, out _);
+                    this.monitor.taskOutputs.TryRemove(this.key, out _);
                 }
             }
 
@@ -46,7 +47,7 @@
             private readonly string key;
             private readonly TaskMonitor monitor;
 
-            public OutputSorter(string key, TaskMonitor monitor, Func<string, CancellationToken, Task> processor)
+            public OutputSorter(string key, TaskMonitor monitor, Func<string, CancellationToken, System.Threading.Tasks.Task> processor)
             {
                 this.processor = processor;
                 this.key = key;
@@ -71,7 +72,7 @@
             private int leftKey;
             private int rightKey;
 
-            public async Task PutOutput(ClusrunOutput output, CancellationToken token)
+            public async T.Task PutOutput(ClusrunOutput output, CancellationToken token)
             {
                 await this.sem.WaitAsync(token);
 
@@ -114,13 +115,13 @@
             }
 
             private readonly SemaphoreSlim sem = new SemaphoreSlim(1);
-            private readonly Func<string, CancellationToken, Task> processor;
+            private readonly Func<string, CancellationToken, System.Threading.Tasks.Task> processor;
         }
 
         private readonly ConcurrentDictionary<string, TaskResultMonitor> taskResults = new ConcurrentDictionary<string, TaskResultMonitor>();
         private readonly ConcurrentDictionary<string, OutputSorter> taskOutputs = new ConcurrentDictionary<string, OutputSorter>();
 
-        public TaskResultMonitor StartMonitorTask(string key, Func<string, CancellationToken, Task> outputProcessor)
+        public TaskResultMonitor StartMonitorTask(string key, Func<string, CancellationToken, System.Threading.Tasks.Task> outputProcessor)
         {
             this.taskOutputs.GetOrAdd(key, new OutputSorter(key, this, outputProcessor));
             return this.taskResults.GetOrAdd(key, new TaskResultMonitor(key, this));
@@ -131,9 +132,9 @@
             return this.taskResults.TryGetValue(key, out TaskResultMonitor t) ? t : null;
         }
 
-        public Task PutOutput(string key, ClusrunOutput output, CancellationToken token)
+        public T.Task PutOutput(string key, ClusrunOutput output, CancellationToken token)
         {
-            return this.taskOutputs.TryGetValue(key, out OutputSorter sorter) ? sorter.PutOutput(output, token) : Task.CompletedTask;
+            return this.taskOutputs.TryGetValue(key, out OutputSorter sorter) ? sorter.PutOutput(output, token) : T.Task.CompletedTask;
         }
 
         public void CompleteTask(string key, ComputeNodeTaskCompletionEventArgs commandResult)

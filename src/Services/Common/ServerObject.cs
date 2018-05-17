@@ -1,6 +1,7 @@
 ﻿namespace Microsoft.HpcAcm.Services.Common
 {
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Utilities;
     using System;
@@ -16,6 +17,7 @@
             this.Utilities = so.Utilities;
             this.CloudOptions = so.CloudOptions;
             this.ServerOptions = so.ServerOptions;
+            this.Provider = so.Provider;
         }
 
         public ILogger Logger { get; set; }
@@ -24,5 +26,6 @@
         public CloudOptions CloudOptions { get; set; }
 
         public ServerOptions ServerOptions { get; set; }
+        public ServiceProvider Provider { get; set; }
     }
 }

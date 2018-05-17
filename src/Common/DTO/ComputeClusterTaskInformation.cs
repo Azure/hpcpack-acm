@@ -4,11 +4,11 @@
 
     public class ComputeClusterTaskInformation
     {
-        /// <summary>
-        /// Default Constructor
-        /// </summary>
-        public ComputeClusterTaskInformation() { }
-
+        public string CommandLine { get; set; }
+        public string NodeName { get; set; }
+        public string ResultKey { get; set; }
+        public int JobId { get; set; }
+        public string FilteredResult { get; set; }
         public int TaskId { get; set; }
 
         public string Message { get; set; }

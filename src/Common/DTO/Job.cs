@@ -8,8 +8,17 @@ namespace Microsoft.HpcAcm.Common.Dto
         Running,
         Finished,
         Finishing,
-        Cancelling,
+        /// <summary>
+        /// A state that the job is being canceled by user, or timeout.
+        /// The job won't dispatch new tasks to nodes
+        /// The running tasks is being canceled.
+        /// </summary>
+        Canceling,
         Failed,
+        /// <summary>
+        /// A state that the job finished its cancel process.
+        /// The job won't dispatch new tasks to nodes
+        /// </summary>
         Canceled,
     }
 
@@ -22,6 +31,7 @@ namespace Microsoft.HpcAcm.Common.Dto
     public class Job
     {
         public int Id { get; set; }
+        public string Request { get; set; }
         public string Name { get; set; }
         public JobState State { get; set; }
         public JobType Type { get; set; }

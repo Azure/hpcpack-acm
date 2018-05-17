@@ -10,7 +10,7 @@
     using System.Collections.Generic;
     using System.Text;
     using System.Threading;
-    using System.Threading.Tasks;
+    using T = System.Threading.Tasks;
 
     public class CloudUtilities
     {
@@ -37,7 +37,7 @@
 
         public bool IsSharedKeyAccount { get => this.account.Credentials.IsSharedKey; }
 
-        public async Task InitializeAsync(CancellationToken token)
+        public async T.Task InitializeAsync(CancellationToken token)
         {
             await this.GetOrCreateJobEventQueueAsync(token);
             await this.GetOrCreateJobsTableAsync(token);
@@ -57,13 +57,13 @@
         public const string PartitionKeyName = "PartitionKey";
         public const string RowKeyName = "RowKey";
 
-        public string GetRowKeyRangeString(string lowKey, string highKey) => GetKeyRangeString(lowKey, highKey, RowKeyName);
-        public string GetPartitionKeyRangeString(string lowKey, string highKey) => GetKeyRangeString(lowKey, highKey, PartitionKeyName);
+        public string GetRowKeyRangeString(string lowKey, string highKey, bool inclusive = false) => GetKeyRangeString(lowKey, highKey, RowKeyName, inclusive);
+        public string GetPartitionKeyRangeString(string lowKey, string highKey, bool inclusive = false) => GetKeyRangeString(lowKey, highKey, PartitionKeyName, inclusive);
 
-        public string GetKeyRangeString(string lowKey, string highKey, string keyName) => TableQuery.CombineFilters(
-            TableQuery.GenerateFilterCondition(keyName, QueryComparisons.GreaterThan, lowKey),
+        public string GetKeyRangeString(string lowKey, string highKey, string keyName, bool inclusive) => TableQuery.CombineFilters(
+            TableQuery.GenerateFilterCondition(keyName, inclusive ? QueryComparisons.GreaterThanOrEqual : QueryComparisons.GreaterThan, lowKey),
             TableOperators.And,
-            TableQuery.GenerateFilterCondition(keyName, QueryComparisons.LessThan, highKey));
+            TableQuery.GenerateFilterCondition(keyName, inclusive ? QueryComparisons.LessThanOrEqual : QueryComparisons.LessThan, highKey));
 
         public string GetPartitionQueryString(string partitionKey) =>
             TableQuery.GenerateFilterCondition(PartitionKeyName, QueryComparisons.Equal, partitionKey);
@@ -88,6 +88,7 @@
         public string GetMinimumNodeTaskResultKey() => this.GetNodeTaskResultKey(this.MinString, 0, 0, 0);
         public string GetMaximumNodeTaskResultKey() => this.GetNodeTaskResultKey(this.MaxString, int.MaxValue, int.MaxValue, int.MaxValue);
         public string GetTaskKey(int jobId, int taskId, int requeueCount) => $"task-{this.GetRawTaskKey(jobId, taskId, requeueCount)}";
+        public string GetTaskInfoKey(int jobId, int taskId, int requeueCount) => $"taskinfo-{this.GetRawTaskKey(jobId, taskId, requeueCount)}";
         public string GetMinimumTaskKey(int jobId, int requeueCount) => this.GetTaskKey(jobId, 0, requeueCount);
         public string GetMaximumTaskKey(int jobId, int requeueCount) => this.GetTaskKey(jobId, int.MaxValue, requeueCount);
         public string GetRawTaskKey(int jobId, int taskId, int requeueCount) => $"{IntegerKey.ToStringKey(jobId)}-{IntegerKey.ToStringKey(requeueCount)}-{IntegerKey.ToStringKey(taskId)}";
@@ -95,7 +96,7 @@
 
         public CloudQueue GetQueue(string queueName) => this.queueClient.GetQueueReference(queueName);
 
-        public async Task<CloudQueue> GetOrCreateQueueAsync(string queueName, CancellationToken token)
+        public async T.Task<CloudQueue> GetOrCreateQueueAsync(string queueName, CancellationToken token)
         {
             var q = this.GetQueue(queueName);
             await q.CreateIfNotExistsAsync(null, null, token);
@@ -115,7 +116,7 @@
             return jobContainer.GetAppendBlobReference(blobName);
         }
 
-        public async Task<CloudAppendBlob> GetOrCreateAppendBlobAsync(string containerName, string blobName, CancellationToken token)
+        public async T.Task<CloudAppendBlob> GetOrCreateAppendBlobAsync(string containerName, string blobName, CancellationToken token)
         {
             var jobContainer = this.blobClient.GetContainerReference(containerName);
             await jobContainer.CreateIfNotExistsAsync(BlobContainerPublicAccessType.Off, null, null, token);
@@ -126,7 +127,7 @@
 
         public CloudTable GetTable(string tableName) => this.tableClient.GetTableReference(tableName);
 
-        public async Task<CloudTable> GetOrCreateTableAsync(string tableName, CancellationToken token)
+        public async T.Task<CloudTable> GetOrCreateTableAsync(string tableName, CancellationToken token)
         {
             var t = this.GetTable(tableName);
             await t.CreateIfNotExistsAsync(null, null, token);

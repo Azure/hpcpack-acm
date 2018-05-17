@@ -2,6 +2,7 @@
 {
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Services.Common;
     using System;
@@ -10,7 +11,7 @@
     using System.Net;
     using System.Net.Http;
     using System.Threading;
-    using System.Threading.Tasks;
+    using Tasks = System.Threading.Tasks;
 
     public class NodeCommunicator
     {
@@ -19,27 +20,32 @@
         private readonly HttpClient client;
 
         private readonly ILogger logger;
-        private IConfiguration Configuration { get; }
-        public NodeCommunicator(ILogger logger, IConfiguration config, NodeAgentWorkerOptions options)
+        public NodeCommunicator(ILogger<NodeCommunicator> logger, IOptions<NodeAgentWorkerOptions> options)
         {
-            this.Configuration = config;
             this.logger = logger;
-            this.Options = options;
+            this.Options = options.Value;
             this.client = new HttpClient();
         }
 
+        // TODO make node communicator options.
         public NodeAgentWorkerOptions Options { get; }
 
-        public async Task StartJobAndTaskAsync(string nodeName, StartJobAndTaskArg arg,
+        public async Tasks.Task<string> EndJobAsync(string nodeName, EndJobArg arg,
+            CancellationToken token)
+        {
+            return await this.SendRequestAsync("endjob",
+                this.GetCallbackUri(nodeName, "taskcompleted"),
+                nodeName,
+                arg,
+                0,
+                token);
+        }
+
+        public async Tasks.Task<string> StartJobAndTaskAsync(string nodeName, StartJobAndTaskArg arg,
             string userName, string password, ProcessStartInfo startInfo, string privateKey, string publicKey,
             CancellationToken token)
         {
-            //if (IsAdmin(userName, password))
-            //{
-            //    startInfo.environmentVariables[Constants.CcpAdminEnv] = "1";
-            //}
-
-            await this.SendRequestAsync("startjobandtask",
+            return await this.SendRequestAsync("startjobandtask",
                 this.GetCallbackUri(nodeName, "taskcompleted"),
                 nodeName,
                 Tuple.Create(arg, startInfo, userName, password, privateKey, publicKey),
@@ -47,10 +53,7 @@
                 token);
         }
 
-        private bool IsAdmin(string userName, string password) => true;
-
-
-        private async Task SendRequestInternalAsync<T>(string action, string callbackUri, string nodeName, T arg, int retryCount, CancellationToken token)
+        private async Tasks.Task<string> SendRequestInternalAsync<T>(string action, string callbackUri, string nodeName, T arg, int retryCount, CancellationToken token)
         {
             this.logger.LogInformation("Sending out request, action {0}, callback {1}, nodeName {2}", action, callbackUri, nodeName);
 
@@ -63,6 +66,7 @@
                     this.logger.LogInformation("Sending out request task completed, action {0}, callback {1}, nodeName {2} response code {3}",
                         action, callbackUri, nodeName, response.StatusCode);
                     response.EnsureSuccessStatusCode();
+                    return await response.Content.ReadAsStringAsync();
                 }
             }
             catch (Exception e)
@@ -70,17 +74,22 @@
                 this.logger.LogError(e, "Sending out request, action {0}, callback {1}, nodeName {2}", action, callbackUri, nodeName);
                 if (this.CanRetry(e) && retryCount < this.Options.AutoResendLimit)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(this.Options.ResendIntervalSeconds), token);
-                    await this.SendRequestAsync(action, callbackUri, nodeName, arg, retryCount + 1, token);
+                    await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(this.Options.ResendIntervalSeconds), token);
+                    return await this.SendRequestAsync(action, callbackUri, nodeName, arg, retryCount + 1, token);
                 }
+                else
+                {
+                    throw;
+                }                
             }
         }
 
-        private async Task SendRequestAsync<T>(string action, string callbackUri, string nodeName, T arg, int retryCount, CancellationToken token)
+        private async Tasks.Task<string> SendRequestAsync<T>(string action, string callbackUri, string nodeName, T arg, int retryCount, CancellationToken token)
         {
-            await this.SendRequestInternalAsync(action, callbackUri, nodeName, arg, retryCount, token).ContinueWith(t =>
+            return await this.SendRequestInternalAsync(action, callbackUri, nodeName, arg, retryCount, token).ContinueWith(t =>
             {
                 this.logger.LogInformation("Finished sending, action {0}, callback {1}, nodeName {2} retry count {3}", action, callbackUri, nodeName, retryCount);
+                return t.Result;
             });
         }
 
@@ -88,7 +97,7 @@
         {
             if (exception is HttpRequestException ||
                 exception is WebException ||
-                exception is TaskCanceledException)
+                exception is Tasks.TaskCanceledException)
             {
                 return true;
             }
@@ -104,13 +113,6 @@
         }
 
         private Uri GetResoureUri(string nodeName, string action) => new Uri($"{this.Options.NodeManagerUriBase}/{nodeName}/{action}");
-
-        private string GetMetricCallbackUri(string headNodeName, int port, Guid nodeGuid)
-        {
-            // change to a place holder for linux node to resolve the service place.
-            headNodeName = "{0}";
-            return string.Format("udp://{0}:{1}/api/{2}/metricreported", headNodeName, port, nodeGuid);
-        }
 
         private string GetCallbackUri(string nodeName, string action) => $"{this.Options.AgentUriBase}/callback/{action}";
     }

@@ -6,7 +6,7 @@
     using System.Linq;
     using System.Text;
     using System.Threading;
-    using System.Threading.Tasks;
+    using T = System.Threading.Tasks;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
@@ -15,7 +15,7 @@
     public class DiagnosticsJobFinisher : JobFinisher
     {
         public override JobType RestrictedJobType => JobType.Diagnostics;
-        public override async Task AggregateTasksAsync(Job job, List<ComputeNodeTaskCompletionEventArgs> taskResults, CancellationToken token)
+        public override async T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeNodeTaskCompletionEventArgs> taskResults, CancellationToken token)
         {
             var jobTable = this.Utilities.GetJobsTable();
 

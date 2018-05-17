@@ -34,9 +34,10 @@
         {
             try
             {
-                var nodeName = nodeInfo.Name.ToLowerInvariant();
+                token.ThrowIfCancellationRequested();
+                var nodeName = nodeInfo?.Name?.ToLowerInvariant();
 
-                this.logger.LogInformation("ComputeNodeReported. NodeName {0}, JobCount {1}", nodeName, nodeInfo.Jobs?.Count);
+                this.logger.LogInformation("ComputeNodeReported. NodeName {0}, JobCount {1}", nodeName, nodeInfo?.Jobs?.Count);
 
                 var nodeTable = this.utilities.GetNodesTable();
 
@@ -57,7 +58,7 @@
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "ComputeNodeReported. NodeName {0}, JobCount {1}", nodeInfo.Name, nodeInfo.Jobs?.Count);
+                this.logger.LogError(ex, "ComputeNodeReported. NodeName {0}, JobCount {1}", nodeInfo?.Name, nodeInfo?.Jobs?.Count);
             }
 
             return this.utilities.Option.RetryOnFailureSeconds * 1000;
@@ -79,7 +80,7 @@
 
                 this.monitor.CompleteTask(taskKey, taskInfo);
 
-                return Task.FromResult(NextOperation.CancelTask);
+                return System.Threading.Tasks.Task.FromResult(NextOperation.CancelTask);
             }
             catch (Exception ex)
             {
@@ -91,7 +92,7 @@
 
                 this.monitor.FailTask(taskKey, ex);
 
-                return Task.FromResult(NextOperation.CancelJob);
+                return System.Threading.Tasks.Task.FromResult(NextOperation.CancelJob);
             }
         }
 

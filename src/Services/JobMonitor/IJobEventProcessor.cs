@@ -5,12 +5,12 @@
     using System.Collections.Generic;
     using System.Text;
     using System.Threading;
-    using System.Threading.Tasks;
+    using T = System.Threading.Tasks;
 
     interface IJobEventProcessor
     {
         JobType RestrictedJobType { get; }
         string EventVerb { get; }
-        Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token);
+        T.Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token);
     }
 }

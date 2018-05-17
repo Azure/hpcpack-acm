@@ -6,7 +6,7 @@
     using Microsoft.HpcAcm.Services.Common;
     using Microsoft.HpcAcm.Common.Dto;
     using System.Threading;
-    using System.Threading.Tasks;
+    using T = System.Threading.Tasks;
     using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.WindowsAzure.Storage.Table;
@@ -35,21 +35,20 @@
 
         private CloudTable jobsTable;
 
-        public override async Task InitializeAsync(CancellationToken token)
+        public override async T.Task InitializeAsync(CancellationToken token)
         {
             this.jobsTable = await this.Utilities.GetOrCreateJobsTableAsync(token);
 
             this.Source = new QueueTaskItemSource(
                 await this.Utilities.GetOrCreateJobEventQueueAsync(token),
-                TimeSpan.FromSeconds(this.options.VisibleTimeoutSeconds),
-                TimeSpan.FromSeconds(this.options.RetryIntervalSeconds));
+                this.options);
 
             this.processorsList.OfType<ServerObject>().ToList().ForEach(so => so.CopyFrom(this));
 
             await base.InitializeAsync(token);
         }
 
-        public override async Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
+        public override async T.Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
         {
             var message = taskItem.GetMessage<JobEventMessage>();
             using (this.Logger.BeginScope("Do work for JobEvent {0}, {1}, {2}", message.Id, message.Type, message.EventVerb))
@@ -70,7 +69,7 @@
                         if (this.processors.TryGetValue(message.EventVerb, out var verbProcessors) && verbProcessors.TryGetValue(message.Type, out var processor))
                         {
                             await processor.ProcessAsync(job, message, token);
-                            this.Logger.LogInformation("Finished job {0} {1}", job.Id, job.State);
+                            this.Logger.LogInformation("Processed {0} job {1} {2}", job.Type, job.Id, job.State);
                         }
                         else
                         {
@@ -90,7 +89,7 @@
                     }
                     catch (Exception ex)
                     {
-                        this.Logger.LogError("Exception occurred when process job {0}, {1}, {2}", job.Id, job.Type, message.EventVerb);
+                        this.Logger.LogError("Exception occurred when process job {0}, {1}, {2}, {3}", job.Id, job.Type, message.EventVerb, ex);
                         await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                         {
                             j.State = JobState.Failed;

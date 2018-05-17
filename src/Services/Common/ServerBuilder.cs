@@ -103,6 +103,7 @@
                         so.CloudOptions = provider.GetService<IOptions<CloudOptions>>().Value;
                         so.Utilities = provider.GetService<CloudUtilities>();
                         so.ServerOptions = provider.GetService<IOptions<ServerOptions>>().Value;
+                        so.Provider = provider;
                     }
 
                     w.InitializeAsync(token).Wait();

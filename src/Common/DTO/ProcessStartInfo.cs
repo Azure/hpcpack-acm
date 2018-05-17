@@ -1,4 +1,4 @@
-namespace Microsoft.HpcAcm.Services.Common
+namespace Microsoft.HpcAcm.Common.Dto
 {
     #region Using directives
 
@@ -8,7 +8,6 @@ namespace Microsoft.HpcAcm.Services.Common
     using System.Collections.Generic;
 
     #endregion
-
 
     [Serializable()]
     public sealed class ProcessStartInfo
@@ -57,6 +56,7 @@ namespace Microsoft.HpcAcm.Services.Common
         #endregion // PrivateFields
 
         #region Constructors
+        public ProcessStartInfo() { }
         public ProcessStartInfo(
                 string commandLine,
                 string workingDirectory,

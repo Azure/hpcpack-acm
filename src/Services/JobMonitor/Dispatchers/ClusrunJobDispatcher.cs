@@ -13,17 +13,17 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class ClusrunJobDispatcher : JobDispatcher
+    public class ClusRunJobDispatcher : JobDispatcher
     {
         public override JobType RestrictedJobType { get => JobType.ClusRun; }
 
         public override Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token)
         {
-            return Task.FromResult(Enumerable.Range(1, job.TargetNodes.Length).Select(id =>
+            return System.Threading.Tasks.Task.FromResult(Enumerable.Range(1, job.TargetNodes.Length).Select(id =>
             {
                 var t = InternalTask.CreateFrom(job);
+                t.CustomizedData = t.Node = job.TargetNodes[id - 1];
                 t.Id = id;
-                t.Node = job.TargetNodes[id - 1];
                 return t;
             }).ToList());
         }

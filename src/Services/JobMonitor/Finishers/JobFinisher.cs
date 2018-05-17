@@ -10,14 +10,14 @@
     using System.Linq;
     using System.Text;
     using System.Threading;
-    using System.Threading.Tasks;
+    using T = System.Threading.Tasks;
 
     public abstract class JobFinisher : ServerObject, IJobEventProcessor
     {
         public abstract JobType RestrictedJobType { get; }
         public string EventVerb { get => "finish"; }
 
-        public async Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token)
+        public async T.Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token)
         {
             Debug.Assert(job.Type == this.RestrictedJobType, "Job type mismatch");
 
@@ -34,15 +34,24 @@
             var taskResultRangeQuery = this.Utilities.GetRowKeyRangeString(
                 this.Utilities.GetTaskResultKey(job.Id, 0, job.RequeueCount),
                 this.Utilities.GetTaskResultKey(job.Id, int.MaxValue, job.RequeueCount));
-
-            var allTasks = (await jobTable.QueryAsync<ComputeNodeTaskCompletionEventArgs>(
+            var allTaskResults = (await jobTable.QueryAsync<ComputeNodeTaskCompletionEventArgs>(
                 TableQuery.CombineFilters(jobPartitionQuery, TableOperators.And, taskResultRangeQuery),
                 null,
                 token))
                 .Select(t => t.Item3)
                 .ToList();
 
-            await this.AggregateTasksAsync(job, allTasks, token);
+            var taskRangeQuery = this.Utilities.GetRowKeyRangeString(
+                this.Utilities.GetTaskKey(job.Id, 0, job.RequeueCount),
+                this.Utilities.GetTaskKey(job.Id, int.MaxValue, job.RequeueCount));
+            var allTasks = (await jobTable.QueryAsync<Task>(
+                TableQuery.CombineFilters(jobPartitionQuery, TableOperators.And, taskRangeQuery),
+                null,
+                token))
+                .Select(t => t.Item3)
+                .ToList();
+
+            await this.AggregateTasksAsync(job, allTasks, allTaskResults, token);
 
             if (job.State == JobState.Finishing)
             {
@@ -63,6 +72,6 @@
             }, token);
         }
 
-        public abstract Task AggregateTasksAsync(Job job, List<ComputeNodeTaskCompletionEventArgs> taskResults, CancellationToken token);
+        public abstract T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeNodeTaskCompletionEventArgs> taskResults, CancellationToken token);
     }
 }

@@ -13,7 +13,7 @@
     using System.Diagnostics;
     using System.Linq;
     using System.Threading;
-    using System.Threading.Tasks;
+    using T = System.Threading.Tasks;
     using System.IO;
 
     public class MetricsWorker : ServerObject, IWorker
@@ -27,25 +27,25 @@
             this.workerOptions = options.Value;
         }
 
-        public async Task InitializeAsync(CancellationToken token)
+        public async T.Task InitializeAsync(CancellationToken token)
         {
             this.metricsTable = await this.Utilities.GetOrCreateMetricsTableAsync(token);
             this.nodesTable = await this.Utilities.GetOrCreateNodesTableAsync(token);
         }
 
-        public async Task<IList<(string, string)>> GetMetricScriptsAsync(CancellationToken token)
+        public async T.Task<IList<(string, string)>> GetMetricScriptsAsync(CancellationToken token)
         {
             var partitionQuery = this.Utilities.GetPartitionQueryString(this.Utilities.MetricsCategoriesPartitionKey);
 
             return (await this.metricsTable.QueryAsync<string>(partitionQuery, null, token)).Select(i => (i.Item2, i.Item3)).ToList();
         }
 
-        public async Task DoWorkAsync(CancellationToken token)
+        public async T.Task DoWorkAsync(CancellationToken token)
         {
             long currentMinute = 0;
             while (true)
             {
-                await Task.Delay(TimeSpan.FromSeconds(this.workerOptions.MetricsIntervalSeconds), token);
+                await T.Task.Delay(TimeSpan.FromSeconds(this.workerOptions.MetricsIntervalSeconds), token);
 
                 try
                 {
@@ -58,7 +58,7 @@
                         string toErrorJson(string e) =>
                             JsonConvert.SerializeObject(new Dictionary<string, string>() { { "Error", e } }, Formatting.Indented);
 
-                        var results = await Task.WhenAll(metricScripts.Select(async s =>
+                        var results = await T.Task.WhenAll(metricScripts.Select(async ((string, string) s) =>
                         {
                             try
                             {

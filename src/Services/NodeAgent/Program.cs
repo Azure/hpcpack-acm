@@ -41,10 +41,15 @@
                 .ConfigServiceCollection((svc, config, token) =>
                 {
                     svc.AddSingleton(monitor);
+                    svc.AddSingleton<NodeCommunicator, NodeCommunicator>();
                     svc.Configure<MetricsWorkerOptions>(config.GetSection(nameof(MetricsWorkerOptions)));
                     svc.AddSingleton<IWorker, MetricsWorker>();
                     svc.Configure<NodeAgentWorkerOptions>(config.GetSection(nameof(NodeAgentWorkerOptions)));
                     svc.AddSingleton<IWorker, NodeAgentWorker>();
+                    svc.AddTransient<JobCancelWorker>();
+                    svc.AddTransient<JobDispatchWorker>();
+                    svc.AddTransient<StartJobAndTaskProcessor>();
+                    svc.AddTransient<CancelJobOrTaskProcessor>();
                 });
 
         public static IWebHost BuildWebHost(string[] args, TaskMonitor taskMonitor, CloudUtilities utilities) =>

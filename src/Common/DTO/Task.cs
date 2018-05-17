@@ -1,18 +1,27 @@
-﻿namespace Microsoft.HpcAcm.Services.Common
+﻿namespace Microsoft.HpcAcm.Common.Dto
 {
-    using Microsoft.HpcAcm.Common.Dto;
     using System;
     using System.Collections.Generic;
     using System.Text;
 
-    public class InternalTask
+    public enum TaskState
+    {
+        Queued,
+        Dispatching,
+        Running,
+        Finished,
+        Failed,
+        Canceled,
+    }
+
+    public class Task
     {
         public const string StartTaskMark = "Start";
         public const string EndTaskMark = "End";
 
-        public static InternalTask CreateFrom(Job job)
+        public static Task CreateFrom(Job job)
         {
-            return new InternalTask()
+            return new Task()
             {
                 JobId = job.Id,
                 RequeueCount = job.RequeueCount,
@@ -25,18 +34,12 @@
         public int Id { get; set; }
         public int RequeueCount { get; set; }
         public JobType JobType { get; set; }
+        public TaskState State { get; set; }
         public List<int> ParentIds { get; set; }
         public List<int> ChildIds { get; set; }
         public HashSet<int> RemainingParentIds { get; set; }
         public string CommandLine { get; set; }
-        public string WorkingDirectory { get; set; }
-        public Dictionary<string, string> EnvironmentVariables { get; set; }
         public string Node { get; set; }
-        public string UserName { get; set; }
-        public string Password { get; set; }
-        public string PrivateKey { get; set; }
-        public string PublicKey { get; set; }
-
         public string CustomizedData { get; set; }
     }
 }
