@@ -3,7 +3,7 @@ import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, 
 import { of } from 'rxjs/observable/of';
 import { _throw } from 'rxjs/observable/throw';
 
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { FormsModule } from '@angular/forms'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -77,6 +77,10 @@ const activatedRouteStub = {
   paramMap: of({ get: () => 1 })
 }
 
+const routerStub = {
+  navigate: () => {},
+}
+
 fdescribe('ResultDetailComponent', () => {
   let component: ResultDetailComponent;
   let fixture: ComponentFixture<ResultDetailComponent>;
@@ -96,6 +100,7 @@ fdescribe('ResultDetailComponent', () => {
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
+        { provide: Router, useValue: routerStub },
       ]
     })
     .compileComponents();

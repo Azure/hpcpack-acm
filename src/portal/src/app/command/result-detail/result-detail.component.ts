@@ -1,11 +1,12 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { MatTableDataSource } from '@angular/material';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MatTableDataSource, MatDialog } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { CommandResult } from '../../models/command-result';
 import { ApiService, Loop } from '../../services/api.service';
 import { NodeSelectorComponent } from '../node-selector/node-selector.component';
 import { CommandOutputComponent } from '../command-output/command-output.component';
+import { CommandInputComponent } from '../command-input/command-input.component';
 
 @Component({
   selector: 'app-result-detail',
@@ -41,7 +42,9 @@ export class ResultDetailComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private api: ApiService,
+    private dialog: MatDialog,
   ) {}
 
   ngOnInit() {
@@ -334,5 +337,23 @@ export class ResultDetailComponent implements OnInit {
         output.loading = false;
         this.updateNodeOutput(output, result);
       });
+  }
+
+  newCommand() {
+    let dialogRef = this.dialog.open(CommandInputComponent, {
+      width: '98%',
+      data: { command: this.result.command }
+    });
+    dialogRef.afterClosed().subscribe(cmd => {
+      if (cmd) {
+        let names = (this.result as any).targetNodes;
+        this.api.command.create(cmd, names).subscribe(obj => {
+          this.router.navigate([`/command/results/${obj.id}`]);
+        });
+      }
+    });
+  }
+
+  cancelCommand() {
   }
 }

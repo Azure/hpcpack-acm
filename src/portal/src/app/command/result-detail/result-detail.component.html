@@ -3,6 +3,11 @@
   <div class="state">{{result?.state | titlecase }}</div>
 </div>
 
+<div class="actions">
+  <button mat-raised-button (click)="newCommand()" [disabled]="!result">New Run...</button>
+  <button mat-raised-button (click)="cancelCommand()">Cancel</button>
+</div>
+
 <ng-container *ngIf="isLoaded; else waiting">
   <div class="container-fluid">
     <div class="row">
