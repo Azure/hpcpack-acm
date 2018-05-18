@@ -20,8 +20,7 @@ export class TaskTableComponent implements OnInit {
   @Input()
   customizableColumns: any;
 
-  @Input()
-  displayedColumns: any;
+  private displayedColumns: any;
 
   @Input()
   dataSource: any;

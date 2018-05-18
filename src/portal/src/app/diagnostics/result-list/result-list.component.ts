@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, ViewChild, HostListener, ElementRef } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableDataSource, MatPaginator } from '@angular/material';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { SelectionModel } from '@angular/cdk/collections';
@@ -14,7 +13,6 @@ import { DiagEventsComponent } from './diag-events/diag-events.component';
   styleUrls: ['./result-list.component.css'],
 })
 export class ResultListComponent implements OnInit, OnDestroy {
-  @ViewChild(MatPaginator) paginator: MatPaginator;
 
   static customizableColumns = [
     { name: 'test', displayName: 'Test', displayed: true },
@@ -44,8 +42,6 @@ export class ResultListComponent implements OnInit, OnDestroy {
   hasReceivedData = false;
 
   constructor(
-    private router: Router,
-    private route: ActivatedRoute,
     private api: ApiService,
     private settings: TableSettingsService,
     public dialog: MatDialog,
@@ -68,7 +64,6 @@ export class ResultListComponent implements OnInit, OnDestroy {
         data.diagnosticTest.name.indexOf(filter) != -1 ||
         data.diagnosticTest.category.indexOf(filter) != -1;
     };
-
   }
 
   ngOnDestroy() {

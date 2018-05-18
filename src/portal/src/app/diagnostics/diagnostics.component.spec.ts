@@ -1,16 +1,19 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { Component } from '@angular/core';
 import { DiagnosticsComponent } from './diagnostics.component';
 
-describe('DiagnosticsComponent', () => {
+@Component({ selector: 'router-outlet', template: '' })
+class RouterOutletStubComponent { }
+
+fdescribe('DiagnosticsComponent', () => {
   let component: DiagnosticsComponent;
   let fixture: ComponentFixture<DiagnosticsComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DiagnosticsComponent ]
+      declarations: [DiagnosticsComponent, RouterOutletStubComponent]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {
