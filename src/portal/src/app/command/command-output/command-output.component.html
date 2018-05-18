@@ -1,5 +1,5 @@
 <div class="control static up" *ngIf="bof; else prevButton">
-  Output Begin
+  Begin of Output
 </div>
 <ng-template #prevButton>
   <button mat-button class="control up" [ngClass]="{ attention: !loading && !disabled }"
@@ -10,10 +10,17 @@
   </button>
 </ng-template>
 
-<pre (scroll)="onScroll($event)" #output>{{content}}</pre>
+<div class="content">
+  <pre (scroll)="onScroll($event)" #output>{{content}}</pre>
+  <div class="up-to-top">
+    <button mat-icon-button matTooltip="Go to the begin of output" (click)="gotoTop.emit(output)" [disabled]="loading || disabled">
+      <i class="material-icons upward">arrow_upward</i>
+    </button>
+  </div>
+</div>
 
 <div class="control static down" *ngIf="eof; else nextButton">
-  Output End
+  End of Output
 </div>
 <ng-template #nextButton>
   <button mat-button class="control down" [ngClass]="{ attention: !loading && !disabled }"
