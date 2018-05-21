@@ -339,6 +339,35 @@ export class ResultDetailComponent implements OnInit {
       });
   }
 
+  loadFromBeginAndScroll(node, elem) {
+    this.loadFromBegin(node, () => elem.scrollTop = 0);
+  }
+
+  loadFromBegin(node, onload) {
+    let output = this.getNodeOutput(node)
+    if (output.loading) {
+      return;
+    }
+    if (output.start === 0 && onload) {
+      setTimeout(onload, 0);
+      return;
+    }
+    //Reset output for loading from the begin
+    output.content = '';
+    output.start = undefined;
+    output.end = undefined;
+    output.next = 0;
+    output.loading = 'top';
+    let opt = { fulfill: true, over: () => this.isOutputOver(node), timeout: 2000 };
+    this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt as any).subscribe(
+      result => {
+        output.loading = false;
+        this.updateNodeOutput(output, result);
+        setTimeout(onload, 0);
+      }
+    );
+  }
+
   newCommand() {
     let dialogRef = this.dialog.open(CommandInputComponent, {
       width: '98%',

@@ -1,3 +1,15 @@
+.content {
+  position: relative;
+}
+
+.content .up-to-top {
+  position: absolute;
+  bottom: 2em;
+  right: 1.5em;
+  color: floralwhite;
+  background-color: rgba(0,0,0,0.4);
+}
+
 pre {
   color: white;
   background-color: black;

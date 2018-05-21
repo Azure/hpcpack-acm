@@ -12,6 +12,9 @@ export class CommandOutputComponent implements OnInit {
   @Output()
   loadNext = new EventEmitter<any>();
 
+  @Output()
+  gotoTop = new EventEmitter<any>();
+
   @Input()
   content: string = '';
 
