@@ -60,7 +60,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return new OkObjectResult(tasks);
         }
 
-        // GET v1/clusrun/5/task/10?requeueCount=0
+        // GET v1/clusrun/5/tasks/10?requeueCount=0
         [HttpGet("{jobid}/tasks/{taskid}")]
         public async T.Task<IActionResult> GetJobTaskAsync(
             int jobId,
@@ -78,7 +78,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return task == null ? (IActionResult)new NotFoundResult() : new OkObjectResult(task);
         }
 
-        // GET v1/diagnostics/5/task/10/result?requeueCount=0
+        // GET v1/diagnostics/5/tasks/10/result?requeueCount=0
         [HttpGet("{jobid}/tasks/{taskid}/result")]
         public async T.Task<IActionResult> GetJobTaskResultAsync(
             int jobId,
@@ -110,6 +110,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> PatchJobAsync(int jobId, [FromBody] Job job, CancellationToken token)
         {
             job.Id = jobId;
+            job.Type = JobType.ClusRun;
             return await this.provider.PatchJobAsync(job, token);
         }
 

@@ -300,7 +300,7 @@
 
             var q = TableQuery.CombineFilters(partitionQuery, TableOperators.And, rowKeyRangeQuery);
             var tasks = await this.jobsTable.QueryAsync<Task>(q, count, token);
-            return tasks.Select(r => r.Item3);
+            return tasks.Where(r => r.Item3.CustomizedData != Task.EndTaskMark).Select(r => r.Item3);
         }
 
         public async T.Task<Task> GetTaskAsync(
