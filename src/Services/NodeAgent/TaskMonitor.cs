@@ -115,7 +115,7 @@
             }
 
             private readonly SemaphoreSlim sem = new SemaphoreSlim(1);
-            private readonly Func<string, CancellationToken, System.Threading.Tasks.Task> processor;
+            private readonly Func<string, CancellationToken, T.Task> processor;
         }
 
         private readonly ConcurrentDictionary<string, TaskResultMonitor> taskResults = new ConcurrentDictionary<string, TaskResultMonitor>();
