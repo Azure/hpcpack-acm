@@ -6,6 +6,6 @@
     <div class="event-content">{{event.content}}</div>
   </div>
 </div>
-<div class="event" *ngIf="events.length < 1">
+<div class="event empty-msg" *ngIf="events.length < 1">
   {{message}}
 </div>

@@ -9,11 +9,15 @@ export class EventListComponent implements OnInit {
   @Input()
   events: any;
 
+  message: string;
+
   constructor(
   ) { }
 
   ngOnInit() {
-
+    if (this.events.length < 1) {
+      this.message = "No event to show!";
+    }
   }
 
   eventType(source, type) {
