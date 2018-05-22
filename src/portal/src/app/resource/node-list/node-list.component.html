@@ -58,12 +58,12 @@
     <mat-cell *matCellDef="let node"> {{node.runningJobCount}} </mat-cell>
   </ng-container>
 
-  <ng-container matColumnDef="coreCount">
-    <mat-header-cell *matHeaderCellDef> Cores </mat-header-cell>
-    <mat-cell *matCellDef="let node"> {{node.system.coreCount}} </mat-cell>
+  <ng-container matColumnDef="eventCount">
+    <mat-header-cell *matHeaderCellDef> Events </mat-header-cell>
+    <mat-cell *matCellDef="let node"> {{node.eventCount}} </mat-cell>
   </ng-container>
 
-  <ng-container matColumnDef="memory">
+  <!-- <ng-container matColumnDef="memory">
     <mat-header-cell *matHeaderCellDef> Memory </mat-header-cell>
     <mat-cell *matCellDef="let node" title="MB"> {{node.system.memory}} </mat-cell>
   </ng-container>
@@ -71,7 +71,7 @@
   <ng-container matColumnDef="os">
     <mat-header-cell *matHeaderCellDef> OS </mat-header-cell>
     <mat-cell *matCellDef="let node" [title]="node.system.os"> {{node.system.os}} </mat-cell>
-  </ng-container>
+  </ng-container> -->
 
   <ng-container matColumnDef="actions">
     <mat-header-cell *matHeaderCellDef></mat-header-cell>
