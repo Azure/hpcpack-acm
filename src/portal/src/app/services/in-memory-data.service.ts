@@ -1,5 +1,5 @@
 import { InMemoryDbService } from 'angular-in-memory-web-api';
-import { NodeApi, CommandApi, TestApi, HeatmapApi, NodeHistoryApi } from './api.service';
+import { NodeApi, CommandApi, TestApi, HeatmapApi } from './api.service';
 import { environment as env } from '../../environments/environment';
 
 export class InMemoryDataService implements InMemoryDbService {
@@ -10,7 +10,6 @@ export class InMemoryDataService implements InMemoryDbService {
     { url: HeatmapApi.url + '/cpu', coll: 'heatmapNodes' },
     { url: HeatmapApi.url + '/categories', coll: 'heatmapCategories' },
     { url: env.apiBase + '/commands/resetdb', coll: 'resetdb' },
-    { url: NodeHistoryApi.url, coll: 'nodeHistory' }
   ];
 
   parseRequestUrl(url, utils) {
