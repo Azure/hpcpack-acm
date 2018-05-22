@@ -14,7 +14,7 @@
       {{errorMessage}}
     </div>
   </div>
-  <mat-vertical-stepper linear="true" #stepper>
+  <mat-vertical-stepper linear="true" #stepper (selectionChange)="selectionChange($event)">
     <mat-step label="Select test to run">
       <div class="select-tests">
         <tree-root #tree [nodes]="tests" (updateData)="onTreeLoad($event)" class="test-tree">
