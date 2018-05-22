@@ -102,7 +102,7 @@
                         token);
                     childTask.RemainingParentIds.Remove(taskId);
 
-                    if (childTask.RemainingParentIds.Count == 0 && childTask.State == TaskState.Queued)
+                    if (childTask.RemainingParentIds.Count == 0)
                     {
                         if (string.Equals(childTask.CustomizedData, InternalTask.EndTaskMark, StringComparison.OrdinalIgnoreCase))
                         {
@@ -119,28 +119,28 @@
                         {
                             childTask.State = TaskState.Dispatching;
                         }
-
-                        if (!await this.jobsTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, childTaskKey, childTask, token))
-                        {
-                            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                            {
-                                j.State = JobState.Failed;
-                                // TODO: make event separate.
-                                (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                                {
-                                    Content = $"Unable to update task record {childId}",
-                                    Source = EventSource.Job,
-                                    Type = EventType.Alert
-                                });
-                            }, token);
-                        }
-
-                        if (!string.Equals(childTask.CustomizedData, InternalTask.EndTaskMark, StringComparison.OrdinalIgnoreCase))
-                        {
-                            await action(childTask);
-                        }
                     }
 
+                    // TODO: etag based update. check all insert or replace.
+                    if (!await this.jobsTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, childTaskKey, childTask, token))
+                    {
+                        await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
+                        {
+                            j.State = JobState.Failed;
+                            // TODO: make event separate.
+                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                            {
+                                Content = $"Unable to update task record {childId}",
+                                Source = EventSource.Job,
+                                Type = EventType.Alert
+                            });
+                        }, token);
+                    }
+
+                    if (childTask.RemainingParentIds.Count == 0 && !string.Equals(childTask.CustomizedData, InternalTask.EndTaskMark, StringComparison.OrdinalIgnoreCase))
+                    {
+                        await action(childTask);
+                    }
                 }
                 while (false);
             }
