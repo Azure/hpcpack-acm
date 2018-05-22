@@ -1,14 +1,3 @@
-FROM microsoft/aspnetcore:2.0 AS python
-WORKDIR /app
-RUN apt update
-RUN apt install -y apt-utils
-RUN apt install -y nginx
-RUN apt install python-pip -y
-RUN pip install psutil
-RUN pip install numpy
-EXPOSE 80
-EXPOSE 5000
-
 FROM microsoft/aspnetcore-build:2.0 AS allbuild
 WORKDIR /src
 COPY *.sln ./
@@ -40,7 +29,7 @@ WORKDIR /src/portal
 RUN npm install
 RUN ng build --environment=prod
 
-FROM python AS final
+FROM evancui/hpcacm:runtime AS final
 WORKDIR /app
 COPY --from=portalbuild /src/portal/dist /app/portal
 COPY --from=allbuild /app .
