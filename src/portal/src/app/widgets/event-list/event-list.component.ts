@@ -9,17 +9,21 @@ export class EventListComponent implements OnInit {
   @Input()
   events: any;
 
-  constructor() { }
+  constructor(
+  ) { }
 
   ngOnInit() {
+
   }
 
-  eventType(type) {
-    if (type == 'node event') {
-      return 'node-event';
+  eventType(source, type) {
+    let eventType = source + ' ' + type;
+
+    if (eventType == 'Node Information') {
+      return 'node-information';
     }
-    else if (type == 'Azure scheduled event') {
-      return 'azure-event';
+    else if (eventType == 'Node Warning') {
+      return 'node-warning';
     }
   }
 
