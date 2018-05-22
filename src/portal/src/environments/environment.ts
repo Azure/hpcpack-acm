@@ -5,6 +5,6 @@
 
 export const environment = {
   production: false,
-  apiBase: 'http://52.229.202.147:8080/api',
-  // apiBase: 'http://evanc-hpcacm-host.eastasia.cloudapp.azure.com:8080/api',
+  // apiBase: 'http://52.229.202.147:8080/api',
+  apiBase: 'http://evanclinuxdev1.eastasia.cloudapp.azure.com:8080/v1',
 };

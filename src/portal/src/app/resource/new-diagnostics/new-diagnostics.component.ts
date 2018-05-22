@@ -64,7 +64,25 @@ export class NewDiagnosticsComponent implements OnInit {
 
     node.data.checked = true;
     this.selectedTest = node.data;
-    this.diagTestName = this.selectedTest.name;
+    this.diagTestName = this.selectedTest.name + "@" + this.getCreatedTime();
+  }
+
+
+  selectionChange(e) {
+    if (e.selectedIndex == 2) {
+      if (this.selectedTest != undefined) {
+        this.diagTestName = this.selectedTest.name + "@" + this.getCreatedTime();
+      }
+      else {
+        this.diagTestName = this.getCreatedTime();
+      }
+
+    }
+  }
+
+  getCreatedTime() {
+    let date = new Date();
+    return date.getFullYear() + "-" + date.getMonth() + "-" + date.getDay() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
   }
 
   // function to handle default value when one linked property's value changes
