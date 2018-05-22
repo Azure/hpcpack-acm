@@ -87,81 +87,89 @@
                     }
                 }))
                 {
-                    this.Logger.LogInformation("Call startjobandtask for task {0}", taskKey);
-
-                    var taskInfo = await this.jobsTable.RetrieveAsync<TaskStartInfo>(jobPartitionKey, taskInfoKey, token);
-
-                    taskInfo.StartInfo.stdout = $"{this.Communicator.Options.AgentUriBase}/output/{taskKey}";
+                    int? exitCode = null;
 
                     try
                     {
-                        await this.Communicator.StartJobAndTaskAsync(
-                            nodeName,
-                            new StartJobAndTaskArg(new int[0], taskInfo.JobId, taskInfo.Id), taskInfo.UserName, taskInfo.Password,
-                            taskInfo.StartInfo, taskInfo.PrivateKey, taskInfo.PublicKey, token);
-                    }
-                    catch (Exception ex)
-                    {
-                        await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Failed, token);
-                        await this.Utilities.UpdateJobAsync(task.JobType, task.JobId, j =>
+                        this.Logger.LogInformation("Call startjobandtask for task {0}", taskKey);
+
+                        var taskInfo = await this.jobsTable.RetrieveAsync<TaskStartInfo>(jobPartitionKey, taskInfoKey, token);
+
+                        taskInfo.StartInfo.stdout = $"{this.Communicator.Options.AgentUriBase}/output/{taskKey}";
+
+                        try
                         {
-                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                            await this.Communicator.StartJobAndTaskAsync(
+                                nodeName,
+                                new StartJobAndTaskArg(new int[0], taskInfo.JobId, taskInfo.Id), taskInfo.UserName, taskInfo.Password,
+                                taskInfo.StartInfo, taskInfo.PrivateKey, taskInfo.PublicKey, token);
+                        }
+                        catch (Exception ex)
+                        {
+                            await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Failed, token);
+                            await this.Utilities.UpdateJobAsync(task.JobType, task.JobId, j =>
                             {
-                                Type = EventType.Warning,
-                                Source = EventSource.Job,
-                                Content = $"Task {task.Id} failed to dispatch, exception {ex}",
-                            });
-                        }, token);
+                                (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                                {
+                                    Type = EventType.Warning,
+                                    Source = EventSource.Job,
+                                    Content = $"Task {task.Id} failed to dispatch, exception {ex}",
+                                });
+                            }, token);
 
-                        return true;
+                            return true;
+                        }
+
+                        await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Running, token);
+
+                        this.Logger.LogInformation("Wait for response for job {0}, task {1}", task.JobId, taskKey);
+                        if (monitor == null) return true;
+
+                        ComputeNodeTaskCompletionEventArgs taskResultArgs;
+
+                        try
+                        {
+                            taskResultArgs = await monitor.Execution;
+                        }
+                        catch (T.TaskCanceledException)
+                        {
+                            this.Logger.LogInformation("This task {0} has been canceled", taskKey);
+                            return true;
+                        }
+
+                        this.Logger.LogInformation("Saving result for job {0}, task {1}", task.JobId, taskKey);
+
+                        var taskResult = taskResultArgs.TaskInfo;
+                        await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey,
+                            t => t.State = taskResult?.ExitCode == 0 ? TaskState.Finished : TaskState.Failed,
+                            token);
+
+                        if (taskResult != null)
+                        {
+                            exitCode = taskResult.ExitCode;
+                            taskResult.Message = rawResult.Length > MaxRawResultLength ? rawResult.ToString(0, MaxRawResultLength) : rawResult.ToString();
+                            taskResult.CommandLine = cmd;
+                            taskResult.JobId = task.JobId;
+                            taskResult.TaskId = task.Id;
+                            taskResult.NodeName = nodeName;
+                            taskResult.ResultKey = taskResultKey;
+
+                            if (!await this.PersistTaskResult(nodeTaskResultKey, taskResult, token)) { return false; }
+                            if (!await this.PersistTaskResult(taskResultKey, taskResult, token)) { return false; }
+                        }
                     }
-
-                    await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Running, token);
-
-                    this.Logger.LogInformation("Wait for response for job {0}, task {1}", task.JobId, taskKey);
-                    if (monitor == null) return true;
-
-                    ComputeNodeTaskCompletionEventArgs taskResultArgs;
-
-                    try
+                    finally
                     {
-                        taskResultArgs = await monitor.Execution;
+                        var queue = await this.Utilities.GetOrCreateTaskCompletionQueueAsync(token);
+                        await queue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(new TaskCompletionMessage()
+                        {
+                            JobId = task.JobId,
+                            Id = task.Id,
+                            ExitCode = exitCode,
+                            JobType = task.JobType,
+                            RequeueCount = task.RequeueCount,
+                        }, Formatting.Indented)), null, null, null, null, token);
                     }
-                    catch (T.TaskCanceledException)
-                    {
-                        this.Logger.LogInformation("This task {0} has been canceled", taskKey);
-                        return true;
-                    }
-
-                    this.Logger.LogInformation("Saving result for job {0}, task {1}", task.JobId, taskKey);
-
-                    var taskResult = taskResultArgs.TaskInfo;
-                    await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey,
-                        t => t.State = taskResult?.ExitCode == 0 ? TaskState.Finished : TaskState.Failed,
-                        token);
-
-                    if (taskResultArgs.TaskInfo != null)
-                    {
-                        taskResult.Message = rawResult.Length > MaxRawResultLength ? rawResult.ToString(0, MaxRawResultLength) : rawResult.ToString();
-                        taskResult.CommandLine = cmd;
-                        taskResult.JobId = task.JobId;
-                        taskResult.TaskId = task.Id;
-                        taskResult.NodeName = nodeName;
-                        taskResult.ResultKey = taskResultKey;
-
-                        if (!await this.PersistTaskResult(nodeTaskResultKey, taskResult, token)) { return false; }
-                        if (!await this.PersistTaskResult(taskResultKey, taskResult, token)) { return false; }
-                    }
-
-                    var queue = await this.Utilities.GetOrCreateTaskCompletionQueueAsync(token);
-                    await queue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(new TaskCompletionMessage()
-                    {
-                        JobId = task.JobId,
-                        Id = task.Id,
-                        ExitCode = taskResultArgs.TaskInfo?.ExitCode,
-                        JobType = task.JobType,
-                        RequeueCount = task.RequeueCount,
-                    }, Formatting.Indented)), null, null, null, null, token);
                 }
 
                 return true;
