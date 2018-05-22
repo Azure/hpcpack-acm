@@ -51,57 +51,38 @@ export class NodeApi extends Resource<Node> {
     return NodeApi.url;
   }
 
-  protected normalize(node: any): Node {
-    if (node.nodeInfo)
-      node = node.nodeInfo;
-    let reg = node.nodeRegistrationInfo;
-    return {
-      id: node.name,
-      name: node.name,
-      state: node.state,
-      health: node.health,
-      runningJobCount: node.runningJobCount,
-      system: {
-        coreCount: reg.coreCount,
-        memory: reg.memoryMegabytes,
-        os: reg.distroInfo,
-      },
-    } as Node;
-  }
-}
-
-export class NodeHistoryApi extends Resource<any> {
-  static url = `${Resource.baseUrl}/nodes`;
-
-  protected get url(): string {
-    return NodeHistoryApi.url;
+  getHistoryData(id: string): Observable<any> {
+    return this.http.get(this.url + '/' + id + '/metrichistory')
+      .pipe(
+        map(e => this.normalizeHistory(e)),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
   }
 
-  getMockData(id: string): Observable<any> {
-    const url = `${Resource.baseUrl}/nodes/${id}`;
-    return this.http.post(env.apiBase + '/commands/resetdb', { clear: true })
-      .concatMap(() => {
-        return this.http.get<any>(url)
-          .pipe(
-            map(e => this.normalize(e)),
-            catchError((error: any): Observable<any> => {
-              console.error(error);
-              return new ErrorObservable(error);
-            })
-          )
-      });
-  }
-
-  protected normalize(node: any): any {
+  protected normalizeHistory(history: any): any {
     let historyData = [];
 
-    if (node.history.data) {
-      for (let key in node.history.data) {
-        historyData.push({ label: key, data: node.history.data[key] });
+    if (history.data) {
+      for (let key in history.data) {
+        historyData.push({ label: key, data: history.data[key] });
       }
     }
-    node.history = historyData;
-    return node;
+    history.history = historyData;
+    return history;
+  }
+
+  getNodeEvents(id: string): Observable<any> {
+    return this.http.get(this.url + '/' + id + '/events')
+      .pipe(
+        map(e => e),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
   }
 }
 
@@ -407,8 +388,6 @@ export class DiagApi extends Resource<any> {
 export class ApiService {
   private nodeApi: NodeApi;
 
-  private nodeHistoryApi: NodeHistoryApi;
-
   private testApi: TestApi;
 
   private commandApi: CommandApi;
@@ -424,13 +403,6 @@ export class ApiService {
       this.nodeApi = new NodeApi(this.http);
     }
     return this.nodeApi;
-  }
-
-  get nodeHistory(): NodeHistoryApi {
-    if (!this.nodeHistoryApi) {
-      this.nodeHistoryApi = new NodeHistoryApi(this.http);
-    }
-    return this.nodeHistoryApi;
   }
 
   get command(): CommandApi {

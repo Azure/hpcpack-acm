@@ -125,31 +125,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     },
   };
 
-  events = [{
-    time: new Date(),
-    content: 'This is node event, test event by JJ',
-    type: 'node event'
-  }, {
-    time: new Date(),
-    content: 'This is node event, test event by JJ',
-    type: 'node event'
-  }, {
-    time: new Date(),
-    content: 'This is node event, test event by JJ',
-    type: 'node event'
-  }, {
-    time: new Date(),
-    content: 'This is Azure scheduled event, test event by JJ',
-    type: 'Azure scheduled event'
-  }, {
-    time: new Date(),
-    content: 'This is node event, test event by JJ',
-    type: 'node event'
-  }, {
-    time: new Date(),
-    content: 'This is Azure scheduled event, test event by JJ',
-    type: 'Azure scheduled event'
-  }];
+  events = [];
 
   // events: MatTableDataSource<any> = new MatTableDataSource();
 
@@ -186,15 +162,18 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
       let id = map.get('id');
+
+      //get node Info
+      this.api.node.get(id).subscribe(result => {
+        this.nodeInfo = result;
+        this.nodeRegistrationInfo = result["nodeRegistrationInfo"];
+      });
+
       this.historyLoop = Loop.start(
-        //in-memory-web-api to mock cpu usage history
-        // this.api.nodeHistory.getMockData(id),
-        this.api.nodeHistory.get(id),
+        this.api.node.getHistoryData(id),
         {
           next: (res) => {
             this.labels = this.makeLabels(res.history);
-            this.nodeInfo = res.nodeInfo;
-            this.nodeRegistrationInfo = res.nodeInfo.nodeRegistrationInfo;
             let cpuTotal = this.makeCpuTotalData(res.history);
             this.cpuData = { labels: this.labels, datasets: [{ label: 'CPU usage', data: cpuTotal, borderColor: '#215ebb' }] };
             return true;
@@ -202,6 +181,11 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
         },
         this.interval
       );
+
+      this.api.node.getNodeEvents(id).subscribe(result => {
+        this.events = result;
+      });
+
     });
   }
 

@@ -3,36 +3,21 @@ export class Node {
   name: string;
   state: string;
   health: string;
+  eventCount: number;
   runningJobCount: number;
-  system: {
+  nodeRegistrationInfo: {
     coreCount: number;
-    memory: number;
-    os: string;
-  }
-  //Below are legacy fields and to be deleted.
-  cpuUsage: any;
-  networkUsage: any;
-  diskUsage: any;
-  properties: {
-    cpu: string;
-    memory: number;
-    os: string;
-    nodeGroups: string[];
-    nodeTemplate: string;
-    network: {
-      mac: string;
-      ip: string;
-      subnet: string;
+    distroInfo: string;
+    gpuInfo: {}[];
+    memoryMegabytes: number;
+    networksInfo: {
       name: string;
-      domain: string;
-    };
+      macAddress: string;
+      ipV4: string;
+      ipV6: string;
+      isIB: boolean;
+    }[];
+    nodeName: string;
+    socketCount: number
   };
-  events: {
-    id: string;
-    type: string;
-    resourceType: string;
-    resources: string[];
-    status: string;
-    notBefore: string;
-  }[];
 }
