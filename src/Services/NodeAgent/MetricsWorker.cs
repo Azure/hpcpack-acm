@@ -43,7 +43,7 @@
         public async T.Task DoWorkAsync(CancellationToken token)
         {
             long currentMinute = 0;
-            while (true)
+            while (!token.IsCancellationRequested)
             {
                 await T.Task.Delay(TimeSpan.FromSeconds(this.workerOptions.MetricsIntervalSeconds), token);
 
