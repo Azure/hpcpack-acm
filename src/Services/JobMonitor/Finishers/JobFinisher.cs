@@ -3,7 +3,9 @@
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
+    using Microsoft.WindowsAzure.Storage.Queue;
     using Microsoft.WindowsAzure.Storage.Table;
+    using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
@@ -70,6 +72,14 @@
                 j.AggregationResult = job.AggregationResult;
                 j.Events = job.Events;
             }, token);
+
+            foreach(var task in allTasks.Where(t => t.CustomizedData != Task.EndTaskMark))
+            {
+                var q = await this.Utilities.GetOrCreateNodeCancelQueueAsync(task.Node, token);
+                await q.AddMessageAsync(new CloudQueueMessage(
+                    JsonConvert.SerializeObject(new TaskEventMessage() { JobId = job.Id, Id = task.Id, JobType = job.Type, RequeueCount = job.RequeueCount, EventVerb = "cancel" })),
+                    null, null, null, null, token);
+            }
         }
 
         public abstract T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeNodeTaskCompletionEventArgs> taskResults, CancellationToken token);

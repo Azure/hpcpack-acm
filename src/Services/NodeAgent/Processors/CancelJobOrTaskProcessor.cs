@@ -53,20 +53,7 @@
 
                 try
                 {
-                    if (job.State != JobState.Canceling && job.State != JobState.Canceled)
-                    {
-                        await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                        {
-                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                            {
-                                Type = EventType.Warning,
-                                Source = EventSource.Job,
-                                Content = $"Attempted to end the job {job.Id} when the job is in state {job.State}",
-                            });
-                        }, token);
-                    }
-
-                    await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Canceled, token);
+                    await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = t.State == TaskState.Failed || t.State == TaskState.Finished ? t.State : TaskState.Canceled, token);
                     await this.Communicator.EndJobAsync(nodeName, new EndJobArg(null, message.JobId), token);
                     this.Monitor.CancelTask(taskKey);
                 }

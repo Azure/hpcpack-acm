@@ -44,7 +44,7 @@
             try
             {
                 var t = CancellationTokenSource.CreateLinkedTokenSource(token, this.cts.Token).Token;
-                var loopInterval = this.invisibleTimeout - TimeSpan.FromSeconds(1.0);
+                var loopInterval = this.invisibleTimeout - TimeSpan.FromSeconds(this.invisibleTimeout.TotalSeconds / 2);
 
                 while (!t.IsCancellationRequested)
                 {

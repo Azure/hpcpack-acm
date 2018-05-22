@@ -19,7 +19,7 @@
         private readonly TaskMonitor monitor;
         private readonly CloudUtilities utilities;
 
-        public OutputController(ILogger<CallbackController> logger, TaskMonitor monitor, CloudUtilities utilities)
+        public OutputController(ILogger<OutputController> logger, TaskMonitor monitor, CloudUtilities utilities)
         {
             this.logger = logger;
             this.monitor = monitor;

@@ -120,7 +120,18 @@
 
                     this.Logger.LogInformation("Wait for response for job {0}, task {1}", task.JobId, taskKey);
                     if (monitor == null) return true;
-                    var taskResultArgs = await monitor.Execution;
+
+                    ComputeNodeTaskCompletionEventArgs taskResultArgs;
+
+                    try
+                    {
+                        taskResultArgs = await monitor.Execution;
+                    }
+                    catch (T.TaskCanceledException)
+                    {
+                        this.Logger.LogInformation("This task {0} has been canceled", taskKey);
+                        return true;
+                    }
 
                     this.Logger.LogInformation("Saving result for job {0}, task {1}", task.JobId, taskKey);
 

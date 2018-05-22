@@ -66,6 +66,7 @@
 
                     var result = await processor.ProcessAsync(message, token);
                     this.Logger.LogInformation("Finished process {0} {1} {2}, result {3}", message.EventVerb, message.JobId, message.Id, result);
+                    return result;
                 }
                 catch (Exception ex)
                 {
