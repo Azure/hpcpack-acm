@@ -36,7 +36,7 @@
             var taskResultRangeQuery = this.Utilities.GetRowKeyRangeString(
                 this.Utilities.GetTaskResultKey(job.Id, 0, job.RequeueCount),
                 this.Utilities.GetTaskResultKey(job.Id, int.MaxValue, job.RequeueCount));
-            var allTaskResults = (await jobTable.QueryAsync<ComputeNodeTaskCompletionEventArgs>(
+            var allTaskResults = (await jobTable.QueryAsync<ComputeClusterTaskInformation>(
                 TableQuery.CombineFilters(jobPartitionQuery, TableOperators.And, taskResultRangeQuery),
                 null,
                 token))
@@ -82,6 +82,6 @@
             }
         }
 
-        public abstract T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeNodeTaskCompletionEventArgs> taskResults, CancellationToken token);
+        public abstract T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeClusterTaskInformation> taskResults, CancellationToken token);
     }
 }

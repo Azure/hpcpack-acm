@@ -31,29 +31,28 @@
                 var diagTest = entity.GetObject<InternalDiagnosticsTest>();
 
                 var scriptBlob = this.Utilities.GetBlob(diagTest.DispatchScript.ContainerName, diagTest.DispatchScript.Name);
-                var fileName = Path.GetTempFileName();
 
-                var dispatchTasks = await PythonExecutor.ExecuteAsync(fileName, scriptBlob, job, token);
+                var dispatchTasks = await PythonExecutor.ExecuteAsync(scriptBlob, job, token);
 
-                if (!string.IsNullOrEmpty(dispatchTasks.Item2))
+                if (dispatchTasks.Item1 != 0)
                 {
                     await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                     {
                         j.State = JobState.Failed;
                         (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
                         {
-                            Content = dispatchTasks.Item2,
+                            Content = $"Dispatch script exit code {dispatchTasks.Item1}, message {dispatchTasks.Item3}",
                             Source = EventSource.Job,
                             Type = EventType.Alert
                         });
                     }, token);
 
-                    this.Logger.LogError("Dispatch failed {0}", dispatchTasks.Item2);
+                    this.Logger.LogError("Dispatch failed {0}, {1}", dispatchTasks.Item1, dispatchTasks.Item3);
                     return null;
                 }
                 else
                 {
-                    return JsonConvert.DeserializeObject<List<InternalTask>>(dispatchTasks.Item1);
+                    return JsonConvert.DeserializeObject<List<InternalTask>>(dispatchTasks.Item2);
                 }
             }
             else
