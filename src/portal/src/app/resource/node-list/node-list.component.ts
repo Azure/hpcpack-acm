@@ -26,8 +26,8 @@ export class NodeListComponent {
     { name: 'state',  displayName: 'State',   displayed: true,  },
     { name: 'runningJobCount',  displayName: 'Jobs',  displayed: true },
     { name: 'eventCount',displayName: 'Events', displayed: true },
-    // { name: 'memory',   displayName: 'Memory',displayed: true },
-    // { name: 'os',       displayName: 'OS',    displayed: true },
+    { name: 'memory',   displayName: 'Memory',displayed: true },
+    { name: 'os',       displayName: 'OS',    displayed: true },
   ];
 
   private availableColumns;

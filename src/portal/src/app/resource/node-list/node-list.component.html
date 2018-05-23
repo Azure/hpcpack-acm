@@ -25,22 +25,20 @@
 
   <ng-container matColumnDef="select">
     <mat-header-cell *matHeaderCellDef>
-      <mat-checkbox (change)="$event ? masterToggle() : null"
-                    [checked]="selection.hasValue() && isAllSelected()"
-                    [indeterminate]="false">
+      <mat-checkbox (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()" [indeterminate]="false">
       </mat-checkbox>
     </mat-header-cell>
     <mat-cell *matCellDef="let node">
-      <mat-checkbox color="primary" (click)="$event.stopPropagation()"
-                    (change)="$event ? selection.toggle(node) : null"
-                    [checked]="selection.isSelected(node)">
+      <mat-checkbox color="primary" (click)="$event.stopPropagation()" (change)="$event ? selection.toggle(node) : null" [checked]="selection.isSelected(node)">
       </mat-checkbox>
     </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="name">
     <mat-header-cell *matHeaderCellDef> Name </mat-header-cell>
-    <mat-cell *matCellDef="let node"><a [routerLink]="['..', node.id]">{{node.name}}</a></mat-cell>
+    <mat-cell *matCellDef="let node">
+      <a [routerLink]="['..', node.id]">{{node.name}}</a>
+    </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="state">
@@ -63,15 +61,15 @@
     <mat-cell *matCellDef="let node"> {{node.eventCount}} </mat-cell>
   </ng-container>
 
-  <!-- <ng-container matColumnDef="memory">
-    <mat-header-cell *matHeaderCellDef> Memory </mat-header-cell>
-    <mat-cell *matCellDef="let node" title="MB"> {{node.system.memory}} </mat-cell>
+  <ng-container matColumnDef="memory">
+    <mat-header-cell *matHeaderCellDef> Memory(MB) </mat-header-cell>
+    <mat-cell *matCellDef="let node" title="MB"> {{node.nodeRegistrationInfo.memoryMegabytes}} </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="os">
     <mat-header-cell *matHeaderCellDef> OS </mat-header-cell>
-    <mat-cell *matCellDef="let node" [title]="node.system.os"> {{node.system.os}} </mat-cell>
-  </ng-container> -->
+    <mat-cell *matCellDef="let node" [title]="node.nodeRegistrationInfo.distroInfo"> {{node.nodeRegistrationInfo.distroInfo}} </mat-cell>
+  </ng-container>
 
   <ng-container matColumnDef="actions">
     <mat-header-cell *matHeaderCellDef></mat-header-cell>

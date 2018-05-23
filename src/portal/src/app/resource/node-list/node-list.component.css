@@ -48,5 +48,5 @@ nav {
 }
 
 .mat-column-runningJobCount, .mat-column-coreCount, .mat-column-memory {
-  text-align: right;
+  /* text-align: right; */
 }
