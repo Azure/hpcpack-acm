@@ -60,13 +60,20 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return new OkObjectResult(jobs);
         }
 
-
         // GET v1/nodes/node1/metrichistory
         [HttpGet("{id}/metrichistory")]
         public async T.Task<IActionResult> GetHistoryAsync(string id, CancellationToken token)
         {
             var history = await this.provider.GetNodeMetricHistoryAsync(id, token);
             return new OkObjectResult(history);
+        }
+
+        // GET v1/nodes/node1/scheduledevents
+        [HttpGet("{id}/scheduledevents")]
+        public async T.Task<IActionResult> GetScheduledEventsAsync(string id, CancellationToken token)
+        {
+            var obj = await this.provider.GetNodeScheduledEventsAsync(id, token);
+            return new OkObjectResult(obj);
         }
     }
 }

@@ -51,6 +51,7 @@
                 null,
                 token))
                 .Select(t => t.Item3)
+                .Where(t => t.CustomizedData != Task.EndTaskMark)
                 .ToList();
 
             await this.AggregateTasksAsync(job, allTasks, allTaskResults, token);

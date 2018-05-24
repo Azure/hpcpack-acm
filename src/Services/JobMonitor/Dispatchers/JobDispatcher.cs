@@ -74,7 +74,7 @@
             });
 
             var endTask = InternalTask.CreateFrom(job);
-            endTask.Id = tasks.Max(t => t.Id) + 1;
+            endTask.Id = int.MaxValue;
             endTask.CustomizedData = InternalTask.EndTaskMark;
             endTask.ParentIds = ids;
 
