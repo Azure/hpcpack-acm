@@ -16,46 +16,6 @@ export class PingPongOverviewResultComponent implements OnInit, OnChanges {
 
   constructor() { }
 
-  ngOnInit() {
-    this.showOverview();
-  }
-
-  showOverview() {
-    if (this.result != undefined) {
-      this.nodeData = this.result.ResultByNode;
-      this.overviewResult = this.result.Result;
-      this.nodes = Object.keys(this.result.ResultByNode);
-      this.packetSize = this.result['Packet_size'];
-      this.unit = this.result['Unit'];
-      this.threshold = this.result['Threshold'];
-      this.selectedNode = this.nodes[0];
-      this.updateView(this.overviewResult);
-    }
-  }
-
-  activeMode = "total";
-  overviewData: any = {};
-  bestPairs = [];
-  bestPairsValue: number;
-  badPairs = [];
-  worstPairs = [];
-  worstPairsValue: number;
-  overviewResult: any;
-  unit: any;
-  threshold: any;
-
-  average: number;
-  median: number;
-  passed: boolean;
-  packetSize: string;
-  standardDeviation: number;
-  variability: string;
-  overviewThroughputData: any;
-  nodeData: any;
-
-  nodes = [];
-  selectedNode: string;
-
   overviewOption = {
     responsive: true,
     maintainAspectRatio: true,
@@ -81,12 +41,60 @@ export class PingPongOverviewResultComponent implements OnInit, OnChanges {
         display: true,
         ticks: {
           callback: function (value, index, values) {
-            return value + ' MB/s';
+            return value + ' ' + this.unit;
           }
         }
       }]
     }
   };
+
+  ngOnInit() {
+    this.showOverview();
+  }
+
+  showOverview() {
+    if (this.result != undefined) {
+      this.nodeData = this.result.ResultByNode;
+      this.overviewResult = this.result.Result;
+      this.nodes = Object.keys(this.result.ResultByNode);
+      this.packetSize = this.result['Packet_size'];
+      this.unit = this.result['Unit'];
+      this.threshold = this.result['Threshold'];
+      this.selectedNode = this.nodes[0];
+      this.updateView(this.overviewResult);
+      this.overviewOption.scales.yAxes = [{
+        display: true,
+        ticks: {
+          callback: (value, index, values) => {
+            return value + ' ' + this.unit;
+          }
+        }
+      }];
+    }
+  }
+
+  activeMode = "total";
+  overviewData: any = {};
+  bestPairs = [];
+  bestPairsValue: number;
+  badPairs = [];
+  worstPairs = [];
+  worstPairsValue: number;
+  overviewResult: any;
+  unit: any;
+  threshold: any;
+
+  average: number;
+  median: number;
+  passed: boolean;
+  packetSize: string;
+  standardDeviation: number;
+  variability: string;
+  overviewThroughputData: any;
+  nodeData: any;
+
+  nodes = [];
+  selectedNode: string;
 
   updateView(data) {
     this.overviewData = {
