@@ -12,7 +12,7 @@
     public class ClusRunJobFinisher : JobFinisher
     {
         public override JobType RestrictedJobType => JobType.ClusRun;
-        public override T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeNodeTaskCompletionEventArgs> taskResults, CancellationToken token)
+        public override T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeClusterTaskInformation> taskResults, CancellationToken token)
         {
             var groups = tasks.GroupBy(t => t.State).Select(g => new { State = g.Key, Count = g.Count() });
 

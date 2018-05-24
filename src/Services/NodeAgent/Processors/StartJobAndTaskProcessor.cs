@@ -106,6 +106,7 @@
                         }
                         catch (Exception ex)
                         {
+                            // TODO: Dispatch failure, why job running.
                             await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Failed, token);
                             await this.Utilities.UpdateJobAsync(task.JobType, task.JobId, j =>
                             {

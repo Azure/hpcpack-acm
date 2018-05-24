@@ -15,7 +15,7 @@
     public class DiagnosticsJobFinisher : JobFinisher
     {
         public override JobType RestrictedJobType => JobType.Diagnostics;
-        public override async T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeNodeTaskCompletionEventArgs> taskResults, CancellationToken token)
+        public override async T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeClusterTaskInformation> taskResults, CancellationToken token)
         {
             var jobTable = this.Utilities.GetJobsTable();
 
@@ -27,15 +27,14 @@
             if (diagTest != null)
             {
                 var scriptBlob = this.Utilities.GetBlob(diagTest.AggregationScript.ContainerName, diagTest.AggregationScript.Name);
-                var fileName = Path.GetTempFileName();
 
-                var aggregationResult = await PythonExecutor.ExecuteAsync(fileName, scriptBlob, new { Job = job, Tasks = taskResults }, token);
-                job.AggregationResult = aggregationResult.Item1;
-                if (!string.IsNullOrEmpty(aggregationResult.Item2))
+                var aggregationResult = await PythonExecutor.ExecuteAsync(scriptBlob, new { Job = job, Tasks = tasks, TaskResults = taskResults }, token);
+                job.AggregationResult = aggregationResult.Item2;
+                if (0 != aggregationResult.Item1)
                 {
                     (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
                     {
-                        Content = aggregationResult.Item2,
+                        Content = $"Diag reduce script exit code {aggregationResult.Item1}, message {aggregationResult.Item3}",
                         Source = EventSource.Job,
                         Type = EventType.Alert,
                     });

@@ -64,8 +64,8 @@
                             {
                                 this.Logger.LogDebug("Collect metrics for {0}", s.Item1);
 
-                                var scriptOutput = await PythonExecutor.ExecuteAsync(Path.GetTempFileName(), s.Item2, null, token);
-                                return (s.Item1, string.IsNullOrEmpty(scriptOutput.Item2) ? scriptOutput.Item1 : toErrorJson(scriptOutput.Item2));
+                                var scriptOutput = await PythonExecutor.ExecuteScriptAsync(s.Item2, null, token);
+                                return (s.Item1, scriptOutput.Item1 == 0 ? scriptOutput.Item2 : toErrorJson($"Metric script exit code {scriptOutput.Item1}, message {scriptOutput.Item3}"));
                             }
                             catch (Exception ex)
                             {

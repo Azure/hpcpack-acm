@@ -65,10 +65,9 @@
                     var taskResultKey = this.Utilities.GetTaskResultKey(job.Id, task.Id, job.RequeueCount);
                     var taskResult = await this.jobsTable.RetrieveAsync<ComputeNodeTaskCompletionEventArgs>(jobPartitionKey, taskResultKey, token);
                     var scriptBlob = this.Utilities.GetBlob(diagTest.TaskResultFilterScript.ContainerName, diagTest.TaskResultFilterScript.Name);
-                    var fileName = Path.GetTempFileName();
 
-                    var filteredResult = await PythonExecutor.ExecuteAsync(fileName, scriptBlob, new { Job = job, Task = taskResult }, token);
-                    taskResult.TaskInfo.FilteredResult = filteredResult.Item1 ?? filteredResult.Item2;
+                    var filteredResult = await PythonExecutor.ExecuteAsync(scriptBlob, new { Job = job, Task = taskResult }, token);
+                    taskResult.TaskInfo.FilteredResult = filteredResult.Item1 == 0 ? filteredResult.Item2 : $"Task result filter script exit code {filteredResult.Item1}, message {filteredResult.Item3}";
 
                     await this.jobsTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, taskResultKey, taskResult, token);
 
