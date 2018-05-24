@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, HostListener, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, HostListener, ElementRef, ViewChildren } from '@angular/core';
 import { MatTableDataSource, MatPaginator } from '@angular/material';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { SelectionModel } from '@angular/cdk/collections';
@@ -6,6 +6,7 @@ import { ApiService, Loop } from '../../services/api.service';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { TableSettingsService } from '../../services/table-settings.service';
 import { DiagEventsComponent } from './diag-events/diag-events.component';
+import { NUMBER_TYPE } from '@angular/compiler/src/output/output_ast';
 
 @Component({
   selector: 'diagnostics-results',
@@ -13,7 +14,6 @@ import { DiagEventsComponent } from './diag-events/diag-events.component';
   styleUrls: ['./result-list.component.css'],
 })
 export class ResultListComponent implements OnInit, OnDestroy {
-
   static customizableColumns = [
     { name: 'test', displayName: 'Test', displayed: true },
     { name: 'diagnostic', displayName: 'Diagnostic', displayed: true },
@@ -30,14 +30,20 @@ export class ResultListComponent implements OnInit, OnDestroy {
   private selection = new SelectionModel(true, []);
   private interval: number;
   private diagsLoop: Object;
-  private lastId = Number.MAX_VALUE;
-  private currentPageSize = 50;
+  private nextPageLastId = Number.MAX_VALUE;
+  private currentPageLastId = Number.MAX_VALUE;
+  private previousPageLastId = Number.MAX_VALUE;
+  private firstItemId = Number.MAX_VALUE;
+  private currentPageSize = 18;
   private scrolled = false;
+  private rowHeight = 0;
+  public autoScroll = false;
 
-  throttle = 300;
+  throttle = 500;
   scrollDistance = 1;
   scrollUpDistance = 2;
   loadFinish = false;
+  scrollDirection = "down";
 
   hasReceivedData = false;
 
@@ -51,11 +57,10 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-
     this.loadSettings();
     this.getDisplayedColumns();
-    // this.diagsLoop = this.getDiags(this.lastId, this.currentPageSize);
-    this.getDiags(this.lastId, this.currentPageSize);
+    this.diagsLoop = this.getDiags(this.nextPageLastId, this.currentPageSize);
+
     /*configure filter*/
     this.dataSource.filterPredicate = (data: any, filter: string) => {
       return data.name.indexOf(filter) != -1 ||
@@ -67,80 +72,134 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    //   if (this.diagsLoop) {
-    //     Loop.stop(this.diagsLoop);
-    //   }
+    if (this.diagsLoop) {
+      Loop.stop(this.diagsLoop);
+    }
   }
 
   private getDiags(pageIndex: any, pageSize: any): any {
     this.hasReceivedData = false;
-    this.api.diag.getDiagsByPage(pageIndex, pageSize).subscribe(result => {
-      if (result.length > 0) {
-        this.lastId = result[result.length - 1].id;
-      }
-      let diags = result.filter(e => {
-        return e.diagnosticTest != undefined && e.name != undefined;
-      });
-      this.hasReceivedData = true;
-      if (diags.length == 0) {
-        this.loadFinish = true;
-        return false;
-      }
-      this.dataSource.data = this.dataSource.data.concat(diags);
-    });
 
-    // return Loop.start(
-    // this.api.diag.getDiagsByPage(pageIndex, pageSize),
-    // {
-    //   next: (result) => {
-    //     if (result.length > 0) {
-    //       this.lastId = result[result.length - 1].id;
-    //     }
-    //     let diags = result.filter(e => {
-    //       return e.diagnosticTest != undefined && e.name != undefined;
-    //     });
-    //     this.hasReceivedData = true;
-    //     if (diags.length == 0) {
-    //       // this.currentPageIndex -= this.currentPageSize;
-    //       this.loadFinish = true;
-    //       return false;
-    //     }
+    return Loop.start(
+      this.api.diag.getDiagsByPage(pageIndex, pageSize),
+      {
+        next: (result) => {
+          this.hasReceivedData = true;
+          if (result.length == 0) {
+            this.loadFinish = true;
+          
+            this.nextPageLastId = this.currentPageLastId;
+            this.currentPageLastId = this.previousPageLastId;
+            this.previousPageLastId = this.previousPageLastId + this.currentPageSize;
 
-    //     let exsit = this.updateData(diags);
-    //     if (!exsit) {
-    //       this.dataSource.data = this.dataSource.data.concat(diags);
-    //       // this.dataSource.data = diags;
-    //     }
-    //     return true;
-    //   }
-    // },
-    // this.interval
-    // );
+            this.updateTableLoop(this.nextPageLastId, this.currentPageSize);
+            return false;
+          }
+          else {
+            if (this.nextPageLastId == Number.MAX_VALUE) {
+              this.firstItemId = result[0].id;
+            }
+            if (this.scrollDirection == "down") {
+              if (this.nextPageLastId !== result[result.length - 1].id) {
+                if (window.scrollY == this.rowHeight) {
+                  this.previousPageLastId = this.currentPageLastId;
+                  this.currentPageLastId = this.nextPageLastId;
+                  // this.nextPageLastId = result[result.length - 1].id;
+                }
+
+                let tableRow = this.el.nativeElement.querySelector(".table-row");
+                let table = this.el.nativeElement.querySelector(".diags-table");
+
+                window.scrollTo({ left: 0, top: this.rowHeight, behavior: 'smooth' });
+               
+                if (table !== null && this.rowHeight == 0) {
+                  this.rowHeight += table.getBoundingClientRect().top;
+                }
+             
+                if (tableRow !== null) {
+                  this.rowHeight += tableRow.offsetHeight * result.length;
+                }   
+              }
+              this.nextPageLastId = result[result.length - 1].id;
+            }
+            else if (this.scrollDirection == "up") {
+              if (this.previousPageLastId != this.firstItemId + 1) {
+                this.nextPageLastId = this.currentPageLastId;
+                this.currentPageLastId = this.previousPageLastId;
+                this.previousPageLastId = this.previousPageLastId + this.currentPageSize;
+              }
+              else {
+                this.nextPageLastId = Number.MAX_VALUE;
+                this.currentPageLastId = Number.MAX_VALUE;
+                this.previousPageLastId = Number.MAX_VALUE;
+              }
+
+            }
+
+            if (this.scrollDirection == "up") {
+              this.loadFinish = false;
+            }
+            let exsit = this.updateData(result);
+            if (!exsit) {
+              this.dataSource.data = this.dataSource.data.concat(result);
+            }
+
+          }
+          return true;
+        }
+      },
+      this.interval
+    );
   }
 
-  // updateData(data) {
-  //   let firstIndex = data[0].id;
-  //   let length = data.length;
-  //   let index = this.dataSource.data.findIndex(item => {
-  //     return item['id'] == firstIndex;
-  //   });
-  //   if (index == -1) {
-  //     return false;
-  //   }
-  //   let firstPart = this.dataSource.data.slice(0, index);
-  //   let lastPart = this.dataSource.data.slice(index + length);
-  //   this.dataSource.data = firstPart.concat(data).concat(lastPart);
-  //   return true;
-  // }
+  updateData(data) {
+    let firstId = data[0].id;
+    let length = data.length;
+    let firstIndex = this.dataSource.data.findIndex(item => {
+      return item['id'] == firstId;
+    });
+    if (firstIndex == -1) {
+      return false;
+    }
+    let firstPart = this.dataSource.data.slice(0, firstIndex);
+    let lastPart = this.dataSource.data.slice(firstIndex + length);
+    this.dataSource.data = firstPart.concat(data).concat(lastPart);
+    return true;
+  }
+
+  updateTableLoop(pageIndex, pageSize) {
+    if (this.diagsLoop) {
+      Loop.stop(this.diagsLoop);
+    }
+    this.diagsLoop = this.getDiags(pageIndex, pageSize);
+  }
 
   onScrollDown(ev) {
-    if (!this.loadFinish && this.hasReceivedData) {
-      //how to decide the last api has returned data and rendered
-      // if (this.diagsLoop) {
-      //   Loop.stop(this.diagsLoop);
-      // }
-      // this.diagsLoop = this.getDiags(this.lastId, this.currentPageSize);
-      this.getDiags(this.lastId, this.currentPageSize);
+    // console.log("window scroll Y: " + window.scrollY);
+    // console.log("now row height: " + this.rowHeight);
+    // if (window.scrollY !== this.rowHeight) {
+    //   return;
+    // }
+    // console.log("trigger down func.");
+    this.scrollDirection = "down";
+    if (this.hasReceivedData && !this.loadFinish) {
+      // console.log("down down down");
+      this.updateTableLoop(this.nextPageLastId, this.currentPageSize);
+    }
+  }
+
+  onUp() {
+    this.scrollDirection = "up";
+    // console.log("up up up");
+    if (this.hasReceivedData && !this.loadFinish) {
+      this.updateTableLoop(this.previousPageLastId, this.currentPageSize);
+    }
+    else if (this.hasReceivedData && this.loadFinish) {
+      // this.nextPageLastId = this.currentPageLastId;
+      // this.currentPageLastId = this.previousPageLastId;
+      // this.previousPageLastId = this.previousPageLastId + this.currentPageSize;
+
+      this.updateTableLoop(this.previousPageLastId, this.currentPageSize);
     }
   }
 
@@ -163,11 +222,6 @@ export class ResultListComponent implements OnInit, OnDestroy {
         this.scrolled = false;
       }
     }, delay);
-  }
-
-  onUp(ev) {
-    console.log('scrolled up!!', ev);
-    // console.log(document.documentElement.scrollTop);
   }
 
   private hasNoSelection(): boolean {

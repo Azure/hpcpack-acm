@@ -183,7 +183,7 @@ export class CommandApi extends Resource<CommandResult> {
 }
 
 export class HeatmapApi extends Resource<any> {
-  static url = `${Resource.baseUrl}/heatmap`;
+  static url = `${Resource.baseUrl}/metrics`;
 
   protected get url(): string {
     return HeatmapApi.url;

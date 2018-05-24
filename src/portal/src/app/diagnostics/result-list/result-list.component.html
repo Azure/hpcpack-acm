@@ -96,13 +96,13 @@
     </mat-menu>
 
     <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-    <mat-row *matRowDef="let result; columns: displayedColumns;" (click)="selection.toggle(result)"></mat-row>
+    <mat-row class="table-row" *matRowDef="let result; columns: displayedColumns;" (click)="selection.toggle(result)"></mat-row>
   </mat-table>
 </div>
 
 <div class="loading">
   <!-- <mat-spinner *ngIf="!hasReceivedData"></mat-spinner> -->
-  <mat-progress-bar *ngIf="!hasReceivedData" mode="buffer"></mat-progress-bar>
+  <mat-progress-bar *ngIf="!hasReceivedData && !loadFinish" mode="buffer"></mat-progress-bar>
   <div class="load-finish" *ngIf="loadFinish">
     No more data.
   </div>
