@@ -75,7 +75,8 @@
         public string GetDiagCategoryName(string partitionKey) => partitionKey.Substring(5);
         public string GetNodePartitionKey(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);
         public string GetMinuteHistoryKey(long minutes) => string.Format(this.Option.MinuteHistoryPattern, IntegerKey.ToStringKey(minutes));
-        public string GetMinuteHistoryKey() => string.Format(this.Option.MinuteHistoryKey);
+        public string GetMinuteHistoryKey() => this.Option.MinuteHistoryKey;
+        public string GetScheduledEventsKey() => this.Option.ScheduledEventsKey;
         public string GetRegistrationKey(string nodeName) => string.Format(this.Option.RegistrationPattern, nodeName);
         public string GetMaximumRegistrationKey() => string.Format(this.Option.RegistrationPattern, this.MaxString);
         public string GetHeartbeatKey(string nodeName) => string.Format(this.Option.HeartbeatPattern, nodeName);

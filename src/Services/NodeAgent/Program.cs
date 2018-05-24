@@ -42,6 +42,8 @@
                 {
                     svc.AddSingleton(monitor);
                     svc.AddSingleton<NodeCommunicator, NodeCommunicator>();
+                    svc.Configure<ScheduledEventsWorkerOptions>(config.GetSection(nameof(ScheduledEventsWorkerOptions)));
+                    svc.AddSingleton<IWorker, ScheduledEventsWorker>();
                     svc.Configure<MetricsWorkerOptions>(config.GetSection(nameof(MetricsWorkerOptions)));
                     svc.AddSingleton<IWorker, MetricsWorker>();
                     svc.Configure<NodeAgentWorkerOptions>(config.GetSection(nameof(NodeAgentWorkerOptions)));

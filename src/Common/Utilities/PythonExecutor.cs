@@ -58,16 +58,9 @@
                 }
                 finally
                 {
-                    try
+                    if (!process.HasExited)
                     {
-                        if (!process.HasExited)
-                        {
-                            process.Kill();
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        // Deal with it
+                        process.Kill();
                     }
                 }
             }
