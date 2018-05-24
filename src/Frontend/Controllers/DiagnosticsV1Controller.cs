@@ -61,7 +61,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 requeueCount,
                 lastId,
                 count,
-                JobType.ClusRun,
+                JobType.Diagnostics,
                 token);
 
             return new OkObjectResult(tasks);
@@ -79,7 +79,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 jobId,
                 requeueCount,
                 taskId,
-                JobType.ClusRun,
+                JobType.Diagnostics,
                 token);
 
             return task == null ? (IActionResult)new NotFoundResult() : new OkObjectResult(task);
@@ -97,7 +97,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 jobId,
                 requeueCount,
                 taskId,
-                JobType.ClusRun,
+                JobType.Diagnostics,
                 token);
 
             return task == null ? (IActionResult)new NotFoundResult() : new OkObjectResult(task);
