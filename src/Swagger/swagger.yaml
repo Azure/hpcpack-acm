@@ -1,0 +1,720 @@
+swagger: '2.0'
+
+info:
+  version: '1.0.0'
+  title: 'HPC Web API'
+  description: 'Preview'
+
+consumes:
+  - application/json
+produces:
+  - application/json
+
+definitions:
+  NodeNetwork:
+    type: object
+    properties:
+      name:
+        type: string
+        example: eth0
+      macAddress:
+        type: string
+        example: 98:90:96:da:da:46
+      ipV4:
+        type: string
+        example: 10.172.7.39/23
+      ipV6:
+        type: string
+        example: fe80::e01c:e798:8141:d6e4/64
+      isIB:
+        type: boolean
+        example: false
+
+  NodeGpu:
+    type: object
+    properties:
+      name:
+        type: string
+      uuid:
+        type: string
+      pciBusDevice:
+        type: string
+      pciBusId:
+        type: string
+      totalMemory:
+        type: integer
+      maxSMClock:
+        type: integer
+
+  NodeRegistration:
+    type: object
+    properties:
+      nodeName:
+        type: string
+        example: NODE001
+      coreCount:
+        type: integer
+        example: 8
+      socketCount:
+        type: integer
+        example: 1
+      memoryMegabytes:
+        type: integer
+        example: 16308
+      gpuInfo:
+        type: array
+        items:
+          $ref: '#/definitions/NodeGpu'
+      networksInfo:
+        type: array
+        items:
+          $ref: '#/definitions/NodeNetwork'
+      distroInfo:
+        type: string
+        example: "Linux version 4.4.0-43-Microsoft (Microsoft@Microsoft.com) (gcc version 5.4.0 (GCC) ) #1-Microsoft Wed Dec 31 14:42:53 PST 2014"
+
+  Node:
+    type: object
+    properties:
+      id:
+        type: string
+        example: node001
+      name:
+        type: string
+        example: node001
+      state:
+        type: string
+        enum: [Online, Offline]
+      health:
+        type: string
+        enum: [OK, Warning, Error]
+      runningJobCount:
+        type: integer
+        minimum: 0
+      eventCount:
+        type: integer
+        minimum: 0
+      nodeRegistrationInfo:
+        $ref: '#/definitions/NodeRegistration'
+
+  Event:
+    type: object
+    properties:
+      content:
+        type: string
+        example: Dummy node event.
+      time:
+        type: string
+        format: date-time
+        example: 2018-05-22T03:57:48.1870392+00:00
+      type:
+        type: string
+        enum: [Information, Warning, Alert]
+      source:
+        type: string
+        enum: [Node, Cluster, Job, Scheduler]
+
+  NodeJob:
+    type: object
+    properties:
+      jobId:
+        type: integer
+      tasks:
+        $ref: '#/definitions/TaskResult'
+
+  NodeMetrics:
+    type: object
+    properties:
+      range:
+        type: string  # Better be integer, TimeSpan is not supported in other languages than C#
+        example: 00:00:10
+        description: Time range of the metric data
+      data: {}  # Should be an array order by time: time string as key is not supported by SAWGGER
+
+  Metrics:
+    type: object
+    properties:
+      category:
+        type: string
+        example: cpu
+        description: Category of the metric data
+      instanceValues: # Better be an array
+        description: A hash whose key is node name and value is node metrics of the category
+        type: object
+        additionalProperties:
+          type: object
+          additionalProperties:
+            type: number
+            format: double
+
+  JobState:
+    description: job state
+    type: string
+    enum: [Queued, Running, Finished, Finishing, Canceling, Failed, Canceled]
+
+  JobType:
+    description: job type
+    type: string
+    enum: [ClusRun, Diagnostics]
+
+  Job:
+    type: object
+    properties:
+      type:
+        $ref: '#/definitions/JobType'
+      id:
+        type: integer
+        example: 1
+        description: job id
+      commandLine:
+        type: string
+        example: ls -la
+        description: Available only for ClusRun job
+      diagnosticTest:
+        $ref: '#/definitions/DiagnoticTest'
+        description: Available only for Diagnostics job
+      state:
+        $ref: '#/definitions/JobState'
+      targetNodes:
+        type: array
+        items:
+          type: string
+          example: ComputeNode001
+        description: Nodes on which the job runs
+      progress:
+        type: integer # Better be float
+        description: Job progress
+      events:
+        type: array
+        items:
+          $ref: '#/definitions/Event'
+        description: Events happened in the job
+      aggregationResult:
+        type: string
+        example: '{"Error": "Task count is not correct."}'
+        description: Summary info of the job, a JSON string whose structure is documented elsewhere.
+      requeueCount:
+        type: integer
+        description: The number of times the job is requeued
+      failJobOnTaskFailure:
+        type: boolean
+
+  JobUpdate:
+    type: object
+    properties:
+      request:
+        type: string
+        enum: [cancel]
+
+  TaskState:
+    type: string
+    enum: [Queued, Dispatching, Running, Finished, Failed, Canceled]
+
+  Task:
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 1
+        description: task id
+      jobId:
+        type: integer
+        example: 1
+        description: Id of the job the task belongs to
+      jobType:
+        $ref: '#/definitions/JobType'
+        description: Type of the job the task belongs to
+      state:
+        $ref: '#/definitions/TaskState'
+        description: Task state
+      commandLine:
+        type: string
+        example: ls -la
+        description: Available only when task's job type is ClusRun
+      node:
+        type: string
+        example: ComputeNode001
+        description: The node on which the task runs
+      parentIds:
+        type: array
+        items:
+          type: integer
+      childIds:
+        type: array
+        items:
+          type: integer
+      remainingParentIds:
+        type: array
+        items:
+          type: integer
+      customizedData:
+        type: string
+
+  TaskResult:
+    type: object
+    properties:
+      jobId:
+        type: integer
+      taskId:
+        type: integer
+      nodeName:
+        type: string
+        description: The name of the node on which the task runs
+      commandLine:
+        type: string
+        example: ls -la
+        description: Available only for ClusRun task
+      exited:
+        type: boolean
+        example: true
+      exitCode:
+        type: integer
+        example: 0
+      resultKey:
+        type: string
+      taskRequeueCount:
+        type: integer
+        description: The number of times the task is requeued
+      message:
+        type: string
+      filteredResult:
+        type: string
+      numberOfProcesses:
+        type: integer
+      processIds:
+        type: string
+      kernelProcessorTime:
+        type: integer
+        format: int64
+      userProcessorTime:
+        type: integer
+        format: int64
+      workingSet:
+        type: integer
+      primaryTask:
+        type: boolean
+
+  TaskOutput:
+    type: object
+    description: The end of the output can only be told by size of value 0 and the end of the task.
+    properties:
+      offset:
+        type: integer
+        description: Distance between the start of the returned content and the start of the whole output
+      size:
+        type: integer
+        description: Length of the content(in a unit meaningful only to the server, not in character of content)
+      content:
+        type: string
+        description: The output content
+
+  DiagnoticTestParameter:
+    type: object
+    properties:
+      name:
+        type: string
+        example: Mode
+      description:
+        type: string
+        example: Select the way to run tasks
+      options:
+        type: array
+        items:
+          type: object
+        example: [Tournament, Serial]
+      defaultValue:
+        example: Tournament
+      min:
+        type: integer
+        example: 0
+      max:
+        type: integer
+        example: 100
+      type:
+        type: string
+        enum: [select, number]
+        example: select
+
+  DiagnoticTest:
+    type: object
+    properties:
+      category:
+        type: string
+        example: mpi
+      name:
+        type: string
+        example: pingpong
+      description:
+        type: string
+        example: Run Intel MPI Benchmark – PingPong between all node pairs
+      parameters:
+        type: array
+        items:
+          $ref: '#/definitions/DiagnoticTestParameter'
+        description: optional parameters for the test
+      arguments:
+        type: string # better be an object array
+        example: '[{"name":"Run with RDMA","value":"NO"},{"name":"Latency threshold","value":1000},{"name":"Throughput threshold","value":100}]'
+        description: Input arguments
+
+parameters:
+  nodeId:
+    in: path
+    name: id
+    description: Node id
+    type: string
+    required: true
+  jobId:
+    in: path
+    name: id
+    description: Job id
+    type: integer
+    required: true
+  taskId:
+    in: path
+    name: taskId
+    description: Task id
+    type: integer
+    required: true
+  resultKey:
+    in: path
+    name: key
+    description: Result key of a task
+    type: string
+    required: true
+  count:
+    in: query
+    name: count
+    description: Requested number of objects
+    type: integer
+    default: 1000
+  lastId:
+    in: query
+    name: lastId
+    description: The object id since which(but not included) the objects are requested
+    type: integer
+  reverse:
+    in: query
+    name: reverse
+    description: Get the results in reverse order
+    type: boolean
+    default: false
+  requeueCount:
+    in: query
+    name: requeueCount
+    type: integer
+    description: The number of times a job/task is requeued
+
+paths:
+  /nodes:
+    get:
+      summary: Get a list of nodes
+      parameters:
+        - $ref: '#/parameters/lastId'
+        - $ref: '#/parameters/count'
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Node'
+
+  /nodes/{id}:
+    parameters:
+      - $ref: '#/parameters/nodeId'
+    get:
+      summary: Get a node
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Node'
+
+  /nodes/{id}/events:
+    parameters:
+      - $ref: '#/parameters/nodeId'
+    get:
+      summary: Get events of a node
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Event'
+
+  /nodes/{id}/jobs:
+    parameters:
+      - $ref: '#/parameters/nodeId'
+    get:
+      summary: Get jobs of a node
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/NodeJob'
+
+  /nodes/{id}/metricHistory:
+    parameters:
+      - $ref: '#/parameters/nodeId'
+    get:
+      summary: Get metric history of a node
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/NodeMetrics'
+
+  /metrics/categories:
+    get:
+      summary: Get node metric categories
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              type: string
+              example: cpu
+
+  /metrics/{category}:
+    get:
+      summary: Get node merics in a category
+      parameters:
+        - in: path
+          name: category
+          type: string
+          required: true
+        - in: query
+          name: lastNodeId
+          type: string
+        - $ref: '#/parameters/count'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Metrics'
+
+  /clusrun:
+    get:
+      summary: Get a list of clusruns
+      parameters:
+        - $ref: '#/parameters/lastId'
+        - $ref: '#/parameters/count'
+        - $ref: '#/parameters/reverse'
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Job'
+    post:
+      summary: Create a clusrun
+      parameters:
+        - in: body
+          name: result
+          schema:
+            $ref: '#/definitions/Job'
+      responses:
+        201:
+          description: OK
+          headers:
+            Location:
+              type: string
+              description: the url for the newly created job
+
+  /clusrun/{id}:
+    parameters:
+      - $ref: '#/parameters/jobId'
+    get:
+      summary: Get a clusrun
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Job'
+    patch:
+      summary: Cancel a clusrun
+      parameters:
+        - in: body
+          name: result
+          schema:
+            $ref: '#/definitions/JobUpdate'
+      responses:
+        200:
+          description: OK
+
+  /clusrun/{id}/tasks:
+    parameters:
+      - $ref: '#/parameters/jobId'
+      - $ref: '#/parameters/lastId'
+      - $ref: '#/parameters/count'
+      - $ref: '#/parameters/requeueCount'
+    get:
+      summary: Get tasks of a clusrun
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Task'
+
+  /clusrun/{id}/tasks/{taskId}:
+    parameters:
+      - $ref: '#/parameters/jobId'
+      - $ref: '#/parameters/taskId'
+    get:
+      summary: Get a task of a clusrun
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Task'
+
+  /clusrun/{id}/tasks/{taskId}/result:
+    parameters:
+      - $ref: '#/parameters/jobId'
+      - $ref: '#/parameters/taskId'
+    get:
+      summary: Get a task result of a clusrun
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/TaskResult'
+
+  /output/clusrun/{key}/raw:
+    parameters:
+      - $ref: '#/parameters/resultKey'
+    get:
+      summary: Get the whole output of a task
+      produces:
+        - text/plain
+      responses:
+        200:
+          description: OK
+          schema:
+            type: file
+
+  /output/clusrun/{key}/page:
+    parameters:
+      - $ref: '#/parameters/resultKey'
+    get:
+      summary: Get partial output of a task
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/TaskOutput'
+
+  /diagnostics:
+    get:
+      summary: Get a list of diagnostic test runs
+      parameters:
+        - $ref: '#/parameters/lastId'
+        - $ref: '#/parameters/count'
+        - $ref: '#/parameters/reverse'
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Job'
+    post:
+      summary: Create a diagnostic test run
+      parameters:
+        - in: body
+          name: result
+          schema:
+            $ref: '#/definitions/Job'
+      responses:
+        201:
+          description: OK
+          headers:
+            Location:
+              type: string
+              description: the url for the newly created job
+
+
+  /diagnostics/{id}:
+    parameters:
+      - $ref: '#/parameters/jobId'
+    get:
+      summary: Get a diagnostic test run
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Job'
+    patch:
+      summary: Cancel a diagnostic test run
+      parameters:
+        - in: body
+          name: result
+          schema:
+            $ref: '#/definitions/JobUpdate'
+      responses:
+        200:
+          description: OK
+
+  /diagnostics/{id}/tasks:
+    parameters:
+      - $ref: '#/parameters/jobId'
+      - $ref: '#/parameters/lastId'
+      - $ref: '#/parameters/count'
+      - $ref: '#/parameters/requeueCount'
+    get:
+      summary: Get tasks of a diagnostic test run
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Task'
+
+  /diagnostics/{id}/tasks/{taskId}:
+    parameters:
+      - $ref: '#/parameters/jobId'
+      - $ref: '#/parameters/taskId'
+    get:
+      summary: Get a task of a diagnostic test run
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Task'
+
+  /diagnostics/{id}/tasks/{taskId}/result:
+    parameters:
+      - $ref: '#/parameters/jobId'
+      - $ref: '#/parameters/taskId'
+    get:
+      summary: Get a task result of a diagnostic test run
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/TaskResult'
+
+  /diagnostics/tests:
+    get:
+      summary: Get available diagnostic tests
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/DiagnoticTest'
+
+host: localhost
+basePath: /v1
+schemes:
+ - http
