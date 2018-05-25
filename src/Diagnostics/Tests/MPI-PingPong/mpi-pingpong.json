@@ -1,0 +1,64 @@
+{
+    "DispatchScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"mpi-pingpong-map.py"
+    },
+    "AggregationScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"mpi-pingpong-reduce.py"
+    },
+    "description":"Run Intel MPI Benchmark – PingPong between all node pairs in selected nodes. The latency and throughput will be reported. More refer to https://software.intel.com/en-us/imb-user-guide-pingpong-pingpongspecificsource-pingponganysource",
+    "parameters":[
+        {
+            "name":"Run with RDMA",
+            "description":"Select YES if the Linux nodes are RDMA-capable, otherwise NO.",
+            "type":"select",
+            "options":["YES", "NO"],
+            "defaultValue":"NO",
+            "whenChanged":
+            {
+                "YES":
+                {
+                    "Latency threshold": 1000,
+                    "Throughput threshold": 1000,
+                },
+                "NO":
+                {
+                    "Latency threshold": 1000,
+                    "Throughput threshold": 100,
+                },                
+            }
+        },
+        {
+            "name":"Latency threshold",
+            "description":"Specify the threshold of latency to determine if test result is good. The value should be a number larger than 0.",
+            "type":"number",
+            "min":0,
+            "max":10000,
+            "defaultValue":1000
+        },
+        {
+            "name":"Throughput threshold",
+            "description":"Specify the threshold of throughput to determine if test result is good. The value should be a number larger than 0.",
+            "type":"number",
+            "min":0,
+            "max":10000,
+            "defaultValue":100
+        },
+        {
+            "name":"Packet size",
+            "description":"Specify the size of transfer messages used in testing. Sizes from 2^0 to 2^22 bytes will be included in testing if the value is 0.",
+            "type":"number",
+            "min":0,
+            "max":29,
+            "defaultValue":0,
+        },
+        {
+            "name":"Mode",
+            "description":"Select the way to run tasks.",
+            "type":"select",
+            "options":["Tournament", "Serial"],
+            "defaultValue":"Tournament",
+        },
+    ],
+}

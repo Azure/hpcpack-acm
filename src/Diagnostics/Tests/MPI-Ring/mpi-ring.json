@@ -1,0 +1,49 @@
+{
+    "DispatchScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"mpi-ring-map.py"
+    },
+    "AggregationScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"mpi-ring-reduce.py"
+    },
+    "description":"Run Intel MPI Benchmark – Sendrecv among processors, one processor per node, which forms a periodic communication chain in selected nodes. The latency and bandwidth will be reported. More refer to https://software.intel.com/en-us/imb-user-guide-sendrecv",
+    "parameters":[
+        {
+            "name":"Run with RDMA",
+            "description":"Select YES if the Linux nodes are RDMA-capable, otherwise NO.",
+            "type":"select",
+            "options":["YES", "NO"],
+            "defaultValue":"NO",
+            "whenChanged":
+            {
+                "YES":
+                {
+                    "Latency threshold": 1000,
+                    "Throughput threshold": 1000,
+                },
+                "NO":
+                {
+                    "Latency threshold": 1000,
+                    "Throughput threshold": 100,
+                },                
+            }
+        },
+        {
+            "name":"Latency threshold",
+            "description":"Specify the threshold of latency to determine if test result is good. The value should be a number larger than 0.",
+            "type":"number",
+            "min":0,
+            "max":10000,
+            "defaultValue":1000
+        },
+        {
+            "name":"Throughput threshold",
+            "description":"Specify the threshold of throughput to determine if test result is good. The value should be a number larger than 0.",
+            "type":"number",
+            "min":0,
+            "max":10000,
+            "defaultValue":100
+        },
+    ],
+}
