@@ -1,6 +1,6 @@
-<div class="actions">
+<!-- <div class="actions">
   <button mat-raised-button (click)="customizeTable()">Customize Columns...</button>
-</div>
+</div> -->
 
 <div class="filter">
   <mat-form-field>
@@ -15,6 +15,11 @@
        Note that these columns can be defined in any order. The actual rendered
        columns are set as a property on the row definition, displayedColumns."
       -->
+  <ng-container matColumnDef="id">
+    <mat-header-cell *matHeaderCellDef>Id</mat-header-cell>
+    <mat-cell *matCellDef="let task">{{task.id}}</mat-cell>
+  </ng-container>
+
   <ng-container matColumnDef="nodes">
     <mat-header-cell *matHeaderCellDef>Nodes</mat-header-cell>
     <mat-cell *matCellDef="let task">{{task.customizedData}}</mat-cell>
@@ -31,14 +36,14 @@
   </ng-container>
 
   <ng-container matColumnDef="throughput">
-    <mat-header-cell *matHeaderCellDef>Throughput [usec]</mat-header-cell>
+    <mat-header-cell *matHeaderCellDef>Throughput [MB/s]</mat-header-cell>
     <mat-cell *matCellDef="let task">{{task.taskInfo.message.Throughput}}</mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="detail">
     <mat-header-cell *matHeaderCellDef>Detail</mat-header-cell>
     <mat-cell *matCellDef="let task">
-      <button mat-icon-button (click)="showDetail(task.taskInfo.message)">
+      <button mat-icon-button (click)="showDetail(task.jobId, task.id)">
         <i class="material-icons">settings_ethernet</i>
       </button>
     </mat-cell>

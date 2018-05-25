@@ -2,12 +2,42 @@
   <div class="job-info">
     Task Detail
   </div>
-  <mat-divider></mat-divider>
   <div class="close-icon" (click)="close()">
     <i class="material-icons">close</i>
   </div>
 </div>
+<mat-divider></mat-divider>
 <mat-dialog-content>
-  <div [innerHTML]="message" class="msg-item" *ngFor="let message of msg">
+  <div class="detail-item">
+    <div class="area-title">
+      <i class="material-icons title-icon">equalizer</i>
+      <div class="detail-title">OVERVIEW</div>
+    </div>
+    <div class="overview">
+      <div class="overview-info">
+        <div class="overview-title"> Node Name </div>
+        <div class="overview-value">{{result.nodeName}}</div>
+      </div>
+      <div class="overview-info">
+        <div class="overview-title"> Latency </div>
+        <div class="overview-value">{{message.Latency | number: '1.2-2'}} us</div>
+      </div>
+      <div class="overview-info">
+        <div class="overview-title"> Throughput </div>
+        <div class="overview-value">{{message.Throughput | number: '1.2-2'}} MB/s</div>
+      </div>
+      <div class="overview-info">
+        <div class="overview-title"> Primary Task</div>
+        <div class="overview-value">{{result.primaryTask}}</div>
+      </div>
+    </div>
+  </div>
+  <div class="detail-item">
+    <div class="area-title">
+      <i class="material-icons title-icon">timer</i>
+      <div class="detail-title">OUTPUT</div>
+    </div>
+    <div [innerHTML]="message" class="msg-item" *ngFor="let message of msg">
+    </div>
   </div>
 </mat-dialog-content>

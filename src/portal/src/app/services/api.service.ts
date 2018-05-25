@@ -365,7 +365,23 @@ export class DiagApi extends Resource<any> {
           return new ErrorObservable(error);
         })
       );
+  }
 
+  getDiagTaskResult(jobId: string, taskId: string) {
+    let url = this.url + '/' + jobId + '/tasks/' + taskId + '/result';
+    return this.http.get<any>(url)
+      .pipe(
+        map(item => {
+          if (this.isJSON(item.message)) {
+            item.message = JSON.parse(item.message);
+          }
+          return item;
+        }),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
   }
 
   create(name: string, targetNodes: string[], diagnosticTest: any, jobType = 'diagnostics') {

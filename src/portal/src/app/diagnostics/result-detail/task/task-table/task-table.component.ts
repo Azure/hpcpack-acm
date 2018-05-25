@@ -39,17 +39,17 @@ export class TaskTableComponent implements OnInit {
     this.getDisplayedColumns();
   }
 
-  private showDetail(message) {
+  private showDetail(jobId, taskId) {
     let dialogRef = this.dialog.open(TaskDetailComponent, {
       width: '98%',
-      data: { msg: message }
+      data: { jobId: jobId, taskId: taskId }
     });
   }
 
   getDisplayedColumns(): void {
     let columns = this.availableColumns.filter(e => e.displayed).map(e => e.name);
     columns.push('detail');
-    this.displayedColumns = ['nodes', 'state'].concat(columns);
+    this.displayedColumns = ['id', 'nodes', 'state'].concat(columns);
   }
 
   customizeTable(): void {

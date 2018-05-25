@@ -23,8 +23,8 @@ export class RingReportComponent implements OnInit {
   private componentName = "RingReport";
 
   private customizableColumns = [
-    { name: 'latency', displayName: 'Latency', displayed: true },
-    { name: 'throughput', displayName: 'Throughput', displayed: true },
+    // { name: 'latency', displayName: 'Latency', displayed: true },
+    // { name: 'throughput', displayName: 'Throughput', displayed: true },
   ];
 
   constructor(

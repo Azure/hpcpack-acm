@@ -22,8 +22,8 @@ export class PingPongReportComponent implements OnInit {
   private componentName = "PingPongReport";
 
   private customizableColumns = [
-    { name: 'latency', displayName: 'Latency', displayed: true },
-    { name: 'throughput', displayName: 'Throughput', displayed: true },
+    // { name: 'latency', displayName: 'Latency', displayed: true },
+    // { name: 'throughput', displayName: 'Throughput', displayed: true },
   ];
 
   latencyData: any;

@@ -1,13 +1,13 @@
-.dialog-title{
+.dialog-title {
   display: flex;
   justify-content: space-between;
 }
 
-.close-icon:hover{
+.close-icon:hover {
   cursor: pointer;
 }
 
-.msg-item{
+.msg-item {
   white-space: pre;
   font-family: "Courier New", Courier, monospace;
   background: rgba(0, 0, 0, 0.9);
@@ -16,10 +16,57 @@
   padding: 10px 0;
 }
 
-.task-detail{
+.task-detail {
   border-left: 4px solid #3f51b5;
   padding: 10px;
   margin: 10px 0;
   font-weight: 500;
   background: #eee;
+}
+
+.mat-dialog-title {
+  margin-bottom: 10px;
+}
+
+mat-divider {
+  margin-bottom: 10px;
+}
+
+.detail-item {
+  margin-bottom: 1em;
+}
+
+.area-title {
+  font-size: .9em;
+  display: flex;
+  align-items: center;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  margin-bottom: 1em;
+}
+
+.title-icon {
+  font-size: 1em;
+  padding-right: 0.2em;
+}
+
+.overview-info {
+  margin: .5em;
+}
+
+.overview-title {
+  font-size: .9em;
+  color: #7986CB;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.overview-value {
+  font-size: .9em;
+}
+
+.overview {
+  display: flex;
+  justify-content: space-evenly;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
 }

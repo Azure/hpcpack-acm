@@ -11,6 +11,11 @@ mat-header-cell {
     font-size: .8em;
 }
 
+.mat-cell, .mat-header-cell {
+    text-align: center;
+    padding: 0 2px;
+}
+
 .node.success {
     background-color: #d5ffd4;
 }
@@ -23,9 +28,22 @@ mat-header-cell {
     cursor: pointer;
 }
 
+.mat-header-cell.mat-column-id {
+    /* text-align: center; */
+    flex: 1;
+    /* padding-right: 0.8em; */
+}
+
+mat-row .mat-column-id {
+    flex: 1;
+    /* text-align: right; */
+    /* padding-right: 0.5em; */
+}
+
 .mat-column-nodes {
     text-overflow: ellipsis;
     white-space: nowrap;
+    flex: 3;
 }
 
 .title {
