@@ -1,11 +1,17 @@
 <div class="title main">
   <div class="name">{{result.id}} - {{result.name}} {{result.state}}</div>
+  <div *ngIf="!done">
+    <mat-spinner [diameter]="40"></mat-spinner>
+  </div>
 </div>
 <div class="area-title">
   <i class="material-icons title-icon">equalizer</i>
   <div>OVERVIEW</div>
 </div>
-<div class="overview">
+<div *ngIf="!done" class="overview-progress">
+  <mat-progress-bar mode="buffer"></mat-progress-bar>
+</div>
+<div class="overview" *ngIf="done">
   <ng-container *ngTemplateOutlet="overviewTemplate"></ng-container>
 </div>
 

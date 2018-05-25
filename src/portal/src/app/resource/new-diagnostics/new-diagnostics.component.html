@@ -74,14 +74,12 @@
         </mat-form-field>
       </div>
       <div class="step-btn last-step">
-        <div>
-          <button mat-button color="primary" matStepperPrevious>Back</button>
-        </div>
-        <div>
-          <button mat-button color="warn" [mat-dialog-close]="false">Cancel</button>
-          <button mat-button color="primary" (click)="getTest()" (keyup.enter)="pressEnter()">Run</button>
-        </div>
+        <button mat-button color="primary" matStepperPrevious>Back</button>
       </div>
     </mat-step>
   </mat-vertical-stepper>
+  <div class="diag-btns">
+    <button mat-button color="warn" [mat-dialog-close]="false">Cancel</button>
+    <button mat-button color="primary" (click)="getTest()" (keyup.enter)="pressEnter()">Run</button>
+  </div>
 </mat-dialog-content>

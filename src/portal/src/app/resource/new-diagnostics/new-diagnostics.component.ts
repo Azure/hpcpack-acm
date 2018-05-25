@@ -82,7 +82,22 @@ export class NewDiagnosticsComponent implements OnInit {
 
   getCreatedTime() {
     let date = new Date();
-    return date.getFullYear() + "-" + date.getMonth() + "-" + date.getDay() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+    let year = date.getFullYear();
+    let month = this.fomateDateNumber(date.getMonth());
+    let day = this.fomateDateNumber(date.getDay());
+    let hour = this.fomateDateNumber(date.getHours());
+    let minutes = this.fomateDateNumber(date.getMinutes());
+    let seconds = this.fomateDateNumber(date.getSeconds());
+    return year + "-" + month + "-" + day + " " + hour + ":" + minutes + ":" + seconds;
+  }
+
+  fomateDateNumber(num) {
+    if (num > 10) {
+      return num;
+    }
+    else {
+      return "0" + num;
+    }
   }
 
   // function to handle default value when one linked property's value changes
