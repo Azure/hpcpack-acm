@@ -17,12 +17,12 @@
     using System.IO;
     using System.Net.Http;
 
-    public class ScheduledEventsWorker : ServerObject, IWorker
+    public class MetadataWorker : ServerObject, IWorker
     {
         private CloudTable nodesTable;
-        private readonly ScheduledEventsWorkerOptions workerOptions;
+        private readonly MetadataWorkerOptions workerOptions;
 
-        public ScheduledEventsWorker(IOptions<ScheduledEventsWorkerOptions> options)
+        public MetadataWorker(IOptions<MetadataWorkerOptions> options)
         {
             this.workerOptions = options.Value;
         }
@@ -34,6 +34,13 @@
 
         public async T.Task DoWorkAsync(CancellationToken token)
         {
+            await T.Task.WhenAll(
+                this.DoWorkAsync(this.workerOptions.MetadataInstanceUri, this.Utilities.GetMetadataKey(), token),
+                this.DoWorkAsync(this.workerOptions.ScheduledEventsUri, this.Utilities.GetScheduledEventsKey(), token));
+        }
+
+        public async T.Task DoWorkAsync(string uri, string storageKey, CancellationToken token)
+        {
             while (!token.IsCancellationRequested)
             {
                 try
@@ -42,7 +49,7 @@
                     string content = null;
                     using (HttpClient c = new HttpClient())
                     {
-                        HttpRequestMessage msg = new HttpRequestMessage(HttpMethod.Get, this.workerOptions.ScheduledEventsUri);
+                        HttpRequestMessage msg = new HttpRequestMessage(HttpMethod.Get, uri);
                         msg.Headers.Add("Metadata", "true");
                         var response = await c.SendAsync(msg, token);
                         response.EnsureSuccessStatusCode();
@@ -50,10 +57,8 @@
                     }
 
                     var nodesPartitionKey = this.Utilities.GetNodePartitionKey(nodeName);
-                    var scheduledEventsKey = this.Utilities.GetScheduledEventsKey();
 
-                    var obj = JsonConvert.DeserializeObject(content);
-                    await this.nodesTable.InsertOrReplaceAsJsonAsync(nodesPartitionKey, scheduledEventsKey, obj, token);
+                    await this.nodesTable.InsertOrReplaceAsJsonStringAsync(nodesPartitionKey, storageKey, content, token);
                 }
                 catch (Exception ex)
                 {

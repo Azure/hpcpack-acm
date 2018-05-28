@@ -16,12 +16,10 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     public class NodesV1Controller : Controller
     {
         private readonly DataProvider provider;
-        private readonly CloudUtilities utilities;
 
-        public NodesV1Controller(DataProvider provider, CloudUtilities utilities)
+        public NodesV1Controller(DataProvider provider)
         {
             this.provider = provider;
-            this.utilities = utilities;
         }
 
         // GET v1/nodes?count=50&lastid=testnode
@@ -66,6 +64,14 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         {
             var history = await this.provider.GetNodeMetricHistoryAsync(id, token);
             return new OkObjectResult(history);
+        }
+
+        // GET v1/nodes/node1/metadata
+        [HttpGet("{id}/metadata")]
+        public async T.Task<IActionResult> GetMetadataAsync(string id, CancellationToken token)
+        {
+            var obj = await this.provider.GetNodeMetadataAsync(id, token);
+            return new OkObjectResult(obj);
         }
 
         // GET v1/nodes/node1/scheduledevents

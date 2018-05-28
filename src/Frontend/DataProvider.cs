@@ -202,6 +202,12 @@
             return nodeInfo.Jobs;
         }
 
+        public async T.Task<object> GetNodeMetadataAsync(string id, CancellationToken token)
+        {
+            var key = this.utilities.GetMetadataKey();
+            return await this.nodesTable.RetrieveAsync<object>(this.utilities.GetNodePartitionKey(id), key, token);
+        }
+
         public async T.Task<object> GetNodeScheduledEventsAsync(string id, CancellationToken token)
         {
             var key = this.utilities.GetScheduledEventsKey();

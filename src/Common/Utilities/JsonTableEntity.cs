@@ -15,6 +15,11 @@
             this.PutObject(obj);
         }
 
+        public JsonTableEntity(string partitionKey, string rowKey, string jsonString) : base(partitionKey, rowKey)
+        {
+            this.JsonContent = jsonString;
+        }
+
         public string JsonContent { get; set; }
 
         public void PutObject(object obj) => this.JsonContent = JsonConvert.SerializeObject(obj, Formatting.Indented);
