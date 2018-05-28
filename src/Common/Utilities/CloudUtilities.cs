@@ -76,6 +76,7 @@
         public string GetNodePartitionKey(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);
         public string GetMinuteHistoryKey(long minutes) => string.Format(this.Option.MinuteHistoryPattern, IntegerKey.ToStringKey(minutes));
         public string GetMinuteHistoryKey() => this.Option.MinuteHistoryKey;
+        public string GetMetadataKey() => this.Option.MetadataKey;
         public string GetScheduledEventsKey() => this.Option.ScheduledEventsKey;
         public string GetRegistrationKey(string nodeName) => string.Format(this.Option.RegistrationPattern, nodeName);
         public string GetMaximumRegistrationKey() => string.Format(this.Option.RegistrationPattern, this.MaxString);
