@@ -11,6 +11,18 @@ produces:
   - application/json
 
 definitions:
+  IpV4:
+    type: string
+    example: 10.172.7.39/23
+
+  IpV6:
+    type: string
+    example: fe80::e01c:e798:8141:d6e4/64
+
+  MacAddress:
+    type: string
+    example: 98:90:96:da:da:46
+
   NodeNetwork:
     type: object
     properties:
@@ -18,14 +30,11 @@ definitions:
         type: string
         example: eth0
       macAddress:
-        type: string
-        example: 98:90:96:da:da:46
+        $ref: '#/definitions/MacAddress'
       ipV4:
-        type: string
-        example: 10.172.7.39/23
+        $ref: '#/definitions/IpV4'
       ipV6:
-        type: string
-        example: fe80::e01c:e798:8141:d6e4/64
+        $ref: '#/definitions/IpV6'
       isIB:
         type: boolean
         example: false
@@ -96,6 +105,154 @@ definitions:
         minimum: 0
       nodeRegistrationInfo:
         $ref: '#/definitions/NodeRegistration'
+
+  NodeMetadataCompute:
+    type: object
+    properties:
+      location:
+        type: string
+        example: westus
+        description: Azure Region the VM is running in
+      name:
+        type: string
+        example: SQLTest
+        description: Name of the VM
+      offer:
+        type: string
+        example: SQL2016SP1-WS2016
+        description: Offer information for the VM image. This value is only present for images deployed from Azure image gallery.
+      osType:
+        type: string
+        example: Windows
+        description: Linux or Windows
+      platformFaultDomain:
+        type: string
+        example: "0"
+        description: Fault domain the VM is running in
+      platformUpdateDomain:
+        type: string
+        example: "0"
+        description: Update domain the VM is running in
+      publisher:
+        type: string
+        example: MicrosoftSQLServer
+        description: Publisher of the VM image
+      sku:
+        type: string
+        example: Enterprise
+        description: Specific SKU for the VM image
+      version:
+        type: string
+        example: "13.0.400110"
+        description: Version of the VM image
+      vmId:
+        type: string
+        example: 453945c8-3923-4366-b2d3-ea4c80e9b70e
+        description: Unique identifier for the VM
+      vmSize:
+        type: string
+        example: Standard_DS2
+        description: VM size
+      subscriptionId:
+        type: string
+        example: "ad6c6203-8014-4913-ae06-61105eaa2ed8"
+        description: Azure subscription for the Virtual Machine
+      tags:
+        type: string
+        description: Tags for your Virtual Machine
+      resourceGroupName:
+        type: string
+        description: Resource group for your Virtual Machine
+      placementGroupId:
+        type: string
+        description: Placement Group of your virtual machine scale set
+
+  NodeMetadataNetwork:
+    type: object
+    properties:
+      interface:
+        type: array
+        items:
+          type: object
+          properties:
+            ipv4:
+              type: object
+              properties:
+                ipAddress:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      privateIpAddress:
+                        $ref: '#/definitions/IpV4'
+                      publicIpAddress:
+                        $ref: '#/definitions/IpV4'
+                subnet:
+                  type: array
+                  items:
+                    properties:
+                      address:
+                        $ref: '#/definitions/IpV4'
+                      prefix:
+                        type: string
+                        example: "24"
+            ipv6:
+              type: object
+              properties:
+                ipAddress:
+                  type: array
+                  items:
+                    type: object
+            macAddress:
+              $ref: '#/definitions/MacAddress'
+
+  NodeMetadata:
+    type: object
+    properties:
+      compute:
+        $ref: '#/definitions/NodeMetadataCompute'
+      network:
+        $ref: '#/definitions/NodeMetadataNetwork'
+
+  ScheduledEvent:
+    type: object
+    properties:
+      eventId:
+        type: string
+        example: 602d9444-d2cd-49c7-8624-8643e7171297
+        description: Globally unique identifier for this event
+      eventType:
+        type: string
+        enum: [Freeze, Reboot, Redeploy]
+        description: Impact this event causes
+      resourceType:
+        type: string
+        enum: [VirtualMachine]
+        description: Type of resource this event impacts
+      resources:
+        type: array
+        items:
+          type: string
+        example: [FrontEnd_IN_0, BackEnd_IN_0]
+        description: List of resources this event impacts. This is guaranteed to contain machines from at most one Update Domain, but may not contain all machines in the UD.
+      eventStatus:
+        type: string
+        enum: [Scheduled, Started]
+        description: No Completed or similar status is ever provided; the event will no longer be returned when the event is completed.
+      notBefore:
+        type: string
+        format: date-time
+        description: Time after which this event may start
+
+  ScheduledEvents:
+    type: object
+    properties:
+      documentIncarnation:
+        type: integer
+      events:
+        type: array
+        items:
+          $ref: '#/definitions/ScheduledEvent'
 
   Event:
     type: object
@@ -430,6 +587,28 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Node'
+
+  /nodes/{id}/metadata:
+    parameters:
+      - $ref: '#/parameters/nodeId'
+    get:
+      summary: get metadata of a node
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/NodeMetadata'
+
+  /nodes/{id}/scheduledEvents:
+    parameters:
+      - $ref: '#/parameters/nodeId'
+    get:
+      summary: get scheduled events of a node
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ScheduledEvents'
 
   /nodes/{id}/events:
     parameters:
