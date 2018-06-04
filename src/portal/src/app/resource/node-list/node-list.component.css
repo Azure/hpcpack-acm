@@ -29,7 +29,7 @@ nav {
   text-align: right;
 }
 
-.mat-column-runningJobCount, .mat-column-coreCount, .mat-column-memory, .mat-column-health, .mat-column-state {
+.mat-column-runningJobCount, .mat-column-coreCount, .mat-column-memory, .mat-column-health, .mat-column-state, .mat-column-eventCount {
   flex: 0.5;
 }
 
@@ -47,6 +47,6 @@ nav {
   text-align: center;
 }
 
-.mat-column-runningJobCount, .mat-column-coreCount, .mat-column-memory {
-  /* text-align: right; */
+.mat-column-runningJobCount, .mat-column-coreCount, .mat-column-memory, .mat-column-eventCount {
+  text-align: right;
 }
