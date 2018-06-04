@@ -7,6 +7,7 @@ import { TableOptionComponent } from '../../widgets/table-option/table-option.co
 import { TableSettingsService } from '../../services/table-settings.service';
 import { DiagEventsComponent } from './diag-events/diag-events.component';
 import { NUMBER_TYPE } from '@angular/compiler/src/output/output_ast';
+import { last } from 'rxjs/operators';
 
 @Component({
   selector: 'diagnostics-results',
@@ -34,14 +35,15 @@ export class ResultListComponent implements OnInit, OnDestroy {
   private currentPageLastId = Number.MAX_VALUE;
   private previousPageLastId = Number.MAX_VALUE;
   private firstItemId = Number.MAX_VALUE;
-  private currentPageSize = 18;
+  private currentPageSize = 30;
+  private maxPageSize = 40;
   private scrolled = false;
   private rowHeight = 0;
   public autoScroll = false;
 
   throttle = 500;
-  scrollDistance = 1;
-  scrollUpDistance = 2;
+  scrollDistance = 0;
+  scrollUpDistance = 1;
   loadFinish = false;
   scrollDirection = "down";
 
@@ -57,6 +59,8 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    console.log(Math.max(document.documentElement.clientWidth, window.innerWidth || 0));
+    console.log(Math.max(document.documentElement.clientHeight, window.innerHeight || 0));
     this.loadSettings();
     this.getDisplayedColumns();
     this.diagsLoop = this.getDiags(this.nextPageLastId, this.currentPageSize);
@@ -87,7 +91,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
           this.hasReceivedData = true;
           if (result.length == 0) {
             this.loadFinish = true;
-          
+
             this.nextPageLastId = this.currentPageLastId;
             this.currentPageLastId = this.previousPageLastId;
             this.previousPageLastId = this.previousPageLastId + this.currentPageSize;
@@ -101,49 +105,26 @@ export class ResultListComponent implements OnInit, OnDestroy {
             }
             if (this.scrollDirection == "down") {
               if (this.nextPageLastId !== result[result.length - 1].id) {
-                if (window.scrollY == this.rowHeight) {
-                  this.previousPageLastId = this.currentPageLastId;
-                  this.currentPageLastId = this.nextPageLastId;
-                  // this.nextPageLastId = result[result.length - 1].id;
-                }
-
-                let tableRow = this.el.nativeElement.querySelector(".table-row");
-                let table = this.el.nativeElement.querySelector(".diags-table");
-
-                window.scrollTo({ left: 0, top: this.rowHeight, behavior: 'smooth' });
-               
-                if (table !== null && this.rowHeight == 0) {
-                  this.rowHeight += table.getBoundingClientRect().top;
-                }
-             
-                if (tableRow !== null) {
-                  this.rowHeight += tableRow.offsetHeight * result.length;
-                }   
+                this.previousPageLastId = this.currentPageLastId;
+                this.currentPageLastId = this.nextPageLastId;
               }
               this.nextPageLastId = result[result.length - 1].id;
             }
             else if (this.scrollDirection == "up") {
-              if (this.previousPageLastId != this.firstItemId + 1) {
+              if (this.currentPageLastId !== result[0].id + 1) {
                 this.nextPageLastId = this.currentPageLastId;
-                this.currentPageLastId = this.previousPageLastId;
-                this.previousPageLastId = this.previousPageLastId + this.currentPageSize;
+                this.currentPageLastId = result[0].id + 1;
+                this.previousPageLastId = this.currentPageLastId + this.currentPageSize;
               }
-              else {
-                this.nextPageLastId = Number.MAX_VALUE;
-                this.currentPageLastId = Number.MAX_VALUE;
-                this.previousPageLastId = Number.MAX_VALUE;
-              }
-
             }
 
             if (this.scrollDirection == "up") {
               this.loadFinish = false;
             }
-            let exsit = this.updateData(result);
-            if (!exsit) {
-              this.dataSource.data = this.dataSource.data.concat(result);
+            this.updateData(result);
+            if (result.length < this.currentPageSize) {
+              this.loadFinish = true;
             }
-
           }
           return true;
         }
@@ -153,17 +134,59 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   updateData(data) {
+    if (this.dataSource.data.length == 0) {
+      this.dataSource.data = data;
+      return;
+    }
+    let currentLength = this.dataSource.data.length;
     let firstId = data[0].id;
+    let currentStartId = this.dataSource.data[0]['id'];
+    let currentEndId = this.dataSource.data[currentLength - 1]['id'];
+
     let length = data.length;
+    let lastId = data[length - 1].id;
     let firstIndex = this.dataSource.data.findIndex(item => {
       return item['id'] == firstId;
     });
-    if (firstIndex == -1) {
-      return false;
+    let lastIndex = this.dataSource.data.findIndex(item => {
+      return item['id'] == lastId;
+    });
+    if (firstIndex == -1 && lastIndex == -1) {
+      if (firstId < currentEndId) {
+        this.dataSource.data = this.dataSource.data.concat(data);
+      }
+      else if (lastId > currentStartId) {
+        this.dataSource.data = data.concat(this.dataSource.data);
+      }
     }
-    let firstPart = this.dataSource.data.slice(0, firstIndex);
-    let lastPart = this.dataSource.data.slice(firstIndex + length);
-    this.dataSource.data = firstPart.concat(data).concat(lastPart);
+    else if (firstIndex == -1) {
+      let backPart = this.dataSource.data.slice(lastIndex + 1);
+      this.dataSource.data = data.concat(backPart);
+    }
+    else if (lastIndex == -1) {
+      let frontPart = this.dataSource.data.slice(0, firstIndex);
+      this.dataSource.data = frontPart.concat(data);
+    }
+    else {
+      let frontPart = this.dataSource.data.slice(0, firstIndex);
+      let backPart = this.dataSource.data.slice(lastIndex + 1);
+      this.dataSource.data = frontPart.concat(data).concat(backPart);
+    }
+
+    if (this.dataSource.data.length > this.maxPageSize) {
+      if (this.scrollDirection == "down") {
+        let startIndex = this.dataSource.data.length - this.maxPageSize;
+        this.dataSource.data = this.dataSource.data.slice(startIndex);
+        window.scrollTo({ left: 0, top: window.scrollY / 3 * 2, behavior: 'smooth' });
+      }
+      else if (this.scrollDirection == "up") {
+        this.dataSource.data = this.dataSource.data.slice(0, this.maxPageSize);
+        var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+        window.scrollTo({ left: 0, top: h / 4, behavior: 'smooth' });
+      }
+
+    }
+    console.log(window.scrollY);
     return true;
   }
 
@@ -175,30 +198,21 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   onScrollDown(ev) {
-    // console.log("window scroll Y: " + window.scrollY);
-    // console.log("now row height: " + this.rowHeight);
-    // if (window.scrollY !== this.rowHeight) {
-    //   return;
-    // }
-    // console.log("trigger down func.");
+    console.log("trigger down func.");
     this.scrollDirection = "down";
     if (this.hasReceivedData && !this.loadFinish) {
-      // console.log("down down down");
+      console.log("down down down");
       this.updateTableLoop(this.nextPageLastId, this.currentPageSize);
     }
   }
 
   onUp() {
     this.scrollDirection = "up";
-    // console.log("up up up");
+    console.log("up up up");
     if (this.hasReceivedData && !this.loadFinish) {
       this.updateTableLoop(this.previousPageLastId, this.currentPageSize);
     }
     else if (this.hasReceivedData && this.loadFinish) {
-      // this.nextPageLastId = this.currentPageLastId;
-      // this.currentPageLastId = this.previousPageLastId;
-      // this.previousPageLastId = this.previousPageLastId + this.currentPageSize;
-
       this.updateTableLoop(this.previousPageLastId, this.currentPageSize);
     }
   }
