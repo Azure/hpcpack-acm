@@ -89,7 +89,16 @@
     </div>
   </mat-tab>
   <mat-tab label="Events">
-    <app-event-list [events]="events"></app-event-list>
+    <div class="events">
+      <div class="node-events">
+        <div class="area-title">NODE EVENTS</div>
+        <app-event-list [events]="events"></app-event-list>
+      </div>
+      <div class="azure-events">
+        <div class="area-title">AZURE SCHEDULED EVENTS</div>
+        <app-event-list [events]="scheduledEvents"></app-event-list>
+      </div>
+    </div>
   </mat-tab>
   <mat-tab label="Jobs">
   </mat-tab>

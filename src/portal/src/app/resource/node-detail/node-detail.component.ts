@@ -126,6 +126,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
   };
 
   events = [];
+  scheduledEvents = [];
 
   // events: MatTableDataSource<any> = new MatTableDataSource();
 
@@ -184,6 +185,10 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
       this.api.node.getNodeEvents(id).subscribe(result => {
         this.events = result;
+      });
+
+      this.api.node.getNodeSheduledEvents(id).subscribe(result => {
+        this.scheduledEvents = result.Events;
       });
 
     });
