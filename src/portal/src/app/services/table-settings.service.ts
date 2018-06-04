@@ -9,9 +9,8 @@ export class TableSettingsService {
   ) {}
 
   save(key, columns): void {
-    let options = columns.filter(e => !e.displayed).map(e => e.name);
     let selected = columns.filter(e => e.displayed).map(e => e.name);
-    this.settings.set(key, { options, selected });
+    this.settings.set(key, { selected });
     this.settings.save();
   }
 
@@ -20,9 +19,15 @@ export class TableSettingsService {
     let data = this.settings.get(key);
     let res;
     if (data) {
-      let selected = data.selected.map(name => availableColumns.find(col => col.name === name));
+      //A column name may change between saving and loading, and thus the map
+      //result array may have null element.
+      let selected = data.selected
+        .map(name => availableColumns.find(col => col.name === name))
+        .filter(col => col);
       selected.forEach(e => e.displayed = true);
-      let options = data.options.map(name => availableColumns.find(col => col.name === name));
+
+      //Non-selected options don't need ordering.
+      let options = availableColumns.filter(col => !data.selected.includes(col.name));
       options.forEach(e => e.displayed = false);
       res = selected.concat(options);
     }
