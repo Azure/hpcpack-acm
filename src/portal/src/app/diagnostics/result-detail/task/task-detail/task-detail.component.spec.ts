@@ -11,10 +11,10 @@ import { ApiService } from '../../../../services/api.service';
 class MatDialogModuleMock { }
 
 class ApiServiceStub {
-  static results = [{ nodeName: "testNode", message: { Latency: 513.43, Throughput: 337.58, Detail: "" }, name: 'test', primaryTask: true }];
+  static result = { nodeName: "testNode", message: { Latency: 513.43, Throughput: 337.58, Detail: "test \n test \n" }, primaryTask: true };
 
   diag = {
-    getDiagTaskResult: (jobId: any, taskId: any) => of(ApiServiceStub.results)
+    getDiagTaskResult: (jobId: any, taskId: any) => of(ApiServiceStub.result)
   }
 }
 
@@ -28,8 +28,8 @@ fdescribe('TaskDetailComponent', () => {
       imports: [MaterialsModule, MatDialogModule, NoopAnimationsModule],
       providers: [
         { provide: MatDialogRef, useClass: MatDialogModuleMock },
-        { provide: MAT_DIALOG_DATA, useValue: { msg: { Detail: "message" } } },
-        { provide: ApiService, useValue: ApiServiceStub }
+        { provide: MAT_DIALOG_DATA, useValue: { jobId: 1, taskId: 1 } },
+        { provide: ApiService, useClass: ApiServiceStub }
       ]
     })
       .compileComponents();
@@ -44,14 +44,15 @@ fdescribe('TaskDetailComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
     let text = fixture.nativeElement.querySelector(".msg-item").textContent;
-    expect(text).toEqual("message");
+    expect(text).toEqual("test \n test \n");
   });
 
   it('should show task detail', () => {
-    let details = fixture.nativeElement.querySelector(".overview-value");
+    let details = fixture.nativeElement.querySelectorAll(".overview-value");
     let text = details[0].textContent;
     expect(text).toEqual("testNode");
+    console.log(details[1]);
     text = details[1].textContent;
-    expect(text).toEqual("513.43");
+    expect(text).toEqual("513.43 us");
   });
 });
