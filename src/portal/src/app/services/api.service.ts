@@ -84,6 +84,17 @@ export class NodeApi extends Resource<Node> {
         })
       );
   }
+
+  getNodeSheduledEvents(id: string): Observable<any> {
+    return this.http.get(this.url + '/' + id + '/scheduledevents')
+      .pipe(
+        map(e => e),
+        catchError((error: any) => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
+  }
 }
 
 export class TestApi extends Resource<TestResult> {
