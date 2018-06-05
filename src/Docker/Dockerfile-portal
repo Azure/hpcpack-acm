@@ -1,0 +1,3 @@
+FROM evancui/hpcacm:latest as final
+ENTRYPOINT ["nginx", "-g", "'daemon off;'"]
+

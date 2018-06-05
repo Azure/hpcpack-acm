@@ -1,0 +1,3 @@
+FROM evancui/hpcacm:latest as final
+ENTRYPOINT ["dotnet", "Frontend/Frontend.dll"]
+
