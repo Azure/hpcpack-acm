@@ -25,7 +25,7 @@ class RouterLinkDirectiveStub {
 }
 
 const routerStub = {
-  navigate: () => {},
+  navigate: () => { },
 }
 
 const activatedRouteStub = {
@@ -33,11 +33,23 @@ const activatedRouteStub = {
 }
 
 const matDialogStub = {
-  open: () => {}
+  open: () => { }
 }
 
 class ApiServiceStub {
-  static nodes = [{ id: 'a node', name: 'a node', state: 'Ok', system: {} }]
+  static nodes = [{
+    id: 'a node',
+    name: 'a node',
+    state: 'Online',
+    health: 'OK',
+    nodeRegistrationInfo: {
+      memoryMegabytes: 6947,
+      distroInfo: 'Linux'
+
+    },
+    runningJobCount: 1,
+    eventCount: 1
+  }]
 
   node = {
     getAll: () => of(ApiServiceStub.nodes),
@@ -76,15 +88,15 @@ fdescribe('NodeListComponent', () => {
         { provide: TableSettingsService, useValue: tableSettingsStub },
       ]
     })
-    //We want to stub out MatDialog only for this component.
-    .overrideComponent(NodeListComponent, {
-      add: {
-        providers: [
-          { provide: MatDialog, useValue: matDialogStub },
-        ],
-      }
-    })
-    .compileComponents();
+      //We want to stub out MatDialog only for this component.
+      .overrideComponent(NodeListComponent, {
+        add: {
+          providers: [
+            { provide: MatDialog, useValue: matDialogStub },
+          ],
+        }
+      })
+      .compileComponents();
   }));
 
   beforeEach(() => {
