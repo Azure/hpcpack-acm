@@ -1,3 +1,4 @@
 FROM evancui/hpcacm:latest as final
-ENTRYPOINT ["dotnet", "TaskDispatcher/TaskDispatcher.dll"]
+WORKDIR /app/TaskDispatcher
+ENTRYPOINT ["dotnet", "TaskDispatcher.dll"]
 

@@ -1,3 +1,4 @@
 FROM evancui/hpcacm:latest as final
-ENTRYPOINT ["dotnet", "JobMonitor/JobMonitor.dll"]
+WORKDIR /app/JobMonitor
+ENTRYPOINT ["dotnet", "JobMonitor.dll"]
 
