@@ -1,6 +1,7 @@
 import { fakeAsync, flush } from '@angular/core/testing';
 import { Resource, CommandApi, ApiService, Loop } from './api.service';
 import { of } from 'rxjs/observable/of';
+import { map } from 'rxjs/operators';
 import { _throw } from 'rxjs/observable/throw';
 
 fdescribe('Resource', () => {
@@ -8,6 +9,7 @@ fdescribe('Resource', () => {
     protected get url(): string {
       return '';
     }
+
   }
 
   let httpSpy;
@@ -16,6 +18,24 @@ fdescribe('Resource', () => {
   beforeEach(() => {
     httpSpy = jasmine.createSpyObj('HttpClient', ['get']);
     resource = new TestResource(httpSpy);
+  });
+
+  it('should get with pipe', () => {
+    let value = [1, 2, 3];
+    let expected = [10, 20, 30];
+    let mapper = map(a => (a as any[]).map(e => e * 10));
+    httpSpy.get.and.returnValue(of(value));
+    resource.httpGet(null, null, [mapper]).subscribe(res => expect(res).toEqual(expected));
+  });
+
+  it('should catch error and throw', () => {
+    let value = 1;
+    let error = 'Error in pipe!';
+    let mapper = map(e => { throw(error) });
+    httpSpy.get.and.returnValue(of(value));
+    expect(() => {
+      resource.httpGet(null, null, [mapper]).subscribe(() => {})
+    }).toThrow(resource.errorMsg(error));
   });
 
   it('should get all', () => {

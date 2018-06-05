@@ -21,26 +21,34 @@ export abstract class Resource<T> {
 
   protected normalize(e: any): T { return e as T; }
 
+  errorMsg(error) {
+    return `Caught error: "${error}"`;
+  }
+
+  httpGet(url, params = null, pipes = []) {
+    let res = this.http.get<any>(url, params ? { params } : {});
+    pipes = Array.from(pipes);
+    pipes.push(
+      catchError(error => {
+        console.error(error);
+        //ErrorObservable is effectively an exception, like throw(...)
+        return new ErrorObservable(this.errorMsg(error));
+      })
+    );
+    res = res.pipe.apply(res, pipes);
+    return res;
+  }
+
   getAll(params?: any): Observable<T[]> {
-    return this.http.get<T[]>(this.url, params ? { params } : {})
-      .pipe(
-        map(array => array.map(e => this.normalize(e))),
-        catchError((error: any): Observable<T[]> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
+    return this.httpGet(this.url, params, [
+      map(array => (array as any[]).map(e => this.normalize(e))),
+    ]);
   }
 
   get(id: string): Observable<T> {
-    return this.http.get<T>(this.url + '/' + id)
-      .pipe(
-        map(e => this.normalize(e)),
-        catchError((error: any): Observable<T> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
+    return this.httpGet(`${this.url}/${id}`, null, [
+      map(e => this.normalize(e)),
+    ]);
   }
 }
 
