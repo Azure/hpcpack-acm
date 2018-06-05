@@ -1,5 +1,6 @@
 namespace Microsoft.HpcAcm.Common.Dto
 {
+    using System;
     using System.Collections.Generic;
 
     public enum JobState
@@ -33,6 +34,8 @@ namespace Microsoft.HpcAcm.Common.Dto
         public int Id { get; set; }
         public string Request { get; set; }
         public string Name { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset LastChangedAtAt { get; set; }
         public JobState State { get; set; }
         public JobType Type { get; set; }
         public int Progress { get; set; }
