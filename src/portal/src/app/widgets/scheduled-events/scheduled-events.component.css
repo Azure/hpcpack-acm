@@ -23,10 +23,12 @@
   justify-content: center;
   align-items: center;
   font-family: 'Material Icons';
-  width: 2.4em;
-  height: 2.4em;
-  left: -1.2em;
-  top: 1.5em;
+  /* width: 2.4em;
+  height: 2.4em; */
+  padding: .4em;
+  font-size: 1.4em;
+  left: -.9em;
+  top: 1em;
   color: #fff;
   border-radius: 50%;
 }
@@ -78,12 +80,13 @@
 
 .event-content {
   color: rgba(0, 0, 0, .7);
+  line-height: 1.5em;
 }
 
 .Scheduled {
   color: #0aa4af;
   border: 1px solid #0aa4af;
-  padding: .2em .3em;
+  padding: .1em .3em;
   /* color: #fff;
   padding: .2em .5em; */
 }
@@ -91,7 +94,7 @@
 .Started {
   color: #0a57af;
   border: 1px solid #0a57af;
-  padding: .2em .3em;
+  padding: .1em .3em;
   /* color: #fff;
   padding: .2em .5em; */
 }

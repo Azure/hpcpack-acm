@@ -21,14 +21,14 @@
 
 .charts {
   display: flex;
-  flex: 2;
+  flex: 1;
   flex-wrap: wrap;
   padding: 0 1em;
-  /* flex-direction: column; */
+  flex-direction: column;
 }
 
 .chart {
-  width: 50%;
+  width: 100%;
   margin-top: 1em;
 }
 

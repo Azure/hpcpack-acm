@@ -41,23 +41,67 @@
       <div class="node-info">
         <div class="area-title">
           <!-- <i class="material-icons title-icon">grid_on</i> -->
-          <div>NODE REGISTRATION INFO</div>
+          <div>NODE MEATADATA</div>
         </div>
         <div class="info-item">
-          <div class="overview-title">Core Number</div>
-          <div class="overview-value">{{nodeRegistrationInfo.coreCount}}</div>
+          <div class="overview-title">Location</div>
+          <div class="overview-value">{{compute.location}}</div>
         </div>
         <div class="info-item">
-          <div class="overview-title">Memory</div>
-          <div class="overview-value">{{nodeRegistrationInfo.memoryMegabytes}} (Megabytes)</div>
+          <div class="overview-title">Name</div>
+          <div class="overview-value">{{compute.name}}</div>
         </div>
         <div class="info-item">
-          <div class="overview-title">Socket Count</div>
-          <div class="overview-value">{{nodeRegistrationInfo.socketCount}}</div>
+          <div class="overview-title">Offer</div>
+          <div class="overview-value">{{compute.offer}}</div>
         </div>
         <div class="info-item">
-          <div class="overview-title">Distro Info</div>
-          <div class="overview-value">{{nodeRegistrationInfo.distroInfo}}</div>
+          <div class="overview-title">OS Type</div>
+          <div class="overview-value">{{compute.osType}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Placement Group ID</div>
+          <div class="overview-value">{{compute.placementGroupId}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Platform Fault Domain</div>
+          <div class="overview-value">{{compute.platformFaultDomain}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Platform Update Domain</div>
+          <div class="overview-value">{{compute.platformUpdateDomain}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Publisher</div>
+          <div class="overview-value">{{compute.publisher}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Resource Group Name</div>
+          <div class="overview-value">{{compute.resourceGroupName}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">SKU</div>
+          <div class="overview-value">{{compute.sku}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">SubscriptionId</div>
+          <div class="overview-value">{{compute.subscriptionId}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Tags</div>
+          <div class="overview-value">{{compute.tags}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Version</div>
+          <div class="overview-value">{{compute.version}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">VM ID</div>
+          <div class="overview-value">{{compute.vmId}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">VM Size</div>
+          <div class="overview-value">{{compute.vmSize}}</div>
         </div>
       </div>
       <div class="node-info">
@@ -84,6 +128,28 @@
             <div class="overview-value">{{n.isIB}}</div>
           </div>
           <hr/>
+        </div>
+      </div>
+      <div class="node-info">
+        <div class="area-title">
+          <!-- <i class="material-icons title-icon">grid_on</i> -->
+          <div>NODE REGISTRATION INFO</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Core Number</div>
+          <div class="overview-value">{{nodeRegistrationInfo.coreCount}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Memory</div>
+          <div class="overview-value">{{nodeRegistrationInfo.memoryMegabytes}} (Megabytes)</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Socket Count</div>
+          <div class="overview-value">{{nodeRegistrationInfo.socketCount}}</div>
+        </div>
+        <div class="info-item">
+          <div class="overview-title">Distro Info</div>
+          <div class="overview-value">{{nodeRegistrationInfo.distroInfo}}</div>
         </div>
       </div>
     </div>

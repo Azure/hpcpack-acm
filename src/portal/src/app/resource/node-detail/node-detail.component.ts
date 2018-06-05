@@ -146,6 +146,8 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
   private nodeRegistrationInfo = {};
 
+  private compute = {};
+
   // private cpuUsage = [];
 
   // private colors = ['#3e95cd', '#8e5ea2', '#3cba9f', '#e8c3b9', '#c45850', '#FFA07A', '#DB7093', '#FFA500', '#E6E6FA', '#8FBC8B', '#E0FFFF', '#B0C4DE', '#FFDEAD', '#BC8F8F',
@@ -168,6 +170,11 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
       this.api.node.get(id).subscribe(result => {
         this.nodeInfo = result;
         this.nodeRegistrationInfo = result["nodeRegistrationInfo"];
+      });
+
+      //get node metadata
+      this.api.node.getMetadata(id).subscribe(result => {
+        this.compute = result.compute;
       });
 
       this.historyLoop = Loop.start(

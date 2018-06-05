@@ -62,6 +62,18 @@ export class NodeApi extends Resource<Node> {
       );
   }
 
+  getMetadata(id: string): Observable<any> {
+    return this.http.get(this.url + '/' + id + '/metadata')
+      .pipe(
+        map(e => e),
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
+
+  }
+
   protected normalizeHistory(history: any): any {
     let historyData = [];
 
