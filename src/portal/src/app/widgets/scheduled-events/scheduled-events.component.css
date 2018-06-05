@@ -17,7 +17,7 @@
   flex: 2;
 }
 
-.node-information::before, .node-warning::before {
+.azure-event::before {
   position: absolute;
   display: flex;
   justify-content: center;
@@ -31,19 +31,31 @@
   border-radius: 50%;
 }
 
-.azure-event::before {
-  content: '\e2c2';
+.Reboot::before {
+  content: '\e8ac';
+  background-color: #12ba74;
+}
+
+.reboot {
+  color: #12ba74;
+}
+
+.Redeploy::before {
+  content: '\e2c3';
   background-color: #5C6BC0;
 }
 
-.node-information::before {
-  content: '\e1b1';
-  background-color: #4DB6AC;
+.redeploy {
+  color: #5C6BC0;
 }
 
-.node-warning::before {
-  content: '\e1b1';
-  background-color: #dd5013;
+.Freeze::before {
+  content: '\e628';
+  background-color: #ef6807;
+}
+
+.freeze {
+  color: #ef6807;
 }
 
 .event-info {
@@ -52,10 +64,6 @@
   border-left: .13em solid rgba(110, 122, 140, .6);
   padding: 2em 1.5em 2em 2em;
   flex: 10;
-}
-
-.azure-event {
-  color: rgba(63, 81, 181, .8);
 }
 
 .event-type .material-icons {
@@ -70,4 +78,20 @@
 
 .event-content {
   color: rgba(0, 0, 0, .7);
+}
+
+.Scheduled {
+  color: #0aa4af;
+  border: 1px solid #0aa4af;
+  padding: .2em .3em;
+  /* color: #fff;
+  padding: .2em .5em; */
+}
+
+.Started {
+  color: #0a57af;
+  border: 1px solid #0a57af;
+  padding: .2em .3em;
+  /* color: #fff;
+  padding: .2em .5em; */
 }
