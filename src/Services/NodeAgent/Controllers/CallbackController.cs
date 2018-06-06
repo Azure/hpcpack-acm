@@ -13,7 +13,7 @@
     using System.Net;
     using System.Net.Http;
     using System.Threading;
-    using System.Threading.Tasks;
+    using T = System.Threading.Tasks;
 
     [Route("api/[controller]")]
     public class CallbackController : Controller
@@ -30,7 +30,7 @@
         }
 
         [HttpPost("computenodereported")]
-        public async Task<int> ComputeNodeReportedAsync([FromBody] ComputeClusterNodeInformation nodeInfo, CancellationToken token)
+        public async T.Task<int> ComputeNodeReportedAsync([FromBody] ComputeClusterNodeInformation nodeInfo, CancellationToken token)
         {
             try
             {
@@ -65,7 +65,7 @@
         }
 
         [HttpPost("taskcompleted")]
-        public Task<NextOperation> TaskCompletedAsync([FromBody] ComputeNodeTaskCompletionEventArgs taskInfo, CancellationToken token)
+        public T.Task<NextOperation> TaskCompletedAsync([FromBody] ComputeNodeTaskCompletionEventArgs taskInfo, CancellationToken token)
         {
             // TODO: move task key to url
             var taskKey = this.utilities.GetTaskKey(taskInfo.JobId, taskInfo.TaskInfo.TaskId, taskInfo.TaskInfo.TaskRequeueCount ?? 0);
@@ -80,7 +80,7 @@
 
                 this.monitor.CompleteTask(taskKey, taskInfo);
 
-                return System.Threading.Tasks.Task.FromResult(NextOperation.CancelTask);
+                return T.Task.FromResult(NextOperation.CancelTask);
             }
             catch (Exception ex)
             {
@@ -92,12 +92,12 @@
 
                 this.monitor.FailTask(taskKey, ex);
 
-                return System.Threading.Tasks.Task.FromResult(NextOperation.CancelJob);
+                return T.Task.FromResult(NextOperation.CancelJob);
             }
         }
 
         [HttpPost("registerrequested")]
-        public async Task<int> RegisterRequestedAsync([FromBody] ComputeClusterRegistrationInformation registerInfo, CancellationToken token)
+        public async T.Task<int> RegisterRequestedAsync([FromBody] ComputeClusterRegistrationInformation registerInfo, CancellationToken token)
         {
             try
             {

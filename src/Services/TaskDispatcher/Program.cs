@@ -2,7 +2,7 @@
 {
     using System;
     using System.IO;
-    using System.Threading.Tasks;
+    using T = System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
@@ -24,7 +24,7 @@
                 var server = builder.BuildAsync().GetAwaiter().GetResult();
                 server.Start(builder.CancelToken);
 
-                while (Console.In.Peek() == -1) { System.Threading.Tasks.Task.Delay(1000).Wait(); }
+                while (Console.In.Peek() == -1) { T.Task.Delay(1000).Wait(); }
                 var logger = builder.LoggerFactory.CreateLogger<Program>();
                 logger.LogInformation("Stop message received, stopping");
 

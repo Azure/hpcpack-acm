@@ -47,7 +47,7 @@
             private readonly string key;
             private readonly TaskMonitor monitor;
 
-            public OutputSorter(string key, TaskMonitor monitor, Func<string, CancellationToken, System.Threading.Tasks.Task> processor)
+            public OutputSorter(string key, TaskMonitor monitor, Func<string, CancellationToken, T.Task> processor)
             {
                 this.processor = processor;
                 this.key = key;
@@ -121,7 +121,7 @@
         private readonly ConcurrentDictionary<string, TaskResultMonitor> taskResults = new ConcurrentDictionary<string, TaskResultMonitor>();
         private readonly ConcurrentDictionary<string, OutputSorter> taskOutputs = new ConcurrentDictionary<string, OutputSorter>();
 
-        public TaskResultMonitor StartMonitorTask(string key, Func<string, CancellationToken, System.Threading.Tasks.Task> outputProcessor)
+        public TaskResultMonitor StartMonitorTask(string key, Func<string, CancellationToken, T.Task> outputProcessor)
         {
             this.taskOutputs.GetOrAdd(key, new OutputSorter(key, this, outputProcessor));
             return this.taskResults.GetOrAdd(key, new TaskResultMonitor(key, this));
