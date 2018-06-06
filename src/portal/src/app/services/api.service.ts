@@ -60,26 +60,15 @@ export class NodeApi extends Resource<Node> {
   }
 
   getHistoryData(id: string): Observable<any> {
-    return this.http.get(this.url + '/' + id + '/metrichistory')
-      .pipe(
-        map(e => this.normalizeHistory(e)),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
+    return this.httpGet(`${this.url}/${id}/metrichistory`, null, [
+      map(e => this.normalizeHistory(e)),
+    ]);
   }
 
   getMetadata(id: string): Observable<any> {
-    return this.http.get(this.url + '/' + id + '/metadata')
-      .pipe(
-        map(e => e),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
-
+    return this.httpGet(`${this.url}/${id}/metadata`, null, [
+      map(e => this.normalizeHistory(e)),
+    ]);
   }
 
   protected normalizeHistory(history: any): any {
@@ -95,25 +84,11 @@ export class NodeApi extends Resource<Node> {
   }
 
   getNodeEvents(id: string): Observable<any> {
-    return this.http.get(this.url + '/' + id + '/events')
-      .pipe(
-        map(e => e),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
+    return this.httpGet(`${this.url}/${id}/events`);
   }
 
   getNodeSheduledEvents(id: string): Observable<any> {
-    return this.http.get(this.url + '/' + id + '/scheduledevents')
-      .pipe(
-        map(e => e),
-        catchError((error: any) => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
+    return this.httpGet(`${this.url}/${id}/scheduledevents`);
   }
 }
 
@@ -236,28 +211,14 @@ export class HeatmapApi extends Resource<any> {
 
   getCategories(): Observable<string[]> {
     let url = this.url + '/categories';
-    return this.http.get<string[]>(url)
-      .pipe(
-        map(e => {
-          return e;
-        }),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
+    return this.httpGet(url);
   }
 
   get(category: string): Observable<any> {
     let url = this.url + '/' + category;
-    return this.http.get<any>(url)
-      .pipe(
-        map(e => this.normalize(e)),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
+    return this.httpGet(url, null, [
+      map(e => this.normalize(e)),
+    ]);
   }
 
   getMockData(category: string): Observable<any> {
@@ -324,45 +285,24 @@ export class DiagApi extends Resource<any> {
 
   getDiagTests() {
     let url = this.url + '/tests';
-    return this.http.get<any>(url)
-      .pipe(
-        map(e => this.normalizeTests(e)),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      )
+    return this.httpGet(url, null, [
+      map(e => this.normalizeTests(e)),
+    ]);
   }
 
   getDiagJob(id: string) {
-    let url = this.url + '/' + id;
-    return this.http.get<any>(url)
-      .pipe(
-        map(e => {
-          if (e.aggregationResult != undefined && this.isJSON(e.aggregationResult)) {
-            e.aggregationResult = JSON.parse(e.aggregationResult);
-          }
-          return e;
-        }),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
+    return this.httpGet(`${this.url}/${id}`, null, [
+      map((e: any) => {
+        if (e.aggregationResult != undefined && this.isJSON(e.aggregationResult)) {
+          e.aggregationResult = JSON.parse(e.aggregationResult);
+        }
+        return e;
+      })
+    ]);
   }
 
   getDiagsByPage(lastId: any, count: any) {
-    let url = this.url + '?lastid=' + lastId + '&count=' + count + '&reverse=true';
-    return this.http.get<any>(url)
-      .pipe(
-        map(e => {
-          return e;
-        }),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      )
+    return this.httpGet(`${this.url}?lastid=${lastId}&count=${count}&reverse=true`);
   }
 
 
@@ -384,35 +324,23 @@ export class DiagApi extends Resource<any> {
   }
 
   getDiagTasks(id: string) {
-    let url = this.url + '/' + id + '/tasks';
-    return this.http.get<any>(url)
-      .pipe(
-        map(item => {
-          this.normalizeTasks(item);
-          return item;
-        }),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
+    return this.httpGet(`${this.url}/${id}/tasks`, null, [
+      map(item => {
+        this.normalizeTasks(item);
+        return item;
+      })
+    ]);
   }
 
   getDiagTaskResult(jobId: string, taskId: string) {
-    let url = this.url + '/' + jobId + '/tasks/' + taskId + '/result';
-    return this.http.get<any>(url)
-      .pipe(
-        map(item => {
-          if (this.isJSON(item.message)) {
-            item.message = JSON.parse(item.message);
-          }
-          return item;
-        }),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
+    return this.httpGet(`${this.url}/${jobId}/tasks/${taskId}/result`, null, [
+      map((item: any) => {
+        if (this.isJSON(item.message)) {
+          item.message = JSON.parse(item.message);
+        }
+        return item;
+      }),
+    ]);
   }
 
   create(name: string, targetNodes: string[], diagnosticTest: any, jobType = 'diagnostics') {
@@ -427,8 +355,6 @@ export class DiagApi extends Resource<any> {
         })
       );
   }
-
-
 }
 
 @Injectable()
