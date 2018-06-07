@@ -26,17 +26,18 @@ def main():
         printErrorAsJson('Failed to parse task result. ' + str(e))
         return -1
 
+    latencyThreshold = 1000
+    throughputThreshold = 100
     try:
-        arguments = json.loads(job['DiagnosticTest']['Arguments'])
-        for argument in arguments:
-            if argument['name'].lower() == 'Latency threshold'.lower():
-                latencyThreshold = int(argument['value'])
-                continue
-            if argument['name'].lower() == 'Throughput threshold'.lower():
-                throughputThreshold = int(argument['value'])
-                continue
-        latencyThreshold = latencyThreshold
-        throughputThreshold = throughputThreshold
+        if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
+            arguments = json.loads(job['DiagnosticTest']['Arguments'])
+            for argument in arguments:
+                if argument['name'].lower() == 'Latency threshold'.lower():
+                    latencyThreshold = int(argument['value'])
+                    continue
+                if argument['name'].lower() == 'Throughput threshold'.lower():
+                    throughputThreshold = int(argument['value'])
+                    continue
     except Exception as e:
         printErrorAsJson('Failed to parse arguments. ' + str(e))
         return -1

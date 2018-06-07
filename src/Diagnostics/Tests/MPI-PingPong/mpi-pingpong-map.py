@@ -8,20 +8,21 @@ def main():
         # Duplicate nodes
         raise Exception('Duplicate nodes')
 
-    arguments = json.loads(job['DiagnosticTest']['Arguments'])
-    for argument in arguments:
-        if argument['name'].lower() == 'Run with RDMA'.lower():
-            isRdma = argument['value'].lower() == 'YES'.lower()
-            continue
-        if argument['name'].lower() == 'Mode'.lower():
-            parallel = argument['value'].lower() == 'Tournament'.lower()
-            continue
-        if argument['name'].lower() == 'Packet size'.lower():
-            level = int(argument['value'])
-            continue
-    isRdma = isRdma
-    parallel = parallel
-    level = level            
+    isRdma = False
+    parallel = True
+    level = 0
+    if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
+        arguments = json.loads(job['DiagnosticTest']['Arguments'])
+        for argument in arguments:
+            if argument['name'].lower() == 'Run with RDMA'.lower():
+                isRdma = argument['value'].lower() == 'YES'.lower()
+                continue
+            if argument['name'].lower() == 'Mode'.lower():
+                parallel = argument['value'].lower() == 'Tournament'.lower()
+                continue
+            if argument['name'].lower() == 'Packet size'.lower():
+                level = int(argument['value'])
+                continue          
         
     taskTemplateOrigin = {
         "Id":0,

@@ -7,17 +7,18 @@ def main():
     if len(nodelist) != len(set(nodelist)):
         # Duplicate nodes
         raise Exception('Duplicate nodes')
-    
-    arguments = json.loads(job['DiagnosticTest']['Arguments'])
-    for argument in arguments:
-        if argument['name'].lower() == 'Run with RDMA'.lower():
-            isRdma = argument['value'].lower() == 'YES'.lower()
-            continue
-    isRdma = isRdma
+
+    isRdma = False
+    if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
+        arguments = json.loads(job['DiagnosticTest']['Arguments'])
+        for argument in arguments:
+            if argument['name'].lower() == 'Run with RDMA'.lower():
+                isRdma = argument['value'].lower() == 'YES'.lower()
+                break
 
     taskTemplateOrigin = {
         "Id":0,
-        "CommandLine":"source /opt/intel/impi/`ls /opt/intel/impi`/bin64/mpivars.sh && [mpicommand] 2>stderr | [parseResult] > raw && cat raw | tail -n +2 | awk '{print [columns]}' | tr ' ' '\n' | sed -n '1p;$p' > data && echo -n '{\"Latency\":' > json && cat data | head -n1 | tr -d '\n' >> json && echo -n ',\"Throughput\":' >> json && cat data | tail -n1 | tr -d '\n' >> json && echo -n ',\"Detail\":\"' >> json && cat raw | awk '{printf \"%s\\\\n\", $0}' >> json && echo -n '\"}' >> json && cat json",
+        "CommandLine":"source /opt/intel/impi/`ls /opt/intel/impi`/bin64/mpivars.sh && [mpicommand] >stdout 2>stderr && cat stdout | [parseResult] > raw && cat raw | tail -n +2 | awk '{print [columns]}' | tr ' ' '\n' | sed -n '1p;$p' > data && echo -n '{\"Latency\":' > json && cat data | head -n1 | tr -d '\n' >> json && echo -n ',\"Throughput\":' >> json && cat data | tail -n1 | tr -d '\n' >> json && echo -n ',\"Detail\":\"' >> json && cat raw | awk '{printf \"%s\\\\n\", $0}' >> json && echo -n '\"}' >> json && cat json || (errorcode=$? && echo -n '{\"Latency\":-1,\"Throughput\":-1,\"Detail\":\"' > json && cat stderr | awk '{printf \"%s\\\\n\", $0}' >> json && echo -n '\"}' >> json && cat json && exit $errorcode)",
         "Node":None,
         "UserName":"hpc_diagnostics",
         "Password":None,
