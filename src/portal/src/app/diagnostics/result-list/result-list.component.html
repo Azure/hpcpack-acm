@@ -11,7 +11,7 @@
     <mat-hint align="end">{{dataSource.filteredData.length}} results</mat-hint>
   </mat-form-field>
 </div>
-
+<mat-progress-bar *ngIf="!hasReceivedData && scrollDirection == 'up'" mode="buffer"></mat-progress-bar>
 <div class="diags-table" data-infinite-scroll debounce [infiniteScrollDistance]="scrollDistance" [infiniteScrollUpDistance]="scrollUpDistance"
   [infiniteScrollThrottle]="throttle" (scrolled)="onScrollDown($event)" (scrolledUp)="onUp()" (window:scroll)="onWndScroll()">
   <mat-table #table [dataSource]="dataSource">

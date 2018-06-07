@@ -202,6 +202,12 @@
             return nodeInfo.Jobs;
         }
 
+        public async T.Task<object> GetNodeMetadataAsync(string id, CancellationToken token)
+        {
+            var key = this.utilities.GetMetadataKey();
+            return await this.nodesTable.RetrieveAsync<object>(this.utilities.GetNodePartitionKey(id), key, token);
+        }
+
         public async T.Task<object> GetNodeScheduledEventsAsync(string id, CancellationToken token)
         {
             var key = this.utilities.GetScheduledEventsKey();
@@ -257,7 +263,7 @@
                 TableQuery.GenerateFilterCondition(CloudUtilities.RowKeyName, QueryComparisons.Equal, rowKey));
 
             var results = await jobTable.QueryAsync<Job>(q, count, token);
-            return results.Select(r => r.Item3);
+            return results.Select(r => { r.Item3.LastChangedAtAt = r.Item4; return r.Item3; });
         }
 
         public async T.Task<Job> GetJobAsync(
@@ -270,7 +276,11 @@
             var jobPartitionKey = this.utilities.GetJobPartitionKey(type, jobId);
             var rowKey = utilities.JobEntryKey;
 
-            return await this.jobsTable.RetrieveAsync<Job>(jobPartitionKey, rowKey, token);
+            var jsonTableEntity = await this.jobsTable.RetrieveAsJsonAsync(jobPartitionKey, rowKey, token);
+            var job = jsonTableEntity?.GetObject<Job>();
+            if (job != null) job.LastChangedAtAt = jsonTableEntity.Timestamp;
+
+            return job;
         }
 
         public async T.Task<IEnumerable<Event>> GetJobEventsAsync(
@@ -371,6 +381,8 @@
             job.Id = await this.utilities.GetNextId("Jobs", job.Type.ToString().ToLowerInvariant(), token);
             this.logger.LogInformation("generated new job id {0}", job.Id);
             var rowKey = utilities.JobEntryKey;
+
+            job.CreatedAt = DateTimeOffset.UtcNow;
 
             var partitionName = utilities.GetJobPartitionKey(job.Type, job.Id);
             var result = await jobTable.InsertOrReplaceAsJsonAsync(partitionName, rowKey, job, token);

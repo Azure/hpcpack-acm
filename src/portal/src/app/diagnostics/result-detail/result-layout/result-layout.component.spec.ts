@@ -1,5 +1,6 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { MaterialsModule } from '../../../materials.module';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ResultLayoutComponent } from './result-layout.component';
 
 fdescribe('ResultLayoutComponent', () => {
@@ -8,7 +9,11 @@ fdescribe('ResultLayoutComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ResultLayoutComponent]
+      declarations: [ResultLayoutComponent],
+      imports: [
+        NoopAnimationsModule,
+        MaterialsModule
+      ]
     })
       .compileComponents();
   }));

@@ -21,14 +21,14 @@
 
 .charts {
   display: flex;
-  flex: 2;
+  flex: 1;
   flex-wrap: wrap;
   padding: 0 1em;
-  /* flex-direction: column; */
+  flex-direction: column;
 }
 
 .chart {
-  width: 50%;
+  width: 100%;
   margin-top: 1em;
 }
 
@@ -38,6 +38,11 @@
   flex-direction: column;
   padding-top: 1em;
   padding-right: 1.5em;
+}
+
+.events {
+  display: flex;
+  justify-content: space-evenly;
 }
 
 .area-title {
@@ -123,6 +128,7 @@ td {
   color: #FFF;
   border: 1px solid #9E9E9E;
 }
+
 
 /* .node-info{
   display: flex;
@@ -233,4 +239,8 @@ hr {
 
 .network {
   /* padding-top: 1em; */
+}
+
+.node-events, .azure-events {
+  flex: 1;
 }

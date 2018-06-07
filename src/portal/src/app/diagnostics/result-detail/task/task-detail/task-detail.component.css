@@ -67,6 +67,6 @@ mat-divider {
 
 .overview {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: space-around;
   font-family: Roboto, "Helvetica Neue", sans-serif;
 }

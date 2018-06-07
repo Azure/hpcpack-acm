@@ -16,38 +16,6 @@ export class PingPongOverviewResultComponent implements OnInit, OnChanges {
 
   constructor() { }
 
-  overviewOption = {
-    responsive: true,
-    maintainAspectRatio: true,
-    scaleOverride: true,
-    animation: false,
-    legend: {
-      display: false,
-    },
-    scales: {
-      xAxes: [{
-        display: true,
-        ticks: {
-          min: 0,
-          beginAtZero: true,   // minimum value will be 0.
-          callback: function (value, index, values) {
-            if (Math.floor(value) === value) {
-              return value;
-            }
-          }
-        }
-      }],
-      yAxes: [{
-        display: true,
-        ticks: {
-          callback: function (value, index, values) {
-            return value + ' ' + this.unit;
-          }
-        }
-      }]
-    }
-  };
-
   ngOnInit() {
     this.showOverview();
   }
@@ -73,6 +41,37 @@ export class PingPongOverviewResultComponent implements OnInit, OnChanges {
     }
   }
 
+  overviewOption = {
+    responsive: true,
+    maintainAspectRatio: true,
+    scaleOverride: true,
+    animation: false,
+    legend: {
+      display: false,
+    },
+    scales: {
+      xAxes: [{
+        display: true,
+        ticks: {
+          min: 0,
+          beginAtZero: true,   // minimum value will be 0.
+          callback: function (value, index, values) {
+            if (Math.floor(value) === value) {
+              return value;
+            }
+          }
+        }
+      }],
+      yAxes: [{
+        display: true,
+        ticks: {
+          callback: (value, index, values) => {
+            return value + ' ' + this.unit;
+          }
+        }
+      }]
+    }
+  };
   activeMode = "total";
   overviewData: any = {};
   bestPairs = [];

@@ -9,6 +9,8 @@ export class ResultLayoutComponent implements OnInit {
   @Input()
   result: any;
 
+  private done: boolean;
+
   @ContentChild('task')
   taskTemplate: TemplateRef<any>;
 
@@ -19,6 +21,16 @@ export class ResultLayoutComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.isDone();
+  }
 
+  ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
+    this.isDone();
+  }
+
+  isDone() {
+    if (this.result.state == "Failed" || this.result.state == "Finished") {
+      this.done = true;
+    }
   }
 }

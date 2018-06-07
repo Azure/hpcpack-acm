@@ -25,11 +25,15 @@
 
   <ng-container matColumnDef="select">
     <mat-header-cell *matHeaderCellDef>
-      <mat-checkbox (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()" [indeterminate]="false">
+      <mat-checkbox (change)="$event ? masterToggle() : null" 
+                    [checked]="selection.hasValue() && isAllSelected()" 
+                    [indeterminate]="false">
       </mat-checkbox>
     </mat-header-cell>
     <mat-cell *matCellDef="let node">
-      <mat-checkbox color="primary" (click)="$event.stopPropagation()" (change)="$event ? selection.toggle(node) : null" [checked]="selection.isSelected(node)">
+      <mat-checkbox color="primary" (click)="$event.stopPropagation()" 
+                                    (change)="$event ? selection.toggle(node) : null" 
+                                    [checked]="selection.isSelected(node)">
       </mat-checkbox>
     </mat-cell>
   </ng-container>
@@ -50,6 +54,12 @@
     <mat-header-cell *matHeaderCellDef> Health </mat-header-cell>
     <mat-cell *matCellDef="let node"> {{node.health | titlecase }} </mat-cell>
   </ng-container>
+  <ng-container matColumnDef="os">
+    <mat-header-cell *matHeaderCellDef> OS </mat-header-cell>
+    <mat-cell *matCellDef="let node" [title]="node.nodeRegistrationInfo.distroInfo"> 
+      {{node.nodeRegistrationInfo.distroInfo}} 
+    </mat-cell>
+  </ng-container>
 
   <ng-container matColumnDef="runningJobCount">
     <mat-header-cell *matHeaderCellDef> Jobs </mat-header-cell>
@@ -66,10 +76,6 @@
     <mat-cell *matCellDef="let node" title="MB"> {{node.nodeRegistrationInfo.memoryMegabytes}} </mat-cell>
   </ng-container>
 
-  <ng-container matColumnDef="os">
-    <mat-header-cell *matHeaderCellDef> OS </mat-header-cell>
-    <mat-cell *matCellDef="let node" [title]="node.nodeRegistrationInfo.distroInfo"> {{node.nodeRegistrationInfo.distroInfo}} </mat-cell>
-  </ng-container>
 
   <ng-container matColumnDef="actions">
     <mat-header-cell *matHeaderCellDef></mat-header-cell>

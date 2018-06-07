@@ -13,26 +13,29 @@
     using System.Linq;
     using System.Text;
     using System.Threading;
-    using System.Threading.Tasks;
+    using T = System.Threading.Tasks;
 
     public class DiagnosticsJobDispatcher : JobDispatcher
     {
         public override JobType RestrictedJobType { get => JobType.Diagnostics; }
 
-        public override async Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token)
+        public override async T.Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token)
         {
             // TODO: github integration
             var jobTable = this.Utilities.GetJobsTable();
 
-            var result = await jobTable.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(this.Utilities.GetDiagPartitionKey(job.DiagnosticTest.Category), job.DiagnosticTest.Name), null, null, token);
+            var diagTest = await jobTable.RetrieveAsync<InternalDiagnosticsTest>(this.Utilities.GetDiagPartitionKey(job.DiagnosticTest.Category), job.DiagnosticTest.Name, token);
 
-            if (result.IsSuccessfulStatusCode() && result.Result is JsonTableEntity entity)
+            if (diagTest != null)
             {
-                var diagTest = entity.GetObject<InternalDiagnosticsTest>();
-
                 var scriptBlob = this.Utilities.GetBlob(diagTest.DispatchScript.ContainerName, diagTest.DispatchScript.Name);
 
-                var dispatchTasks = await PythonExecutor.ExecuteAsync(scriptBlob, job, token);
+                var nodesTable = this.Utilities.GetNodesTable();
+                var metadataKey = this.Utilities.GetMetadataKey();
+
+                var metadata = await T.Task.WhenAll(job.TargetNodes.Select(async n => new { Node = n, Metadata = await nodesTable.RetrieveAsync<object>(this.Utilities.GetNodePartitionKey(n), metadataKey, token) }));
+
+                var dispatchTasks = await PythonExecutor.ExecuteAsync(scriptBlob, new { Job = job, Nodes = metadata }, token);
 
                 if (dispatchTasks.Item1 != 0)
                 {

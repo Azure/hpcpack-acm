@@ -6,12 +6,14 @@ import { NodeFilterBuilderComponent } from './node-filter-builder/node-filter-bu
 import { BackButtonComponent } from './back-button/back-button.component';
 import { TableOptionComponent } from './table-option/table-option.component';
 import { EventListComponent } from './event-list/event-list.component';
+import { ScheduledEventsComponent } from './scheduled-events/scheduled-events.component'
 
 const components = [
   NodeFilterBuilderComponent,
   BackButtonComponent,
   TableOptionComponent,
-  EventListComponent
+  EventListComponent,
+  ScheduledEventsComponent
 ];
 
 @NgModule({
@@ -24,4 +26,4 @@ const components = [
   entryComponents: components,
   exports: components,
 })
-export class WidgetsModule {}
+export class WidgetsModule { }

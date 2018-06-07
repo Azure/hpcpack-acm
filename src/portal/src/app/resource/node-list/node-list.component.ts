@@ -22,12 +22,12 @@ export class NodeListComponent {
   private dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
   static customizableColumns = [
-    { name: 'health', displayName: 'Health',  displayed: true,  },
-    { name: 'state',  displayName: 'State',   displayed: true,  },
-    { name: 'runningJobCount',  displayName: 'Jobs',  displayed: true },
-    { name: 'eventCount',displayName: 'Events', displayed: true },
-    { name: 'memory',   displayName: 'Memory',displayed: true },
-    { name: 'os',       displayName: 'OS',    displayed: true },
+    { name: 'health', displayName: 'Health', displayed: true, },
+    { name: 'state', displayName: 'State', displayed: true, },
+    { name: 'os', displayName: 'OS', displayed: true },
+    { name: 'runningJobCount', displayName: 'Jobs', displayed: true },
+    { name: 'eventCount', displayName: 'Events', displayed: true },
+    { name: 'memory', displayName: 'Memory', displayed: true },
   ];
 
   private availableColumns;
@@ -47,7 +47,7 @@ export class NodeListComponent {
   ngOnInit() {
     this.loadSettings();
     this.getDisplayedColumns();
-    this.api.node.getAll().subscribe(nodes => {
+    this.api.node.getAll().subscribe(nodes => {  
       this.dataSource.data = nodes;
     });
     this.subcription = this.route.queryParamMap.subscribe(params => {
@@ -98,8 +98,6 @@ export class NodeListComponent {
         let targetNodes = this.selection.selected.map(e => e.name);
         let diagnosticTest = { name: result['selectedTest']['name'], category: result['selectedTest']['category'], arguments: JSON.stringify(result['selectedTest']['arguments']) };
         let name = result['diagTestName'];
-
-        console.log(diagnosticTest);
         this.api.diag.create(name, targetNodes, diagnosticTest).subscribe(obj => {
           let returnData = obj.headers.get('location').split('/');
           let jobId = returnData[returnData.length - 1];

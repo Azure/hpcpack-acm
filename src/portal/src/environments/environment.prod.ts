@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBase: 'http://52.229.202.147:8080/api',
+  apiBase: 'http://evanclinuxdev1.eastasia.cloudapp.azure.com:8080/v1',
 };
