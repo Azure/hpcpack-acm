@@ -139,14 +139,24 @@ export class CommandApi extends Resource<CommandResult> {
       );
   }
 
+  getTasks(jobId) {
+    let url = `${this.url}/${jobId}/tasks`;
+    return this.httpGet(url);
+  }
+
+  getTaskResult(jobId, taskId) {
+    let url = `${this.url}/${jobId}/tasks/${taskId}/result`;
+    return this.httpGet(url);
+  }
+
   //You can't tell if the output reaches EOF by one simple GET API. You have
   //to call another API to get to know if the command generating the output is
   //over. When opt.fulfill is set to true, DO provide callback opt.over, otherwise
   //the method may never ends since it doesn't know EOF without opt.over!
-  getOutput(id, key, offset, size = 1024, opt = { fulfill: false, over: undefined, timeout: undefined }) {
+  getOutput(key, offset, size = 1024, opt = { fulfill: false, over: undefined, timeout: undefined }) {
     return Observable.create(observer => {
       let res = { content: '', size: 0 };
-      let url = `${this.url}/${id}/results/${key}?offset=${offset}&pageSize=${size}`;
+      let url = `${Resource.baseUrl}/output/clusRun/${key}/page?offset=${offset}&pageSize=${size}`;
       let ts = new Date().getTime();
       Loop.start(
         this.http.get<any>(url),
@@ -169,7 +179,7 @@ export class CommandApi extends Resource<CommandResult> {
             }
             let nextOffset = result.offset + result.size;
             let nextSize = size - res.size;
-            let nextUrl = `${this.url}/${id}/results/${key}?offset=${nextOffset}&pageSize=${nextSize}`;
+            let nextUrl = `${Resource.baseUrl}/output/clusRun/${key}/page?offset=${nextOffset}&pageSize=${nextSize}`;
             return this.http.get<any>(nextUrl);
           },
           error: err => {
@@ -182,8 +192,8 @@ export class CommandApi extends Resource<CommandResult> {
     });
   }
 
-  getDownloadUrl(id, key): string {
-    let url = `${this.url}/${id}/results/${key}?raw=true`;
+  getDownloadUrl(key): string {
+    let url = `${Resource.baseUrl}/output/clusRun/${key}/raw`;
     return url;
   }
 }

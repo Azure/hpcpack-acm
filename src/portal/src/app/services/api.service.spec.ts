@@ -84,7 +84,7 @@ fdescribe('CommandApi', () => {
     let offset = 0;
     let value = { content, offset, size };
     httpSpy.get.and.returnValue(of(value));
-    resource.getOutput('id', 'key', 0, size * 2).subscribe(res =>  {
+    resource.getOutput('key', 0, size * 2).subscribe(res =>  {
       expect(res.content).toEqual(value.content);
       expect(res.size).toEqual(value.size);
       expect(res.offset).toEqual(value.offset);
@@ -105,7 +105,7 @@ fdescribe('CommandApi', () => {
     let value3 = { offset: size + size2, size: 0 };
     httpSpy.get.and.returnValues(of(value), of(value2), of(value3));
     let opt = { fulfill: true, over: () => true }
-    resource.getOutput('id', 'key', 0, (size + size2) * 2, opt).subscribe(res =>  {
+    resource.getOutput('key', 0, (size + size2) * 2, opt).subscribe(res =>  {
       expect(res.content).toEqual(content + content2);
       expect(res.offset).toEqual(offset);
       expect(res.size).toEqual(size + size2);

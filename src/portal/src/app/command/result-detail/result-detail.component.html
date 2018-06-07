@@ -18,8 +18,8 @@
 
       <div class="col-md-9 output">
         <command-output (loadPrev)="loadPrevAndScroll(selectedNode, $event)" (loadNext)="loadNext(selectedNode)"
-           (gotoTop)="loadFromBeginAndScroll(selectedNode, $event)"
-          [content]="currentOutput?.content" [disabled]="!selectedNode" [loading]="loading"
+          (gotoTop)="loadFromBeginAndScroll(selectedNode, $event)"
+          [content]="currentOutput?.content" [disabled]="isOutputDisabled" [loading]="loading"
           [bof]="currentOutput?.start === 0" [eof]="currentOutput?.end">
         </command-output>
 

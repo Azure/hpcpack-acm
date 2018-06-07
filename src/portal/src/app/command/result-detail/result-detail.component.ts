@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTableDataSource, MatDialog } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
-import { CommandResult } from '../../models/command-result';
+import { Observable } from 'rxjs/Observable';
 import { ApiService, Loop } from '../../services/api.service';
 import { NodeSelectorComponent } from '../node-selector/node-selector.component';
 import { CommandOutputComponent } from '../command-output/command-output.component';
@@ -22,11 +22,13 @@ export class ResultDetailComponent implements OnInit {
 
   private id: string;
 
-  private result: CommandResult;
+  private result: any;
 
   private subcription: Subscription;
 
-  private mainLoop: object;
+  private jobLoop: object;
+
+  private nodesLoop: object;
 
   private nodeLoop: object;
 
@@ -49,9 +51,11 @@ export class ResultDetailComponent implements OnInit {
 
   ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
+      this.result = { state: 'unknown', command: '', nodes: [] };
       this.nodeOutputs = {};
       this.id = map.get('id');
-      this.updateResult(this.id);
+      this.updateJob(this.id);
+      this.updateNodes(this.id);
     });
   }
 
@@ -59,25 +63,46 @@ export class ResultDetailComponent implements OnInit {
     return this.result && this.result.nodes.length > 0;
   }
 
-  updateResult(id) {
-    this.mainLoop = Loop.start(
+  updateJob(id) {
+    this.jobLoop = Loop.start(
       //observable:
       this.api.command.get(id),
       //observer:
       {
-        next: (result) => {
+        next: (job: any) => {
           if (id != this.id) {
-            return; //A false value indicates the end of the loop
+            return;
           }
-          //NOTE: this.result is replaced by a new object on each new GET so that
-          //the node info saved on this.result.nodes doesn't persist between GETs!
-          this.result = result;
-          if (result.nodes.length == 0) {
-            return true;
+          this.result.state = job.state;
+          this.result.command = job.commandLine;
+          return !this.isJobOver(job.state);
+        },
+        error: (err) => {
+          this.errorMsg = err;
+        }
+      }
+    );
+  }
+
+  getNodesFromTasks(tasks) {
+    return tasks.map((e: any) => ({
+      name: e.node,
+      state: e.state,
+      taskId: e.id,
+    }));
+  }
+
+  updateNodes(id) {
+    this.nodesLoop = Loop.start(
+      //observable:
+      this.api.command.getTasks(id),
+      //observer:
+      {
+        next: (tasks) => {
+          if (id != this.id) {
+            return;
           }
-          //NOTE: this.result.state, which is set by setResultState, is used to
-          //determin the end of a node output.
-          this.setResultState();
+          this.result.nodes = this.getNodesFromTasks(tasks);
           return !this.isOver;
         },
         error: (err) => {
@@ -91,11 +116,19 @@ export class ResultDetailComponent implements OnInit {
     if (this.subcription) {
       this.subcription.unsubscribe();
     }
-    if (this.mainLoop) {
-      Loop.stop(this.mainLoop);
+    if (this.jobLoop) {
+      Loop.stop(this.jobLoop);
+    }
+    if (this.nodesLoop) {
+      Loop.stop(this.nodesLoop);
     }
     if (this.nodeLoop) {
       Loop.stop(this.nodeLoop);
+    }
+    for (let key in this.nodeOutputs) {
+      let loop = this.nodeOutputs[key].keyLoop;
+      if (loop)
+        Loop.stop(loop);
     }
   }
 
@@ -112,6 +145,7 @@ export class ResultDetailComponent implements OnInit {
   selectNode({ node, prevNode }) {
     this.selectedNode = node;
     if (prevNode) {
+      this.stopNodeOutputKeyLoop(prevNode);
       this.stopAutoload(prevNode);
     }
     if (!node) {
@@ -129,14 +163,90 @@ export class ResultDetailComponent implements OnInit {
     return node && this.selectedNode && node.name === this.selectedNode.name;
   }
 
+  getNodeOutputKey(node, onGot) {
+    return Loop.start(
+      //observable:
+      Observable.create((observer) => {
+        this.api.command.getTaskResult(this.id, node.taskId).subscribe(
+          result => {
+            observer.next(result.resultKey);
+            observer.complete();
+          },
+          error => {
+            observer.next(null);
+            observer.complete();
+          }
+        );
+      }),
+      //observer:
+      {
+        next: (key) => {
+          if (key) {
+            onGot(key);
+            return false;
+          }
+          //TODO: When is it impossible to get a key?
+          //if (this.isNodeOver(node)) {
+          //  onGot(null);
+          //  return false;
+          //}
+          return true;
+        }
+      },
+      //interval(in ms):
+      1000,
+    );
+  }
+
   getNodeOutput(node): any {
     let output = this.nodeOutputs[node.name];
     if (!output) {
       output = this.nodeOutputs[node.name] = {
-        content: '', next: this.outputInitOffset, start: undefined, end: undefined, loading: false,
+        content: '',
+        next: this.outputInitOffset,
+        start: undefined,
+        end: undefined,
+        loading: false,
+        key: null,
       };
+      let onKeyReady = (callback) => {
+        if (output.key === null) {
+          if (!output.keyLoop) {
+            output.loading = 'key';
+            output.keyLoop = this.getNodeOutputKey(node, (key) => {
+              output.loading = false;
+              if (key) {
+                output.key = key;
+                callback(true);
+              }
+              else {
+                output.key = false;
+                callback(false);
+              }
+            });
+          }
+        }
+        else if (output.key === false) { //No key, for no output
+          callback(false);
+        }
+        else {
+          callback(true);
+        }
+      }
+      (output as any).onKeyReady = onKeyReady;
     }
     return output;
+  }
+
+  stopNodeOutputKeyLoop(node) {
+    let output = this.nodeOutputs[node.name];
+    if (output.keyLoop) {
+      Loop.stop(output.keyLoop);
+      output.keyLoop = null;
+      if (output.loading === 'key') {
+        output.loading = false;
+      }
+    }
   }
 
   updateNodeOutput(output, result): boolean {
@@ -184,28 +294,33 @@ export class ResultDetailComponent implements OnInit {
     if (output.end || output.loading) {
       return;
     }
-    output.loading = 'auto';
-    let opt = { over: () => this.isOutputOver(node) };
-    this.nodeLoop = Loop.start(
-      //observable:
-      this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt as any),
-      //observer:
-      {
-        next: (result) => {
-          if (this.updateNodeOutput(output, result)) {
-            setTimeout(() => this.scrollOutputToBottom(), 0);
+    output.onKeyReady((hasKey) => {
+      if (!hasKey) {
+        return;
+      }
+      output.loading = 'auto';
+      let opt = { over: () => this.isOutputOver(node) };
+      this.nodeLoop = Loop.start(
+        //observable:
+        this.api.command.getOutput(output.key, output.next, this.outputPageSize, opt as any),
+        //observer:
+        {
+          next: (result) => {
+            if (this.updateNodeOutput(output, result)) {
+              setTimeout(() => this.scrollOutputToBottom(), 0);
+            }
+            let over = output.end || !this.autoload;
+            if (over) {
+              output.loading = false;
+            }
+            return over ? false :
+              this.api.command.getOutput(node.key, output.next, this.outputPageSize, opt as any);
           }
-          let over = output.end || !this.autoload;
-          if (over) {
-            output.loading = false;
-          }
-          return over ? false :
-            this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt as any);
-        }
-      },
-      //interval(in ms):
-      0,
-    );
+        },
+        //interval(in ms):
+        0,
+      );
+    });
   }
 
   loadOnce(node) {
@@ -213,14 +328,19 @@ export class ResultDetailComponent implements OnInit {
     if (output.content || output.end || output.loading) {
       return;
     }
-    output.loading = 'once';
-    let opt = { fulfill: true, over: () => this.isOutputOver(node), timeout: 2000 };
-    this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt as any).subscribe(
-      result => {
-        output.loading = false;
-        this.updateNodeOutput(output, result);
+    output.onKeyReady((hasKey) => {
+      if (!hasKey) {
+        return;
       }
-    );
+      output.loading = 'once';
+      let opt = { fulfill: true, over: () => this.isOutputOver(node), timeout: 2000 };
+      this.api.command.getOutput(output.key, output.next, this.outputPageSize, opt as any).subscribe(
+        result => {
+          output.loading = false;
+          this.updateNodeOutput(output, result);
+        }
+      );
+    });
   }
 
   get loading(): boolean {
@@ -234,38 +354,31 @@ export class ResultDetailComponent implements OnInit {
     return this.getNodeOutput(this.selectedNode);
   }
 
+  get isOutputDisabled(): boolean {
+    return !this.selectedNode || !this.currentOutput.key;
+  }
+
   get currentOutputUrl(): string {
-    return this.selectedNode ? this.api.command.getDownloadUrl(this.id, this.selectedNode.key) : '';
+    return this.isOutputDisabled ? '' :  this.api.command.getDownloadUrl(this.currentOutput.key);
   }
 
   scrollOutputToBottom(): void {
     this.output.scrollToBottom();
   }
 
-  setResultState() {
-    let stats = { running: 0, finished: 0, failed: 0 };
-    this.result.nodes.forEach(e => {
-      stats[e.state]++;
-    });
-    let state;
-    if (stats.running > 0)
-      state = 'running';
-    else if (stats.failed > 0)
-      state = 'failed';
-    else
-      state = 'finished';
-    this.result.state = state;
-    return state;
+  isJobOver(state): boolean {
+    state = state.toLowerCase();
+    return state == 'finished' || state == 'failed' || state == 'canceled';
   }
 
   get isOver(): boolean {
     let state = this.result.state;
-    return state == 'finished' || state == 'failed';
+    return this.isJobOver(state);
   }
 
   isNodeOver(node): boolean {
     let state = node.state;
-    return state == 'finished' || state == 'failed';
+    return this.isJobOver(state);
   }
 
   isOutputOver(node): boolean {
@@ -313,16 +426,21 @@ export class ResultDetailComponent implements OnInit {
     else {
       prev = this.outputInitOffset;
     }
-    output.loading = 'prev';
-    let opt = { fulfill: true, over: () => this.isOutputOver(node) };
-    this.api.command.getOutput(this.id, node.key, prev, pageSize, opt as any)
-      .subscribe(result => {
-        output.loading = false;
-        if (this.updateNodeOutputBackward(output, result) && onload
-          && this.selectedNode && this.selectedNode.name == node.name) {
-          setTimeout(onload, 0);
-        }
-      });
+    output.onKeyReady((hasKey) => {
+      if (!hasKey) {
+        return;
+      }
+      output.loading = 'prev';
+      let opt = { fulfill: true, over: () => this.isOutputOver(node) };
+      this.api.command.getOutput(output.key, prev, pageSize, opt as any)
+        .subscribe(result => {
+          output.loading = false;
+          if (this.updateNodeOutputBackward(output, result) && onload
+            && this.selectedNode && this.selectedNode.name == node.name) {
+            setTimeout(onload, 0);
+          }
+        });
+    });
   }
 
   loadNext(node) {
@@ -330,13 +448,18 @@ export class ResultDetailComponent implements OnInit {
     if (output.end || output.loading) {
       return;
     }
-    output.loading = 'next';
-    let opt = { fulfill: true, over: () => this.isOutputOver(node), timeout: 2000 };
-    this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt)
-      .subscribe(result => {
-        output.loading = false;
-        this.updateNodeOutput(output, result);
-      });
+    output.onKeyReady((hasKey) => {
+      if (!hasKey) {
+        return;
+      }
+      output.loading = 'next';
+      let opt = { fulfill: true, over: () => this.isOutputOver(node), timeout: 2000 };
+      this.api.command.getOutput(output.key, output.next, this.outputPageSize, opt)
+        .subscribe(result => {
+          output.loading = false;
+          this.updateNodeOutput(output, result);
+        });
+    });
   }
 
   loadFromBeginAndScroll(node, elem) {
@@ -357,15 +480,20 @@ export class ResultDetailComponent implements OnInit {
     output.start = undefined;
     output.end = undefined;
     output.next = 0;
-    output.loading = 'top';
-    let opt = { fulfill: true, over: () => this.isOutputOver(node), timeout: 2000 };
-    this.api.command.getOutput(this.id, node.key, output.next, this.outputPageSize, opt as any).subscribe(
-      result => {
-        output.loading = false;
-        this.updateNodeOutput(output, result);
-        setTimeout(onload, 0);
+    output.onKeyReady((hasKey) => {
+      if (!hasKey) {
+        return;
       }
-    );
+      output.loading = 'top';
+      let opt = { fulfill: true, over: () => this.isOutputOver(node), timeout: 2000 };
+      this.api.command.getOutput(output.key, output.next, this.outputPageSize, opt as any).subscribe(
+        result => {
+          output.loading = false;
+          this.updateNodeOutput(output, result);
+          setTimeout(onload, 0);
+        }
+      );
+    });
   }
 
   newCommand() {
@@ -375,7 +503,7 @@ export class ResultDetailComponent implements OnInit {
     });
     dialogRef.afterClosed().subscribe(cmd => {
       if (cmd) {
-        let names = (this.result as any).targetNodes;
+        let names = this.result.nodes.map(node => node.name);
         this.api.command.create(cmd, names).subscribe(obj => {
           this.router.navigate([`/command/results/${obj.id}`]);
         });
