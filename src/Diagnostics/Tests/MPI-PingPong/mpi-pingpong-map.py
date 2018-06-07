@@ -1,28 +1,51 @@
 import sys, json, copy
 
 def main():
-    job = json.load(sys.stdin)
+    stdin = json.load(sys.stdin)
+    job = stdin["Job"]
+    nodesInfo = stdin["Nodes"]
     nodelist = job["TargetNodes"]
       
     if len(nodelist) != len(set(nodelist)):
         # Duplicate nodes
         raise Exception('Duplicate nodes')
 
-    isRdma = False
+    rdmaVmSizes = set(["Standard_H16r".lower(), "Standard_H16mr".lower()])
+    normalNodes = []
+    rdmaNodes = []
+    for nodeInfo in nodesInfo:
+        if nodeInfo["Metadata"]["compute"]["vmSize"].lower() in rdmaVmSizes:
+            rdmaNodes.append(nodeInfo["Node"])
+        else:
+            normalNodes.append(nodeInfo["Node"])
+    if len(normalNodes) != 0 and len(rdmaNodes) != 0:
+        # Mixed normal nodes and rdma nodes
+        raise Exception("Mixed nodes. Normal nodes: {0}. RDMA nodes: {1}.".format(','.join(normalNodes), ','.join(rdmaNodes)))
+
+    if len(rdmaNodes) != 0:
+        isRdma = True
+        allNodes = set([node.lower() for node in rdmaNodes])
+    else:
+        isRdma = False
+        allNodes = set([node.lower() for node in normalNodes])    
+
+    for node in nodelist:
+        if node.lower() not in allNodes:
+            raise Exception("Missing node info: {0}".format(node))
+
     parallel = True
     level = 0
     if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
-        arguments = json.loads(job['DiagnosticTest']['Arguments'])
-        for argument in arguments:
-            if argument['name'].lower() == 'Run with RDMA'.lower():
-                isRdma = argument['value'].lower() == 'YES'.lower()
-                continue
-            if argument['name'].lower() == 'Mode'.lower():
-                parallel = argument['value'].lower() == 'Tournament'.lower()
-                continue
-            if argument['name'].lower() == 'Packet size'.lower():
-                level = int(argument['value'])
-                continue          
+        arguments = job['DiagnosticTest']['Arguments']
+        if arguments:
+            arguments = json.loads(arguments)
+            for argument in arguments:
+                if argument['name'].lower() == 'Mode'.lower():
+                    parallel = argument['value'].lower() == 'Tournament'.lower()
+                    continue
+                if argument['name'].lower() == 'Packet size'.lower():
+                    level = int(argument['value'])
+                    continue          
         
     taskTemplateOrigin = {
         "Id":0,
