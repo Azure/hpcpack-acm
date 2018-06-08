@@ -202,7 +202,7 @@ definitions:
                 ipAddress:
                   type: array
                   items:
-                    type: object
+                    $ref: '#/definitions/IpV6'
             macAddress:
               $ref: '#/definitions/MacAddress'
 
@@ -566,6 +566,7 @@ paths:
   /nodes:
     get:
       summary: Get a list of nodes
+      operationId: getNodes
       parameters:
         - $ref: '#/parameters/lastId'
         - $ref: '#/parameters/count'
@@ -582,6 +583,7 @@ paths:
       - $ref: '#/parameters/nodeId'
     get:
       summary: Get a node
+      operationId: getNode
       responses:
         200:
           description: OK
@@ -593,6 +595,7 @@ paths:
       - $ref: '#/parameters/nodeId'
     get:
       summary: get metadata of a node
+      operationId: getNodeMetadata
       responses:
         200:
           description: OK
@@ -604,6 +607,7 @@ paths:
       - $ref: '#/parameters/nodeId'
     get:
       summary: get scheduled events of a node
+      operationId: getNodeScheduledEvents
       responses:
         200:
           description: OK
@@ -615,6 +619,7 @@ paths:
       - $ref: '#/parameters/nodeId'
     get:
       summary: Get events of a node
+      operationId: getNodeEvents
       responses:
         200:
           description: OK
@@ -628,6 +633,7 @@ paths:
       - $ref: '#/parameters/nodeId'
     get:
       summary: Get jobs of a node
+      operationId: getNodeJobs
       responses:
         200:
           description: OK
@@ -641,6 +647,7 @@ paths:
       - $ref: '#/parameters/nodeId'
     get:
       summary: Get metric history of a node
+      operationId: getNodeMetricHistory
       responses:
         200:
           description: OK
@@ -650,6 +657,7 @@ paths:
   /metrics/categories:
     get:
       summary: Get node metric categories
+      operationId: getMetricCategories
       responses:
         200:
           description: OK
@@ -662,6 +670,7 @@ paths:
   /metrics/{category}:
     get:
       summary: Get node merics in a category
+      operationId: getMetricsOfCategory
       parameters:
         - in: path
           name: category
@@ -680,6 +689,7 @@ paths:
   /clusrun:
     get:
       summary: Get a list of clusruns
+      operationId: getClusrunJobs
       parameters:
         - $ref: '#/parameters/lastId'
         - $ref: '#/parameters/count'
@@ -693,6 +703,7 @@ paths:
               $ref: '#/definitions/Job'
     post:
       summary: Create a clusrun
+      operationId: createClusrunJob
       parameters:
         - in: body
           name: result
@@ -711,6 +722,7 @@ paths:
       - $ref: '#/parameters/jobId'
     get:
       summary: Get a clusrun
+      operationId: getClusrunJob
       responses:
         200:
           description: OK
@@ -718,6 +730,7 @@ paths:
             $ref: '#/definitions/Job'
     patch:
       summary: Cancel a clusrun
+      operationId: cancelClusrunJob
       parameters:
         - in: body
           name: result
@@ -735,6 +748,7 @@ paths:
       - $ref: '#/parameters/requeueCount'
     get:
       summary: Get tasks of a clusrun
+      operationId: getClusrunTasks
       responses:
         200:
           description: OK
@@ -749,6 +763,7 @@ paths:
       - $ref: '#/parameters/taskId'
     get:
       summary: Get a task of a clusrun
+      operationId: getClusrunTask
       responses:
         200:
           description: OK
@@ -761,6 +776,7 @@ paths:
       - $ref: '#/parameters/taskId'
     get:
       summary: Get a task result of a clusrun
+      operationId: getClusrunTaskResult
       responses:
         200:
           description: OK
@@ -772,6 +788,7 @@ paths:
       - $ref: '#/parameters/resultKey'
     get:
       summary: Get the whole output of a task
+      operationId: getClusrunOutput
       produces:
         - text/plain
       responses:
@@ -783,8 +800,18 @@ paths:
   /output/clusrun/{key}/page:
     parameters:
       - $ref: '#/parameters/resultKey'
+      - in: query
+        name: offset
+        description: The distance from the beginning of the output
+        type: integer
+      - in: query
+        name: pageSize
+        description: The size of requested piece of output
+        type: integer
+
     get:
       summary: Get partial output of a task
+      operationId: getClusrunOutput2
       responses:
         200:
           description: OK
@@ -794,6 +821,7 @@ paths:
   /diagnostics:
     get:
       summary: Get a list of diagnostic test runs
+      operationId: getDiagnosticJobs
       parameters:
         - $ref: '#/parameters/lastId'
         - $ref: '#/parameters/count'
@@ -807,6 +835,7 @@ paths:
               $ref: '#/definitions/Job'
     post:
       summary: Create a diagnostic test run
+      operationId: createDiagnosticJob
       parameters:
         - in: body
           name: result
@@ -826,6 +855,7 @@ paths:
       - $ref: '#/parameters/jobId'
     get:
       summary: Get a diagnostic test run
+      operationId: getDiagnosticJob
       responses:
         200:
           description: OK
@@ -833,6 +863,7 @@ paths:
             $ref: '#/definitions/Job'
     patch:
       summary: Cancel a diagnostic test run
+      operationId: cancelDiagnosticJob
       parameters:
         - in: body
           name: result
@@ -850,6 +881,7 @@ paths:
       - $ref: '#/parameters/requeueCount'
     get:
       summary: Get tasks of a diagnostic test run
+      operationId: cancelDiagnosticTasks
       responses:
         200:
           description: OK
@@ -864,6 +896,7 @@ paths:
       - $ref: '#/parameters/taskId'
     get:
       summary: Get a task of a diagnostic test run
+      operationId: getDiagnosticTask
       responses:
         200:
           description: OK
@@ -876,6 +909,7 @@ paths:
       - $ref: '#/parameters/taskId'
     get:
       summary: Get a task result of a diagnostic test run
+      operationId: getDiagnosticTaskResult
       responses:
         200:
           description: OK
@@ -885,6 +919,7 @@ paths:
   /diagnostics/tests:
     get:
       summary: Get available diagnostic tests
+      operationId: getDiagnosticTests
       responses:
         200:
           description: OK
