@@ -39,9 +39,9 @@ export class ResultDetailComponent implements OnInit {
 
   private autoload = true;
 
-  private outputInitOffset = -4096;
+  private outputInitOffset = -8192;
 
-  private outputPageSize = 4096;
+  private outputPageSize = 8192;
 
   constructor(
     private route: ActivatedRoute,
