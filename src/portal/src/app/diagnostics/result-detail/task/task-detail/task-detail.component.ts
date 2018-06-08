@@ -24,6 +24,7 @@ export class TaskDetailComponent implements OnInit {
   ngOnInit() {
     this.api.diag.getDiagTaskResult(this.data.jobId, this.data.taskId).subscribe(result => {
       this.result = result;
+      this.message = result.message;
     });
   }
 
