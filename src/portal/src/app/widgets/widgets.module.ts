@@ -7,13 +7,15 @@ import { BackButtonComponent } from './back-button/back-button.component';
 import { TableOptionComponent } from './table-option/table-option.component';
 import { EventListComponent } from './event-list/event-list.component';
 import { ScheduledEventsComponent } from './scheduled-events/scheduled-events.component'
+import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
 
 const components = [
   NodeFilterBuilderComponent,
   BackButtonComponent,
   TableOptionComponent,
   EventListComponent,
-  ScheduledEventsComponent
+  ScheduledEventsComponent,
+  ConfirmDialogComponent
 ];
 
 @NgModule({

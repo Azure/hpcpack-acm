@@ -139,6 +139,17 @@ export class CommandApi extends Resource<CommandResult> {
       );
   }
 
+  cancel(jobId) {
+    let url = `${this.url}/${jobId}`;
+    return this.http.patch<any>(url, { request: 'cancel' })
+      .pipe(
+        catchError((error: any): Observable<any> => {
+          console.error(error);
+          return new ErrorObservable(error);
+        })
+      );
+  }
+
   getTasks(jobId) {
     let url = `${this.url}/${jobId}/tasks`;
     return this.httpGet(url);

@@ -7,6 +7,7 @@ import { ApiService, Loop } from '../../services/api.service';
 import { NodeSelectorComponent } from '../node-selector/node-selector.component';
 import { CommandOutputComponent } from '../command-output/command-output.component';
 import { CommandInputComponent } from '../command-input/command-input.component';
+import { ConfirmDialogComponent } from '../../widgets/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-result-detail',
@@ -512,5 +513,17 @@ export class ResultDetailComponent implements OnInit {
   }
 
   cancelCommand() {
+    let dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '90%',
+      data: {
+        title: 'Cancel',
+        message: 'Are you sure to cancel the current run of command?'
+      }
+    });
+    dialogRef.afterClosed().subscribe(res => {
+      if (res) {
+        this.api.command.cancel(this.id).subscribe();
+      }
+    });
   }
 }
