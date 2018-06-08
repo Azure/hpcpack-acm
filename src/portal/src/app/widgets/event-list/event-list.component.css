@@ -23,10 +23,10 @@
   justify-content: center;
   align-items: center;
   font-family: 'Material Icons';
-  width: 2.4em;
-  height: 2.4em;
-  left: -1.2em;
-  top: 1.5em;
+  padding: .4em;
+  font-size: 1.3em;
+  left: -.9em;
+  top: 1.1em;
   color: #fff;
   border-radius: 50%;
 }
