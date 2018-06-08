@@ -315,7 +315,7 @@ export class ResultDetailComponent implements OnInit {
               output.loading = false;
             }
             return over ? false :
-              this.api.command.getOutput(node.key, output.next, this.outputPageSize, opt as any);
+              this.api.command.getOutput(output.key, output.next, this.outputPageSize, opt as any);
           }
         },
         //interval(in ms):
