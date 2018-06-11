@@ -17,7 +17,7 @@
   flex: 2;
 }
 
-.node-information::before, .node-warning::before {
+.node-information::before, .node-warning::before, .job-alert::before, .default::before {
   position: absolute;
   display: flex;
   justify-content: center;
@@ -46,6 +46,16 @@
   background-color: #dd5013;
 }
 
+.job-alert::before {
+  content: '\e7f5';
+  background-color: #dd5013;
+}
+
+.default::before {
+  content: '\e88f';
+  background-color: #4DB6AC;
+}
+
 .event-info {
   display: flex;
   position: relative;
@@ -70,4 +80,8 @@
 
 .event-content {
   color: rgba(0, 0, 0, .7);
+}
+
+.empty-msg {
+  padding: 1em;
 }

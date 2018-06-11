@@ -18,6 +18,7 @@ export class PingPongReportComponent implements OnInit {
   private tasksLoop: Object;
   private jobState: string;
   private tasks = [];
+  private events = [];
 
   private componentName = "PingPongReport";
 
@@ -50,6 +51,9 @@ export class PingPongReportComponent implements OnInit {
     }
   }
 
+  isError() {
+    return this.result.aggregationResult != undefined && this.result.aggregationResult.Error !== undefined;
+  }
 
   getTasksInfo(): any {
     return Loop.start(
@@ -81,6 +85,9 @@ export class PingPongReportComponent implements OnInit {
     this.api.diag.getDiagJob(this.result.id).subscribe(res => {
       this.jobState = res.state;
       this.result = res;
+      if (res.events !== undefined) {
+        this.events = res.events;
+      }
       this.updateOverviewData();
     });
   }
