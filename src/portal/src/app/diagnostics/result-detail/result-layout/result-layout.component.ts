@@ -66,12 +66,11 @@ export class ResultLayoutComponent implements OnInit {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        console.log(this.result);
         let targetNodes = this.result.targetNodes;
         let diagnosticTest = this.result.diagnosticTest;
         let name = `${this.result.name.split('@')[0]}@${this.api.diag.getCreatedTime()}`;
         this.api.diag.create(name, targetNodes, diagnosticTest).subscribe(obj => {
-          let returnData = obj.headers.get('location').split('/');
+         let returnData = obj.headers.get('location').split('/');
           let jobId = returnData[returnData.length - 1];
           this.router.navigate([`/diagnostics/results/` + jobId]);
         });
