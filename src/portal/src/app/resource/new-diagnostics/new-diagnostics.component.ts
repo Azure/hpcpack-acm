@@ -83,8 +83,8 @@ export class NewDiagnosticsComponent implements OnInit {
   getCreatedTime() {
     let date = new Date();
     let year = date.getFullYear();
-    let month = this.fomateDateNumber(date.getMonth());
-    let day = this.fomateDateNumber(date.getDay());
+    let month = this.fomateDateNumber(date.getMonth() + 1);
+    let day = this.fomateDateNumber(date.getDate());
     let hour = this.fomateDateNumber(date.getHours());
     let minutes = this.fomateDateNumber(date.getMinutes());
     let seconds = this.fomateDateNumber(date.getSeconds());
@@ -92,7 +92,7 @@ export class NewDiagnosticsComponent implements OnInit {
   }
 
   fomateDateNumber(num) {
-    if (num > 10) {
+    if (num > 9) {
       return num;
     }
     else {
