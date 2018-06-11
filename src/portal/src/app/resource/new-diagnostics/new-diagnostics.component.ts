@@ -64,39 +64,19 @@ export class NewDiagnosticsComponent implements OnInit {
 
     node.data.checked = true;
     this.selectedTest = node.data;
-    this.diagTestName = this.selectedTest.name + "@" + this.getCreatedTime();
+    this.diagTestName = this.selectedTest.name + "@" + this.api.diag.getCreatedTime();
   }
 
 
   selectionChange(e) {
     if (e.selectedIndex == 2) {
       if (this.selectedTest != undefined) {
-        this.diagTestName = this.selectedTest.name + "@" + this.getCreatedTime();
+        this.diagTestName = this.selectedTest.name + "@" + this.api.diag.getCreatedTime();
       }
       else {
-        this.diagTestName = this.getCreatedTime();
+        this.diagTestName = this.api.diag.getCreatedTime();
       }
 
-    }
-  }
-
-  getCreatedTime() {
-    let date = new Date();
-    let year = date.getFullYear();
-    let month = this.fomateDateNumber(date.getMonth() + 1);
-    let day = this.fomateDateNumber(date.getDate());
-    let hour = this.fomateDateNumber(date.getHours());
-    let minutes = this.fomateDateNumber(date.getMinutes());
-    let seconds = this.fomateDateNumber(date.getSeconds());
-    return year + "-" + month + "-" + day + " " + hour + ":" + minutes + ":" + seconds;
-  }
-
-  fomateDateNumber(num) {
-    if (num > 9) {
-      return num;
-    }
-    else {
-      return "0" + num;
     }
   }
 

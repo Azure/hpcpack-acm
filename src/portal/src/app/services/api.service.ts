@@ -257,6 +257,26 @@ export class DiagApi extends Resource<any> {
     return DiagApi.url;
   }
 
+  getCreatedTime() {
+    let date = new Date();
+    let year = date.getFullYear();
+    let month = this.fomateDateNumber(date.getMonth() + 1);
+    let day = this.fomateDateNumber(date.getDate());
+    let hour = this.fomateDateNumber(date.getHours());
+    let minutes = this.fomateDateNumber(date.getMinutes());
+    let seconds = this.fomateDateNumber(date.getSeconds());
+    return year + "-" + month + "-" + day + " " + hour + ":" + minutes + ":" + seconds;
+  }
+
+  fomateDateNumber(num) {
+    if (num > 9) {
+      return num;
+    }
+    else {
+      return "0" + num;
+    }
+  }
+
   protected normalizeTests(result: any): any {
     let data = [];
     let tests = [];
