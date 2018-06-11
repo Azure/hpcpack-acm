@@ -25,16 +25,18 @@ export abstract class Resource<T> {
     return `Caught error: "${error}"`;
   }
 
+  get errorHandler() {
+    return catchError(error => {
+      console.error(error);
+      //ErrorObservable is effectively an exception, like throw(...)
+      return new ErrorObservable(this.errorMsg(error));
+    })
+  }
+
   httpGet(url, params = null, pipes = []) {
     let res = this.http.get<any>(url, params ? { params } : {});
     pipes = Array.from(pipes);
-    pipes.push(
-      catchError(error => {
-        console.error(error);
-        //ErrorObservable is effectively an exception, like throw(...)
-        return new ErrorObservable(this.errorMsg(error));
-      })
-    );
+    pipes.push(this.errorHandler);
     res = res.pipe.apply(res, pipes);
     return res;
   }
@@ -132,11 +134,14 @@ export class CommandApi extends Resource<CommandResult> {
           let id = parseInt(idx);
           return { id };
         }),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
+        this.errorHandler
       );
+  }
+
+  cancel(jobId) {
+    let url = `${this.url}/${jobId}`;
+    return this.http.patch<any>(url, { request: 'cancel' })
+      .pipe(this.errorHandler);
   }
 
   getTasks(jobId) {
@@ -238,10 +243,7 @@ export class HeatmapApi extends Resource<any> {
         return this.http.get<any>(url)
           .pipe(
             map(e => this.normalize(e)),
-            catchError((error: any): Observable<any> => {
-              console.error(error);
-              return new ErrorObservable(error);
-            })
+            this.errorHandler
           )
       });
   }
@@ -354,26 +356,20 @@ export class DiagApi extends Resource<any> {
   }
 
   create(name: string, targetNodes: string[], diagnosticTest: any, jobType = 'diagnostics') {
-    return this.http.post<any>(this.url, { name, targetNodes, diagnosticTest, jobType }, { observe: 'response', responseType: 'json' })
-      .pipe(
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
+    return this.http.post<any>(
+      this.url,
+      { name, targetNodes, diagnosticTest, jobType },
+      { observe: 'response', responseType: 'json' }
+    ).pipe(this.errorHandler);
   }
 
   cancel(jobId: string) {
     let url = `${this.url}/${jobId}`;
     return this.http.patch<any>(url, { request: 'cancel' }, {
       headers: new HttpHeaders({
-        'Accept': 'application/json',
-        // 'responseType': 'text'
+        'Accept': 'application/json'
       })
     }).pipe(
-      map(e => {
-        console.log(typeof (e));
-      }),
       catchError((error: any): Observable<any> => {
         console.error(error);
         return new ErrorObservable(error);

@@ -5,7 +5,7 @@
 
 <div class="actions">
   <button mat-raised-button (click)="newCommand()" [disabled]="!result">New Run...</button>
-  <button mat-raised-button (click)="cancelCommand()">Cancel</button>
+  <button mat-raised-button (click)="cancelCommand()" [disabled]="isOver">Cancel...</button>
 </div>
 
 <ng-container *ngIf="isLoaded; else waiting">
