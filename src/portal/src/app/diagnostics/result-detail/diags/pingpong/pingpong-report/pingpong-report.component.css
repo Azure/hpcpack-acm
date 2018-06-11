@@ -71,4 +71,5 @@ mat-header-cell {
 .error-message {
   color: rgba(206, 80, 57, .9);
   padding: 1em;
+  font-size: .9rem;
 }

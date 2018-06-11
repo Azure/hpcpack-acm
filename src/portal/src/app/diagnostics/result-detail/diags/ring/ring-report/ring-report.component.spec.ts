@@ -19,6 +19,12 @@ class RingOverviewResultComponent {
   result: any;
 }
 
+@Component({ selector: 'app-event-list', template: '' })
+class EventListComponent {
+  @Input()
+  events: any;
+}
+
 @Component({ selector: 'diag-task-table', template: '' })
 class DiagTaskTableComponent {
   @Input()
@@ -82,6 +88,7 @@ fdescribe('RingReportComponent', () => {
         ResultLayoutComponent,
         RingOverviewResultComponent,
         DiagTaskTableComponent,
+        EventListComponent,
         WrapperComponent
       ],
       imports: [MaterialsModule, NoopAnimationsModule],

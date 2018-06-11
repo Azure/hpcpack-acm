@@ -5,7 +5,7 @@
 
 <div class="actions">
   <button mat-raised-button (click)="newCommand()" [disabled]="!result">New Run...</button>
-  <button mat-raised-button (click)="cancelCommand()">Cancel</button>
+  <button mat-raised-button (click)="cancelCommand()" [disabled]="isOver">Cancel...</button>
 </div>
 
 <ng-container *ngIf="isLoaded; else waiting">
@@ -18,8 +18,8 @@
 
       <div class="col-md-9 output">
         <command-output (loadPrev)="loadPrevAndScroll(selectedNode, $event)" (loadNext)="loadNext(selectedNode)"
-           (gotoTop)="loadFromBeginAndScroll(selectedNode, $event)"
-          [content]="currentOutput?.content" [disabled]="!selectedNode" [loading]="loading"
+          (gotoTop)="loadFromBeginAndScroll(selectedNode, $event)"
+          [content]="currentOutput?.content" [disabled]="isOutputDisabled" [loading]="loading"
           [bof]="currentOutput?.start === 0" [eof]="currentOutput?.end">
         </command-output>
 

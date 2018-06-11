@@ -56,7 +56,11 @@ class NodeSelectorStubComponent {
 }
 
 class ApiServiceStub {
-  static result = { command: 'TEST COMMAND', nodes: [{ name: 'TEST NODE', state: 'finished' }] };
+  static job = { commandLine: 'TEST COMMAND', state: 'finished' };
+
+  static tasks = [{ id: 1, node: 'TEST NODE', state: 'finished' }];
+
+  static taskResult1 = { resultKey: 'key001' };
 
   static outputContent = 'TEST CONTENT';
 
@@ -65,8 +69,10 @@ class ApiServiceStub {
   command: any;
 
   constructor() {
-    this.command = jasmine.createSpyObj('Command', ['get', 'getOutput', 'getDownloadUrl']);
-    this.command.get.and.returnValue(of(ApiServiceStub.result));
+    this.command = jasmine.createSpyObj('Command', ['get', 'getTasks', 'getTaskResult', 'getOutput', 'getDownloadUrl']);
+    this.command.get.and.returnValue(of(ApiServiceStub.job));
+    this.command.getTasks.and.returnValue(of(ApiServiceStub.tasks));
+    this.command.getTaskResult.and.returnValue(of(ApiServiceStub.taskResult1));
     let value = { content: ApiServiceStub.outputContent, size: ApiServiceStub.outputContent.length, offset: 0, end: true };
     this.command.getOutput.and.returnValues(of(value));
     this.command.getDownloadUrl.and.returnValue(ApiServiceStub.outputUrl);
@@ -117,14 +123,14 @@ fdescribe('ResultDetailComponent', () => {
 
     expect(component).toBeTruthy();
     let text = fixture.nativeElement.querySelector('.command').textContent;
-    expect(text).toContain(ApiServiceStub.result.command);
+    expect(text).toContain(ApiServiceStub.job.commandLine);
     text = fixture.nativeElement.querySelector('.state').textContent;
     expect(text).toContain('Finished');
 
     expect(component.currentOutput.content).toEqual(ApiServiceStub.outputContent);
 
     let selectedNode = component.selectedNode;
-    expect(selectedNode.name).toEqual(ApiServiceStub.result.nodes[0].name);
-    expect(selectedNode.state).toEqual(ApiServiceStub.result.nodes[0].state);
+    expect(selectedNode.name).toEqual(ApiServiceStub.tasks[0].node);
+    expect(selectedNode.state).toEqual(ApiServiceStub.tasks[0].state);
   }));
 });

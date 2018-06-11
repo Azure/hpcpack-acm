@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { ErrorObservable } from 'rxjs/observable/ErrorObservable';
 import { of } from 'rxjs/observable/of';
@@ -25,16 +25,18 @@ export abstract class Resource<T> {
     return `Caught error: "${error}"`;
   }
 
+  get errorHandler() {
+    return catchError(error => {
+      console.error(error);
+      //ErrorObservable is effectively an exception, like throw(...)
+      return new ErrorObservable(this.errorMsg(error));
+    })
+  }
+
   httpGet(url, params = null, pipes = []) {
     let res = this.http.get<any>(url, params ? { params } : {});
     pipes = Array.from(pipes);
-    pipes.push(
-      catchError(error => {
-        console.error(error);
-        //ErrorObservable is effectively an exception, like throw(...)
-        return new ErrorObservable(this.errorMsg(error));
-      })
-    );
+    pipes.push(this.errorHandler);
     res = res.pipe.apply(res, pipes);
     return res;
   }
@@ -132,21 +134,34 @@ export class CommandApi extends Resource<CommandResult> {
           let id = parseInt(idx);
           return { id };
         }),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
+        this.errorHandler
       );
+  }
+
+  cancel(jobId) {
+    let url = `${this.url}/${jobId}`;
+    return this.http.patch<any>(url, { request: 'cancel' })
+      .pipe(this.errorHandler);
+  }
+
+  getTasks(jobId) {
+    let url = `${this.url}/${jobId}/tasks`;
+    return this.httpGet(url);
+  }
+
+  getTaskResult(jobId, taskId) {
+    let url = `${this.url}/${jobId}/tasks/${taskId}/result`;
+    return this.httpGet(url);
   }
 
   //You can't tell if the output reaches EOF by one simple GET API. You have
   //to call another API to get to know if the command generating the output is
   //over. When opt.fulfill is set to true, DO provide callback opt.over, otherwise
   //the method may never ends since it doesn't know EOF without opt.over!
-  getOutput(id, key, offset, size = 1024, opt = { fulfill: false, over: undefined, timeout: undefined }) {
+  getOutput(key, offset, size = 1024, opt = { fulfill: false, over: undefined, timeout: undefined }) {
     return Observable.create(observer => {
       let res = { content: '', size: 0 };
-      let url = `${this.url}/${id}/results/${key}?offset=${offset}&pageSize=${size}`;
+      let url = `${Resource.baseUrl}/output/clusRun/${key}/page?offset=${offset}&pageSize=${size}`;
       let ts = new Date().getTime();
       Loop.start(
         this.http.get<any>(url),
@@ -169,7 +184,7 @@ export class CommandApi extends Resource<CommandResult> {
             }
             let nextOffset = result.offset + result.size;
             let nextSize = size - res.size;
-            let nextUrl = `${this.url}/${id}/results/${key}?offset=${nextOffset}&pageSize=${nextSize}`;
+            let nextUrl = `${Resource.baseUrl}/output/clusRun/${key}/page?offset=${nextOffset}&pageSize=${nextSize}`;
             return this.http.get<any>(nextUrl);
           },
           error: err => {
@@ -182,8 +197,8 @@ export class CommandApi extends Resource<CommandResult> {
     });
   }
 
-  getDownloadUrl(id, key): string {
-    let url = `${this.url}/${id}/results/${key}?raw=true`;
+  getDownloadUrl(key): string {
+    let url = `${Resource.baseUrl}/output/clusRun/${key}/raw`;
     return url;
   }
 }
@@ -222,16 +237,13 @@ export class HeatmapApi extends Resource<any> {
   }
 
   getMockData(category: string): Observable<any> {
-    let url = this.url + '/' + category;
-    return this.http.post(env.apiBase + '/commands/resetdb', { clear: true })
+    let url = `${this.url}/${category}`;
+    return this.http.post(`${env.apiBase}/commands/resetdb`, { clear: true })
       .concatMap(() => {
         return this.http.get<any>(url)
           .pipe(
             map(e => this.normalize(e)),
-            catchError((error: any): Observable<any> => {
-              console.error(error);
-              return new ErrorObservable(error);
-            })
+            this.errorHandler
           )
       });
   }
@@ -243,6 +255,26 @@ export class DiagApi extends Resource<any> {
 
   protected get url(): string {
     return DiagApi.url;
+  }
+
+  getCreatedTime() {
+    let date = new Date();
+    let year = date.getFullYear();
+    let month = this.fomateDateNumber(date.getMonth() + 1);
+    let day = this.fomateDateNumber(date.getDate());
+    let hour = this.fomateDateNumber(date.getHours());
+    let minutes = this.fomateDateNumber(date.getMinutes());
+    let seconds = this.fomateDateNumber(date.getSeconds());
+    return `${year}-${month}-${day} ${hour}:${minutes}:${seconds}`;
+  }
+
+  fomateDateNumber(num) {
+    if (num > 9) {
+      return num;
+    }
+    else {
+      return `0${num}`;
+    }
   }
 
   protected normalizeTests(result: any): any {
@@ -284,7 +316,7 @@ export class DiagApi extends Resource<any> {
   }
 
   getDiagTests() {
-    let url = this.url + '/tests';
+    let url = `${this.url}/tests`;
     return this.httpGet(url, null, [
       map(e => this.normalizeTests(e)),
     ]);
@@ -344,16 +376,20 @@ export class DiagApi extends Resource<any> {
   }
 
   create(name: string, targetNodes: string[], diagnosticTest: any, jobType = 'diagnostics') {
-    return this.http.post<any>(this.url, { name, targetNodes, diagnosticTest, jobType }, { observe: 'response', responseType: 'json' })
-      .pipe(
-        map(e => {
-          return e;
-        }),
-        catchError((error: any): Observable<any> => {
-          console.error(error);
-          return new ErrorObservable(error);
-        })
-      );
+    return this.http.post<any>(
+      this.url,
+      { name, targetNodes, diagnosticTest, jobType },
+      { observe: 'response', responseType: 'json' }
+    ).pipe(this.errorHandler);
+  }
+
+  cancel(jobId: string) {
+    let url = `${this.url}/${jobId}`;
+    return this.http.patch<any>(url, { request: 'cancel' }, {
+      headers: new HttpHeaders({
+        'Accept': 'application/json'
+      })
+    }).pipe(this.errorHandler)
   }
 }
 
