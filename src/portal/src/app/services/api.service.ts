@@ -237,8 +237,8 @@ export class HeatmapApi extends Resource<any> {
   }
 
   getMockData(category: string): Observable<any> {
-    let url = this.url + '/' + category;
-    return this.http.post(env.apiBase + '/commands/resetdb', { clear: true })
+    let url = `${this.url}/${category}`;
+    return this.http.post(`${env.apiBase}/commands/resetdb`, { clear: true })
       .concatMap(() => {
         return this.http.get<any>(url)
           .pipe(
@@ -265,7 +265,7 @@ export class DiagApi extends Resource<any> {
     let hour = this.fomateDateNumber(date.getHours());
     let minutes = this.fomateDateNumber(date.getMinutes());
     let seconds = this.fomateDateNumber(date.getSeconds());
-    return year + "-" + month + "-" + day + " " + hour + ":" + minutes + ":" + seconds;
+    return `${year}-${month}-${day} ${hour}:${minutes}:${seconds}`;
   }
 
   fomateDateNumber(num) {
@@ -273,7 +273,7 @@ export class DiagApi extends Resource<any> {
       return num;
     }
     else {
-      return "0" + num;
+      return `0${num}`;
     }
   }
 
@@ -316,7 +316,7 @@ export class DiagApi extends Resource<any> {
   }
 
   getDiagTests() {
-    let url = this.url + '/tests';
+    let url = `${this.url}/tests`;
     return this.httpGet(url, null, [
       map(e => this.normalizeTests(e)),
     ]);
@@ -389,12 +389,7 @@ export class DiagApi extends Resource<any> {
       headers: new HttpHeaders({
         'Accept': 'application/json'
       })
-    }).pipe(
-      catchError((error: any): Observable<any> => {
-        console.error(error);
-        return new ErrorObservable(error);
-      })
-    )
+    }).pipe(this.errorHandler)
   }
 }
 
