@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { ErrorObservable } from 'rxjs/observable/ErrorObservable';
 import { of } from 'rxjs/observable/of';
@@ -356,14 +356,29 @@ export class DiagApi extends Resource<any> {
   create(name: string, targetNodes: string[], diagnosticTest: any, jobType = 'diagnostics') {
     return this.http.post<any>(this.url, { name, targetNodes, diagnosticTest, jobType }, { observe: 'response', responseType: 'json' })
       .pipe(
-        map(e => {
-          return e;
-        }),
         catchError((error: any): Observable<any> => {
           console.error(error);
           return new ErrorObservable(error);
         })
       );
+  }
+
+  cancel(jobId: string) {
+    let url = `${this.url}/${jobId}`;
+    return this.http.patch<any>(url, { request: 'cancel' }, {
+      headers: new HttpHeaders({
+        'Accept': 'application/json',
+        // 'responseType': 'text'
+      })
+    }).pipe(
+      map(e => {
+        console.log(typeof (e));
+      }),
+      catchError((error: any): Observable<any> => {
+        console.error(error);
+        return new ErrorObservable(error);
+      })
+    )
   }
 }
 

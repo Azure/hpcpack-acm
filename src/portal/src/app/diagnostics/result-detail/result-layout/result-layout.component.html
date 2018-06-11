@@ -1,7 +1,17 @@
 <div class="title main">
-  <div class="name">{{result.id}} - {{result.name}} {{result.state}}</div>
-  <div *ngIf="!done">
-    <mat-spinner [diameter]="40"></mat-spinner>
+  <div class="job-state">
+    <div class="name">{{result.id}} - {{result.name}} {{result.state}}</div>
+    <mat-spinner *ngIf="!done" [diameter]="25"></mat-spinner>
+  </div>
+  <div>
+    <div class="operation" *ngIf="!done" (click)="cancelDiag()">
+      <i class="material-icons cancel">clear</i>
+      <div class="operation-name">Cancel</div>
+    </div>
+    <div class="operation" *ngIf="done || canceled">
+      <i class="material-icons rerun">replay</i>
+      <div class="operation-name">Rerun</div>
+    </div>
   </div>
 </div>
 <div class="area-title">

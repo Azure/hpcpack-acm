@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateRef, OnChanges, SimpleChange } from '@angular/core';
-
+import { ApiService } from '../../../services/api.service';
 @Component({
   selector: 'app-result-layout',
   templateUrl: './result-layout.component.html',
@@ -18,6 +18,7 @@ export class ResultLayoutComponent implements OnInit {
   overviewTemplate: TemplateRef<any>;
 
   constructor(
+    private api: ApiService
   ) { }
 
   ngOnInit() {
@@ -29,8 +30,14 @@ export class ResultLayoutComponent implements OnInit {
   }
 
   isDone() {
-    if (this.result.state == "Failed" || this.result.state == "Finished") {
+    if (this.result.state == "Failed" || this.result.state == "Finished" || this.result.state == "Canceled") {
       this.done = true;
     }
+  }
+  cancelDiag() {
+    this.api.diag.cancel(this.result.id).subscribe(res => {
+      // console.log(res);
+      console.trace();
+    });
   }
 }

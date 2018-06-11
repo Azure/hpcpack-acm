@@ -53,7 +53,7 @@ export class RingReportComponent implements OnInit {
         next: (result) => {
           this.dataSource.data = result;
           this.tasks = result;
-          if (this.jobState == 'Finished') {
+          if (this.jobState == 'Finished' || this.jobState == 'Failed' || this.jobState == 'Canceled') {
             return false;
           }
           else {
