@@ -21,13 +21,12 @@ export class EventListComponent implements OnInit {
   }
 
   eventType(source, type) {
-    let eventType = source + ' ' + type;
-
-    if (eventType == 'Node Information') {
-      return 'node-information';
-    }
-    else if (eventType == 'Node Warning') {
-      return 'node-warning';
+    let eventType = `${source} ${type}`;
+    switch (eventType) {
+      case 'Node Information': return 'node-information';
+      case 'Node Warning': return 'node-warning';
+      case 'Job Alert': return 'job-alert';
+      default: return 'default';
     }
   }
 

@@ -51,7 +51,6 @@ fdescribe('TaskDetailComponent', () => {
     let details = fixture.nativeElement.querySelectorAll(".overview-value");
     let text = details[0].textContent;
     expect(text).toEqual("testNode");
-    console.log(details[1]);
     text = details[1].textContent;
     expect(text).toEqual("513.43 us");
   });

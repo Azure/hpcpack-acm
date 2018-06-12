@@ -59,8 +59,8 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    console.log(Math.max(document.documentElement.clientWidth, window.innerWidth || 0));
-    console.log(Math.max(document.documentElement.clientHeight, window.innerHeight || 0));
+    // console.log(Math.max(document.documentElement.clientWidth, window.innerWidth || 0));
+    // console.log(Math.max(document.documentElement.clientHeight, window.innerHeight || 0));
     this.loadSettings();
     this.getDisplayedColumns();
     this.diagsLoop = this.getDiags(this.nextPageLastId, this.currentPageSize);
@@ -186,7 +186,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
       }
 
     }
-    console.log(window.scrollY);
+    // console.log(window.scrollY);
     return true;
   }
 
@@ -198,17 +198,14 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   onScrollDown(ev) {
-    console.log("trigger down func.");
     this.scrollDirection = "down";
     if (this.hasReceivedData && !this.loadFinish) {
-      console.log("down down down");
       this.updateTableLoop(this.nextPageLastId, this.currentPageSize);
     }
   }
 
   onUp() {
     this.scrollDirection = "up";
-    console.log("up up up");
     if (this.hasReceivedData && !this.loadFinish) {
       this.updateTableLoop(this.previousPageLastId, this.currentPageSize);
     }
