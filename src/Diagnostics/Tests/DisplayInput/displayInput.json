@@ -1,0 +1,11 @@
+﻿{
+    "DispatchScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"displayInput-map.py"
+    },
+    "AggregationScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"displayInput-reduce.py"
+    },
+    "description":"Display input of dispatching/map script and aggregation/reduce script for testing",
+}
