@@ -10,7 +10,7 @@ def main():
         # Duplicate nodes
         raise Exception('Duplicate nodes')
 
-    rdmaVmSizes = set(["Standard_H16r".lower(), "Standard_H16mr".lower()])
+    rdmaVmSizes = set([size.lower() for size in ["Standard_H16r", "Standard_H16mr", "Standard_A8", "Standard_A9"]])
     normalNodes = []
     rdmaNodes = []
     for nodeInfo in nodesInfo:
