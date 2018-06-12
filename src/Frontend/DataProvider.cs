@@ -34,6 +34,55 @@
             this.nodesTable = this.utilities.GetNodesTable();
         }
 
+        public async T.Task<object> GetDashboardNodesAsync(CancellationToken token)
+        {
+            var states = Enum.GetValues(typeof(NodeHealth)).Cast<NodeHealth>();
+            var result = states.ToDictionary(s => s, s => 0);
+
+            string lastNodeId = null;
+            IEnumerable<Node> nodes;
+            do
+            {
+                nodes = await this.GetNodesAsync(lastNodeId, 1000, token);
+                var dict = nodes.GroupBy(n => n.Health).ToDictionary(g => g.Key, g => g.Count());
+                foreach (var d in dict) { result[d.Key] += d.Value; }
+                lastNodeId = nodes?.LastOrDefault()?.Id;
+            }
+            while (nodes?.Count() > 0);
+
+            return result;
+        }
+
+        public T.Task<object> GetDashboardDiagnosticsAsync(CancellationToken token)
+        {
+            return this.GetDashboardJobsAsync(JobType.Diagnostics, token);
+        }
+
+        public T.Task<object> GetDashboardClusrunAsync(CancellationToken token)
+        {
+            return this.GetDashboardJobsAsync(JobType.ClusRun, token);
+        }
+
+        public async T.Task<object> GetDashboardJobsAsync(JobType jobType, CancellationToken token)
+        {
+            var states = Enum.GetValues(typeof(JobState)).Cast<JobState>();
+            var result = states.ToDictionary(s => s, s => 0);
+
+            int lastJobId = 0;
+            IEnumerable<Job> jobs;
+            do
+            {
+                jobs = await this.GetJobsAsync(lastJobId, 1000, jobType, false, token);
+                var dict = jobs.GroupBy(n => n.State).ToDictionary(g => g.Key, g => g.Count());
+                foreach (var d in dict) { result[d.Key] += d.Value; }
+                lastJobId = jobs?.LastOrDefault()?.Id ?? int.MaxValue;
+            }
+
+            while (jobs?.Count() > 0);
+
+            return result;
+        }
+
         public async T.Task<IActionResult> GetOutputRawAsync(JobType type, string taskResultKey, CancellationToken token)
         {
             var blob = this.utilities.GetTaskOutputBlob(type.ToString().ToLowerInvariant(), taskResultKey);

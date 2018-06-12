@@ -75,6 +75,7 @@
 
                 this.LoggerFactory = new LoggerFactory()
                     .AddConsole(configuration.GetSection("Logging").GetSection("Console"))
+                  //  .AddAzureWebAppDiagnostics()
                     .AddDebug(LogLevel.Debug);
 
                 this.loggerFactoryConfigMethod?.Invoke(configuration, this.LoggerFactory);
