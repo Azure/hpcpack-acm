@@ -4,12 +4,12 @@ import { environment as env } from '../../environments/environment';
 
 export class InMemoryDataService implements InMemoryDbService {
   urlMap = [
-    { url: NodeApi.url, coll: 'nodes' },
-    { url: CommandApi.url, coll: 'commands' },
-    { url: TestApi.url, coll: 'tests' },
-    { url: HeatmapApi.url + '/cpu', coll: 'heatmapNodes' },
-    { url: HeatmapApi.url + '/categories', coll: 'heatmapCategories' },
-    { url: env.apiBase + '/commands/resetdb', coll: 'resetdb' },
+    { url: `${env.apiBase}/nodes`, coll: 'nodes' },
+    { url: `${env.apiBase}/clusRun`, coll: 'commands' },
+    { url: `${env.apiBase}/diagnostics/jobs`, coll: 'tests' },
+    { url: `${env.apiBase}/metrics` + '/cpu', coll: 'heatmapNodes' },
+    { url: `${env.apiBase}/metrics/categories`, coll: 'heatmapCategories' },
+    { url: `${env.apiBase}/commands/resetdb`, coll: 'resetdb' },
   ];
 
   parseRequestUrl(url, utils) {
