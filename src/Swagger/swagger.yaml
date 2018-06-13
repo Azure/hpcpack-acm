@@ -514,6 +514,44 @@ definitions:
         example: '[{"name":"Run with RDMA","value":"NO"},{"name":"Latency threshold","value":1000},{"name":"Throughput threshold","value":100}]'
         description: Input arguments
 
+  NodeSummary:
+    type: object
+    properties:
+      OK:
+        type: number
+        description: number of nodes that are OK
+      Warning:
+        type: number
+        description: number of nodes that has warning
+      Error:
+        type: number
+        description: number of nodes that has error
+
+  JobSummary:
+    type: object
+    properties:
+      Queued:
+        type: number
+        description: number of jobs that are queued
+      Running:
+        type: number
+        description: number of jobs that are running
+      Finishing:
+        type: number
+        description: number of jobs that are finishing
+      Finished:
+        type: number
+        description: number of jobs that are finished
+      Canceling:
+        type: number
+        description: number of jobs that are canceling
+      Canceled:
+        type: number
+        description: number of jobs that are canceled
+      Failed:
+        type: number
+        description: number of jobs that are failed
+
 parameters:
   nodeId:
     in: path
@@ -927,6 +965,36 @@ paths:
             type: array
             items:
               $ref: '#/definitions/DiagnoticTest'
+
+  /dashboard/nodes:
+    get:
+      summary: Get summary of nodes
+      operationId: getNodeSummary
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/NodeSummary'
+
+  /dashboard/clusrun:
+    get:
+      summary: Get summary of ClusRun jobs
+      operationId: getClusRunJobSummary
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/JobSummary'
+
+  /dashboard/diagnostics:
+    get:
+      summary: Get summary of diagnostic jobs
+      operationId: getDiagnosticJobSummary
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/JobSummary'
 
 host: localhost
 basePath: /v1
