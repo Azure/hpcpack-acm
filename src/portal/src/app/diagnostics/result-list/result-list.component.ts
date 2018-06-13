@@ -26,7 +26,8 @@ export class ResultListComponent implements OnInit, OnDestroy {
   private availableColumns;
 
   private dataSource = new MatTableDataSource();
-  private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'actions'];
+  // private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'actions'];
+  private displayedColumns = ['id', 'test', 'diagnostic', 'category', 'progress', 'state'];
 
   private selection = new SelectionModel(true, []);
   private interval: number;
@@ -280,8 +281,8 @@ export class ResultListComponent implements OnInit, OnDestroy {
 
   getDisplayedColumns(): void {
     let columns = this.availableColumns.filter(e => e.displayed).map(e => e.name);
-    columns.push('actions');
-    this.displayedColumns = ['select', 'id'].concat(columns);
+    // columns.push('actions');
+    this.displayedColumns = ['id'].concat(columns);
   }
 
   customizeTable(): void {
