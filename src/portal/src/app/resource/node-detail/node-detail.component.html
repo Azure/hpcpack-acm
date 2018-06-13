@@ -167,5 +167,37 @@
     </div>
   </mat-tab>
   <mat-tab label="Jobs">
+    <mat-table #table [dataSource]="dataSource">
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
+        <mat-cell *matCellDef="let job">
+          <a [routerLink]="getLink(job.jobId)">{{job.jobId}}</a>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="content">
+        <mat-header-cell *matHeaderCellDef> Content </mat-header-cell>
+        <mat-cell *matCellDef="let job"> {{getJobContent(job.type)}} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="type">
+        <mat-header-cell *matHeaderCellDef> Type </mat-header-cell>
+        <mat-cell *matCellDef="let job"> {{job.type}} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="state">
+        <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
+        <mat-cell *matCellDef="let job"> {{job.state}} </mat-cell>
+      </ng-container>
+
+
+      <ng-container matColumnDef="progress">
+        <mat-header-cell *matHeaderCellDef> Progress </mat-header-cell>
+        <mat-cell *matCellDef="let job"> {{job.progress}} </mat-cell>
+      </ng-container>
+    </mat-table>
   </mat-tab>
 </mat-tab-group>

@@ -92,6 +92,10 @@ export class NodeApi extends Resource<Node> {
   getNodeSheduledEvents(id: string): Observable<any> {
     return this.httpGet(`${this.url}/${id}/scheduledevents`);
   }
+
+  getNodeJobs(id: string): Observable<any> {
+    return this.httpGet(`${this.url}/${id}/jobs`);
+  }
 }
 
 export class TestApi extends Resource<TestResult> {

@@ -226,6 +226,24 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
         }
       });
 
+      this.api.node.getNodeJobs(id).subscribe(result => {
+        let fakeData = result.map((job, index) => {
+          console.log(job);
+          if (index % 3 == 0) {
+            job.type = "Diagnostic";
+          }
+          else {
+            job.type = "ClusRun";
+          }
+          job.state = "Finished";
+          job.progress = "100%";
+          return job;
+        });
+        this.dataSource.data = fakeData;
+        console.log(this.dataSource);
+      });
+
+
     });
   }
 
@@ -236,6 +254,24 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     if (this.historyLoop) {
       Loop.stop(this.historyLoop);
     }
+  }
+
+
+  private dataSource = new MatTableDataSource();
+  // private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'actions'];
+  private displayedColumns = ['id', 'content', 'type', 'state', 'progress'];
+
+  getJobContent(type) {
+    if (type == 'ClusRun') {
+      return "This should show clusrun command";
+    }
+    else if (type == 'Diagnostic') {
+      return "mpi-pingpong or other diagnostics name";
+    }
+  }
+
+  getLink(jobId) {
+    return `${jobId}`;
   }
 
   dateFormat(value): string {
