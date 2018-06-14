@@ -744,7 +744,7 @@ paths:
       operationId: createClusrunJob
       parameters:
         - in: body
-          name: result
+          name: job
           schema:
             $ref: '#/definitions/Job'
       responses:
@@ -771,7 +771,7 @@ paths:
       operationId: cancelClusrunJob
       parameters:
         - in: body
-          name: result
+          name: job
           schema:
             $ref: '#/definitions/JobUpdate'
       responses:
@@ -876,7 +876,7 @@ paths:
       operationId: createDiagnosticJob
       parameters:
         - in: body
-          name: result
+          name: job
           schema:
             $ref: '#/definitions/Job'
       responses:
@@ -904,7 +904,7 @@ paths:
       operationId: cancelDiagnosticJob
       parameters:
         - in: body
-          name: result
+          name: job
           schema:
             $ref: '#/definitions/JobUpdate'
       responses:
