@@ -104,7 +104,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         }
 
         [HttpGet("testnewjob/{nodes}")]
-        public async T.Task<int> TestCreateJobAsync(string nodes, CancellationToken token)
+        public async T.Task<Job> TestCreateJobAsync(string nodes, CancellationToken token)
         {
             var job = new Job()
             {
@@ -129,8 +129,8 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 return new BadRequestObjectResult("The DiagnosticTest field should be specified.");
             }
 
-            int id = await this.provider.CreateJobAsync(job, token);
-            return new CreatedResult($"/v1/diagnostics/{id}", null);
+            job = await this.provider.CreateJobAsync(job, token);
+            return new CreatedResult($"/v1/diagnostics/{job.Id}", job);
         }
 
         // PATCH v1/diagnostics/5

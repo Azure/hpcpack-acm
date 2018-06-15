@@ -106,8 +106,8 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 return new BadRequestObjectResult("The CommandLine field should be specified.");
             }
 
-            int id = await this.provider.CreateJobAsync(job, token);
-            return new CreatedResult($"/v1/clusrun/{id}", null);
+            job = await this.provider.CreateJobAsync(job, token);
+            return new CreatedResult($"/v1/clusrun/{job.Id}", job);
         }
 
         // PATCH v1/clusrun/5
@@ -145,8 +145,8 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 Type = JobType.ClusRun,
             };
 
-            var id = await this.provider.CreateJobAsync(job, token);
-            return new CreatedResult($"/v1/clusrun/{id}", null);
+            job = await this.provider.CreateJobAsync(job, token);
+            return new CreatedResult($"/v1/clusrun/{job.Id}", job);
         }
     }
 }
