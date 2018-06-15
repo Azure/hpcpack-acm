@@ -1,4 +1,6 @@
 FROM evancui/hpcacm:latest as final
 RUN echo "\ndaemon off;" >> /etc/nginx/nginx.conf
-ENTRYPOINT ["nginx"]
+COPY startportal.sh /app/portal/startportal.sh
+WORKDIR /app/portal
+ENTRYPOINT ["./startportal.sh"]
 
