@@ -422,7 +422,7 @@
             }
         }
 
-        public async T.Task<int> CreateJobAsync(Job job, CancellationToken token)
+        public async T.Task<Job> CreateJobAsync(Job job, CancellationToken token)
         {
             this.logger.LogInformation("New job called. creating job");
             var jobTable = this.utilities.GetJobsTable();
@@ -448,7 +448,7 @@
             await jobEventQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(jobMsg)), null, null, null, null, token);
             this.logger.LogInformation("Create job dispatch message success.");
 
-            return job.Id;
+            return job;
         }
     }
 }
