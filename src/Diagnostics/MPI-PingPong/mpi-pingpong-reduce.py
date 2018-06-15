@@ -6,8 +6,8 @@ def main():
     tasks = stdin['Tasks']
     taskResults = stdin['TaskResults']
 
-    nodes = job['TargetNodes']
-    nodesNumber = len(nodes)
+    allNodes = job['TargetNodes']
+    nodesNumber = len(allNodes)
     if nodesNumber < 2:
         printErrorAsJson('The number of nodes is less than 2.')
         return -1
@@ -18,27 +18,6 @@ def main():
         return -1
     if len(taskResults) != expectedTaskCount:
         printErrorAsJson('Task result count ' + str(len(tasks)) + ' is not correct, should be ' + str(expectedTaskCount) + '.')
-        return -1
-
-    taskId2nodePair = {}
-    try:
-        for task in tasks:
-            nodePair = task['CustomizedData']
-            # filter out tasks running on one node
-            if ',' in nodePair:
-                taskId2nodePair[task['Id']] = nodePair
-    except Exception as e:
-        printErrorAsJson('Failed to parse tasks. ' + str(e))
-        return -1
-                
-    messages = {}
-    try:
-        for taskResult in taskResults:
-            taskId = taskResult['TaskId']
-            if taskId in taskId2nodePair:
-                messages[taskId2nodePair[taskId]] = json.loads(taskResult['Message'])
-    except Exception as e:
-        printErrorAsJson('Failed to parse task results. ' + str(e))
         return -1
 
     latencyThreshold = 1000
@@ -58,17 +37,87 @@ def main():
                         continue
                     if argument['name'].lower() == 'Packet size'.lower():
                         packetSize = 2**int(argument['value'])
+                        # if packetSize > somevalue, the Latency is invalid
                         continue
     except Exception as e:
         printErrorAsJson('Failed to parse arguments. ' + str(e))
         return -1
+    
+    taskStateFinished = 3
+    taskStateFailed = 4
+    
+    taskId2nodePair = {}
+    badPairs = []
+    tasksForStatistics = set()
+    try:
+        for task in tasks:
+            taskId = task['Id']
+            state = task['State']
+            nodePair = task['CustomizedData']
+            taskId2nodePair[taskId] = nodePair
+            if ',' in nodePair:
+                if state == taskStateFailed:
+                    badPairs.append(nodePair)
+                if state == taskStateFinished:
+                    tasksForStatistics.add(taskId)
+    except Exception as e:
+        printErrorAsJson('Failed to parse tasks. ' + str(e))
+        return -1
 
-    result = {}
-    for item in ["Latency", "Throughput"]:
+    messages = {}
+    failedNodes = []
+    try:
+        for taskResult in taskResults:
+            taskId = taskResult['TaskId']
+            nodeName = taskResult['NodeName']
+            nodePair = taskId2nodePair[taskId]
+            exitCode = taskResult['ExitCode']
+            message = json.loads(taskResult['Message'])
+            detail = message['Detail']
+            if taskId in tasksForStatistics:
+                messages[taskId2nodePair[taskId]] = message
+            if exitCode != 0:
+                failedNode = {
+                    'NodeName':nodeName,
+                    'NodePair':nodePair,
+                    'ExitCode':exitCode,
+                    'Detail':detail
+                    }
+                failedNodes.append(failedNode)
+    except Exception as e:
+        printErrorAsJson('Failed to parse task results. ' + str(e))
+        return -1
+
+    goodPairs = list(messages.keys())
+    goodNodesGroups = getGroupsOfFullConnectedNodes(goodPairs)
+    largestGoodNodesGroups = [group for group in goodNodesGroups if len(group) == max([len(groupInner) for groupInner in goodNodesGroups])]
+    goodNodesGroupsWithMasters = getGroupsWithMasters(goodPairs)
+    largestGoodNodesGroupsWithMasters = [group for group in goodNodesGroupsWithMasters if len(group["Nodes"]) == max([len(groupInner["Nodes"]) for groupInner in goodNodesGroupsWithMasters])]
+    goodNodes = set([node for group in goodNodesGroups for node in group])
+    badNodes = [node for node in allNodes if node not in goodNodes]
+    goodNodes = list(goodNodes)
+
+    result = {
+        'GoodPairs':goodPairs,
+        'GoodNodesGroups':goodNodesGroups,
+        'GoodNodesGroupsWithMasters':goodNodesGroupsWithMasters,
+        'LargestGoodNodesGroups':largestGoodNodesGroups,
+        'LargestGoodNodesGroupsWithMasters':largestGoodNodesGroupsWithMasters,
+        'GoodNodes':goodNodes,
+        'BadPairs':badPairs,
+        'FailedNodes':failedNodes,
+        'BadNodes':badNodes
+        }
+
+    histogramSize = min(nodesNumber, 10)
+    statisticsItems = ["Throughput"]
+    if packetSize < 65536:
+        statisticsItems.append("Latency")
+    for item in statisticsItems:
         data = [messages[pair][item] for pair in messages]
         golbalMin = numpy.amin(data)
         golbalMax = numpy.amax(data)
-        histogram = [list(array) for array in numpy.histogram(data, bins=nodesNumber, range=(golbalMin, golbalMax))]
+        histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(golbalMin, golbalMax))]
 
         result[item] = {}
         if item == "Latency":
@@ -101,9 +150,9 @@ def main():
         result[item]["Result"]["Variability"] = getVariability(data)
 
         result[item]["ResultByNode"] = {}
-        for node in nodes:
+        for node in goodNodes:
             data = [messages[pair][item] for pair in messages if node in pair.split(',')]
-            histogram = [list(array) for array in numpy.histogram(data, bins=nodesNumber, range=(golbalMin, golbalMax))]
+            histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(golbalMin, golbalMax))]
             if item == "Latency":            
                 badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold and node in pair.split(',')]
                 bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
@@ -122,9 +171,55 @@ def main():
             result[item]["ResultByNode"][node]["Median"] = numpy.median(data)
             result[item]["ResultByNode"][node]["Standard_deviation"] = numpy.std(data)
             result[item]["ResultByNode"][node]["Variability"] = getVariability(data)
-
+            
     print(json.dumps(result))
     return 0
+
+def getNodeMap(pairs):
+    connectedNodesOfNode = {}
+    for pair in pairs:
+        nodes = pair.split(',')
+        connectedNodesOfNode.setdefault(nodes[0], set()).add(nodes[1])
+        connectedNodesOfNode.setdefault(nodes[1], set()).add(nodes[0])
+    return connectedNodesOfNode
+
+def getGroupsWithMasters(pairs):
+    connectedNodesOfNode = getNodeMap(pairs)
+    for node in connectedNodesOfNode:
+        connectedNodesOfNode[node].add(node)
+    groupsWithMasters = []
+    while connectedNodesOfNode:
+        master, nodes = connectedNodesOfNode.popitem()
+        masters = [node for node in connectedNodesOfNode if connectedNodesOfNode[node] == nodes]
+        for node in masters:
+            del connectedNodesOfNode[node]
+        masters.append(master)
+        groupsWithMasters.append({
+            "Nodes":list(nodes),
+            "Masters":masters
+            })
+    return groupsWithMasters
+
+def getGroupsOfFullConnectedNodes(pairs):
+    connectedNodesOfNode = getNodeMap(pairs)
+    nodes = list(connectedNodesOfNode.keys())
+    groups = [set([nodes[0]])]
+    for node in nodes[1:]:
+        newGroups = []
+        for group in groups:
+            newGroup = group & connectedNodesOfNode[node]
+            newGroup.add(node)
+            addToGroups(newGroups, newGroup)
+        for group in newGroups:
+            addToGroups(groups, group)
+    return [list(group) for group in groups]
+
+def addToGroups(groups, new):
+    for old in groups:
+        if old <= new or old >= new:
+            old |= new
+            return
+    groups.append(new)
 
 def renderHistogram(histogram):
     binEdges = histogram[1]

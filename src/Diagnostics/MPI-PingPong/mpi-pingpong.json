@@ -1,4 +1,4 @@
-{
+﻿{
     "DispatchScript":{
         "ContainerName":"diagtestscripts",
         "Name":"mpi-pingpong-map.py"
@@ -10,40 +10,26 @@
     "description":"Run Intel MPI Benchmark – PingPong between all node pairs in selected nodes. The latency and throughput will be reported. More refer to https://software.intel.com/en-us/imb-user-guide-pingpong-pingpongspecificsource-pingponganysource",
     "parameters":[
         {
-            "name":"Run with RDMA",
-            "description":"Select YES if the Linux nodes are RDMA-capable, otherwise NO.",
+            "name":"Aim",
+            "description":".",
             "type":"select",
-            "options":["YES", "NO"],
-            "defaultValue":"NO",
+            "options":["Default", "Latency", "Throughput"],
+            "defaultValue":"Default",
             "whenChanged":
             {
-                "YES":
+                "Default":
                 {
-                    "Latency threshold": 1000,
-                    "Throughput threshold": 1000,
+                    "Packet size": 0,
                 },
-                "NO":
+                "Latency":
                 {
-                    "Latency threshold": 1000,
-                    "Throughput threshold": 100,
-                },                
+                    "Packet size": 1,
+                },
+                "Throughput":
+                {
+                    "Packet size": 20,
+                },
             }
-        },
-        {
-            "name":"Latency threshold",
-            "description":"Specify the threshold of latency to determine if test result is good. The value should be a number larger than 0.",
-            "type":"number",
-            "min":0,
-            "max":10000,
-            "defaultValue":1000
-        },
-        {
-            "name":"Throughput threshold",
-            "description":"Specify the threshold of throughput to determine if test result is good. The value should be a number larger than 0.",
-            "type":"number",
-            "min":0,
-            "max":10000,
-            "defaultValue":100
         },
         {
             "name":"Packet size",
@@ -57,7 +43,7 @@
             "name":"Mode",
             "description":"Select the way to run tasks.",
             "type":"select",
-            "options":["Tournament", "Serial"],
+            "options":["Tournament", "Serial", "Jumble"],
             "defaultValue":"Tournament",
         },
     ],

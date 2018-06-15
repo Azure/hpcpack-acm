@@ -83,6 +83,7 @@ def main():
 
     # Create task for every node to run Intel MPI Benchmark - PingPong between processors within each node.
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
+    
     mpicommand = "mpirun -env I_MPI_SHM_LMT=shm" + rdmaOption + " IMB-MPI1 pingpong"
     parseResult = "tail -n29 | head -n25"
     columns = "$3,$4"
@@ -156,7 +157,7 @@ def main():
                 task["Node"] = nodepair[0]
                 task["CustomizedData"] = nodes
                 #task["EnvironmentVariables"] = {"CCP_NODES":"2 "+" 1 ".join(nodepair)+" 1"}
-                tasks.append(task)                
+                tasks.append(task)  
     else:
         id = 1
         nodepairs = []
