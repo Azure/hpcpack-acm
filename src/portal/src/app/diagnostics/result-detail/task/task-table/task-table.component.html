@@ -43,7 +43,7 @@
   <ng-container matColumnDef="detail">
     <mat-header-cell *matHeaderCellDef>Detail</mat-header-cell>
     <mat-cell *matCellDef="let task">
-      <button mat-icon-button (click)="showDetail(task.jobId, task.id)">
+      <button mat-icon-button (click)="showDetail(task.jobId, task.id, task.state)">
         <i class="material-icons">settings_ethernet</i>
       </button>
     </mat-cell>
