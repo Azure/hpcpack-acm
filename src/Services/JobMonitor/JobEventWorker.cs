@@ -20,17 +20,24 @@
     internal class JobEventWorker : TaskItemWorker, IWorker
     {
         private readonly JobEventWorkerOptions options;
-        private readonly Dictionary<string, Dictionary<JobType, IJobEventProcessor>> processors;
-        private readonly List<IJobEventProcessor> processorsList;
+        private readonly Dictionary<string, Type> ActionHandlerTypes = new Dictionary<string, Type>()
+        {
+            { "cancel", typeof(JobCanceler) },
+            { "progress", typeof(JobProgressHandler) },
+            { "finish", typeof(JobFinisher) },
+            { "dispatch", typeof(JobDispatcher) },
+        };
 
-        public JobEventWorker(IOptions<JobEventWorkerOptions> options, IEnumerable<IJobEventProcessor> processors)
+        private readonly Dictionary<JobType, Type> JobTypeHandlers = new Dictionary<JobType, Type>()
+        {
+            { JobType.ClusRun, typeof(ClusrunJobHandler) },
+            { JobType.Diagnostics, typeof(DiagnosticsJobHandler) },
+        };
+
+        public JobEventWorker(IOptions<JobEventWorkerOptions> options)
            : base(options.Value)
         {
             this.options = options.Value;
-
-            this.processors = processors.GroupBy(p => p.EventVerb)
-                .ToDictionary(g => g.Key, g => g.ToDictionary(e => e.RestrictedJobType, e => e));
-            this.processorsList = processors.ToList();
         }
 
         private CloudTable jobsTable;
@@ -42,8 +49,6 @@
             this.Source = new QueueTaskItemSource(
                 await this.Utilities.GetOrCreateJobEventQueueAsync(token),
                 this.options);
-
-            this.processorsList.OfType<ServerObject>().ToList().ForEach(so => so.CopyFrom(this));
 
             await base.InitializeAsync(token);
         }
@@ -66,9 +71,17 @@
                 {
                     try
                     {
-                        if (this.processors.TryGetValue(message.EventVerb, out var verbProcessors) && verbProcessors.TryGetValue(message.Type, out var processor))
+                        IJobTypeHandler typeHandler;
+                        IJobActionHandler actionHandler;
+                        if (this.ActionHandlerTypes.TryGetValue(message.EventVerb, out Type actionType) 
+                            && this.JobTypeHandlers.TryGetValue(message.Type, out Type jobType)
+                            && (null != (actionHandler = (IJobActionHandler)this.Provider.GetService(actionType)))
+                            && (null != (typeHandler = (IJobTypeHandler)this.Provider.GetService(jobType))))
                         {
-                            await processor.ProcessAsync(job, message, token);
+                            ((ServerObject)actionHandler).CopyFrom(this);
+                            ((ServerObject)typeHandler).CopyFrom(this);
+                            actionHandler.JobTypeHandler = typeHandler;
+                            await actionHandler.ProcessAsync(job, message, token);
                             this.Logger.LogInformation("Processed {0} job {1} {2}", job.Type, job.Id, job.State);
                         }
                         else

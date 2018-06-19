@@ -14,15 +14,10 @@
     using System.Threading;
     using T = System.Threading.Tasks;
 
-    public abstract class JobFinisher : ServerObject, IJobEventProcessor
+    class JobFinisher : JobActionHandlerBase
     {
-        public abstract JobType RestrictedJobType { get; }
-        public string EventVerb { get => "finish"; }
-
-        public async T.Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token)
+        public override async T.Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token)
         {
-            Debug.Assert(job.Type == this.RestrictedJobType, "Job type mismatch");
-
             var jobTable = this.Utilities.GetJobsTable();
 
             if (job.State != JobState.Finishing)
@@ -54,7 +49,7 @@
                 .Where(t => t.CustomizedData != Task.EndTaskMark)
                 .ToList();
 
-            await this.AggregateTasksAsync(job, allTasks, allTaskResults, token);
+            await this.JobTypeHandler.AggregateTasksAsync(job, allTasks, allTaskResults, token);
 
             if (job.State == JobState.Finishing)
             {
@@ -82,7 +77,5 @@
                     null, null, null, null, token);
             }
         }
-
-        public abstract T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeClusterTaskInformation> taskResults, CancellationToken token);
     }
 }

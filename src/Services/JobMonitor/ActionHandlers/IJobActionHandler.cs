@@ -7,10 +7,9 @@
     using System.Threading;
     using T = System.Threading.Tasks;
 
-    interface IJobEventProcessor
+    interface IJobActionHandler
     {
-        JobType RestrictedJobType { get; }
-        string EventVerb { get; }
+        IJobTypeHandler JobTypeHandler { get; set; }
         T.Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token);
     }
 }

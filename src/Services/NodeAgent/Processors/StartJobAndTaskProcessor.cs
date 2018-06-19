@@ -33,9 +33,11 @@
 
         private async T.Task<bool> PersistTaskResult(string resultKey, object result, CancellationToken token)
         {
-            if (!await this.jobsTable.InsertOrReplaceAsJsonAsync(this.jobPartitionKey, resultKey, result, token)) { return false; }
+            var tableResult = await this.jobsTable.InsertOrReplaceAsJsonAsync(this.jobPartitionKey, resultKey, result, token);
+            if (!tableResult.IsSuccessfulStatusCode()) { return false; }
             this.Logger.LogInformation("Saved task result {0} to jobs table", resultKey);
-            if (!await this.nodesTable.InsertOrReplaceAsJsonAsync(this.nodePartitionKey, resultKey, result, token)) { return false; }
+            tableResult = await this.nodesTable.InsertOrReplaceAsJsonAsync(this.nodePartitionKey, resultKey, result, token);
+            if (!tableResult.IsSuccessfulStatusCode()) { return false; }
             this.Logger.LogInformation("Saved task result {0} to nodes table", resultKey);
             return true;
         }
