@@ -427,7 +427,7 @@
             this.logger.LogInformation("New job called. creating job");
             var jobTable = this.utilities.GetJobsTable();
 
-            job.Id = await this.utilities.GetNextId("Jobs", job.Type.ToString().ToLowerInvariant(), token);
+            job.Id = await this.utilities.GetNextId("Jobs", "Jobs",token);
             this.logger.LogInformation("generated new job id {0}", job.Id);
             var rowKey = utilities.JobEntryKey;
 

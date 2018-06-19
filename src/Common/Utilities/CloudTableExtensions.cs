@@ -60,17 +60,19 @@
             var result = await t.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(partition, key), null, null, token);
             return result.Result as JsonTableEntity;
         }
-        public static async Task<bool> InsertOrReplaceAsJsonStringAsync(this CloudTable t, string partition, string key, string jsonString, CancellationToken token)
+        public static async Task<TableResult> InsertOrReplaceAsJsonStringAsync(this CloudTable t, string partition, string key, string jsonString, CancellationToken token)
         {
             var entity = new JsonTableEntity(partition, key, jsonString);
-            var result = await t.ExecuteAsync(TableOperation.InsertOrReplace(entity), null, null, token);
-            return result.IsSuccessfulStatusCode();
+            return await t.InsertOrReplaceAsync(entity, token);
         }
-        public static async Task<bool> InsertOrReplaceAsJsonAsync(this CloudTable t, string partition, string key, object obj, CancellationToken token)
+        public static async Task<TableResult> InsertOrReplaceAsJsonAsync(this CloudTable t, string partition, string key, object obj, CancellationToken token)
         {
             var entity = new JsonTableEntity(partition, key, obj);
-            var result = await t.ExecuteAsync(TableOperation.InsertOrReplace(entity), null, null, token);
-            return result.IsSuccessfulStatusCode();
+            return await t.InsertOrReplaceAsync(entity, token);
+        }
+        public static async Task<TableResult> InsertOrReplaceAsync(this CloudTable t, JsonTableEntity entity, CancellationToken token)
+        {
+            return await t.ExecuteAsync(TableOperation.InsertOrReplace(entity), null, null, token);
         }
     }
 }
