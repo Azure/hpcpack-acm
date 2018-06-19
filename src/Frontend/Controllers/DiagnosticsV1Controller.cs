@@ -124,9 +124,14 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> CreateJobAsync([FromBody] Job job, CancellationToken token)
         {
             job.Type = JobType.Diagnostics;
-            if (job.DiagnosticTest == null)
+            if (job.DiagnosticTest?.Name == null || job.DiagnosticTest?.Category == null)
             {
                 return new BadRequestObjectResult("The DiagnosticTest field should be specified.");
+            }
+
+            if (job.TargetNodes == null || job.TargetNodes.Length == 0)
+            {
+                return new BadRequestObjectResult("The TargetNodes shouldn't be empty.");
             }
 
             job = await this.provider.CreateJobAsync(job, token);
