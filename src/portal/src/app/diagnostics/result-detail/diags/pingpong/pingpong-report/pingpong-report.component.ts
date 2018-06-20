@@ -6,7 +6,7 @@ import { TableSettingsService } from '../../../../../services/table-settings.ser
 @Component({
   selector: 'app-pingpong-report',
   templateUrl: './pingpong-report.component.html',
-  styleUrls: ['./pingpong-report.component.css']
+  styleUrls: ['./pingpong-report.component.scss']
 })
 export class PingPongReportComponent implements OnInit {
   @Input() result: any;
@@ -51,7 +51,7 @@ export class PingPongReportComponent implements OnInit {
     }
   }
 
-  isError() {
+  get hasError() {
     return this.result.aggregationResult != undefined && this.result.aggregationResult.Error !== undefined;
   }
 

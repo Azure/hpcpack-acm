@@ -4,13 +4,13 @@
   <button mat-raised-button [disabled]="hasNoSelection()">Cancel</button> -->
 </div>
 
-<div class="filter">
+<!-- <div class="filter">
   <mat-form-field>
     <input #filter matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter">
     <mat-hint>Filter results by test name or state or category</mat-hint>
     <mat-hint align="end">{{dataSource.filteredData.length}} results</mat-hint>
   </mat-form-field>
-</div>
+</div> -->
 <mat-progress-bar *ngIf="!hasReceivedData && scrollDirection == 'up'" mode="buffer"></mat-progress-bar>
 <div class="diags-table" data-infinite-scroll debounce [infiniteScrollDistance]="scrollDistance" [infiniteScrollUpDistance]="scrollUpDistance"
   [infiniteScrollThrottle]="throttle" (scrolled)="onScrollDown($event)" (scrolledUp)="onUp()" (window:scroll)="onWndScroll()">
@@ -35,7 +35,10 @@
     <ng-container matColumnDef="state">
       <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
       <mat-cell *matCellDef="let result">
-        <i class="material-icons" [ngClass]="result.state" matTooltip="{{result.state}}">{{setIcon(result.state)}}</i>
+        <div class="state">
+          <i class="material-icons" [ngClass]="result.state">{{setIcon(result.state)}}</i>
+          {{result.state}}
+        </div>
       </mat-cell>
     </ng-container>
 
@@ -67,17 +70,23 @@
 
     <ng-container matColumnDef="progress">
       <mat-header-cell *matHeaderCellDef> Progress </mat-header-cell>
-      <mat-cell *matCellDef="let result" matTooltip="{{result.progress | percent}}">
+      <mat-cell *matCellDef="let result">
         <mat-progress-bar mode="determinate" [value]="result.progress"></mat-progress-bar>
+        {{result.progress | percent}}
       </mat-cell>
     </ng-container>
 
-    <ng-container matColumnDef="events">
-      <mat-header-cell *matHeaderCellDef></mat-header-cell>
+    <ng-container matColumnDef="createdAt">
+      <mat-header-cell *matHeaderCellDef>Created</mat-header-cell>
       <mat-cell *matCellDef="let result">
-        <button mat-icon-button matTooltip="Events" (click)="showEvents(result)">
-          <i class="material-icons">event_note</i>
-        </button>
+        {{result.createdAt | date:'yyyy-MM-dd hh:mm:ss'}}
+      </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="lastChangedAt">
+      <mat-header-cell *matHeaderCellDef>Last Changed</mat-header-cell>
+      <mat-cell *matCellDef="let result">
+        {{result.lastChangedAtAt | date:'yyyy-MM-dd hh:mm:ss'}}
       </mat-cell>
     </ng-container>
 

@@ -7,7 +7,7 @@
       <mat-tab label="Throughput" *ngIf="throughputData">
         <pingpong-overview-result [result]="throughputData"></pingpong-overview-result>
       </mat-tab>
-      <mat-tab label="Error" *ngIf="isError()">
+      <mat-tab label="Error" *ngIf="hasError">
         <div class="error-message">
           {{result.aggregationResult.Error}}
         </div>

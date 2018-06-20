@@ -1,0 +1,64 @@
+@import "../../stylesheets/mixin.scss";
+@import "../../stylesheets/table.scss";
+.id {
+    text-decoration: underline #3f51b5;
+    color: #3f51b5
+}
+
+.id:hover {
+    cursor: pointer;
+}
+
+mat-table {
+    margin-top: 1em;
+}
+
+.mat-column-progress {
+    flex: 0.8;
+}
+
+// .mat-column-result {
+//     flex: 0.3;
+// }
+.loading {
+    display: flex;
+    justify-content: center;
+    margin: 20px auto;
+}
+
+.diags-table {
+    height: 100%;
+}
+
+.up-to-top {
+    position: fixed;
+    z-index: 200;
+    width: 2.5em;
+    height: 2.5em;
+    background: rgba(0, 0, 0, .08);
+    bottom: 1em;
+    right: 1em;
+}
+
+.up-to-top:hover {
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.upward {
+    position: absolute;
+    width: 1.4em;
+    height: 1.4em;
+    font-size: 1.8em;
+    left: 0;
+    top: 0.3em;
+    bottom: 0;
+    right: 0;
+    margin: auto;
+    text-align: center;
+    color: rgba(63, 81, 181, 0.7)
+}
+
+.upward:hover {
+    color: #FFF;
+}

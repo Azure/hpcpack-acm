@@ -5,29 +5,28 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { ApiService, Loop } from '../../services/api.service';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { TableSettingsService } from '../../services/table-settings.service';
-import { DiagEventsComponent } from './diag-events/diag-events.component';
-import { NUMBER_TYPE } from '@angular/compiler/src/output/output_ast';
-import { last } from 'rxjs/operators';
 
 @Component({
   selector: 'diagnostics-results',
   templateUrl: './result-list.component.html',
-  styleUrls: ['./result-list.component.css'],
+  styleUrls: ['./result-list.component.scss'],
 })
 export class ResultListComponent implements OnInit, OnDestroy {
   static customizableColumns = [
-    { name: 'test', displayName: 'Test', displayed: true },
+    // { name: 'test', displayName: 'Test', displayed: true },
+    { name: 'createdAt', displayName: 'Created', displayed: true },
     { name: 'diagnostic', displayName: 'Diagnostic', displayed: true },
     { name: 'category', displayName: 'Category', displayed: true },
-    { name: 'progress', displayName: 'Progress', displayed: true },
     { name: 'state', displayName: 'State', displayed: true },
+    { name: 'progress', displayName: 'Progress', displayed: true },
+    { name: 'lastChangedAt', displayName: 'Last Changed', displayed: true }
   ];
 
   private availableColumns;
 
   private dataSource = new MatTableDataSource();
   // private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'actions'];
-  private displayedColumns = ['id', 'test', 'diagnostic', 'category', 'progress', 'state'];
+  private displayedColumns = ['id', 'test', 'diagnostic', 'category', 'progress', 'state', 'createdAt', 'lastChangedAt'];
 
   private selection = new SelectionModel(true, []);
   private interval: number;
@@ -270,13 +269,6 @@ export class ResultListComponent implements OnInit, OnDestroy {
 
   applyFilter(text: string): void {
     this.dataSource.filter = text;
-  }
-
-  private showEvents(res) {
-    this.dialog.open(DiagEventsComponent, {
-      width: '98%',
-      data: { job: res }
-    });
   }
 
   getDisplayedColumns(): void {

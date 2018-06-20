@@ -1,7 +1,7 @@
 <div class="actions">
   <button mat-raised-button (click)="customizeTable()">Customize Columns...</button>
-  <button mat-raised-button [disabled]="hasNoSelection()">Rerun</button>
-  <button mat-raised-button [disabled]="hasNoSelection()">Cancel</button>
+  <!-- <button mat-raised-button [disabled]="hasNoSelection()">Rerun</button>
+  <button mat-raised-button [disabled]="hasNoSelection()">Cancel</button> -->
 </div>
 
 <mat-table #table [dataSource]="dataSource" infiniteScroll (scrolled)="onScroll()" id="table">
@@ -11,24 +11,26 @@
    columns are set as a property on the row definition, displayedColumns."
   -->
 
-  <ng-container matColumnDef="select">
-    <mat-header-cell *matHeaderCellDef>
+  <!-- <ng-container matColumnDef="select"> -->
+  <!-- <mat-header-cell *matHeaderCellDef>
       <mat-checkbox (change)="$event ? masterToggle() : null"
                     [checked]="selection.hasValue() && isAllSelected()"
                     [indeterminate]="false">
       </mat-checkbox>
-    </mat-header-cell>
-    <mat-cell *matCellDef="let node">
+    </mat-header-cell> -->
+  <!-- <mat-cell *matCellDef="let node">
       <mat-checkbox (click)="$event.stopPropagation()"
                     (change)="$event ? selection.toggle(node) : null"
                     [checked]="selection.isSelected(node)">
       </mat-checkbox>
     </mat-cell>
-  </ng-container>
+  </ng-container> -->
 
   <ng-container matColumnDef="id">
     <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
-    <mat-cell *matCellDef="let result"><a [routerLink]="result.id">{{result.id}}</a></mat-cell>
+    <mat-cell *matCellDef="let result">
+      <a [routerLink]="result.id">{{result.id}}</a>
+    </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="command">
@@ -38,37 +40,46 @@
 
   <ng-container matColumnDef="state">
     <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
-    <mat-cell *matCellDef="let result"> {{result.state | titlecase }} </mat-cell>
+    <mat-cell *matCellDef="let result">
+      <div class="state">
+        <i class="material-icons" [ngClass]="result.state">{{setIcon(result.state)}}</i>
+        {{result.state | titlecase}}
+      </div>
+    </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="progress">
     <mat-header-cell *matHeaderCellDef> Progress </mat-header-cell>
-    <mat-cell *matCellDef="let result"> {{result.progress | percent}} </mat-cell>
+    <!-- <mat-cell *matCellDef="let result"> {{result.progress | percent}} </mat-cell> -->
+    <mat-cell *matCellDef="let result">
+      <mat-progress-bar mode="determinate" [value]="result.progress"></mat-progress-bar>
+      {{result.progress | percent}}
+    </mat-cell>
   </ng-container>
 
-  <ng-container matColumnDef="startedAt">
-    <mat-header-cell *matHeaderCellDef> Started At </mat-header-cell>
-    <mat-cell *matCellDef="let result"> {{result.startedAt | date:'yyyy-MM-dd HH:mm:ss'}} </mat-cell>
+  <ng-container matColumnDef="createdAt">
+    <mat-header-cell *matHeaderCellDef> Created </mat-header-cell>
+    <mat-cell *matCellDef="let result"> {{result.createdAt | date:'yyyy-MM-dd HH:mm:ss'}} </mat-cell>
   </ng-container>
 
-  <ng-container matColumnDef="updatedAt">
-    <mat-header-cell *matHeaderCellDef> Updated At </mat-header-cell>
-    <mat-cell *matCellDef="let result"> {{result.updatedAt | date:'yyyy-MM-dd HH:mm:ss'}} </mat-cell>
+  <ng-container matColumnDef="lastChangedAt">
+    <mat-header-cell *matHeaderCellDef> Last Changed </mat-header-cell>
+    <mat-cell *matCellDef="let result"> {{result.lastChangedAtAt | date:'yyyy-MM-dd HH:mm:ss'}} </mat-cell>
   </ng-container>
 
-  <ng-container matColumnDef="actions">
+  <!-- <ng-container matColumnDef="actions">
     <mat-header-cell *matHeaderCellDef></mat-header-cell>
     <mat-cell *matCellDef="let node">
       <button mat-icon-button [matMenuTriggerFor]="appMenu" (click)="$event.stopPropagation(); select(node)">
         <i class="material-icons">more_horiz</i>
       </button>
     </mat-cell>
-  </ng-container>
+  </ng-container> -->
 
-  <mat-menu #appMenu="matMenu">
+  <!-- <mat-menu #appMenu="matMenu">
     <button mat-menu-item>Rerun</button>
     <button mat-menu-item>Cancel</button>
-  </mat-menu>
+  </mat-menu> -->
 
   <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
   <mat-row *matRowDef="let result; columns: displayedColumns;" (click)="selection.toggle(result)"></mat-row>
@@ -80,6 +91,7 @@
 
 <div class="up-to-top">
   <!-- It seems a known issue about hash in URL. Anyway, it works here except a console error. Just ignore it. -->
-  <a href="#table"><i class="material-icons upward">arrow_upward</i></a>
+  <a href="#table">
+    <i class="material-icons upward">arrow_upward</i>
+  </a>
 </div>
-
