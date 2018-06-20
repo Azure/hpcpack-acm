@@ -1,5 +1,4 @@
 import { async, ComponentFixture, TestBed, inject } from '@angular/core/testing';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { TaskDetailComponent } from './task-detail.component';
 import { of } from 'rxjs/observable/of';
 import { MaterialsModule } from '../../../../materials.module';
@@ -11,7 +10,7 @@ import { ApiService } from '../../../../services/api.service';
 class MatDialogModuleMock { }
 
 class ApiServiceStub {
-  static result = { nodeName: "testNode", message: { Latency: 513.43, Throughput: 337.58, Detail: "test \n test \n" }, primaryTask: true };
+  static result = { nodeName: "testNode", message: { Latency: 513.43, Throughput: 337.58, Detail: "test \n test \n", Time: 3.7 }, primaryTask: true };
 
   diag = {
     getDiagTaskResult: (jobId: any, taskId: any) => of(ApiServiceStub.result)
@@ -28,7 +27,7 @@ fdescribe('TaskDetailComponent', () => {
       imports: [MaterialsModule, MatDialogModule, NoopAnimationsModule],
       providers: [
         { provide: MatDialogRef, useClass: MatDialogModuleMock },
-        { provide: MAT_DIALOG_DATA, useValue: { jobId: 1, taskId: 1 } },
+        { provide: MAT_DIALOG_DATA, useValue: { jobId: 1, taskId: 1, taskState: 'Finished' } },
         { provide: ApiService, useClass: ApiServiceStub }
       ]
     })
@@ -52,6 +51,6 @@ fdescribe('TaskDetailComponent', () => {
     let text = details[0].textContent;
     expect(text).toEqual("testNode");
     text = details[1].textContent;
-    expect(text).toEqual("513.43 us");
+    expect(text).toEqual("true");
   });
 });
