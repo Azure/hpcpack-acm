@@ -106,6 +106,11 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 return new BadRequestObjectResult("The CommandLine field should be specified.");
             }
 
+            if (job.TargetNodes == null || job.TargetNodes.Length == 0)
+            {
+                return new BadRequestObjectResult("The TargetNodes shouldn't be empty.");
+            }
+
             job = await this.provider.CreateJobAsync(job, token);
             return new CreatedResult($"/v1/clusrun/{job.Id}", job);
         }
@@ -120,7 +125,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         }
 
         [HttpGet("testcanceljob/{id}")]
-        public async T.Task<IActionResult> TestCreateJobAsync(int id, CancellationToken token)
+        public async T.Task<IActionResult> TestCancelJobAsync(int id, CancellationToken token)
         {
             var job = new Job()
             {

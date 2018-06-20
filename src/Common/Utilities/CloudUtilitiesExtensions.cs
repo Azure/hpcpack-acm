@@ -30,21 +30,20 @@
             {
                 try
                 {
-                    var result = await idsTable.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(category, usage), null, null, token);
-
                     int currentId = 1;
-                    if (result.Result is JsonTableEntity id)
+                    var entity = await idsTable.RetrieveAsJsonAsync(category, usage, token);
+                    if (entity == null)
                     {
-                        currentId = id.GetObject<int>() + 1;
+                        entity = new JsonTableEntity() { PartitionKey = category, RowKey = usage, };
                     }
                     else
                     {
-                        id = new JsonTableEntity() { PartitionKey = category, RowKey = usage, };
+                        currentId = entity.GetObject<int>() + 1;
                     }
 
-                    id.JsonContent = JsonConvert.SerializeObject(currentId);
+                    entity.PutObject(currentId);
 
-                    var updateResult = await idsTable.ExecuteAsync(TableOperation.InsertOrReplace(id), null, null, token);
+                    var updateResult = await idsTable.InsertOrReplaceAsync(entity, token);
 
                     // concurrency failure or conflict
                     if (updateResult.HttpStatusCode == 412 || updateResult.HttpStatusCode == 409)

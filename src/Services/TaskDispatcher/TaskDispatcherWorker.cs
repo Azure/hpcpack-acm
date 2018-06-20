@@ -121,7 +121,9 @@
                     }
 
                     // TODO: etag based update. check all insert or replace.
-                    if (!await this.jobsTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, childTaskKey, childTask, token))
+                    var tableResult = await this.jobsTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, childTaskKey, childTask, token);
+
+                    if (!tableResult.IsSuccessfulStatusCode())
                     {
                         await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                         {
@@ -159,6 +161,12 @@
                     this.Logger.LogWarning("Skip processing the task completion of {0}. Job is null = {1}, job.RequeueCount = {2}, message.RequeueCount = {3}", message.Id, job == null, job?.RequeueCount, message.RequeueCount);
                     return true;
                 }
+
+                var jobEventQueue = await this.Utilities.GetOrCreateJobEventQueueAsync(token);
+                await jobEventQueue.AddMessageAsync(
+                    new CloudQueueMessage(JsonConvert.SerializeObject(new JobEventMessage() { Id = job.Id, EventVerb = "progress", Type = job.Type })),
+                    null, null, null, null,
+                    token);
 
                 if (job.State == JobState.Running)
                 {

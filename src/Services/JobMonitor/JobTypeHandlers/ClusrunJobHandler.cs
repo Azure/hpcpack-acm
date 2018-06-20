@@ -1,23 +1,18 @@
 ﻿namespace Microsoft.HpcAcm.Services.JobMonitor
 {
     using Microsoft.HpcAcm.Common.Dto;
-    using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
-    using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Text;
     using System.Threading;
     using T = System.Threading.Tasks;
 
-    public class ClusRunJobDispatcher : JobDispatcher
+    class ClusrunJobHandler : IJobTypeHandler
     {
-        public override JobType RestrictedJobType { get => JobType.ClusRun; }
-
-        public override T.Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token)
+        public T.Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token)
         {
             return T.Task.FromResult(Enumerable.Range(1, job.TargetNodes.Length).Select(id =>
             {
@@ -26,6 +21,14 @@
                 t.Id = id;
                 return t;
             }).ToList());
+        }
+
+        public T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeClusterTaskInformation> taskResults, CancellationToken token)
+        {
+            var groups = tasks.GroupBy(t => t.State).Select(g => new { State = g.Key, Count = g.Count() });
+
+            job.AggregationResult = JsonConvert.SerializeObject(groups);
+            return T.Task.CompletedTask;
         }
     }
 }

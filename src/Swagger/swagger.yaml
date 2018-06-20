@@ -323,6 +323,10 @@ definitions:
         type: integer
         example: 1
         description: job id
+      name:
+        type: string
+        example: a job name
+        description: job name give by user
       commandLine:
         type: string
         example: ls -la
@@ -754,6 +758,8 @@ paths:
             Location:
               type: string
               description: the url for the newly created job
+          schema:
+            $ref: '#/definitions/Job'
 
   /clusrun/{id}:
     parameters:
@@ -886,7 +892,8 @@ paths:
             Location:
               type: string
               description: the url for the newly created job
-
+          schema:
+            $ref: '#/definitions/Job'
 
   /diagnostics/{id}:
     parameters:
