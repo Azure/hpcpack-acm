@@ -6,10 +6,10 @@
       <app-breadcrumb></app-breadcrumb>
     </div>
     <div class="right">
-      <a mat-icon-button matTooltip="Open Notifications" (click)="right.toggle()">
+      <!-- <a mat-icon-button matTooltip="Open Notifications" (click)="right.toggle()">
         <span class="notification-num" [ngClass]="{hidden: notifications.length == 0}">{{notifications.length}}</span>
         <i class="material-icons">event_note</i>
-      </a>
+      </a> -->
       <app-back-button></app-back-button>
     </div>
   </mat-toolbar>
@@ -22,9 +22,9 @@
         </a>
       </mat-nav-list>
     </mat-sidenav>
-    <mat-sidenav #right position="end" mode="over">
+    <!-- <mat-sidenav #right position="end" mode="over">
       <app-notification [items]="notifications"></app-notification>
-    </mat-sidenav>
+    </mat-sidenav> -->
     <mat-sidenav-content class="main-container">
       <router-outlet></router-outlet>
     </mat-sidenav-content>
