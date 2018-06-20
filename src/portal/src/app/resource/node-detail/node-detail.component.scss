@@ -1,0 +1,132 @@
+@import "../../stylesheets/mixin.scss";
+@import "../../stylesheets/info.scss";
+.detail-header {
+    @include display-flex(center, space-between);
+    font-family: $font-stack;
+    background: #FFF;
+    border-left: 4px solid #3f51b5;
+    padding: 1em;
+}
+
+.header-info {
+    @include display-flex(center);
+    margin-left: 0.3em;
+}
+
+.basic-info {
+    @include display-flex(flex-start)
+}
+
+.charts {
+    @include display-flex($flex-direction: column);
+    @include pd(0, 1em, 0, 1em);
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+.chart {
+    width: 100%;
+    margin-top: 1em;
+}
+
+.node-info {
+    @include display-flex($flex-direction: column);
+    @include pd(1em, 1.5em, 0, 0);
+    flex: 1;
+}
+
+.events {
+    @include display-flex();
+    .node-events {
+        flex: 1
+    }
+    .azure-events {
+        flex: 1
+    }
+}
+
+.title-icon {
+    font-size: 1em;
+    padding-right: 0.2em;
+}
+
+.node-name {
+    font-size: 1.2em;
+}
+
+.section {
+    margin-top: 1em;
+    border-top: 1px dashed;
+    padding-top: 1em;
+}
+
+chart {
+    height: 15em;
+}
+
+table {
+    width: 100%;
+}
+
+td {
+    height: 2em;
+    padding: 0 0.5em;
+    background-color: #e8e7e7;
+}
+
+.mat-column-type,
+.mat-column-status {
+    flex: 0.3;
+}
+
+.mat-column-resourceType {
+    flex: 0.6;
+}
+
+.mat-column-id {
+    padding-right: 0.5em;
+}
+
+.node-name {
+    margin-right: 1em;
+}
+
+.node-tag {
+    color: white;
+    margin: 0 0.4em 0 0;
+    padding: 0.1em 0.6em;
+    font-size: 0.8em;
+}
+
+.healthy-tag {
+    /* background: #009688; */
+    color: #009688;
+    border: 1px solid #009688;
+}
+
+.online-tag {
+    /* background: #3f51b5; */
+    color: #3f51b5;
+    border: 1px solid #3f51b5;
+}
+
+.error-tag {
+    /* background: #DC3636; */
+    color: #DC3636;
+    border: 1px solid #DC3636;
+}
+
+.offline-tag {
+    background: #9E9E9E;
+    color: #FFF;
+    border: 1px solid #9E9E9E;
+}
+
+hr {
+    border: none;
+    border-top: 1px dashed rgba(63, 81, 181, 0.5);
+    color: #fff;
+    background-color: #fff;
+    height: 1px;
+    width: 100%;
+}

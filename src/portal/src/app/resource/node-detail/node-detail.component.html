@@ -16,27 +16,24 @@
           </div>
           <chart #cpuChart type="line" [data]="cpuData" [options]="cpuOptions"></chart>
         </div>
-        <div class="chart">
+        <!-- <div class="chart">
           <div class="area-title">
-            <!-- <i class="material-icons title-icon">grid_on</i> -->
             <div>GPU</div>
           </div>
           <chart #gpuChart type="line" [data]="gpuData" [options]="gpuOptions"></chart>
         </div>
         <div class="chart">
           <div class="area-title">
-            <!-- <i class="material-icons title-icon">network_check</i> -->
             <div>NETWORK</div>
           </div>
           <chart type="line" [data]="networkData" [options]="networkOptions"></chart>
         </div>
         <div class="chart">
           <div class="area-title">
-            <!-- <i class="material-icons title-icon">hd</i> -->
             <div>DISK BYTES</div>
           </div>
           <chart type="line" [data]="diskData" [options]="diskOptions"></chart>
-        </div>
+        </div> -->
       </div>
       <div class="node-info">
         <div class="area-title">
@@ -166,7 +163,7 @@
       </div>
     </div>
   </mat-tab>
-  <mat-tab label="Jobs">
+  <!-- <mat-tab label="Jobs">
     <mat-table #table [dataSource]="dataSource">
       <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
       <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
@@ -174,7 +171,7 @@
       <ng-container matColumnDef="id">
         <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
         <mat-cell *matCellDef="let job">
-          <a [routerLink]="getLink(job.jobId)">{{job.jobId}}</a>
+          <a [routerLink]="getLink(job.jobId, job.type)">{{job.jobId}}</a>
         </mat-cell>
       </ng-container>
 
@@ -199,5 +196,5 @@
         <mat-cell *matCellDef="let job"> {{job.progress}} </mat-cell>
       </ng-container>
     </mat-table>
-  </mat-tab>
+  </mat-tab> -->
 </mat-tab-group>

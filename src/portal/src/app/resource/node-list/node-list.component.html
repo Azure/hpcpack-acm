@@ -25,15 +25,12 @@
 
   <ng-container matColumnDef="select">
     <mat-header-cell *matHeaderCellDef>
-      <mat-checkbox (change)="$event ? masterToggle() : null" 
-                    [checked]="selection.hasValue() && isAllSelected()" 
-                    [indeterminate]="false">
+      <mat-checkbox color="primary" (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()"
+        [indeterminate]="false">
       </mat-checkbox>
     </mat-header-cell>
     <mat-cell *matCellDef="let node">
-      <mat-checkbox color="primary" (click)="$event.stopPropagation()" 
-                                    (change)="$event ? selection.toggle(node) : null" 
-                                    [checked]="selection.isSelected(node)">
+      <mat-checkbox color="primary" (click)="$event.stopPropagation()" (change)="$event ? selection.toggle(node) : null" [checked]="selection.isSelected(node)">
       </mat-checkbox>
     </mat-cell>
   </ng-container>
@@ -56,8 +53,8 @@
   </ng-container>
   <ng-container matColumnDef="os">
     <mat-header-cell *matHeaderCellDef> OS </mat-header-cell>
-    <mat-cell *matCellDef="let node" [title]="node.nodeRegistrationInfo.distroInfo"> 
-      {{node.nodeRegistrationInfo.distroInfo}} 
+    <mat-cell *matCellDef="let node" [title]="node.nodeRegistrationInfo.distroInfo">
+      {{node.nodeRegistrationInfo.distroInfo}}
     </mat-cell>
   </ng-container>
 

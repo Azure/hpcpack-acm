@@ -12,7 +12,7 @@ import { TableSettingsService } from '../../services/table-settings.service';
 @Component({
   selector: 'resource-node-list',
   templateUrl: './node-list.component.html',
-  styleUrls: ['./node-list.component.css']
+  styleUrls: ['./node-list.component.scss']
 })
 export class NodeListComponent {
   private query = { filter: '' };

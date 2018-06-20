@@ -1,0 +1,40 @@
+@import "../../stylesheets/timeline.scss";
+.azure-event::before {
+    @include icon-style;
+}
+
+.Reboot::before {
+    @include icon-content('\e8ac', #12ba74);
+}
+
+.reboot {
+    color: #12ba74;
+}
+
+.Redeploy::before {
+    @include icon-content('\e2c3', #5C6BC0);
+}
+
+.redeploy {
+    color: #5C6BC0;
+}
+
+.Freeze::before {
+    @include icon-content('\e628', #ef6807);
+}
+
+.freeze {
+    color: #ef6807;
+}
+
+.Scheduled {
+    color: #0aa4af;
+    border: 1px solid #0aa4af;
+    @include pd(.1em, .3em, .1em, .3em);
+}
+
+.Started {
+    color: #0a57af;
+    border: 1px solid #0a57af;
+    @include pd(.1em, .3em, .1em, .3em);
+}
