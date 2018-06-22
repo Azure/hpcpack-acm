@@ -86,7 +86,7 @@
     <ng-container matColumnDef="lastChangedAt">
       <mat-header-cell *matHeaderCellDef>Last Changed</mat-header-cell>
       <mat-cell *matCellDef="let result">
-        {{result.lastChangedAtAt | date:'yyyy-MM-dd hh:mm:ss'}}
+        {{result.updatedAt | date:'yyyy-MM-dd hh:mm:ss'}}
       </mat-cell>
     </ng-container>
 
