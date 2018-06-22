@@ -49,7 +49,7 @@
                 .Where(t => t.CustomizedData != Task.EndTaskMark)
                 .ToList();
 
-            await this.JobTypeHandler.AggregateTasksAsync(job, allTasks, allTaskResults, token);
+            var aggregationResult = await this.JobTypeHandler.AggregateTasksAsync(job, allTasks, allTaskResults, token);
 
             if (job.State == JobState.Finishing)
             {
@@ -62,10 +62,12 @@
                 job.State = finalState;
             }
 
+            var jobOutputBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(job.Type, this.Utilities.JobAggregationResultKey, token);
+            await jobOutputBlob.AppendTextAsync(aggregationResult, Encoding.UTF8, null, null, null, token);
+
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
                 j.State = job.State;
-                j.AggregationResult = job.AggregationResult;
                 j.Events = job.Events;
             }, token);
 

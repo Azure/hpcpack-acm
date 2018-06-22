@@ -46,6 +46,5 @@ namespace Microsoft.HpcAcm.Common.Dto
         public string CommandLine { get; set; }
         public string[] TargetNodes { get; set; }
         public List<Event> Events { get; set; }
-        public string AggregationResult { get; set; }
     }
 }

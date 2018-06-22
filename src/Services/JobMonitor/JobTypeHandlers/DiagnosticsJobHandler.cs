@@ -71,7 +71,7 @@
             }
         }
 
-        public async T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeClusterTaskInformation> taskResults, CancellationToken token)
+        public async T.Task<string> AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeClusterTaskInformation> taskResults, CancellationToken token)
         {
             var jobTable = this.Utilities.GetJobsTable();
 
@@ -80,12 +80,14 @@
                 job.DiagnosticTest.Name,
                 token);
 
+            string result = string.Empty;
+
             if (diagTest != null)
             {
                 var scriptBlob = this.Utilities.GetBlob(diagTest.AggregationScript.ContainerName, diagTest.AggregationScript.Name);
 
                 var aggregationResult = await PythonExecutor.ExecuteAsync(scriptBlob, new { Job = job, Tasks = tasks, TaskResults = taskResults }, token);
-                job.AggregationResult = aggregationResult.Item2;
+                result = aggregationResult.Item2;
                 if (0 != aggregationResult.Item1)
                 {
                     (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
@@ -108,6 +110,8 @@
                     Type = EventType.Alert
                 });
             }
+
+            return result;
         }
     }
 }
