@@ -31,23 +31,22 @@ export class ResultListComponent implements OnInit, OnDestroy {
   private selection = new SelectionModel(true, []);
   private interval: number;
   private diagsLoop: Object;
-  private nextPageLastId = Number.MAX_VALUE;
-  private currentPageLastId = Number.MAX_VALUE;
-  private previousPageLastId = Number.MAX_VALUE;
+  private lastId = Number.MAX_VALUE;
   private firstItemId = Number.MAX_VALUE;
-  private currentPageSize = 30;
-  private maxPageSize = 40;
+  private jobIndex = 0;
+  private maxPageSize = 200;
+  private derelictSize = 80;
+  private reverse = true;
+  private currentData = [];
+  private rowHeight = -1;
+  private scrolledHeight = 0;
+  private beginningId = Number.MAX_VALUE;
   private scrolled = false;
-  private rowHeight = 0;
-  public autoScroll = false;
 
-  throttle = 500;
-  scrollDistance = 0;
-  scrollUpDistance = 1;
-  loadFinish = false;
+
   scrollDirection = "down";
-
   hasReceivedData = false;
+  loadFinished = false;
 
   constructor(
     private api: ApiService,
@@ -55,15 +54,47 @@ export class ResultListComponent implements OnInit, OnDestroy {
     public dialog: MatDialog,
     public el: ElementRef
   ) {
-    this.interval = 5000;
+    this.interval = 3000;
+  }
+
+  getDiagRequest() {
+    return this.api.diag.getDiagsByPage(this.lastId, this.maxPageSize, this.reverse);
   }
 
   ngOnInit() {
-    // console.log(Math.max(document.documentElement.clientWidth, window.innerWidth || 0));
-    // console.log(Math.max(document.documentElement.clientHeight, window.innerHeight || 0));
     this.loadSettings();
     this.getDisplayedColumns();
-    this.diagsLoop = this.getDiags(this.nextPageLastId, this.currentPageSize);
+
+    this.diagsLoop = Loop.start(
+      this.getDiagRequest(),
+      {
+        next: (result) => {
+          if (result[0]['id'] < result[result.length - 1]['id']) {
+            result = result.reverse();
+          }
+          if (this.lastId == Number.MAX_VALUE) {
+            this.beginningId = result[0].id;
+          }
+
+          //get new data to hide progress bar
+          if (this.firstItemId !== result[0]['id']) {
+            this.firstItemId = result[0].id;
+            this.hasReceivedData = true;
+          }
+          this.currentData = result;
+          this.updateDataSource(result);
+
+          if (this.rowHeight < 0) {
+            if (document.getElementsByTagName('mat-row')[0] !== undefined) {
+              this.rowHeight = document.getElementsByTagName('mat-row')[0].clientHeight;
+            }
+
+          }
+          return this.getDiagRequest();
+        }
+      },
+      this.interval
+    );
 
     /*configure filter*/
     this.dataSource.filterPredicate = (data: any, filter: string) => {
@@ -79,138 +110,31 @@ export class ResultListComponent implements OnInit, OnDestroy {
     if (this.diagsLoop) {
       Loop.stop(this.diagsLoop);
     }
+    clearTimeout(this.scrollTimer);
   }
 
-  private getDiags(pageIndex: any, pageSize: any): any {
-    this.hasReceivedData = false;
-
-    return Loop.start(
-      this.api.diag.getDiagsByPage(pageIndex, pageSize),
-      {
-        next: (result) => {
-          this.hasReceivedData = true;
-          if (result.length == 0) {
-            this.loadFinish = true;
-
-            this.nextPageLastId = this.currentPageLastId;
-            this.currentPageLastId = this.previousPageLastId;
-            this.previousPageLastId = this.previousPageLastId + this.currentPageSize;
-
-            this.updateTableLoop(this.nextPageLastId, this.currentPageSize);
-            return false;
-          }
-          else {
-            if (this.nextPageLastId == Number.MAX_VALUE) {
-              this.firstItemId = result[0].id;
-            }
-            if (this.scrollDirection == "down") {
-              if (this.nextPageLastId !== result[result.length - 1].id) {
-                this.previousPageLastId = this.currentPageLastId;
-                this.currentPageLastId = this.nextPageLastId;
-              }
-              this.nextPageLastId = result[result.length - 1].id;
-            }
-            else if (this.scrollDirection == "up") {
-              if (this.currentPageLastId !== result[0].id + 1) {
-                this.nextPageLastId = this.currentPageLastId;
-                this.currentPageLastId = result[0].id + 1;
-                this.previousPageLastId = this.currentPageLastId + this.currentPageSize;
-              }
-            }
-
-            if (this.scrollDirection == "up") {
-              this.loadFinish = false;
-            }
-            this.updateData(result);
-            if (result.length < this.currentPageSize) {
-              this.loadFinish = true;
-            }
-          }
-          return true;
-        }
-      },
-      this.interval
-    );
-  }
-
-  updateData(data) {
-    if (this.dataSource.data.length == 0) {
-      this.dataSource.data = data;
-      return;
-    }
-    let currentLength = this.dataSource.data.length;
-    let firstId = data[0].id;
-    let currentStartId = this.dataSource.data[0]['id'];
-    let currentEndId = this.dataSource.data[currentLength - 1]['id'];
-
-    let length = data.length;
-    let lastId = data[length - 1].id;
+  updateDataSource(res) {
+    let firstId = res[0]['id'];
+    let lastId = res[res.length - 1]['id'];
     let firstIndex = this.dataSource.data.findIndex(item => {
       return item['id'] == firstId;
     });
     let lastIndex = this.dataSource.data.findIndex(item => {
-      return item['id'] == lastId;
+      return item['id'] === lastId;
     });
+    let startPart = [];
+    let endPart = [];
+    if (firstIndex != -1) {
+      startPart = this.dataSource.data.slice(0, firstIndex);
+    }
+    if (lastIndex != -1) {
+      endPart = this.dataSource.data.slice(lastIndex + 1);
+    }
     if (firstIndex == -1 && lastIndex == -1) {
-      if (firstId < currentEndId) {
-        this.dataSource.data = this.dataSource.data.concat(data);
-      }
-      else if (lastId > currentStartId) {
-        this.dataSource.data = data.concat(this.dataSource.data);
-      }
-    }
-    else if (firstIndex == -1) {
-      let backPart = this.dataSource.data.slice(lastIndex + 1);
-      this.dataSource.data = data.concat(backPart);
-    }
-    else if (lastIndex == -1) {
-      let frontPart = this.dataSource.data.slice(0, firstIndex);
-      this.dataSource.data = frontPart.concat(data);
+      this.dataSource.data = this.dataSource.data.concat(res);
     }
     else {
-      let frontPart = this.dataSource.data.slice(0, firstIndex);
-      let backPart = this.dataSource.data.slice(lastIndex + 1);
-      this.dataSource.data = frontPart.concat(data).concat(backPart);
-    }
-
-    if (this.dataSource.data.length > this.maxPageSize) {
-      if (this.scrollDirection == "down") {
-        let startIndex = this.dataSource.data.length - this.maxPageSize;
-        this.dataSource.data = this.dataSource.data.slice(startIndex);
-        window.scrollTo({ left: 0, top: window.scrollY / 3 * 2, behavior: 'smooth' });
-      }
-      else if (this.scrollDirection == "up") {
-        this.dataSource.data = this.dataSource.data.slice(0, this.maxPageSize);
-        var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-        window.scrollTo({ left: 0, top: h / 4, behavior: 'smooth' });
-      }
-
-    }
-    // console.log(window.scrollY);
-    return true;
-  }
-
-  updateTableLoop(pageIndex, pageSize) {
-    if (this.diagsLoop) {
-      Loop.stop(this.diagsLoop);
-    }
-    this.diagsLoop = this.getDiags(pageIndex, pageSize);
-  }
-
-  onScrollDown(ev) {
-    this.scrollDirection = "down";
-    if (this.hasReceivedData && !this.loadFinish) {
-      this.updateTableLoop(this.nextPageLastId, this.currentPageSize);
-    }
-  }
-
-  onUp() {
-    this.scrollDirection = "up";
-    if (this.hasReceivedData && !this.loadFinish) {
-      this.updateTableLoop(this.previousPageLastId, this.currentPageSize);
-    }
-    else if (this.hasReceivedData && this.loadFinish) {
-      this.updateTableLoop(this.previousPageLastId, this.currentPageSize);
+      this.dataSource.data = startPart.concat(res).concat(endPart);
     }
   }
 
@@ -218,10 +142,12 @@ export class ResultListComponent implements OnInit, OnDestroy {
     window.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
   }
 
+  private downNum = 0;
+  private upNum = 0;
   private scrollTimer = null;
-  @HostListener("window:scroll", ['$event']) onWndScroll(delay: number = 300) {
+  @HostListener("window:scroll", ['$event'])
+  onWndScroll(delay: number = 100) {
     clearTimeout(this.scrollTimer);
-    let self = this;
     this.scrollTimer = setTimeout(() => {
       const componentPostion = this.el.nativeElement.offsetTop;
       const scrollPostion = window.pageYOffset;
@@ -232,6 +158,82 @@ export class ResultListComponent implements OnInit, OnDestroy {
       else {
         this.scrolled = false;
       }
+
+      let pageSize = this.currentData.length;
+      let tableSize = this.dataSource.data.length;
+
+      if (this.scrolledHeight > scrollPostion) {
+        this.scrollDirection = "up";
+        if (this.reverse) {
+          this.jobIndex -= Math.floor((this.scrolledHeight - window.pageYOffset) / this.rowHeight);
+          this.reverse = false;
+          this.jobIndex = pageSize - this.jobIndex;
+        }
+        else {
+          this.jobIndex += Math.floor((this.scrolledHeight - window.pageYOffset) / this.rowHeight);
+        }
+        while (this.jobIndex >= pageSize / 2 && (pageSize == this.maxPageSize)) {
+          this.upNum++;
+          if (this.downNum > 0) {
+            this.downNum--;
+          }
+          this.lastId = this.dataSource.data[tableSize - this.derelictSize * this.upNum]['id'];
+          this.jobIndex -= this.derelictSize;
+          this.hasReceivedData = false;
+        }
+        if (!this.scrolled) {
+          this.lastId = Number.MAX_VALUE;
+          this.reverse = true;
+          this.jobIndex = 0;
+          this.downNum = 0;
+          this.upNum = 0;
+        }
+
+      }
+      else if (this.scrolledHeight <= scrollPostion) {
+        this.scrollDirection = "down";
+        if (!this.reverse) {
+          //At top of window
+          if (this.currentData[0]['id'] == this.beginningId) {
+            this.lastId = Number.MAX_VALUE;
+          }
+
+          this.jobIndex -= Math.floor((window.pageYOffset - this.scrolledHeight) / this.rowHeight);
+          this.reverse = true;
+          this.jobIndex = pageSize - this.jobIndex;
+        }
+        else {
+          this.jobIndex += Math.floor((window.pageYOffset - this.scrolledHeight) / this.rowHeight);
+        }
+
+        while (this.jobIndex >= this.maxPageSize / 2 && (pageSize == this.maxPageSize)) {
+          this.downNum++;
+          if (this.upNum > 0) {
+            this.upNum--;
+          }
+          this.lastId = this.dataSource.data[this.downNum * this.derelictSize - 1]['id'];
+          this.jobIndex -= this.derelictSize;
+          this.hasReceivedData = false;
+        }
+
+        if (this.currentData.length < this.maxPageSize) {
+          this.loadFinished = true;
+        }
+        //At bottom of window at once 
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+          if (this.lastId > this.dataSource.data[tableSize - pageSize]['id']) {
+            console.log("Yeah, I'm at bottom at once!");
+            this.lastId = this.dataSource.data[tableSize - pageSize - 1 + Math.floor(pageSize / 2)]['id'];
+            let idIndex = this.dataSource.data.findIndex(item => {
+              return item['id'] == this.lastId;
+            });
+            this.downNum = Math.floor(idIndex / this.derelictSize);
+            this.jobIndex = Math.floor(pageSize / 2);
+            this.upNum = 0;
+          }
+        }
+      }
+      this.scrolledHeight = window.pageYOffset;
     }, delay);
   }
 

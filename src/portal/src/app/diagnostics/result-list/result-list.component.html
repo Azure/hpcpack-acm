@@ -11,15 +11,9 @@
     <mat-hint align="end">{{dataSource.filteredData.length}} results</mat-hint>
   </mat-form-field>
 </div> -->
-<mat-progress-bar *ngIf="!hasReceivedData && scrollDirection == 'up'" mode="buffer"></mat-progress-bar>
-<div class="diags-table" data-infinite-scroll debounce [infiniteScrollDistance]="scrollDistance" [infiniteScrollUpDistance]="scrollUpDistance"
-  [infiniteScrollThrottle]="throttle" (scrolled)="onScrollDown($event)" (scrolledUp)="onUp()" (window:scroll)="onWndScroll()">
-  <mat-table #table [dataSource]="dataSource">
-    <!--
-   Note that these columns can be defined in any order. The actual rendered
-   columns are set as a property on the row definition, displayedColumns."
-  -->
 
+<div class="diags-table" (window:scroll)="onWndScroll()">
+  <mat-table #table [dataSource]="dataSource">
     <ng-container matColumnDef="select">
       <mat-header-cell *matHeaderCellDef>
         <mat-checkbox color="primary" (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()"
@@ -111,7 +105,7 @@
 
 <div class="loading">
   <!-- <mat-spinner *ngIf="!hasReceivedData"></mat-spinner> -->
-  <mat-progress-bar *ngIf="!hasReceivedData && !loadFinish" mode="buffer"></mat-progress-bar>
+  <mat-progress-bar *ngIf="!loadFinished" mode="buffer"></mat-progress-bar>
   <div class="load-finish" *ngIf="loadFinish">
     No more data.
   </div>
