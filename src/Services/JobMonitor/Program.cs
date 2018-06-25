@@ -36,12 +36,12 @@
             .ConfigServiceCollection((svc, config, token) =>
             {
                 svc.Configure<JobEventWorkerOptions>(config.GetSection(nameof(JobEventWorkerOptions)));
-                svc.AddTransient<IJobActionHandler, JobCanceler>();
-                svc.AddTransient<IJobActionHandler, JobDispatcher>();
-                svc.AddTransient<IJobActionHandler, JobFinisher>();
-                svc.AddTransient<IJobActionHandler, JobProgressHandler>();
-                svc.AddTransient<IJobTypeHandler, ClusrunJobHandler>();
-                svc.AddTransient<IJobTypeHandler, DiagnosticsJobHandler>();
+                svc.AddTransient<JobCanceler>();
+                svc.AddTransient<JobDispatcher>();
+                svc.AddTransient<JobFinisher>();
+                svc.AddTransient<JobProgressHandler>();
+                svc.AddTransient<ClusrunJobHandler>();
+                svc.AddTransient<DiagnosticsJobHandler>();
 
                 svc.AddSingleton<IWorker, JobEventWorker>();
             });
