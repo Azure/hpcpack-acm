@@ -1,2 +1,25 @@
-<h2>Node State</h2>
-<chart type="doughnut" [data]="stateData" [options]="chartOption"></chart>
+<div class="card">
+    <div class="headline">
+        <div class="name" [ngClass]="state">NODES</div>
+        <div class="detail" (click)="nodesInfo()">
+            <i class="material-icons detail-icon">more_horiz</i>
+            <span class="info-title">DETAIL</span>
+        </div>
+    </div>
+    <div class="outline">
+        <div class="icon" [ngClass]="state">
+            <i class="material-icons">{{stateIcon}}</i>
+        </div>
+        <div class="info">
+            <div class="info-title">
+                <span [ngClass]="state"> {{state | uppercase}} </span>
+                / TOTAL
+            </div>
+            <div class="info-content">
+                <span [ngClass]="state">{{stateNum}}</span>
+                /
+                <span class="total">{{total}}</span>
+            </div>
+        </div>
+    </div>
+</div>
