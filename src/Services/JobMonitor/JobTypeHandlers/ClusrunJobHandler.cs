@@ -10,7 +10,7 @@
     using System.Threading;
     using T = System.Threading.Tasks;
 
-    class ClusrunJobHandler : IJobTypeHandler
+    class ClusrunJobHandler : ServerObject, IJobTypeHandler
     {
         public T.Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token)
         {
