@@ -28,7 +28,11 @@
                 var nodesTable = this.Utilities.GetNodesTable();
                 var metadataKey = this.Utilities.GetMetadataKey();
 
-                var metadata = await T.Task.WhenAll(job.TargetNodes.Select(async n => new { Node = n, Metadata = await nodesTable.RetrieveAsync<object>(this.Utilities.GetNodePartitionKey(n), metadataKey, token) }));
+                var metadata = await T.Task.WhenAll(job.TargetNodes.Select(async n => new {
+                    Node = n,
+                    Metadata = await nodesTable.RetrieveAsync<object>(this.Utilities.GetNodePartitionKey(n), metadataKey, token),
+                    NodeRegistrationInfo = await nodesTable.RetrieveAsync<ComputeClusterRegistrationInformation>(this.Utilities.NodesPartitionKey, this.Utilities.GetRegistrationKey(n), token),
+                }));
 
                 var dispatchTasks = await PythonExecutor.ExecuteAsync(scriptBlob, new { Job = job, Nodes = metadata }, token);
 
