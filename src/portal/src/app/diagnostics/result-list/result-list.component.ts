@@ -95,15 +95,6 @@ export class ResultListComponent implements OnInit, OnDestroy {
       },
       this.interval
     );
-
-    /*configure filter*/
-    this.dataSource.filterPredicate = (data: any, filter: string) => {
-      return data.name.indexOf(filter) != -1 ||
-        data.state.indexOf(filter) != -1 ||
-        (data.id).toString() == filter.toString() ||
-        data.diagnosticTest.name.indexOf(filter) != -1 ||
-        data.diagnosticTest.category.indexOf(filter) != -1;
-    };
   }
 
   ngOnDestroy() {
@@ -222,7 +213,6 @@ export class ResultListComponent implements OnInit, OnDestroy {
         //At bottom of window at once 
         if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
           if (this.lastId > this.dataSource.data[tableSize - pageSize]['id']) {
-            console.log("Yeah, I'm at bottom at once!");
             this.lastId = this.dataSource.data[tableSize - pageSize - 1 + Math.floor(pageSize / 2)]['id'];
             let idIndex = this.dataSource.data.findIndex(item => {
               return item['id'] == this.lastId;
