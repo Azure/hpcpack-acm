@@ -5,98 +5,93 @@
     background-color: #fff;
     border-left: 4px solid #3f51b5;
     justify-content: space-between;
-    font-family: Roboto,"Helvetica Neue",sans-serif;
-  
+    font-family: Roboto, "Helvetica Neue", sans-serif;
     .name {
-      margin:0 0.3em;
-      color:rgba($color: #000000, $alpha: 0.8);
-      font-size: 1.2em;
-      padding: 1em 0;
+        margin: 0 0.3em;
+        color: rgba($color: #000000, $alpha: 0.8);
+        font-size: 1.2em;
+        padding: 1em 0;
     }
-  
-  }
-  
-  .title-icon{
+}
+
+.title-icon {
     font-size: 1em;
     padding-right: 0.2em;
-  }
-  
-  
-  .Failed{
+}
+
+.Failed {
     color: #D84315;
-  }
-  
-  
-  .Finished {
+}
+
+.Finished {
     color: #2E7D32;
-  }
-  
-  .Running{
+}
+
+.Running {
     color: #283593;
-  }
-  
-  .Queued{
+}
+
+.Queued {
     color: #FF8F00;
-  }
-  
-  .main {
+}
+
+.main {
     clear: both;
-  }
-  
-  .time {
+}
+
+.time {
     margin-top: 8px;
     font-size: small;
-  }
-  
-  .tasks {
+}
+
+.tasks {
     margin-top: 1em;
-  }
-  
-  .overview {
+}
+
+.overview {
     margin: 1em 0;
-  
     chart {
-      height: 200px;
-      max-width: 400px;
+        height: 200px;
+        max-width: 400px;
     }
-  }
-  
-  .aggregationResult{
+}
+
+.aggregationResult {
     white-space: pre-line;
     line-height: 2em;
-  }
-  
-  .task-result-info{
+}
+
+.task-result-info {
     display: flex;
     flex-direction: row;
     justify-content: space-around;
-  }
-  
-  .area-title{
+}
+
+.area-title {
     font-size: .9em;
     padding: 1em 0 0 0;
     display: flex;
     align-items: center;
-    font-family: Roboto,"Helvetica Neue",sans-serif;
-  }
-  
-  .bar-chart{
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.bar-chart {
     width: 30em;
-  }
-  
-  .latency{
+}
+
+.latency {
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-  
-  .chart-type{
+}
+
+.chart-type {
     display: flex;
     align-items: center;
     margin-top: 10px;
-  }
-  
-  .chart-btn{
+}
+
+.chart-btn {
     height: 2em;
     font-size: .8em;
     line-height: 2em;
@@ -104,106 +99,107 @@
     color: #FFF;
     background-color: rgba(63, 81, 181, .2);
     text-align: center;
-  }
-  
-  .chart-btn:hover{
+}
+
+.chart-btn:hover {
     cursor: pointer;
-  }
-  
-  .chart-btn.active{
+}
+
+.chart-btn.active {
     color: #FFF;
     background-color: rgba(63, 81, 181, .9);
-  }
-  
-  .overview-chart{
+}
+
+.overview-chart {
     display: flex;
     justify-content: space-between;
-  }
-  
-  .overview-header{
+}
+
+.overview-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-  }
-  
-  .overview-title{
-    font-size: .9em;
-    // color:rgba(63, 81, 181, 0.9);
+}
+
+.overview-title {
+    font-size: .9em; // color:rgba(63, 81, 181, 0.9);
     color: #7986CB;
     font-weight: 500;
     display: flex;
     align-items: center;
-  }
-  
-  .overview-value {
-    font-size: .9em;
-  }
+}
 
-  .overview-progress {
+.overview-value {
+    font-size: .9em;
+}
+
+.overview-progress {
     margin-top: 1em;
-  }
-  
-  .select-node{
+}
+
+.select-node {
     margin-top: .7em;
     margin-left: 1em;
-  }
-  
-  .mat-form-field-hide-placeholder .mat-select-placeholder{
+}
+
+.mat-form-field-hide-placeholder .mat-select-placeholder {
     font-size: .9em !important;
-  }
-  
-  md-select, .mat-select-placeholder, .mat-select-trigger {
+}
+
+md-select,
+.mat-select-placeholder,
+.mat-select-trigger {
     font-size: .9em !important;
     color: #3f51b5 !important;
-  }
-  
-  .pair-list {
+}
+
+.pair-list {
     font-size: .9em;
     display: flex;
     justify-content: space-between;
     padding-bottom: .5em;
-  }
-  
-  .overview-info {
+}
+
+.overview-info {
     margin-bottom: .5em;
-  }
-  
-  .passed{
+}
+
+.passed {
     color: green;
-  }
-  
-  .not-passed{
+}
+
+.not-passed {
     color: red;
-  }
-  
-  .error-message{
+}
+
+.error-message {
     color: rgba(206, 80, 57, .9);
     padding: 1em;
-  }
+}
 
-  .job-state{
+.job-state {
     display: flex;
     align-items: center;
-  }
+}
 
-  .operation{
+.operation {
     display: flex;
     align-items: center;
-  }
+}
 
-  .operation:hover{
+.operation:hover {
     cursor: pointer;
-  }
+}
 
-  .operation-name{
+.operation-name {
     font-size: .8em;
     color: rgba(0, 0, 0, .5);
-  }
+}
 
-  .cancel{
-   color: rgba(206, 80, 57, .9);
-  }
+.cancel {
+    color: rgba(206, 80, 57, .9);
+}
 
-  .rerun {
+.rerun {
     color: rgba(63, 81, 181, .9)
-  }
+}

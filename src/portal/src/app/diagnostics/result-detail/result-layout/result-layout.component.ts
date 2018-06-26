@@ -40,6 +40,7 @@ export class ResultLayoutComponent implements OnInit {
       this.done = true;
     }
   }
+  private disabledCancel = false;
 
   cancelDiag() {
     let dialogRef = this.dialog.open(ConfirmDialogComponent, {
@@ -51,6 +52,7 @@ export class ResultLayoutComponent implements OnInit {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
+        this.disabledCancel = true;
         this.api.diag.cancel(this.result.id).subscribe(res => { });
       }
     });
