@@ -53,7 +53,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             int jobId,
             CancellationToken token = default(CancellationToken))
         {
-            var result = await this.provider.GetJobAggregationResultAsync(jobId, JobType.ClusRun, token);
+            var result = await this.provider.GetJobAggregationResultAsync(jobId, JobType.Diagnostics, token);
 
             if (result == null) return new NotFoundObjectResult("The job hasn't produced any aggregation result.");
             else return new OkObjectResult(result);
