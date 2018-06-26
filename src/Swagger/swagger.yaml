@@ -350,10 +350,6 @@ definitions:
         items:
           $ref: '#/definitions/Event'
         description: Events happened in the job
-      aggregationResult:
-        type: string
-        example: '{"Error": "Task count is not correct."}'
-        description: Summary info of the job, a JSON string whose structure is documented elsewhere.
       requeueCount:
         type: integer
         description: The number of times the job is requeued
@@ -790,6 +786,18 @@ paths:
         200:
           description: OK
 
+  /clusrun/{id}/aggregationResult:
+    parameters:
+      - $ref: '#/parameters/jobId'
+    get:
+      summary: Get aggregation result of a clusrun job
+      operationId: getClusrunJobAggregationResult
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+
   /clusrun/{id}/tasks:
     parameters:
       - $ref: '#/parameters/jobId'
@@ -924,6 +932,18 @@ paths:
         200:
           description: OK
 
+  /diagnostics/{id}/aggregationResult:
+    parameters:
+      - $ref: '#/parameters/jobId'
+    get:
+      summary: Get aggregation result of a diagnostic job
+      operationId: getDiagnosticJobAggregationResult
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+
   /diagnostics/{id}/tasks:
     parameters:
       - $ref: '#/parameters/jobId'
@@ -932,7 +952,7 @@ paths:
       - $ref: '#/parameters/requeueCount'
     get:
       summary: Get tasks of a diagnostic test run
-      operationId: cancelDiagnosticTasks
+      operationId: getDiagnosticTasks
       responses:
         200:
           description: OK
