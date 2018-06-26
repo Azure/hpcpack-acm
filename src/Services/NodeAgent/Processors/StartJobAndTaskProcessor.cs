@@ -70,6 +70,17 @@
                 }
 
                 var taskResultBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(task.JobType, taskResultKey, token);
+                var taskResult = new ComputeClusterTaskInformation()
+                {
+                    CommandLine = cmd,
+                    JobId = task.JobId,
+                    TaskId = task.Id,
+                    NodeName = nodeName,
+                    ResultKey = taskResultKey,
+                };
+
+                if (!await this.PersistTaskResult(nodeTaskResultKey, taskResult, token)) { return false; }
+                if (!await this.PersistTaskResult(taskResultKey, taskResult, token)) { return false; }
 
                 var rawResult = new StringBuilder();
                 using (var monitor = string.IsNullOrEmpty(cmd) ? null : this.Monitor.StartMonitorTask(taskKey, async (output, cancellationToken) =>
@@ -142,7 +153,7 @@
 
                         this.Logger.LogInformation("Saving result for job {0}, task {1}", task.JobId, taskKey);
 
-                        var taskResult = taskResultArgs.TaskInfo;
+                        taskResult = taskResultArgs.TaskInfo;
                         await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey,
                             t => t.State = taskResult?.ExitCode == 0 ? TaskState.Finished : TaskState.Failed,
                             token);
