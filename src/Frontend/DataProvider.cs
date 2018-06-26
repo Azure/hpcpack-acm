@@ -85,7 +85,7 @@
 
         public async T.Task<IActionResult> GetOutputRawAsync(JobType type, string taskResultKey, CancellationToken token)
         {
-            var blob = this.utilities.GetTaskOutputBlob(type.ToString().ToLowerInvariant(), taskResultKey);
+            var blob = this.utilities.GetJobOutputBlob(type, taskResultKey);
 
             if (!await blob.ExistsAsync(null, null, token))
             {
@@ -118,7 +118,7 @@
 
             var result = new TaskOutputPage() { Offset = offset, Size = 0 };
 
-            var blob = this.utilities.GetTaskOutputBlob(type.ToString().ToLowerInvariant(), taskResultKey);
+            var blob = this.utilities.GetJobOutputBlob(type, taskResultKey);
 
             if (!await blob.ExistsAsync(null, null, token))
             {
@@ -312,7 +312,7 @@
                 TableQuery.GenerateFilterCondition(CloudUtilities.RowKeyName, QueryComparisons.Equal, rowKey));
 
             var results = await jobTable.QueryAsync<Job>(q, count, token);
-            return results.Select(r => { r.Item3.LastChangedAtAt = r.Item4; return r.Item3; });
+            return results.Select(r => { r.Item3.UpdatedAt = r.Item4; return r.Item3; });
         }
 
         public async T.Task<Job> GetJobAsync(
@@ -327,9 +327,25 @@
 
             var jsonTableEntity = await this.jobsTable.RetrieveAsJsonAsync(jobPartitionKey, rowKey, token);
             var job = jsonTableEntity?.GetObject<Job>();
-            if (job != null) job.LastChangedAtAt = jsonTableEntity.Timestamp;
+            if (job != null) job.UpdatedAt = jsonTableEntity.Timestamp;
 
             return job;
+        }
+
+        public async T.Task<object> GetJobAggregationResultAsync(
+            int jobId,
+            JobType type = JobType.ClusRun,
+            CancellationToken token = default(CancellationToken))
+        {
+            var aggregationResultBlob = this.utilities.GetJobOutputBlob(type, this.utilities.JobAggregationResultKey);
+            if (await aggregationResultBlob.ExistsAsync(null, null, token))
+            {
+                return await aggregationResultBlob.DownloadTextAsync(Encoding.UTF8, null, null, null, token);
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public async T.Task<IEnumerable<Event>> GetJobEventsAsync(

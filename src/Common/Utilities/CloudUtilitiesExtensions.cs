@@ -74,7 +74,7 @@
             return await u.GetOrCreateTableAsync(u.Option.JobsTableName, token);
         }
 
-        public static async T.Task<CloudAppendBlob> CreateOrReplaceTaskOutputBlobAsync(this CloudUtilities u, JobType jobType, string key, CancellationToken token)
+        public static async T.Task<CloudAppendBlob> CreateOrReplaceJobOutputBlobAsync(this CloudUtilities u, JobType jobType, string key, CancellationToken token)
         {
             return await u.GetOrCreateAppendBlobAsync(
                 string.Format(u.Option.JobResultContainerPattern, jobType.ToString().ToLowerInvariant()),
@@ -82,8 +82,8 @@
                 token);
         }
 
-        public static CloudAppendBlob GetTaskOutputBlob(this CloudUtilities u, string jobType, string key) => u.GetAppendBlob(
-            string.Format(u.Option.JobResultContainerPattern, jobType),
+        public static CloudAppendBlob GetJobOutputBlob(this CloudUtilities u, JobType jobType, string key) => u.GetAppendBlob(
+            string.Format(u.Option.JobResultContainerPattern, jobType.ToString().ToLowerInvariant()),
             key);
 
         public static CloudQueue GetJobEventQueue(this CloudUtilities u) => u.GetQueue(u.Option.JobEventQueueName);

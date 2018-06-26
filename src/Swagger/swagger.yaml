@@ -359,6 +359,12 @@ definitions:
         description: The number of times the job is requeued
       failJobOnTaskFailure:
         type: boolean
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
 
   JobUpdate:
     type: object

@@ -10,7 +10,7 @@
     using System.Threading;
     using T = System.Threading.Tasks;
 
-    class ClusrunJobHandler : IJobTypeHandler
+    class ClusrunJobHandler : ServerObject, IJobTypeHandler
     {
         public T.Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token)
         {
@@ -23,12 +23,11 @@
             }).ToList());
         }
 
-        public T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeClusterTaskInformation> taskResults, CancellationToken token)
+        public T.Task<string> AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeClusterTaskInformation> taskResults, CancellationToken token)
         {
             var groups = tasks.GroupBy(t => t.State).Select(g => new { State = g.Key, Count = g.Count() });
 
-            job.AggregationResult = JsonConvert.SerializeObject(groups);
-            return T.Task.CompletedTask;
+            return T.Task.FromResult(JsonConvert.SerializeObject(groups));
         }
     }
 }

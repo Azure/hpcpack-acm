@@ -32,6 +32,18 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return new OkObjectResult(await this.provider.GetJobsAsync(lastId, count, JobType.ClusRun, reverse, token));
         }
 
+        // GET v1/clusrun/5/aggregationresult
+        [HttpGet("{jobid}/aggregationresult")]
+        public async T.Task<IActionResult> GetJobAggregationResultAsync(
+            int jobId,
+            CancellationToken token = default(CancellationToken))
+        {
+            var result = await this.provider.GetJobAggregationResultAsync(jobId, JobType.ClusRun, token);
+
+            if (result == null) return new NotFoundObjectResult("The job hasn't produced any aggregation result.");
+            else return new OkObjectResult(result);
+        }
+
         // GET v1/clusrun/5
         [HttpGet("{jobid}")]
         public async T.Task<IActionResult> GetJobAsync(int jobId, CancellationToken token = default(CancellationToken))

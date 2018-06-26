@@ -35,7 +35,7 @@ namespace Microsoft.HpcAcm.Common.Dto
         public string Request { get; set; }
         public string Name { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset LastChangedAtAt { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
         public JobState State { get; set; }
         public JobType Type { get; set; }
         public double Progress { get; set; }
@@ -46,6 +46,5 @@ namespace Microsoft.HpcAcm.Common.Dto
         public string CommandLine { get; set; }
         public string[] TargetNodes { get; set; }
         public List<Event> Events { get; set; }
-        public string AggregationResult { get; set; }
     }
 }

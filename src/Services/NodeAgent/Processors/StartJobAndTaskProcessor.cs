@@ -69,7 +69,7 @@
                     return true;
                 }
 
-                var taskResultBlob = await this.Utilities.CreateOrReplaceTaskOutputBlobAsync(task.JobType, taskResultKey, token);
+                var taskResultBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(task.JobType, taskResultKey, token);
 
                 var rawResult = new StringBuilder();
                 using (var monitor = string.IsNullOrEmpty(cmd) ? null : this.Monitor.StartMonitorTask(taskKey, async (output, cancellationToken) =>

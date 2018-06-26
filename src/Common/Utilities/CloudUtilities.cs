@@ -82,6 +82,7 @@
         public string GetMaximumRegistrationKey() => string.Format(this.Option.RegistrationPattern, this.MaxString);
         public string GetHeartbeatKey(string nodeName) => string.Format(this.Option.HeartbeatPattern, nodeName);
         public string NodesPartitionKey { get => this.Option.NodesPartitionKey; }
+        public string JobAggregationResultKey { get => this.Option.JobAggregationResultKey; }
         public string JobEntryKey { get => this.Option.JobEntryKey; }
         public string MetricsValuesPartitionKey { get => this.Option.MetricsValuesPartitionKey; }
         public string MetricsCategoriesPartitionKey { get => this.Option.MetricsCategoriesPartitionKey; }
