@@ -223,7 +223,7 @@
 
             if (registerInfo == null) return null;
             var heartbeatKey = this.utilities.GetHeartbeatKey(id);
-            var nodeInfo = await this.nodesTable.RetrieveAsJsonAsync(this.utilities.NodesPartitionKey, heartbeatKey, token);
+            var nodeInfo = await this.nodesTable.RetrieveJsonTableEntityAsync(this.utilities.NodesPartitionKey, heartbeatKey, token);
 
             var node = new Node() { NodeRegistrationInfo = registerInfo, Name = id, };
             if (nodeInfo != null && nodeInfo.Timestamp.AddSeconds(this.utilities.Option.MaxMissedHeartbeats * this.utilities.Option.HeartbeatIntervalSeconds) > DateTimeOffset.UtcNow)
@@ -325,7 +325,7 @@
             var jobPartitionKey = this.utilities.GetJobPartitionKey(type, jobId);
             var rowKey = utilities.JobEntryKey;
 
-            var jsonTableEntity = await this.jobsTable.RetrieveAsJsonAsync(jobPartitionKey, rowKey, token);
+            var jsonTableEntity = await this.jobsTable.RetrieveJsonTableEntityAsync(jobPartitionKey, rowKey, token);
             var job = jsonTableEntity?.GetObject<Job>();
             if (job != null) job.UpdatedAt = jsonTableEntity.Timestamp;
 
@@ -337,7 +337,7 @@
             JobType type = JobType.ClusRun,
             CancellationToken token = default(CancellationToken))
         {
-            var aggregationResultBlob = this.utilities.GetJobOutputBlob(type, this.utilities.JobAggregationResultKey);
+            var aggregationResultBlob = this.utilities.GetJobOutputBlob(type, this.utilities.GetJobAggregationResultKey(jobId));
             if (await aggregationResultBlob.ExistsAsync(null, null, token))
             {
                 return await aggregationResultBlob.DownloadTextAsync(Encoding.UTF8, null, null, null, token);
@@ -416,6 +416,7 @@
             this.logger.LogInformation("Patch job called for job {0} {1}", job.Type, job.Id);
 
             JobState state = JobState.Finished;
+
             if (!await this.utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
                 state = j.State = (j.State == JobState.Queued || j.State == JobState.Running) ? JobState.Canceling : j.State;
@@ -443,18 +444,18 @@
             this.logger.LogInformation("New job called. creating job");
             var jobTable = this.utilities.GetJobsTable();
 
-            job.Id = await this.utilities.GetNextId("Jobs", "Jobs",token);
+            job.Id = await this.utilities.GetNextId("Jobs", "Jobs", token);
             this.logger.LogInformation("generated new job id {0}", job.Id);
             var rowKey = utilities.JobEntryKey;
 
             job.CreatedAt = DateTimeOffset.UtcNow;
 
             var partitionName = utilities.GetJobPartitionKey(job.Type, job.Id);
-            var result = await jobTable.InsertOrReplaceAsJsonAsync(partitionName, rowKey, job, token);
+            var result = await jobTable.InsertOrReplaceAsync(partitionName, rowKey, job, token);
             this.logger.LogInformation("create job result {0}", result);
 
             partitionName = utilities.GetJobPartitionKey(job.Type, job.Id, true);
-            result = await jobTable.InsertOrReplaceAsJsonAsync(partitionName, rowKey, job, token);
+            result = await jobTable.InsertOrReplaceAsync(partitionName, rowKey, job, token);
             this.logger.LogInformation("create job result {0}", result);
 
             this.logger.LogInformation("Creating job dispatch message");

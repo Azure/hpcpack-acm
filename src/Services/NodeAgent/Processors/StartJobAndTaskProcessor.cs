@@ -33,10 +33,10 @@
 
         private async T.Task<bool> PersistTaskResult(string resultKey, object result, CancellationToken token)
         {
-            var tableResult = await this.jobsTable.InsertOrReplaceAsJsonAsync(this.jobPartitionKey, resultKey, result, token);
+            var tableResult = await this.jobsTable.InsertOrReplaceAsync(this.jobPartitionKey, resultKey, result, token);
             if (!tableResult.IsSuccessfulStatusCode()) { return false; }
             this.Logger.LogInformation("Saved task result {0} to jobs table", resultKey);
-            tableResult = await this.nodesTable.InsertOrReplaceAsJsonAsync(this.nodePartitionKey, resultKey, result, token);
+            tableResult = await this.nodesTable.InsertOrReplaceAsync(this.nodePartitionKey, resultKey, result, token);
             if (!tableResult.IsSuccessfulStatusCode()) { return false; }
             this.Logger.LogInformation("Saved task result {0} to nodes table", resultKey);
             return true;
@@ -120,6 +120,9 @@
                         catch (Exception ex)
                         {
                             // TODO: Dispatch failure, why job running.
+                            taskResult.Message = ex.ToString();
+                            await this.PersistTaskResult(taskResultKey, taskResult, token);
+                            await this.PersistTaskResult(nodeTaskResultKey, taskResult, token);
                             await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Failed, token);
                             await this.Utilities.UpdateJobAsync(task.JobType, task.JobId, j =>
                             {

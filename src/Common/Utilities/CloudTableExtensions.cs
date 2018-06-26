@@ -55,17 +55,12 @@
             }
         }
 
-        public static async Task<JsonTableEntity> RetrieveAsJsonAsync(this CloudTable t, string partition, string key, CancellationToken token)
+        public static async Task<JsonTableEntity> RetrieveJsonTableEntityAsync(this CloudTable t, string partition, string key, CancellationToken token)
         {
             var result = await t.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(partition, key), null, null, token);
             return result.Result as JsonTableEntity;
         }
-        public static async Task<TableResult> InsertOrReplaceAsJsonStringAsync(this CloudTable t, string partition, string key, string jsonString, CancellationToken token)
-        {
-            var entity = new JsonTableEntity(partition, key, jsonString);
-            return await t.InsertOrReplaceAsync(entity, token);
-        }
-        public static async Task<TableResult> InsertOrReplaceAsJsonAsync(this CloudTable t, string partition, string key, object obj, CancellationToken token)
+        public static async Task<TableResult> InsertOrReplaceAsync<T>(this CloudTable t, string partition, string key, T obj, CancellationToken token)
         {
             var entity = new JsonTableEntity(partition, key, obj);
             return await t.InsertOrReplaceAsync(entity, token);
