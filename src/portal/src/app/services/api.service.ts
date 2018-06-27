@@ -74,14 +74,15 @@ export class NodeApi extends Resource<Node> {
   }
 
   protected normalizeHistory(history: any): any {
-    let historyData = [];
-
-    if (history.data) {
-      for (let key in history.data) {
-        historyData.push({ label: key, data: history.data[key] });
-      }
+    if (history.items) {
+      history.history = history.items.map(item => ({ label: item.span, data: item.data }));
     }
-    history.history = historyData;
+    else {
+      history.history = [];
+    }
+    if (history.span) {
+      history.range = history.span;
+    }
     return history;
   }
 
