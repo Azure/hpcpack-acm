@@ -282,11 +282,35 @@ definitions:
   NodeMetrics:
     type: object
     properties:
-      range:
-        type: string  # Better be integer, TimeSpan is not supported in other languages than C#
-        example: 00:00:10
-        description: Time range of the metric data
-      data: {}  # Should be an array order by time: time string as key is not supported by SAWGGER
+      span:
+        type: number
+        format: double
+        example: 10.0
+        description: Time span in second of the metric data
+      items:
+        type: array
+        items:
+          type: object
+          properties:
+            time:
+              type: string
+              format: date-time
+              description: Time of the metric data
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  category:
+                    type: string
+                    example: cpu
+                    description: Metric category
+                  instanceValues:
+                    type: object
+                    description: Metric data
+                    additionalProperties:
+                      type: number
+                      format: double
 
   Metrics:
     type: object
@@ -295,14 +319,20 @@ definitions:
         type: string
         example: cpu
         description: Category of the metric data
-      instanceValues: # Better be an array
-        description: A hash whose key is node name and value is node metrics of the category
-        type: object
-        additionalProperties:
+      values:
+        type: array
+        items:
           type: object
-          additionalProperties:
-            type: number
-            format: double
+          properties:
+            node:
+              type: string
+              description: Node name
+            data:
+              type: object
+              description: Node metric data
+              additionalProperties:
+                type: number
+                format: double
 
   JobState:
     description: job state
