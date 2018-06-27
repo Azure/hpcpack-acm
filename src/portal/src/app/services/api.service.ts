@@ -210,16 +210,7 @@ export class HeatmapApi extends Resource<any> {
   }
 
   protected normalize(result: any): void {
-    result['results'] = new Array<HeatmapNode>();
-    for (let key in result.values) {
-      if (result.values[key]._Total == undefined) {
-        result['results'].push({ 'id': key, 'value': NaN });
-      }
-      else {
-        result['results'].push({ 'id': key, 'value': result.values[key]._Total });
-
-      }
-    }
+    result.results = result.values.map(e => ({ id: e.node, value: e.data._Total || NaN }));
     return result;
   }
 
