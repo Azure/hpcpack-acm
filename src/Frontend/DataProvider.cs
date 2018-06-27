@@ -242,13 +242,19 @@
             return node;
         }
 
-        public async T.Task<IEnumerable<ComputeClusterJobInformation>> GetNodeJobInfoAsync(string id, CancellationToken token)
+        public async T.Task<IEnumerable<Job>> GetNodeJobInfoAsync(string id, CancellationToken token)
         {
             id = id.ToLowerInvariant();
             var heartbeatKey = this.utilities.GetHeartbeatKey(id);
             var nodeInfo = await this.nodesTable.RetrieveAsync<ComputeClusterNodeInformation>(this.utilities.NodesPartitionKey, heartbeatKey, token);
 
-            return nodeInfo.Jobs;
+            if (nodeInfo == null) return null;
+
+            var jobs = await T.Task.WhenAll(nodeInfo.Jobs.Select(async j =>
+                await this.jobsTable.RetrieveAsync<Job>(this.utilities.GetJobPartitionKey(JobType.Diagnostics, j.JobId), this.utilities.JobEntryKey, token)
+                    ?? await this.jobsTable.RetrieveAsync<Job>(this.utilities.GetJobPartitionKey(JobType.Diagnostics, j.JobId), this.utilities.JobEntryKey, token)));
+
+            return jobs.Where(j => j != null);
         }
 
         public async T.Task<object> GetNodeMetadataAsync(string id, CancellationToken token)

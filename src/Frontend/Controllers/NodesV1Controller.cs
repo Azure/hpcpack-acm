@@ -55,7 +55,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> GetJobsAsync(string id, CancellationToken token)
         {
             var jobs = await this.provider.GetNodeJobInfoAsync(id, token);
-            return new OkObjectResult(jobs);
+            return jobs == null ? (IActionResult)new NotFoundObjectResult("Cannot find the node jobs information") : new OkObjectResult(jobs);
         }
 
         // GET v1/nodes/node1/metrichistory

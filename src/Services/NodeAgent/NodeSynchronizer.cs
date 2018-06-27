@@ -1,5 +1,6 @@
 ﻿namespace Microsoft.HpcAcm.Services.NodeAgent
 {
+    using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
@@ -13,6 +14,12 @@
 
     public class NodeSynchronizer : ServerObject
     {
+        private readonly ILogger logger;
+
+        public NodeSynchronizer(ILogger<NodeCommunicator> logger)
+        {
+            this.logger = logger;
+        }
         public async T.Task Sync(ComputeClusterNodeInformation nodeInfo, CancellationToken token)
         {
             var jobsTable = this.Utilities.GetJobsTable();
@@ -21,14 +28,22 @@
                 var job = await jobsTable.RetrieveAsync<Job>(this.Utilities.GetJobPartitionKey(JobType.ClusRun, j.JobId), this.Utilities.JobEntryKey, token)
                     ?? await jobsTable.RetrieveAsync<Job>(this.Utilities.GetJobPartitionKey(JobType.Diagnostics, j.JobId), this.Utilities.JobEntryKey, token);
 
-                if (job.State == JobState.Canceled || job.State == JobState.Failed || job.State == JobState.Finished)
+                if (job == null || job.State == JobState.Canceled || job.State == JobState.Failed || job.State == JobState.Finished)
                 {
+                    this.logger.LogInformation("Node {0}, {1} job {2} is reported running, but actually {3} in store.", nodeInfo.Name, job?.Type, j.JobId, job == null ? "null" : job.State.ToString());
+                    var q = await this.Utilities.GetOrCreateNodeCancelQueueAsync(this.ServerOptions.HostName, token);
+
+                    // For non-exist job, we don't care about the type, the cancel logic should handle it.
+                    await q.AddMessageAsync(new CloudQueueMessage(
+                        JsonConvert.SerializeObject(new TaskEventMessage() { JobId = j.JobId, Id = 0, JobType = job?.Type ?? JobType.ClusRun, RequeueCount = 0, EventVerb = "cancel" })),
+                        null, null, null, null, token);
+
                     // cancel the job and tasks
                     foreach (var t in j.Tasks)
                     {
-                        var q = await this.Utilities.GetOrCreateNodeCancelQueueAsync(this.ServerOptions.HostName, token);
+                        this.logger.LogInformation("Node {0}, {1} job {2}, sending cancel for task {3}.{4}.", nodeInfo.Name, job?.Type, j.JobId, t?.TaskId, t?.TaskRequeueCount);
                         await q.AddMessageAsync(new CloudQueueMessage(
-                            JsonConvert.SerializeObject(new TaskEventMessage() { JobId = j.JobId, Id = t.TaskId, JobType = job.Type, RequeueCount = t.TaskRequeueCount ?? 0, EventVerb = "cancel" })),
+                            JsonConvert.SerializeObject(new TaskEventMessage() { JobId = j.JobId, Id = t.TaskId, JobType = job?.Type ?? JobType.ClusRun, RequeueCount = t.TaskRequeueCount ?? 0, EventVerb = "cancel" })),
                             null, null, null, null, token);
                     }
                 }
