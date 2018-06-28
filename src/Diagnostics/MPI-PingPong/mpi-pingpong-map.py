@@ -5,7 +5,7 @@ def main():
     job = stdin["Job"]
     nodesInfo = stdin["Nodes"]
     nodelist = job["TargetNodes"]
-      
+
     if len(nodelist) != len(set(nodelist)):
         # Duplicate nodes
         raise Exception('Duplicate nodes')
@@ -45,7 +45,7 @@ def main():
         allNodes = set([node.lower() for node in rdmaNodes])
     else:
         isRdma = False
-        allNodes = set([node.lower() for node in normalNodes])    
+        allNodes = set([node.lower() for node in normalNodes])
 
     for node in nodelist:
         if node.lower() not in allNodes:
@@ -56,14 +56,13 @@ def main():
     if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
         arguments = job['DiagnosticTest']['Arguments']
         if arguments:
-            arguments = json.loads(arguments)
             for argument in arguments:
                 if argument['name'].lower() == 'Mode'.lower():
                     mode = argument['value'].lower()
                     continue
                 if argument['name'].lower() == 'Packet size'.lower():
                     level = int(argument['value'])
-                    continue          
+                    continue
 
     commandClearSshKnowhosts = "rm -f ~/.ssh/known_hosts && "
     commandAddSshKnowhosts = "ssh-keyscan [pairednode] >> ~/.ssh/known_hosts 2>stderr && "
@@ -90,7 +89,7 @@ def main():
         "PrivateKey":privateKey,
         "CustomizedData":None,
     }
-    
+
     rdmaOption = ""
     if isRdma:
         rdmaOption = " -env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0 -env I_MPI_DYNAMIC_CONNECTION=0 -env I_MPI_FALLBACK_DEVICE=0"
@@ -102,7 +101,7 @@ def main():
 
     # Create task for every node to run Intel MPI Benchmark - PingPong between processors within each node.
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
-    
+
     mpicommand = "mpirun -env I_MPI_SHM_LMT=shm" + rdmaOption + " IMB-MPI1 pingpong"
     parseResult = "tail -n29 | head -n25"
     columns = "$3,$4"
@@ -124,12 +123,12 @@ def main():
         task["Node"] = node
         task["CustomizedData"] = node
         tasks.append(task)
-    
+
     if len(nodelist) < 2:
         print(json.dumps(tasks))
         return
 
-    # Create tasks to run Intel MPI Benchmark - PingPong between all node pairs in selected nodes. 
+    # Create tasks to run Intel MPI Benchmark - PingPong between all node pairs in selected nodes.
 
     if 0 < level < 30:
         msglog = " -msglog " + str(level-1) + ":" + str(level)
@@ -139,9 +138,9 @@ def main():
     else:
         msglog = ""
         linesCount = 24
-        parseValue = "sed -n '3p;$p'"        
+        parseValue = "sed -n '3p;$p'"
         timeout = 60
-    
+
     mpicommand = "mpirun -hosts [dummynodes]" + rdmaOption+ " -ppn 1 IMB-MPI1" + msglog + " pingpong"
     parseResult = "tail -n" + str(linesCount+5) + " | head -n" + str(linesCount+1)
     columns = "$3,$4"
@@ -149,7 +148,7 @@ def main():
     if mode == "Jumble".lower():
         timeout *= 3
         mpicommand = "sleep [delay] && " + mpicommand
-        
+
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[mpicommand]", mpicommand)
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseResult]", parseResult)
@@ -182,7 +181,7 @@ def main():
                 task["Node"] = nodepair[0]
                 task["CustomizedData"] = nodes
                 #task["EnvironmentVariables"] = {"CCP_NODES":"2 "+" 1 ".join(nodepair)+" 1"}
-                tasks.append(task)  
+                tasks.append(task)
     else:
         id = 1
         delay = 0
@@ -208,7 +207,7 @@ def main():
             #task["EnvironmentVariables"] = {"CCP_NODES":"2 "+" 1 ".join(nodepair)+" 1"}
             task["CustomizedData"] = nodes
             tasks.append(task)
-    
+
     print(json.dumps(tasks))
 
 def getGroupsOptimal(nodelist):
@@ -226,7 +225,7 @@ def getGroupsOptimal(nodelist):
         groups = getGroupsOptimal(nodelist[1:])
         for i in range(0, len(groups)):
             groups[i].append([nodelist[0], nodelist[i+1]])
-    return groups        
+    return groups
 
 #use for test
 def checkGroupsOptimal(nodelist, groups):
@@ -261,7 +260,7 @@ def checkGroupsOptimal(nodelist, groups):
             if pairReverse in allPairs:
                 return False
             else:
-                allPairs.add(pairReverse)            
+                allPairs.add(pairReverse)
     if len(allPairs) != n*(n-1):
         return False
     for ping in nodelist:

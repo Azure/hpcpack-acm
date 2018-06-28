@@ -520,9 +520,11 @@ definitions:
           example: '{ "name": "Packet size", "description": "The size of transfer messages", "type": "number", "min": 0, "max": 29, "defaultValue": 0 }'
           description: Optional parameter for the test, varying on tests.
       arguments:
-        type: string # better be an object array
-        example: '[{"name":"Run with RDMA","value":"NO"},{"name":"Latency threshold","value":1000},{"name":"Throughput threshold","value":100}]'
-        description: Input arguments
+        type: array
+        items:
+          type: object
+          example: '{ "name": "Packet size", "value": 10 }'
+          description: Argument for test, varying on tests.
 
   NodeSummary:
     type: object

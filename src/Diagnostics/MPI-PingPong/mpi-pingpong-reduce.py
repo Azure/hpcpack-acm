@@ -27,7 +27,6 @@ def main():
         if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
             arguments = job['DiagnosticTest']['Arguments']
             if arguments:
-                arguments = json.loads(arguments)
                 for argument in arguments:
                     if argument['name'].lower() == 'Latency threshold'.lower():
                         latencyThreshold = int(argument['value'])
@@ -42,10 +41,10 @@ def main():
     except Exception as e:
         printErrorAsJson('Failed to parse arguments. ' + str(e))
         return -1
-    
+
     taskStateFinished = 3
     taskStateFailed = 4
-    
+
     taskId2nodePair = {}
     badPairs = []
     tasksForStatistics = set()
@@ -157,14 +156,14 @@ def main():
             for node in goodNodes:
                 data = [messages[pair][item] for pair in messages if node in pair.split(',')]
                 histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(golbalMin, golbalMax))]
-                if item == "Latency":            
+                if item == "Latency":
                     badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold and node in pair.split(',')]
                     bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
                     worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
                 else:
                     badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] < throughputThreshold and node in pair.split(',')]
                     bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
-                    worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}           
+                    worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
                 result[item]["ResultByNode"][node] = {}
                 result[item]["ResultByNode"][node]["Bad_pairs"] = badPairs
                 result[item]["ResultByNode"][node]["Passed"] = len(badPairs) == 0
@@ -175,7 +174,7 @@ def main():
                 result[item]["ResultByNode"][node]["Median"] = numpy.median(data)
                 result[item]["ResultByNode"][node]["Standard_deviation"] = numpy.std(data)
                 result[item]["ResultByNode"][node]["Variability"] = getVariability(data)
-            
+
     print(json.dumps(result))
     return 0
 
