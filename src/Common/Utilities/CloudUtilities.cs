@@ -82,7 +82,6 @@
         public string GetMaximumRegistrationKey() => string.Format(this.Option.RegistrationPattern, this.MaxString);
         public string GetHeartbeatKey(string nodeName) => string.Format(this.Option.HeartbeatPattern, nodeName);
         public string NodesPartitionKey { get => this.Option.NodesPartitionKey; }
-        public string JobAggregationResultKey { get => this.Option.JobAggregationResultKey; }
         public string JobEntryKey { get => this.Option.JobEntryKey; }
         public string MetricsValuesPartitionKey { get => this.Option.MetricsValuesPartitionKey; }
         public string MetricsCategoriesPartitionKey { get => this.Option.MetricsCategoriesPartitionKey; }
@@ -96,6 +95,7 @@
         public string GetMaximumTaskKey(int jobId, int requeueCount) => this.GetTaskKey(jobId, int.MaxValue, requeueCount);
         public string GetRawTaskKey(int jobId, int taskId, int requeueCount) => $"{IntegerKey.ToStringKey(jobId)}-{IntegerKey.ToStringKey(requeueCount)}-{IntegerKey.ToStringKey(taskId)}";
         public string GetTaskResultKey(int jobId, int taskId, int requeueCount) => $"taskresult-{this.GetRawTaskKey(jobId, taskId, requeueCount)}";
+        public string GetJobAggregationResultKey(int jobId) => string.Format(this.Option.JobAggregationResultPattern, jobId);
 
         public CloudQueue GetQueue(string queueName) => this.queueClient.GetQueueReference(queueName);
 

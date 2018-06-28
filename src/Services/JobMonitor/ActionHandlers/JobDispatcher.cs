@@ -19,6 +19,7 @@
     {
         private (bool, string) FillData(IEnumerable<InternalTask> tasks, Job job)
         {
+            // TODO: check circle
             var tasksDict = tasks.ToDictionary(t => t.Id);
             foreach (var t in tasks)
             {
@@ -90,6 +91,8 @@
                         Type = EventType.Alert
                     });
                 }, token);
+
+                return;
             }
 
             var taskInstances = tasks.Select(it => new Task()

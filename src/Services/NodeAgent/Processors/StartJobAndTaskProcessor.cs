@@ -33,10 +33,10 @@
 
         private async T.Task<bool> PersistTaskResult(string resultKey, object result, CancellationToken token)
         {
-            var tableResult = await this.jobsTable.InsertOrReplaceAsJsonAsync(this.jobPartitionKey, resultKey, result, token);
+            var tableResult = await this.jobsTable.InsertOrReplaceAsync(this.jobPartitionKey, resultKey, result, token);
             if (!tableResult.IsSuccessfulStatusCode()) { return false; }
             this.Logger.LogInformation("Saved task result {0} to jobs table", resultKey);
-            tableResult = await this.nodesTable.InsertOrReplaceAsJsonAsync(this.nodePartitionKey, resultKey, result, token);
+            tableResult = await this.nodesTable.InsertOrReplaceAsync(this.nodePartitionKey, resultKey, result, token);
             if (!tableResult.IsSuccessfulStatusCode()) { return false; }
             this.Logger.LogInformation("Saved task result {0} to nodes table", resultKey);
             return true;
@@ -70,6 +70,17 @@
                 }
 
                 var taskResultBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(task.JobType, taskResultKey, token);
+                var taskResult = new ComputeClusterTaskInformation()
+                {
+                    CommandLine = cmd,
+                    JobId = task.JobId,
+                    TaskId = task.Id,
+                    NodeName = nodeName,
+                    ResultKey = taskResultKey,
+                };
+
+                if (!await this.PersistTaskResult(nodeTaskResultKey, taskResult, token)) { return false; }
+                if (!await this.PersistTaskResult(taskResultKey, taskResult, token)) { return false; }
 
                 var rawResult = new StringBuilder();
                 using (var monitor = string.IsNullOrEmpty(cmd) ? null : this.Monitor.StartMonitorTask(taskKey, async (output, cancellationToken) =>
@@ -109,6 +120,9 @@
                         catch (Exception ex)
                         {
                             // TODO: Dispatch failure, why job running.
+                            taskResult.Message = ex.ToString();
+                            await this.PersistTaskResult(taskResultKey, taskResult, token);
+                            await this.PersistTaskResult(nodeTaskResultKey, taskResult, token);
                             await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Failed, token);
                             await this.Utilities.UpdateJobAsync(task.JobType, task.JobId, j =>
                             {
@@ -142,7 +156,7 @@
 
                         this.Logger.LogInformation("Saving result for job {0}, task {1}", task.JobId, taskKey);
 
-                        var taskResult = taskResultArgs.TaskInfo;
+                        taskResult = taskResultArgs.TaskInfo;
                         await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey,
                             t => t.State = taskResult?.ExitCode == 0 ? TaskState.Finished : TaskState.Failed,
                             token);

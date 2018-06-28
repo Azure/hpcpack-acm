@@ -370,18 +370,12 @@ export class InMemoryDataService implements InMemoryDbService {
   }
 
   generateRandomHeatmapNodes(randomNodes) {
-    // let totalNumber = 1000;
-    // let names = this.generateNames(totalNumber);
-    let nodes_size = randomNodes.length;
-    let heatmapNodes = {};
-
-    heatmapNodes['values'] = {};
-    for (let i = 0; i < nodes_size; i++) {
-      let name = randomNodes[i].name;
-      heatmapNodes['values'][name] = {};
-      heatmapNodes['values'][name]['_Total'] = this.generateRandomResourceUsage();
-    }
-    return heatmapNodes;
+    return {
+      values: randomNodes.map(name => ({
+        node: name,
+        data: { _Total: this.generateRandomResourceUsage() }
+      }))
+    };
   }
 
   generateHeatmapCategories() {

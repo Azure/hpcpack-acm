@@ -21,12 +21,14 @@
         private readonly ILogger logger;
         private readonly TaskMonitor monitor;
         private readonly CloudUtilities utilities;
+        private readonly NodeSynchronizer synchronizer;
 
-        public CallbackController(ILogger<CallbackController> logger, TaskMonitor monitor, CloudUtilities utilities)
+        public CallbackController(ILogger<CallbackController> logger, TaskMonitor monitor, CloudUtilities utilities, NodeSynchronizer synchronizer)
         {
             this.logger = logger;
             this.monitor = monitor;
             this.utilities = utilities;
+            this.synchronizer = synchronizer;
         }
 
         [HttpPost("computenodereported")]
@@ -41,17 +43,18 @@
 
                 var nodeTable = this.utilities.GetNodesTable();
 
-                var jsonTableEntity = new JsonTableEntity(
+                var result = await nodeTable.InsertOrReplaceAsync(
                     this.utilities.NodesPartitionKey,
                     this.utilities.GetHeartbeatKey(nodeName),
-                    nodeInfo);
-
-                var result = await nodeTable.ExecuteAsync(TableOperation.InsertOrReplace(jsonTableEntity), null, null, token);
+                    nodeInfo,
+                    token);
 
                 using (HttpResponseMessage r = new HttpResponseMessage((HttpStatusCode)result.HttpStatusCode))
                 {
                     r.EnsureSuccessStatusCode();
                 }
+
+                await this.synchronizer.Sync(nodeInfo, token);
 
                 // 30 s 
                 return this.utilities.Option.HeartbeatIntervalSeconds * 1000;

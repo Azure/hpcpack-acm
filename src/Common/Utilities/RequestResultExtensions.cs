@@ -1,18 +1,18 @@
 ﻿namespace Microsoft.HpcAcm.Common.Utilities
 {
-    using Microsoft.WindowsAzure.Storage.Table;
+    using Microsoft.WindowsAzure.Storage;
     using System;
     using System.Collections.Generic;
     using System.Text;
 
-    public static class TableResultExtensions
+    public static class RequestResultExtensions
     {
-        public static bool IsSuccessfulStatusCode(this TableResult r)
+        public static bool IsSuccessfulStatusCode(this RequestResult r)
         {
             return r.HttpStatusCode >= 200 && r.HttpStatusCode < 300;
         }
 
-        public static bool IsConflict(this TableResult r)
+        public static bool IsConflict(this RequestResult r)
         {
             return r.HttpStatusCode == 412 || r.HttpStatusCode == 409;
         }

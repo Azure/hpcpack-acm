@@ -61,7 +61,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
 
         public string JobsTableName { get; set; } = "jobstable";
         public string JobEntryKey { get; internal set; } = "jobentry";
-        public string JobAggregationResultKey { get; internal set; } = "aggregationresult";
+        public string JobAggregationResultPattern { get; internal set; } = "aggregationresult-{0}";
         public string NodeTaskResultPattern { get; internal set; } = "nodejobresult-{0}-{1}";
         public string JobReversePartitionPattern { get; internal set; } = "jobreverse-{0}-{1}";
         public string JobPartitionPattern { get; internal set; } = "job-{0}-{1}";

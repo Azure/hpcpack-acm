@@ -62,12 +62,13 @@
                 job.State = finalState;
             }
 
-            var jobOutputBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(job.Type, this.Utilities.JobAggregationResultKey, token);
+            var jobOutputBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(job.Type, this.Utilities.GetJobAggregationResultKey(job.Id), token);
             await jobOutputBlob.AppendTextAsync(aggregationResult, Encoding.UTF8, null, null, null, token);
 
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
                 j.State = job.State;
+                // TODO: separate the events.
                 j.Events = job.Events;
             }, token);
 
