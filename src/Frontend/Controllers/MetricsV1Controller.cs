@@ -69,7 +69,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return new OkObjectResult(new Heatmap()
             {
                 Category = category,
-                Values = list.ToDictionary(l => l.Item1, l => l.Item2),
+                Values = list.Select(e => new Heatmap.Record { Node = e.Item1, Data = e.Item2 }).ToList()
             });
         }
 

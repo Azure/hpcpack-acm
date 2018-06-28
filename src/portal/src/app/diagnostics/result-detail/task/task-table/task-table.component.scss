@@ -1,0 +1,31 @@
+@import "../../../../stylesheets/table.scss";
+
+.node.success {
+    background-color: #d5ffd4;
+}
+
+.node.failure {
+    background-color: #ffdada;
+}
+
+.node {
+    cursor: pointer;
+}
+
+.mat-header-cell.mat-column-id {
+    /* text-align: center; */
+    flex: 1;
+    /* padding-right: 0.8em; */
+}
+
+mat-row .mat-column-id {
+    flex: 1;
+    /* text-align: right; */
+    /* padding-right: 0.5em; */
+}
+
+.mat-column-nodes {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 3;
+}

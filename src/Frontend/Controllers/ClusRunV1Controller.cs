@@ -32,6 +32,18 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return new OkObjectResult(await this.provider.GetJobsAsync(lastId, count, JobType.ClusRun, reverse, token));
         }
 
+        // GET v1/clusrun/5/aggregationresult
+        [HttpGet("{jobid}/aggregationresult")]
+        public async T.Task<IActionResult> GetJobAggregationResultAsync(
+            int jobId,
+            CancellationToken token = default(CancellationToken))
+        {
+            var result = await this.provider.GetJobAggregationResultAsync(jobId, JobType.ClusRun, token);
+
+            if (result == null) return new NotFoundObjectResult("The job hasn't produced any aggregation result.");
+            else return new OkObjectResult(result);
+        }
+
         // GET v1/clusrun/5
         [HttpGet("{jobid}")]
         public async T.Task<IActionResult> GetJobAsync(int jobId, CancellationToken token = default(CancellationToken))
@@ -106,8 +118,13 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 return new BadRequestObjectResult("The CommandLine field should be specified.");
             }
 
-            int id = await this.provider.CreateJobAsync(job, token);
-            return new CreatedResult($"/v1/clusrun/{id}", null);
+            if (job.TargetNodes == null || job.TargetNodes.Length == 0)
+            {
+                return new BadRequestObjectResult("The TargetNodes shouldn't be empty.");
+            }
+
+            job = await this.provider.CreateJobAsync(job, token);
+            return new CreatedResult($"/v1/clusrun/{job.Id}", job);
         }
 
         // PATCH v1/clusrun/5
@@ -120,7 +137,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         }
 
         [HttpGet("testcanceljob/{id}")]
-        public async T.Task<IActionResult> TestCreateJobAsync(int id, CancellationToken token)
+        public async T.Task<IActionResult> TestCancelJobAsync(int id, CancellationToken token)
         {
             var job = new Job()
             {
@@ -145,8 +162,8 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 Type = JobType.ClusRun,
             };
 
-            var id = await this.provider.CreateJobAsync(job, token);
-            return new CreatedResult($"/v1/clusrun/{id}", null);
+            job = await this.provider.CreateJobAsync(job, token);
+            return new CreatedResult($"/v1/clusrun/{job.Id}", job);
         }
     }
 }

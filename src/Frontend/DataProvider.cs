@@ -34,9 +34,58 @@
             this.nodesTable = this.utilities.GetNodesTable();
         }
 
+        public async T.Task<object> GetDashboardNodesAsync(CancellationToken token)
+        {
+            var states = Enum.GetValues(typeof(NodeHealth)).Cast<NodeHealth>();
+            var result = states.ToDictionary(s => s, s => 0);
+
+            string lastNodeId = null;
+            IEnumerable<Node> nodes;
+            do
+            {
+                nodes = await this.GetNodesAsync(lastNodeId, 1000, token);
+                var dict = nodes.GroupBy(n => n.Health).ToDictionary(g => g.Key, g => g.Count());
+                foreach (var d in dict) { result[d.Key] += d.Value; }
+                lastNodeId = nodes?.LastOrDefault()?.Id;
+            }
+            while (nodes?.Count() > 0);
+
+            return result;
+        }
+
+        public T.Task<object> GetDashboardDiagnosticsAsync(CancellationToken token)
+        {
+            return this.GetDashboardJobsAsync(JobType.Diagnostics, token);
+        }
+
+        public T.Task<object> GetDashboardClusrunAsync(CancellationToken token)
+        {
+            return this.GetDashboardJobsAsync(JobType.ClusRun, token);
+        }
+
+        public async T.Task<object> GetDashboardJobsAsync(JobType jobType, CancellationToken token)
+        {
+            var states = Enum.GetValues(typeof(JobState)).Cast<JobState>();
+            var result = states.ToDictionary(s => s, s => 0);
+
+            int lastJobId = 0;
+            IEnumerable<Job> jobs;
+            do
+            {
+                jobs = await this.GetJobsAsync(lastJobId, 1000, jobType, false, token);
+                var dict = jobs.GroupBy(n => n.State).ToDictionary(g => g.Key, g => g.Count());
+                foreach (var d in dict) { result[d.Key] += d.Value; }
+                lastJobId = jobs?.LastOrDefault()?.Id ?? int.MaxValue;
+            }
+
+            while (jobs?.Count() > 0);
+
+            return result;
+        }
+
         public async T.Task<IActionResult> GetOutputRawAsync(JobType type, string taskResultKey, CancellationToken token)
         {
-            var blob = this.utilities.GetTaskOutputBlob(type.ToString().ToLowerInvariant(), taskResultKey);
+            var blob = this.utilities.GetJobOutputBlob(type, taskResultKey);
 
             if (!await blob.ExistsAsync(null, null, token))
             {
@@ -69,7 +118,7 @@
 
             var result = new TaskOutputPage() { Offset = offset, Size = 0 };
 
-            var blob = this.utilities.GetTaskOutputBlob(type.ToString().ToLowerInvariant(), taskResultKey);
+            var blob = this.utilities.GetJobOutputBlob(type, taskResultKey);
 
             if (!await blob.ExistsAsync(null, null, token))
             {
@@ -174,7 +223,7 @@
 
             if (registerInfo == null) return null;
             var heartbeatKey = this.utilities.GetHeartbeatKey(id);
-            var nodeInfo = await this.nodesTable.RetrieveAsJsonAsync(this.utilities.NodesPartitionKey, heartbeatKey, token);
+            var nodeInfo = await this.nodesTable.RetrieveJsonTableEntityAsync(this.utilities.NodesPartitionKey, heartbeatKey, token);
 
             var node = new Node() { NodeRegistrationInfo = registerInfo, Name = id, };
             if (nodeInfo != null && nodeInfo.Timestamp.AddSeconds(this.utilities.Option.MaxMissedHeartbeats * this.utilities.Option.HeartbeatIntervalSeconds) > DateTimeOffset.UtcNow)
@@ -193,13 +242,19 @@
             return node;
         }
 
-        public async T.Task<IEnumerable<ComputeClusterJobInformation>> GetNodeJobInfoAsync(string id, CancellationToken token)
+        public async T.Task<IEnumerable<Job>> GetNodeJobInfoAsync(string id, CancellationToken token)
         {
             id = id.ToLowerInvariant();
             var heartbeatKey = this.utilities.GetHeartbeatKey(id);
             var nodeInfo = await this.nodesTable.RetrieveAsync<ComputeClusterNodeInformation>(this.utilities.NodesPartitionKey, heartbeatKey, token);
 
-            return nodeInfo.Jobs;
+            if (nodeInfo == null) return null;
+
+            var jobs = await T.Task.WhenAll(nodeInfo.Jobs.Select(async j =>
+                await this.jobsTable.RetrieveAsync<Job>(this.utilities.GetJobPartitionKey(JobType.Diagnostics, j.JobId), this.utilities.JobEntryKey, token)
+                    ?? await this.jobsTable.RetrieveAsync<Job>(this.utilities.GetJobPartitionKey(JobType.Diagnostics, j.JobId), this.utilities.JobEntryKey, token)));
+
+            return jobs.Where(j => j != null);
         }
 
         public async T.Task<object> GetNodeMetadataAsync(string id, CancellationToken token)
@@ -263,7 +318,7 @@
                 TableQuery.GenerateFilterCondition(CloudUtilities.RowKeyName, QueryComparisons.Equal, rowKey));
 
             var results = await jobTable.QueryAsync<Job>(q, count, token);
-            return results.Select(r => { r.Item3.LastChangedAtAt = r.Item4; return r.Item3; });
+            return results.Select(r => { r.Item3.UpdatedAt = r.Item4; return r.Item3; });
         }
 
         public async T.Task<Job> GetJobAsync(
@@ -276,11 +331,27 @@
             var jobPartitionKey = this.utilities.GetJobPartitionKey(type, jobId);
             var rowKey = utilities.JobEntryKey;
 
-            var jsonTableEntity = await this.jobsTable.RetrieveAsJsonAsync(jobPartitionKey, rowKey, token);
+            var jsonTableEntity = await this.jobsTable.RetrieveJsonTableEntityAsync(jobPartitionKey, rowKey, token);
             var job = jsonTableEntity?.GetObject<Job>();
-            if (job != null) job.LastChangedAtAt = jsonTableEntity.Timestamp;
+            if (job != null) job.UpdatedAt = jsonTableEntity.Timestamp;
 
             return job;
+        }
+
+        public async T.Task<object> GetJobAggregationResultAsync(
+            int jobId,
+            JobType type = JobType.ClusRun,
+            CancellationToken token = default(CancellationToken))
+        {
+            var aggregationResultBlob = this.utilities.GetJobOutputBlob(type, this.utilities.GetJobAggregationResultKey(jobId));
+            if (await aggregationResultBlob.ExistsAsync(null, null, token))
+            {
+                return await aggregationResultBlob.DownloadTextAsync(Encoding.UTF8, null, null, null, token);
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public async T.Task<IEnumerable<Event>> GetJobEventsAsync(
@@ -351,6 +422,7 @@
             this.logger.LogInformation("Patch job called for job {0} {1}", job.Type, job.Id);
 
             JobState state = JobState.Finished;
+
             if (!await this.utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
                 state = j.State = (j.State == JobState.Queued || j.State == JobState.Running) ? JobState.Canceling : j.State;
@@ -373,23 +445,23 @@
             }
         }
 
-        public async T.Task<int> CreateJobAsync(Job job, CancellationToken token)
+        public async T.Task<Job> CreateJobAsync(Job job, CancellationToken token)
         {
             this.logger.LogInformation("New job called. creating job");
             var jobTable = this.utilities.GetJobsTable();
 
-            job.Id = await this.utilities.GetNextId("Jobs", job.Type.ToString().ToLowerInvariant(), token);
+            job.Id = await this.utilities.GetNextId("Jobs", "Jobs", token);
             this.logger.LogInformation("generated new job id {0}", job.Id);
             var rowKey = utilities.JobEntryKey;
 
             job.CreatedAt = DateTimeOffset.UtcNow;
 
             var partitionName = utilities.GetJobPartitionKey(job.Type, job.Id);
-            var result = await jobTable.InsertOrReplaceAsJsonAsync(partitionName, rowKey, job, token);
+            var result = await jobTable.InsertOrReplaceAsync(partitionName, rowKey, job, token);
             this.logger.LogInformation("create job result {0}", result);
 
             partitionName = utilities.GetJobPartitionKey(job.Type, job.Id, true);
-            result = await jobTable.InsertOrReplaceAsJsonAsync(partitionName, rowKey, job, token);
+            result = await jobTable.InsertOrReplaceAsync(partitionName, rowKey, job, token);
             this.logger.LogInformation("create job result {0}", result);
 
             this.logger.LogInformation("Creating job dispatch message");
@@ -399,7 +471,7 @@
             await jobEventQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(jobMsg)), null, null, null, null, token);
             this.logger.LogInformation("Create job dispatch message success.");
 
-            return job.Id;
+            return job;
         }
     }
 }

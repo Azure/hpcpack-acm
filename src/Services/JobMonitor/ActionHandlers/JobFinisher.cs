@@ -14,15 +14,10 @@
     using System.Threading;
     using T = System.Threading.Tasks;
 
-    public abstract class JobFinisher : ServerObject, IJobEventProcessor
+    class JobFinisher : JobActionHandlerBase
     {
-        public abstract JobType RestrictedJobType { get; }
-        public string EventVerb { get => "finish"; }
-
-        public async T.Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token)
+        public override async T.Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token)
         {
-            Debug.Assert(job.Type == this.RestrictedJobType, "Job type mismatch");
-
             var jobTable = this.Utilities.GetJobsTable();
 
             if (job.State != JobState.Finishing)
@@ -54,7 +49,7 @@
                 .Where(t => t.CustomizedData != Task.EndTaskMark)
                 .ToList();
 
-            await this.AggregateTasksAsync(job, allTasks, allTaskResults, token);
+            var aggregationResult = await this.JobTypeHandler.AggregateTasksAsync(job, allTasks, allTaskResults, token);
 
             if (job.State == JobState.Finishing)
             {
@@ -67,10 +62,13 @@
                 job.State = finalState;
             }
 
+            var jobOutputBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(job.Type, this.Utilities.GetJobAggregationResultKey(job.Id), token);
+            await jobOutputBlob.AppendTextAsync(aggregationResult, Encoding.UTF8, null, null, null, token);
+
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
                 j.State = job.State;
-                j.AggregationResult = job.AggregationResult;
+                // TODO: separate the events.
                 j.Events = job.Events;
             }, token);
 
@@ -82,7 +80,5 @@
                     null, null, null, null, token);
             }
         }
-
-        public abstract T.Task AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeClusterTaskInformation> taskResults, CancellationToken token);
     }
 }

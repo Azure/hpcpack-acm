@@ -74,7 +74,7 @@
                 this.logger.LogError(e, "Sending out request, action {0}, callback {1}, nodeName {2}", action, callbackUri, nodeName);
                 if (this.CanRetry(e) && retryCount < this.Options.AutoResendLimit)
                 {
-                    await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(this.Options.ResendIntervalSeconds), token);
+                    await Tasks.Task.Delay(TimeSpan.FromSeconds(this.Options.ResendIntervalSeconds), token);
                     return await this.SendRequestAsync(action, callbackUri, nodeName, arg, retryCount + 1, token);
                 }
                 else

@@ -29,11 +29,8 @@
             var jobsTable = this.Utilities.GetJobsTable();
             var nodeName = this.ServerOptions.HostName;
 
-            var jobPartitionKey = this.Utilities.GetJobPartitionKey(message.JobType, message.JobId);
-            var job = await jobsTable.RetrieveAsync<Job>(jobPartitionKey, this.Utilities.JobEntryKey, token);
             var taskKey = this.Utilities.GetTaskKey(message.JobId, message.Id, message.RequeueCount);
 
-            if (job == null) return true;
 
             // TODO: cancel single task
             //if (message.Id != 0
@@ -44,9 +41,12 @@
             //    var nodeTaskResultKey = this.Utilities.GetNodeTaskResultKey(nodeName, task.JobId, task.RequeueCount, task.Id);
             //}
 
-            using (this.Logger.BeginScope("Do work {0} for job {1} on node {2}", message.EventVerb, job.Id, nodeName))
+            using (this.Logger.BeginScope("Do work {0} for job {1} on node {2}", message.EventVerb, message.JobId, nodeName))
             {
-                if (job.RequeueCount != message.RequeueCount)
+                var jobPartitionKey = this.Utilities.GetJobPartitionKey(message.JobType, message.JobId);
+                var job = await jobsTable.RetrieveAsync<Job>(jobPartitionKey, this.Utilities.JobEntryKey, token);
+
+                if (job != null && job.RequeueCount != message.RequeueCount)
                 {
                     return true;
                 }
@@ -59,15 +59,18 @@
                 }
                 catch (Exception ex)
                 {
-                    await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
+                    if (job != null)
                     {
-                        (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                        await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                         {
-                            Type = EventType.Warning,
-                            Source = EventSource.Job,
-                            Content = $"Failed to end Job {job.Id}, exception {ex}",
-                        });
-                    }, token);
+                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                            {
+                                Type = EventType.Warning,
+                                Source = EventSource.Job,
+                                Content = $"Failed to end Job {job.Id}, exception {ex}",
+                            });
+                        }, token);
+                    }
                 }
 
                 return true;

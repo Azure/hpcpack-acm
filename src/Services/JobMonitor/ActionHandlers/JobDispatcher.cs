@@ -15,13 +15,11 @@
     using System.Threading;
     using T = System.Threading.Tasks;
 
-    public abstract class JobDispatcher : ServerObject, IJobEventProcessor
+    class JobDispatcher : JobActionHandlerBase
     {
-        public abstract JobType RestrictedJobType { get; }
-        public string EventVerb { get => "dispatch"; }
-
         private (bool, string) FillData(IEnumerable<InternalTask> tasks, Job job)
         {
+            // TODO: check circle
             var tasksDict = tasks.ToDictionary(t => t.Id);
             foreach (var t in tasks)
             {
@@ -52,15 +50,13 @@
         }
 
 
-        public async T.Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token)
+        public override async T.Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token)
         {
-            Debug.Assert(job.Type == this.RestrictedJobType, "Job type mismatch");
-
             var jobTable = this.Utilities.GetJobsTable();
 
             if (job.State != JobState.Queued) return;
 
-            var tasks = await this.GenerateTasksAsync(job, token);
+            var tasks = await this.JobTypeHandler.GenerateTasksAsync(job, token);
             if (tasks == null) { return; }
             var ids = tasks.Select(t => t.Id).ToList();
 
@@ -95,6 +91,8 @@
                         Type = EventType.Alert
                     });
                 }, token);
+
+                return;
             }
 
             var taskInstances = tasks.Select(it => new Task()
@@ -170,7 +168,5 @@
                     null, null, null, null, token);
             }
         }
-
-        public abstract T.Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token);
     }
 }

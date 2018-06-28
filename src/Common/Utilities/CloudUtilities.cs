@@ -95,6 +95,7 @@
         public string GetMaximumTaskKey(int jobId, int requeueCount) => this.GetTaskKey(jobId, int.MaxValue, requeueCount);
         public string GetRawTaskKey(int jobId, int taskId, int requeueCount) => $"{IntegerKey.ToStringKey(jobId)}-{IntegerKey.ToStringKey(requeueCount)}-{IntegerKey.ToStringKey(taskId)}";
         public string GetTaskResultKey(int jobId, int taskId, int requeueCount) => $"taskresult-{this.GetRawTaskKey(jobId, taskId, requeueCount)}";
+        public string GetJobAggregationResultKey(int jobId) => string.Format(this.Option.JobAggregationResultPattern, jobId);
 
         public CloudQueue GetQueue(string queueName) => this.queueClient.GetQueueReference(queueName);
 

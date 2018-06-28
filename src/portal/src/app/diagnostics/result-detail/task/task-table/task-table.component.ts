@@ -8,7 +8,7 @@ import { TaskDetailComponent } from '../task-detail/task-detail.component';
 @Component({
   selector: 'diag-task-table',
   templateUrl: './task-table.component.html',
-  styleUrls: ['./task-table.component.css']
+  styleUrls: ['./task-table.component.scss']
 })
 export class TaskTableComponent implements OnInit {
   @ViewChild('filter')
@@ -39,10 +39,10 @@ export class TaskTableComponent implements OnInit {
     this.getDisplayedColumns();
   }
 
-  private showDetail(jobId, taskId) {
+  private showDetail(jobId, taskId, taskState) {
     let dialogRef = this.dialog.open(TaskDetailComponent, {
-      width: '98%',
-      data: { jobId: jobId, taskId: taskId }
+      width: '60%',
+      data: { jobId: jobId, taskId: taskId, taskState: taskState }
     });
   }
 

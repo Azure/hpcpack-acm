@@ -60,8 +60,8 @@ export class ResultLayoutComponent implements OnInit {
     let dialogRef = this.dialog.open(ConfirmDialogComponent, {
       width: '90%',
       data: {
-        title: 'Rerun',
-        message: 'Are you sure to rerun the current diagnostic?'
+        title: 'Copy',
+        message: 'Are you sure to copy the current diagnostic?'
       }
     });
     dialogRef.afterClosed().subscribe(res => {
@@ -70,7 +70,7 @@ export class ResultLayoutComponent implements OnInit {
         let diagnosticTest = this.result.diagnosticTest;
         let name = `${this.result.name.split('@')[0]}@${this.api.diag.getCreatedTime()}`;
         this.api.diag.create(name, targetNodes, diagnosticTest).subscribe(obj => {
-         let returnData = obj.headers.get('location').split('/');
+          let returnData = obj.headers.get('location').split('/');
           let jobId = returnData[returnData.length - 1];
           this.router.navigate([`/diagnostics/results/` + jobId]);
         });

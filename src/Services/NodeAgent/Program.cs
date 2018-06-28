@@ -41,7 +41,8 @@
                 .ConfigServiceCollection((svc, config, token) =>
                 {
                     svc.AddSingleton(monitor);
-                    svc.AddSingleton<NodeCommunicator, NodeCommunicator>();
+                    svc.AddSingleton<NodeCommunicator>();
+                    svc.AddSingleton<NodeSynchronizer>();
                     svc.Configure<MetadataWorkerOptions>(config.GetSection(nameof(MetadataWorkerOptions)));
                     svc.AddSingleton<IWorker, MetadataWorker>();
                     svc.Configure<MetricsWorkerOptions>(config.GetSection(nameof(MetricsWorkerOptions)));

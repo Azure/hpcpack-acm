@@ -4,12 +4,12 @@ import { environment as env } from '../../environments/environment';
 
 export class InMemoryDataService implements InMemoryDbService {
   urlMap = [
-    { url: NodeApi.url, coll: 'nodes' },
-    { url: CommandApi.url, coll: 'commands' },
-    { url: TestApi.url, coll: 'tests' },
-    { url: HeatmapApi.url + '/cpu', coll: 'heatmapNodes' },
-    { url: HeatmapApi.url + '/categories', coll: 'heatmapCategories' },
-    { url: env.apiBase + '/commands/resetdb', coll: 'resetdb' },
+    { url: `${env.apiBase}/nodes`, coll: 'nodes' },
+    { url: `${env.apiBase}/clusRun`, coll: 'commands' },
+    { url: `${env.apiBase}/diagnostics/jobs`, coll: 'tests' },
+    { url: `${env.apiBase}/metrics` + '/cpu', coll: 'heatmapNodes' },
+    { url: `${env.apiBase}/metrics/categories`, coll: 'heatmapCategories' },
+    { url: `${env.apiBase}/commands/resetdb`, coll: 'resetdb' },
   ];
 
   parseRequestUrl(url, utils) {
@@ -370,18 +370,12 @@ export class InMemoryDataService implements InMemoryDbService {
   }
 
   generateRandomHeatmapNodes(randomNodes) {
-    // let totalNumber = 1000;
-    // let names = this.generateNames(totalNumber);
-    let nodes_size = randomNodes.length;
-    let heatmapNodes = {};
-
-    heatmapNodes['values'] = {};
-    for (let i = 0; i < nodes_size; i++) {
-      let name = randomNodes[i].name;
-      heatmapNodes['values'][name] = {};
-      heatmapNodes['values'][name]['_Total'] = this.generateRandomResourceUsage();
-    }
-    return heatmapNodes;
+    return {
+      values: randomNodes.map(name => ({
+        node: name,
+        data: { _Total: this.generateRandomResourceUsage() }
+      }))
+    };
   }
 
   generateHeatmapCategories() {

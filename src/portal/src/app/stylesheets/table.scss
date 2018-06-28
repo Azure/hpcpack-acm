@@ -1,0 +1,71 @@
+@import "./mixin.scss";
+.filter mat-form-field {
+    width: 100%;
+    margin-bottom: 1em;
+}
+
+mat-header-cell {
+    font-size: .8em;
+}
+
+.mat-row>.mat-cell {
+    font-size: .8em;
+}
+
+.mat-row:hover {
+    background: rgba(0, 0, 0, .04);
+}
+
+.mat-row a {
+    color: #3b46da;
+}
+
+.mat-cell,
+.mat-header-cell {
+    padding: 0 2px;
+    text-align: center;
+}
+
+.mat-row,
+.mat-header-row {
+    min-height: 40px;
+    padding: 0 10px;
+}
+
+.mat-column-id {
+    flex: 0.3;
+}
+
+.mat-column-select {
+    overflow: initial;
+    flex: 0;
+}
+
+.mat-column-actions {
+    flex: 0.2;
+    text-align: right;
+}
+
+.Finished,
+.finished {
+    color: #2E7D32;
+}
+
+.Queued,
+.queued {
+    color: #FF8F00;
+}
+
+.Failed,
+.failed {
+    color: #D84315;
+}
+
+.Running,
+.running {
+    color: #283593;
+}
+
+.state {
+    @include display-flex(center, center);
+}

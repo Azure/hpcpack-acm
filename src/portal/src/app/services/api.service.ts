@@ -13,7 +13,9 @@ import { HeatmapNode } from '../models/heatmap-node';
 import 'rxjs/add/operator/concatMap';
 
 export abstract class Resource<T> {
-  static baseUrl = env.apiBase;
+  protected get baseUrl() {
+    return env.apiBase
+  }
 
   constructor(protected http: HttpClient) { }
 
@@ -55,10 +57,8 @@ export abstract class Resource<T> {
 }
 
 export class NodeApi extends Resource<Node> {
-  static url = `${Resource.baseUrl}/nodes`;
-
   protected get url(): string {
-    return NodeApi.url;
+    return `${this.baseUrl}/nodes`;
   }
 
   getHistoryData(id: string): Observable<any> {
@@ -74,14 +74,15 @@ export class NodeApi extends Resource<Node> {
   }
 
   protected normalizeHistory(history: any): any {
-    let historyData = [];
-
-    if (history.data) {
-      for (let key in history.data) {
-        historyData.push({ label: key, data: history.data[key] });
-      }
+    if (history.items) {
+      history.history = history.items.map(item => ({ label: item.span, data: item.data }));
     }
-    history.history = historyData;
+    else {
+      history.history = [];
+    }
+    if (history.span) {
+      history.range = history.span;
+    }
     return history;
   }
 
@@ -92,21 +93,21 @@ export class NodeApi extends Resource<Node> {
   getNodeSheduledEvents(id: string): Observable<any> {
     return this.httpGet(`${this.url}/${id}/scheduledevents`);
   }
+
+  getNodeJobs(id: string): Observable<any> {
+    return this.httpGet(`${this.url}/${id}/jobs`);
+  }
 }
 
 export class TestApi extends Resource<TestResult> {
-  static url = `${Resource.baseUrl}/diagnostics/jobs`;
-
   protected get url(): string {
-    return TestApi.url;
+    return `${this.baseUrl}/diagnostics/jobs`;
   }
 }
 
 export class CommandApi extends Resource<CommandResult> {
-  static url = `${Resource.baseUrl}/clusRun`;
-
   protected get url(): string {
-    return CommandApi.url;
+    return `${this.baseUrl}/clusRun`;
   }
 
   protected normalize(result: any): CommandResult {
@@ -161,7 +162,7 @@ export class CommandApi extends Resource<CommandResult> {
   getOutput(key, offset, size = 1024, opt = { fulfill: false, over: undefined, timeout: undefined }) {
     return Observable.create(observer => {
       let res = { content: '', size: 0 };
-      let url = `${Resource.baseUrl}/output/clusRun/${key}/page?offset=${offset}&pageSize=${size}`;
+      let url = `${this.baseUrl}/output/clusRun/${key}/page?offset=${offset}&pageSize=${size}`;
       let ts = new Date().getTime();
       Loop.start(
         this.http.get<any>(url),
@@ -184,7 +185,7 @@ export class CommandApi extends Resource<CommandResult> {
             }
             let nextOffset = result.offset + result.size;
             let nextSize = size - res.size;
-            let nextUrl = `${Resource.baseUrl}/output/clusRun/${key}/page?offset=${nextOffset}&pageSize=${nextSize}`;
+            let nextUrl = `${this.baseUrl}/output/clusRun/${key}/page?offset=${nextOffset}&pageSize=${nextSize}`;
             return this.http.get<any>(nextUrl);
           },
           error: err => {
@@ -198,29 +199,18 @@ export class CommandApi extends Resource<CommandResult> {
   }
 
   getDownloadUrl(key): string {
-    let url = `${Resource.baseUrl}/output/clusRun/${key}/raw`;
+    let url = `${this.baseUrl}/output/clusRun/${key}/raw`;
     return url;
   }
 }
 
 export class HeatmapApi extends Resource<any> {
-  static url = `${Resource.baseUrl}/metrics`;
-
   protected get url(): string {
-    return HeatmapApi.url;
+    return `${this.baseUrl}/metrics`;
   }
 
   protected normalize(result: any): void {
-    result['results'] = new Array<HeatmapNode>();
-    for (let key in result.values) {
-      if (result.values[key]._Total == undefined) {
-        result['results'].push({ 'id': key, 'value': NaN });
-      }
-      else {
-        result['results'].push({ 'id': key, 'value': result.values[key]._Total });
-
-      }
-    }
+    result.results = result.values.map(e => ({ id: e.node, value: e.data._Total || NaN }));
     return result;
   }
 
@@ -251,10 +241,8 @@ export class HeatmapApi extends Resource<any> {
 }
 
 export class DiagApi extends Resource<any> {
-  static url = `${Resource.baseUrl}/diagnostics`;
-
   protected get url(): string {
-    return DiagApi.url;
+    return `${this.baseUrl}/diagnostics`;
   }
 
   getCreatedTime() {

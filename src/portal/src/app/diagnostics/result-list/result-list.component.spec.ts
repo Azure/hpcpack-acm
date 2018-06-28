@@ -71,7 +71,5 @@ fdescribe('ResultListComponent', () => {
     expect(text).toContain(ApiServiceStub.results[0].diagnosticTest.name);
     text = fixture.nativeElement.querySelector('.mat-cell.mat-column-category').textContent;
     expect(text).toContain(ApiServiceStub.results[0].diagnosticTest.category);
-    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-test').textContent;
-    expect(text).toContain(ApiServiceStub.results[0].name);
   });
 });

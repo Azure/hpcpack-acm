@@ -11,5 +11,10 @@
         {
             return r.HttpStatusCode >= 200 && r.HttpStatusCode < 300;
         }
+
+        public static bool IsConflict(this TableResult r)
+        {
+            return r.HttpStatusCode == 412 || r.HttpStatusCode == 409;
+        }
     }
 }

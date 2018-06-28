@@ -282,11 +282,35 @@ definitions:
   NodeMetrics:
     type: object
     properties:
-      range:
-        type: string  # Better be integer, TimeSpan is not supported in other languages than C#
-        example: 00:00:10
-        description: Time range of the metric data
-      data: {}  # Should be an array order by time: time string as key is not supported by SAWGGER
+      span:
+        type: number
+        format: double
+        example: 10.0
+        description: Time span in second of the metric data
+      items:
+        type: array
+        items:
+          type: object
+          properties:
+            time:
+              type: string
+              format: date-time
+              description: Time of the metric data
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  category:
+                    type: string
+                    example: cpu
+                    description: Metric category
+                  instanceValues:
+                    type: object
+                    description: Metric data
+                    additionalProperties:
+                      type: number
+                      format: double
 
   Metrics:
     type: object
@@ -295,14 +319,20 @@ definitions:
         type: string
         example: cpu
         description: Category of the metric data
-      instanceValues: # Better be an array
-        description: A hash whose key is node name and value is node metrics of the category
-        type: object
-        additionalProperties:
+      values:
+        type: array
+        items:
           type: object
-          additionalProperties:
-            type: number
-            format: double
+          properties:
+            node:
+              type: string
+              description: Node name
+            data:
+              type: object
+              description: Node metric data
+              additionalProperties:
+                type: number
+                format: double
 
   JobState:
     description: job state
@@ -323,6 +353,10 @@ definitions:
         type: integer
         example: 1
         description: job id
+      name:
+        type: string
+        example: a job name
+        description: job name give by user
       commandLine:
         type: string
         example: ls -la
@@ -346,15 +380,17 @@ definitions:
         items:
           $ref: '#/definitions/Event'
         description: Events happened in the job
-      aggregationResult:
-        type: string
-        example: '{"Error": "Task count is not correct."}'
-        description: Summary info of the job, a JSON string whose structure is documented elsewhere.
       requeueCount:
         type: integer
         description: The number of times the job is requeued
       failJobOnTaskFailure:
         type: boolean
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
 
   JobUpdate:
     type: object
@@ -465,33 +501,6 @@ definitions:
         type: string
         description: The output content
 
-  DiagnoticTestParameter:
-    type: object
-    properties:
-      name:
-        type: string
-        example: Mode
-      description:
-        type: string
-        example: Select the way to run tasks
-      options:
-        type: array
-        items:
-          type: object
-        example: [Tournament, Serial]
-      defaultValue:
-        example: Tournament
-      min:
-        type: integer
-        example: 0
-      max:
-        type: integer
-        example: 100
-      type:
-        type: string
-        enum: [select, number]
-        example: select
-
   DiagnoticTest:
     type: object
     properties:
@@ -507,12 +516,51 @@ definitions:
       parameters:
         type: array
         items:
-          $ref: '#/definitions/DiagnoticTestParameter'
-        description: optional parameters for the test
+          type: object
+          example: '{ "name": "Packet size", "description": "The size of transfer messages", "type": "number", "min": 0, "max": 29, "defaultValue": 0 }'
+          description: Optional parameter for the test, varying on tests.
       arguments:
         type: string # better be an object array
         example: '[{"name":"Run with RDMA","value":"NO"},{"name":"Latency threshold","value":1000},{"name":"Throughput threshold","value":100}]'
         description: Input arguments
+
+  NodeSummary:
+    type: object
+    properties:
+      OK:
+        type: number
+        description: number of nodes that are OK
+      Warning:
+        type: number
+        description: number of nodes that has warning
+      Error:
+        type: number
+        description: number of nodes that has error
+
+  JobSummary:
+    type: object
+    properties:
+      Queued:
+        type: number
+        description: number of jobs that are queued
+      Running:
+        type: number
+        description: number of jobs that are running
+      Finishing:
+        type: number
+        description: number of jobs that are finishing
+      Finished:
+        type: number
+        description: number of jobs that are finished
+      Canceling:
+        type: number
+        description: number of jobs that are canceling
+      Canceled:
+        type: number
+        description: number of jobs that are canceled
+      Failed:
+        type: number
+        description: number of jobs that are failed
 
 parameters:
   nodeId:
@@ -706,7 +754,7 @@ paths:
       operationId: createClusrunJob
       parameters:
         - in: body
-          name: result
+          name: job
           schema:
             $ref: '#/definitions/Job'
       responses:
@@ -716,6 +764,8 @@ paths:
             Location:
               type: string
               description: the url for the newly created job
+          schema:
+            $ref: '#/definitions/Job'
 
   /clusrun/{id}:
     parameters:
@@ -733,12 +783,24 @@ paths:
       operationId: cancelClusrunJob
       parameters:
         - in: body
-          name: result
+          name: job
           schema:
             $ref: '#/definitions/JobUpdate'
       responses:
         200:
           description: OK
+
+  /clusrun/{id}/aggregationResult:
+    parameters:
+      - $ref: '#/parameters/jobId'
+    get:
+      summary: Get aggregation result of a clusrun job
+      operationId: getClusrunJobAggregationResult
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
 
   /clusrun/{id}/tasks:
     parameters:
@@ -838,7 +900,7 @@ paths:
       operationId: createDiagnosticJob
       parameters:
         - in: body
-          name: result
+          name: job
           schema:
             $ref: '#/definitions/Job'
       responses:
@@ -848,7 +910,8 @@ paths:
             Location:
               type: string
               description: the url for the newly created job
-
+          schema:
+            $ref: '#/definitions/Job'
 
   /diagnostics/{id}:
     parameters:
@@ -866,12 +929,24 @@ paths:
       operationId: cancelDiagnosticJob
       parameters:
         - in: body
-          name: result
+          name: job
           schema:
             $ref: '#/definitions/JobUpdate'
       responses:
         200:
           description: OK
+
+  /diagnostics/{id}/aggregationResult:
+    parameters:
+      - $ref: '#/parameters/jobId'
+    get:
+      summary: Get aggregation result of a diagnostic job
+      operationId: getDiagnosticJobAggregationResult
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
 
   /diagnostics/{id}/tasks:
     parameters:
@@ -881,7 +956,7 @@ paths:
       - $ref: '#/parameters/requeueCount'
     get:
       summary: Get tasks of a diagnostic test run
-      operationId: cancelDiagnosticTasks
+      operationId: getDiagnosticTasks
       responses:
         200:
           description: OK
@@ -927,6 +1002,36 @@ paths:
             type: array
             items:
               $ref: '#/definitions/DiagnoticTest'
+
+  /dashboard/nodes:
+    get:
+      summary: Get summary of nodes
+      operationId: getNodeSummary
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/NodeSummary'
+
+  /dashboard/clusrun:
+    get:
+      summary: Get summary of ClusRun jobs
+      operationId: getClusRunJobSummary
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/JobSummary'
+
+  /dashboard/diagnostics:
+    get:
+      summary: Get summary of diagnostic jobs
+      operationId: getDiagnosticJobSummary
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/JobSummary'
 
 host: localhost
 basePath: /v1

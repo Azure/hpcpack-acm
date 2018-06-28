@@ -1,0 +1,5 @@
+{
+    "name": "product",
+    "production": true,
+    "apiBase": "http://frontend.westus.azurecontainer.io/v1"
+}

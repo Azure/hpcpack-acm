@@ -9,7 +9,7 @@ import { ChartComponent } from 'angular2-chartjs';
 @Component({
   selector: 'app-node-detail',
   templateUrl: './node-detail.component.html',
-  styleUrls: ['./node-detail.component.css']
+  styleUrls: ['./node-detail.component.scss']
 })
 
 export class NodeDetailComponent implements OnInit, OnDestroy {
@@ -197,34 +197,50 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
       this.api.node.getNodeSheduledEvents(id).subscribe(result => {
         this.scheduledEvents = result.Events;
         if (this.scheduledEvents.length == 0) {
-          this.scheduledEvents = [
-            {
-              EventId: "f020ba2e-3bc0-4c40-a10b-86575a9eabd5",
-              EventType: "Freeze",
-              ResourceType: "VirtualMachine",
-              Resources: ["FrontEnd_IN_0", "BackEnd_IN_0"],
-              EventStatus: "Scheduled",
-              NotBefore: "Mon, 19 Sep 2016 18:29:47 GMT"
-            },
-            {
-              EventId: "f020ba2e-3bc0-4c40-a10b-86575a9eabe7",
-              EventType: "Reboot",
-              ResourceType: "VirtualMachine",
-              Resources: ["FrontEnd_IN_0", "BackEnd_IN_0"],
-              EventStatus: "Started",
-              NotBefore: "Mon, 19 Sep 2016 18:29:47 GMT"
-            },
-            {
-              EventId: "f020ba2e-3bc0-4c40-a10b-86575a9eaba9",
-              EventType: "Redeploy",
-              ResourceType: "VirtualMachine",
-              Resources: ["FrontEnd_IN_0", "BackEnd_IN_0"],
-              EventStatus: "Scheduled",
-              NotBefore: "Mon, 19 Sep 2016 18:29:47 GMT"
-            }
-          ];
+          //   this.scheduledEvents = [
+          //     {
+          //       EventId: "f020ba2e-3bc0-4c40-a10b-86575a9eabd5",
+          //       EventType: "Freeze",
+          //       ResourceType: "VirtualMachine",
+          //       Resources: ["FrontEnd_IN_0", "BackEnd_IN_0"],
+          //       EventStatus: "Scheduled",
+          //       NotBefore: "Mon, 19 Sep 2016 18:29:47 GMT"
+          //     },
+          //     {
+          //       EventId: "f020ba2e-3bc0-4c40-a10b-86575a9eabe7",
+          //       EventType: "Reboot",
+          //       ResourceType: "VirtualMachine",
+          //       Resources: ["FrontEnd_IN_0", "BackEnd_IN_0"],
+          //       EventStatus: "Started",
+          //       NotBefore: "Mon, 19 Sep 2016 18:29:47 GMT"
+          //     },
+          //     {
+          //       EventId: "f020ba2e-3bc0-4c40-a10b-86575a9eaba9",
+          //       EventType: "Redeploy",
+          //       ResourceType: "VirtualMachine",
+          //       Resources: ["FrontEnd_IN_0", "BackEnd_IN_0"],
+          //       EventStatus: "Scheduled",
+          //       NotBefore: "Mon, 19 Sep 2016 18:29:47 GMT"
+          //     }
+          //   ];
         }
       });
+
+      this.api.node.getNodeJobs(id).subscribe(result => {
+        let fakeData = result.map((job, index) => {
+          if (index % 3 == 0) {
+            job.type = "Diagnostic";
+          }
+          else {
+            job.type = "ClusRun";
+          }
+          job.state = "Finished";
+          job.progress = "100%";
+          return job;
+        });
+        this.dataSource.data = fakeData;
+      });
+
 
     });
   }
@@ -236,6 +252,35 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     if (this.historyLoop) {
       Loop.stop(this.historyLoop);
     }
+  }
+
+
+  private dataSource = new MatTableDataSource();
+  // private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'actions'];
+  private displayedColumns = ['id', 'content', 'type', 'state', 'progress'];
+
+  getJobContent(type) {
+    if (type == 'ClusRun') {
+      return "This should show clusrun command";
+    }
+    else if (type == 'Diagnostic') {
+      return "mpi-pingpong or other diagnostics name";
+    }
+  }
+
+  getLink(jobId, type) {
+    let path = [];
+    if (type == 'ClusRun') {
+      path.push('/command');
+      path.push('results');
+      path.push(jobId);
+    }
+    else if (type == "Diagnostic") {
+      path.push('/diagnostics');
+      path.push('results');
+      path.push(jobId);
+    }
+    return path;
   }
 
   dateFormat(value): string {

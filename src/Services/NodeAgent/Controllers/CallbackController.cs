@@ -13,7 +13,7 @@
     using System.Net;
     using System.Net.Http;
     using System.Threading;
-    using System.Threading.Tasks;
+    using T = System.Threading.Tasks;
 
     [Route("api/[controller]")]
     public class CallbackController : Controller
@@ -21,16 +21,18 @@
         private readonly ILogger logger;
         private readonly TaskMonitor monitor;
         private readonly CloudUtilities utilities;
+        private readonly NodeSynchronizer synchronizer;
 
-        public CallbackController(ILogger<CallbackController> logger, TaskMonitor monitor, CloudUtilities utilities)
+        public CallbackController(ILogger<CallbackController> logger, TaskMonitor monitor, CloudUtilities utilities, NodeSynchronizer synchronizer)
         {
             this.logger = logger;
             this.monitor = monitor;
             this.utilities = utilities;
+            this.synchronizer = synchronizer;
         }
 
         [HttpPost("computenodereported")]
-        public async Task<int> ComputeNodeReportedAsync([FromBody] ComputeClusterNodeInformation nodeInfo, CancellationToken token)
+        public async T.Task<int> ComputeNodeReportedAsync([FromBody] ComputeClusterNodeInformation nodeInfo, CancellationToken token)
         {
             try
             {
@@ -41,17 +43,18 @@
 
                 var nodeTable = this.utilities.GetNodesTable();
 
-                var jsonTableEntity = new JsonTableEntity(
+                var result = await nodeTable.InsertOrReplaceAsync(
                     this.utilities.NodesPartitionKey,
                     this.utilities.GetHeartbeatKey(nodeName),
-                    nodeInfo);
-
-                var result = await nodeTable.ExecuteAsync(TableOperation.InsertOrReplace(jsonTableEntity), null, null, token);
+                    nodeInfo,
+                    token);
 
                 using (HttpResponseMessage r = new HttpResponseMessage((HttpStatusCode)result.HttpStatusCode))
                 {
                     r.EnsureSuccessStatusCode();
                 }
+
+                await this.synchronizer.Sync(nodeInfo, token);
 
                 // 30 s 
                 return this.utilities.Option.HeartbeatIntervalSeconds * 1000;
@@ -65,7 +68,7 @@
         }
 
         [HttpPost("taskcompleted")]
-        public Task<NextOperation> TaskCompletedAsync([FromBody] ComputeNodeTaskCompletionEventArgs taskInfo, CancellationToken token)
+        public T.Task<NextOperation> TaskCompletedAsync([FromBody] ComputeNodeTaskCompletionEventArgs taskInfo, CancellationToken token)
         {
             // TODO: move task key to url
             var taskKey = this.utilities.GetTaskKey(taskInfo.JobId, taskInfo.TaskInfo.TaskId, taskInfo.TaskInfo.TaskRequeueCount ?? 0);
@@ -80,7 +83,7 @@
 
                 this.monitor.CompleteTask(taskKey, taskInfo);
 
-                return System.Threading.Tasks.Task.FromResult(NextOperation.CancelTask);
+                return T.Task.FromResult(NextOperation.CancelTask);
             }
             catch (Exception ex)
             {
@@ -92,12 +95,12 @@
 
                 this.monitor.FailTask(taskKey, ex);
 
-                return System.Threading.Tasks.Task.FromResult(NextOperation.CancelJob);
+                return T.Task.FromResult(NextOperation.CancelJob);
             }
         }
 
         [HttpPost("registerrequested")]
-        public async Task<int> RegisterRequestedAsync([FromBody] ComputeClusterRegistrationInformation registerInfo, CancellationToken token)
+        public async T.Task<int> RegisterRequestedAsync([FromBody] ComputeClusterRegistrationInformation registerInfo, CancellationToken token)
         {
             try
             {

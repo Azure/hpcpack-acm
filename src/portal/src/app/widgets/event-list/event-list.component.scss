@@ -1,0 +1,23 @@
+@import "../../stylesheets/timeline.scss";
+.node-information::before,
+.node-warning::before,
+.job-alert::before,
+.default::before {
+    @include icon-style;
+}
+
+.node-information::before {
+    @include icon-content('\e1b1', #4DB6AC);
+}
+
+.node-warning::before {
+    @include icon-content('\e1b1', #dd5013);
+}
+
+.job-alert::before {
+    @include icon-content('\e7f5', #dd5013);
+}
+
+.default::before {
+    @include icon-content('\e88f', #4DB6AC);
+}

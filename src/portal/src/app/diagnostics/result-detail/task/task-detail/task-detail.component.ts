@@ -5,13 +5,15 @@ import { ApiService } from '../../../../services/api.service';
 @Component({
   selector: 'app-task-detail',
   templateUrl: './task-detail.component.html',
-  styleUrls: ['./task-detail.component.css']
+  styleUrls: ['./task-detail.component.scss']
 })
 export class TaskDetailComponent implements OnInit {
 
   private msg = [];
   private message = {};
   private result = {};
+  private hasResult = true;
+  private taskState = "";
 
   constructor(
     private api: ApiService,
@@ -22,10 +24,16 @@ export class TaskDetailComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.api.diag.getDiagTaskResult(this.data.jobId, this.data.taskId).subscribe(result => {
-      this.result = result;
-      this.message = result.message;
-    });
+    this.taskState = this.data.taskState;
+    if (this.data.taskState !== "Finished") {
+      this.hasResult = false;
+    }
+    else {
+      this.api.diag.getDiagTaskResult(this.data.jobId, this.data.taskId).subscribe(result => {
+        this.result = result;
+        this.message = result.message;
+      });
+    }
   }
 
   private close() {

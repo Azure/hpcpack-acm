@@ -1,0 +1,86 @@
+.area-title {
+    @include font-basic($font-size: .85em);
+    @include pd(1em, 0, 1em, 0);
+    @include display-flex($align-items: center);
+}
+
+.overview-title {
+    @include font-basic($font-size: .8em, $font-color: #7986CB);
+}
+
+.overview-value {
+    @include font-basic($font-size: .8em, $font-color: rgba(0, 0, 0, .6));
+}
+
+.info-item,
+.overview-info {
+    margin-bottom: 1em;
+}
+
+.Failed {
+    color: #D84315;
+}
+
+.Finished {
+    color: #2E7D32;
+}
+
+.Running {
+    color: #283593;
+}
+
+.Queued {
+    color: #FF8F00;
+}
+
+.main {
+    clear: both;
+}
+
+.time {
+    margin-top: 8px;
+    font-size: small;
+}
+
+.nodes {
+    margin-top: 1em;
+}
+
+.overview {
+    margin: 1em 0;
+    chart {
+        height: 200px;
+        max-width: 400px;
+    }
+}
+
+.aggregationResult {
+    white-space: pre-line;
+    line-height: 2em;
+}
+
+.task-result-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+.pair-list {
+    font-size: .9em;
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: .5em;
+}
+
+.passed {
+    color: green;
+}
+
+.not-passed {
+    color: red;
+}
+
+.error-message {
+    padding: 1em;
+    @include font-basic($font-size: .9em, $font-color: rgba(206, 80, 57, .9));
+}

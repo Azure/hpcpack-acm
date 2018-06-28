@@ -47,6 +47,18 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return j == null ? (IActionResult)new NotFoundResult() : new OkObjectResult(j);
         }
 
+        // GET v1/diagnostics/5/aggregationresult
+        [HttpGet("{jobid}/aggregationresult")]
+        public async T.Task<IActionResult> GetJobAggregationResultAsync(
+            int jobId,
+            CancellationToken token = default(CancellationToken))
+        {
+            var result = await this.provider.GetJobAggregationResultAsync(jobId, JobType.Diagnostics, token);
+
+            if (result == null) return new NotFoundObjectResult("The job hasn't produced any aggregation result.");
+            else return new OkObjectResult(result);
+        }
+
         // GET v1/diagnostics/5/tasks?lastid=5&count=10&requeueCount=0
         [HttpGet("{jobid}/tasks")]
         public async T.Task<IActionResult> GetJobTasksAsync(
@@ -104,7 +116,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         }
 
         [HttpGet("testnewjob/{nodes}")]
-        public async T.Task<int> TestCreateJobAsync(string nodes, CancellationToken token)
+        public async T.Task<Job> TestCreateJobAsync(string nodes, CancellationToken token)
         {
             var job = new Job()
             {
@@ -124,13 +136,18 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> CreateJobAsync([FromBody] Job job, CancellationToken token)
         {
             job.Type = JobType.Diagnostics;
-            if (job.DiagnosticTest == null)
+            if (job.DiagnosticTest?.Name == null || job.DiagnosticTest?.Category == null)
             {
                 return new BadRequestObjectResult("The DiagnosticTest field should be specified.");
             }
 
-            int id = await this.provider.CreateJobAsync(job, token);
-            return new CreatedResult($"/v1/diagnostics/{id}", null);
+            if (job.TargetNodes == null || job.TargetNodes.Length == 0)
+            {
+                return new BadRequestObjectResult("The TargetNodes shouldn't be empty.");
+            }
+
+            job = await this.provider.CreateJobAsync(job, token);
+            return new CreatedResult($"/v1/diagnostics/{job.Id}", job);
         }
 
         // PATCH v1/diagnostics/5

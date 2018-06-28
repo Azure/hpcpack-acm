@@ -3,7 +3,7 @@ import { Component, OnInit, Input } from '@angular/core';
 @Component({
   selector: 'app-scheduled-events',
   templateUrl: './scheduled-events.component.html',
-  styleUrls: ['./scheduled-events.component.css']
+  styleUrls: ['./scheduled-events.component.scss']
 })
 export class ScheduledEventsComponent implements OnInit {
 

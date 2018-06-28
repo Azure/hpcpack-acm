@@ -1,0 +1,57 @@
+@import "./mixin.scss";
+@mixin icon-content($content, $background-color) {
+    content: $content;
+    background-color: $background-color;
+}
+
+@mixin icon-style {
+    @include position-absolute($top: .9em, $left: -.95em);
+    @include display-flex($justify-content: center, $align-items: center);
+    @include pd(.4em, .4em, .4em, .4em);
+    @include font-basic(1.1em, #fff, 'Material Icons');
+    border-radius: 50%;
+}
+
+.event {
+    @include display-flex($align-items: baseline);
+    @include pd(0, 1em, 0, 1em);
+}
+
+.event-time {
+    color: rgba(0, 0, 0, .6);
+    font-size: .7em;
+}
+
+.event-source {
+    margin-right: 5px;
+}
+
+.event-content {
+    color: rgba(0, 0, 0, .7);
+    font-size: .8em;
+}
+
+.time-line {
+    @include pd(0em, 1.5em, 0em, 0em);
+    text-align: right;
+    flex: 1;
+}
+
+.event-info {
+    @include display-flex;
+    @include position-relative;
+    @include pd(1.5em, 1em, 1.5em, 1.5em);
+    border-left: .13em solid rgba(110, 122, 140, .6);
+    flex: 5;
+}
+
+.event-type .material-icons {
+    font-size: 1.2rem;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.empty-msg {
+    @include pd(1em, 1em, 1em, 1em);
+    @include font-basic($font-size: .9em, $font-color: #3f51b5);
+}

@@ -30,37 +30,31 @@
             {
                 try
                 {
-                    var result = await idsTable.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(category, usage), null, null, token);
-
                     int currentId = 1;
-                    if (result.Result is JsonTableEntity id)
+                    var entity = await idsTable.RetrieveJsonTableEntityAsync(category, usage, token);
+                    if (entity == null)
                     {
-                        currentId = id.GetObject<int>() + 1;
+                        entity = new JsonTableEntity() { PartitionKey = category, RowKey = usage, };
                     }
                     else
                     {
-                        id = new JsonTableEntity() { PartitionKey = category, RowKey = usage, };
+                        currentId = entity.GetObject<int>() + 1;
                     }
 
-                    id.JsonContent = JsonConvert.SerializeObject(currentId);
+                    entity.PutObject(currentId);
 
-                    var updateResult = await idsTable.ExecuteAsync(TableOperation.InsertOrReplace(id), null, null, token);
+                    var updateResult = await idsTable.InsertOrReplaceAsync(entity, token);
 
                     // concurrency failure or conflict
-                    if (updateResult.HttpStatusCode == 412 || updateResult.HttpStatusCode == 409)
-                    {
-                        continue;
-                    }
+                    if (updateResult.IsConflict()) continue;
 
                     return currentId;
                 }
                 catch (StorageException ex)
                 {
                     // concurrency failure or conflict
-                    if (ex.RequestInformation.HttpStatusCode != 412 && ex.RequestInformation.HttpStatusCode != 409)
-                    {
-                        throw;
-                    }
+                    if (ex.RequestInformation.IsConflict()) continue;
+                    throw;
                 }
             }
         }
@@ -75,7 +69,7 @@
             return await u.GetOrCreateTableAsync(u.Option.JobsTableName, token);
         }
 
-        public static async T.Task<CloudAppendBlob> CreateOrReplaceTaskOutputBlobAsync(this CloudUtilities u, JobType jobType, string key, CancellationToken token)
+        public static async T.Task<CloudAppendBlob> CreateOrReplaceJobOutputBlobAsync(this CloudUtilities u, JobType jobType, string key, CancellationToken token)
         {
             return await u.GetOrCreateAppendBlobAsync(
                 string.Format(u.Option.JobResultContainerPattern, jobType.ToString().ToLowerInvariant()),
@@ -83,8 +77,8 @@
                 token);
         }
 
-        public static CloudAppendBlob GetTaskOutputBlob(this CloudUtilities u, string jobType, string key) => u.GetAppendBlob(
-            string.Format(u.Option.JobResultContainerPattern, jobType),
+        public static CloudAppendBlob GetJobOutputBlob(this CloudUtilities u, JobType jobType, string key) => u.GetAppendBlob(
+            string.Format(u.Option.JobResultContainerPattern, jobType.ToString().ToLowerInvariant()),
             key);
 
         public static CloudQueue GetJobEventQueue(this CloudUtilities u) => u.GetQueue(u.Option.JobEventQueueName);
@@ -123,17 +117,8 @@
             return await u.GetOrCreateTableAsync(u.Option.NodesTableName, token);
         }
 
-        public static async T.Task UpdateTaskAsync(this CloudUtilities u, string jobPartitionKey, string taskKey, Action<Task> action, CancellationToken token)
-        {
-            var jobTable = u.GetJobsTable();
-
-            var task = await jobTable.RetrieveAsync<Task>(jobPartitionKey, taskKey, token);
-            if (task != null)
-            {
-                action(task);
-                await jobTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, taskKey, task, token);
-            }
-        }
+        public static T.Task<bool> UpdateTaskAsync(this CloudUtilities u, string jobPartitionKey, string taskKey, Action<Task> action, CancellationToken token) =>
+            u.UpdateObjectAsync(u.GetJobsTable(), jobPartitionKey, taskKey, action, token);
 
         public static async T.Task<bool> UpdateJobAsync(this CloudUtilities u, JobType type, int jobId, Action<Job> action, CancellationToken token)
         {
@@ -146,22 +131,28 @@
             return result1 && result2;
         }
 
-        private static async T.Task<bool> UpdateJobAsync(this CloudUtilities u, string jobPartitionKey, Action<Job> action, CancellationToken token)
+        private static T.Task<bool> UpdateJobAsync(this CloudUtilities u, string jobPartitionKey, Action<Job> action, CancellationToken token) =>
+            u.UpdateObjectAsync(u.GetJobsTable(), jobPartitionKey, u.JobEntryKey, action, token);
+
+        public static async T.Task<bool> UpdateObjectAsync<TObject>(this CloudUtilities u, CloudTable table, string partitionKey, string rowKey, Action<TObject> action, CancellationToken token)
         {
-            var jobRowKey = u.JobEntryKey;
-
-            var jobTable = u.GetJobsTable();
-
-            var job = await jobTable.RetrieveAsync<Job>(jobPartitionKey, jobRowKey, token);
-            if (job != null)
+            while (true)
             {
-                action(job);
-                await jobTable.InsertOrReplaceAsJsonAsync(jobPartitionKey, jobRowKey, job, token);
-                return true;
-            }
-            else
-            {
-                return false;
+                var entity = await table.RetrieveJsonTableEntityAsync(partitionKey, rowKey, token);
+                var obj = entity.GetObject<TObject>();
+
+                if (obj != null)
+                {
+                    action(obj);
+                    entity.PutObject(obj);
+                    var result = await table.InsertOrReplaceAsync(entity, token);
+                    if (result.IsConflict()) continue;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
     }

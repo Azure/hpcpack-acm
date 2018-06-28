@@ -12,11 +12,11 @@ const now = (new Date()).getTime();
 })
 export class AppComponent {
   static items = [
-    {
-      link: 'dashboard',
-      title: 'Dashboard',
-      icon: 'dashboard',
-    },
+    // {
+    //   link: 'dashboard',
+    //   title: 'Dashboard',
+    //   icon: 'dashboard',
+    // },
     {
       link: 'resource',
       title: 'Resource',

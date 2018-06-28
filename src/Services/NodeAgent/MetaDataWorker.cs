@@ -58,7 +58,7 @@
 
                     var nodesPartitionKey = this.Utilities.GetNodePartitionKey(nodeName);
 
-                    await this.nodesTable.InsertOrReplaceAsJsonStringAsync(nodesPartitionKey, storageKey, content, token);
+                    await this.nodesTable.InsertOrReplaceAsync(nodesPartitionKey, storageKey, content, token);
                 }
                 catch (Exception ex)
                 {

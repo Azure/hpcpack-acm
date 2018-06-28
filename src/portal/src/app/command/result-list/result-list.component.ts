@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { MatTableDataSource, MatDialog } from '@angular/material';
-import { SelectionModel  } from '@angular/cdk/collections';
+import { SelectionModel } from '@angular/cdk/collections';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { ApiService } from '../../services/api.service';
 import { TableSettingsService } from '../../services/table-settings.service';
@@ -8,16 +8,18 @@ import { TableSettingsService } from '../../services/table-settings.service';
 @Component({
   selector: 'app-result-list',
   templateUrl: './result-list.component.html',
-  styleUrls: ['./result-list.component.css']
+  styleUrls: ['./result-list.component.scss']
 })
 export class ResultListComponent implements OnInit {
 
   private dataSource = new MatTableDataSource();
 
   static customizableColumns = [
-    { name: 'command',  displayName: 'Command',   displayed: true },
-    { name: 'state',    displayName: 'State',     displayed: true },
-    { name: 'progress', displayName: 'Progress',  displayed: true },
+    { name: 'createdAt', displayName: 'Created', displayed: true },
+    { name: 'command', displayName: 'Command', displayed: true },
+    { name: 'state', displayName: 'State', displayed: true },
+    { name: 'progress', displayName: 'Progress', displayed: true },
+    { name: 'lastChangedAt', displayName: 'Last Changed', displayed: true },
   ];
 
   private availableColumns;
@@ -36,13 +38,25 @@ export class ResultListComponent implements OnInit {
     private api: ApiService,
     private dialog: MatDialog,
     private settings: TableSettingsService,
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadSettings();
     this.getDisplayedColumns();
     this.loadMoreResults();
   }
+
+  private setIcon(state) {
+    switch (state) {
+      case 'finished': return 'done';
+      case '1ueued': return 'blur_linear';
+      case 'failed': return 'clear';
+      case 'running': return 'blur_on';
+      case 'canceled': return 'cancel';
+      default: return 'autonew';
+    }
+  }
+
 
   private loadMoreResults() {
     this.loading = true;
@@ -82,8 +96,8 @@ export class ResultListComponent implements OnInit {
 
   getDisplayedColumns(): void {
     let columns = this.availableColumns.filter(e => e.displayed).map(e => e.name);
-    columns.push('actions');
-    this.displayedColumns = ['select', 'id'].concat(columns);
+    // columns.push('actions');
+    this.displayedColumns = ['id'].concat(columns);
   }
 
   customizeTable(): void {
