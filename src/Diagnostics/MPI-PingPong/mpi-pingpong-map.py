@@ -14,10 +14,28 @@ def main():
     normalNodes = []
     rdmaNodes = []
     for nodeInfo in nodesInfo:
-        if nodeInfo["Metadata"]["compute"]["vmSize"].lower() in rdmaVmSizes:
-            rdmaNodes.append(nodeInfo["Node"])
-        else:
-            normalNodes.append(nodeInfo["Node"])
+        node = nodeInfo["Node"]
+        try:
+            if nodeInfo["Metadata"]["compute"]["vmSize"].lower() in rdmaVmSizes:
+                rdmaNodes.append(node)
+            else:
+                normalNodes.append(node)
+            continue
+        except:
+            pass
+        try:
+            networksInfos = nodeInfo["NodeRegistrationInfo"]["NetworksInfo"]
+            isIB = False
+            for networksInfo in networksInfos:
+                if networksInfo["IsIB"]:
+                    isIB = True
+            if isIB:
+                rdmaNodes.append(node)
+            else:
+                normalNodes.append(node)
+        except:
+            raise Exception("Neither VM size from Metadata nor IsIB from NodeRegistrationInfo of node {0} could be found.".format(node))
+
     if len(normalNodes) != 0 and len(rdmaNodes) != 0:
         # Mixed normal nodes and rdma nodes
         raise Exception("Mixed nodes. Normal nodes: {0}. RDMA nodes: {1}.".format(','.join(normalNodes), ','.join(rdmaNodes)))
@@ -117,12 +135,12 @@ def main():
         msglog = " -msglog " + str(level-1) + ":" + str(level)
         linesCount = 3
         parseValue = "tail -n2"
-        timeout = 5
+        timeout = 10
     else:
         msglog = ""
         linesCount = 24
         parseValue = "sed -n '3p;$p'"        
-        timeout = 30
+        timeout = 60
     
     mpicommand = "mpirun -hosts [dummynodes]" + rdmaOption+ " -ppn 1 IMB-MPI1" + msglog + " pingpong"
     parseResult = "tail -n" + str(linesCount+5) + " | head -n" + str(linesCount+1)

@@ -22,7 +22,7 @@ def main():
 
     latencyThreshold = 1000
     throughputThreshold = 100
-    packetSize = 1
+    packetSize = 2**22
     try:
         if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
             arguments = job['DiagnosticTest']['Arguments']
@@ -94,6 +94,9 @@ def main():
     goodNodesGroupsWithMasters = getGroupsWithMasters(goodPairs)
     largestGoodNodesGroupsWithMasters = [group for group in goodNodesGroupsWithMasters if len(group["Nodes"]) == max([len(groupInner["Nodes"]) for groupInner in goodNodesGroupsWithMasters])]
     goodNodes = set([node for group in goodNodesGroups for node in group])
+    if goodNodes != set([node for pair in goodPairs for node in pair.split(',')]):
+        printErrorAsJson('Should not get here!')
+        return -1
     badNodes = [node for node in allNodes if node not in goodNodes]
     goodNodes = list(goodNodes)
 
@@ -109,68 +112,69 @@ def main():
         'BadNodes':badNodes
         }
 
-    histogramSize = min(nodesNumber, 10)
-    statisticsItems = ["Throughput"]
-    if packetSize < 65536:
-        statisticsItems.append("Latency")
-    for item in statisticsItems:
-        data = [messages[pair][item] for pair in messages]
-        golbalMin = numpy.amin(data)
-        golbalMax = numpy.amax(data)
-        histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(golbalMin, golbalMax))]
-
-        result[item] = {}
-        if item == "Latency":
-            unit = "us"
-            threshold = latencyThreshold
-            badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold]
-            bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMin], "Value":golbalMin}
-            worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMax], "Value":golbalMax}
-        else:
-            unit = "MB/s"
-            threshold = throughputThreshold
-            badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] < throughputThreshold]
-            bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMax], "Value":golbalMax}
-            worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMin], "Value":golbalMin}
-            if packetSize == 2**0:
-                packetSize = 2**22
-
-        result[item]["Unit"] = unit
-        result[item]["Threshold"] = threshold
-        result[item]["Packet_size"] = str(packetSize) + ' Bytes'
-        result[item]["Result"] = {}
-        result[item]["Result"]["Passed"] = len(badPairs) == 0
-        result[item]["Result"]["Bad_pairs"] = badPairs
-        result[item]["Result"]["Best_pairs"] = bestPairs
-        result[item]["Result"]["Worst_pairs"] = worstPairs
-        result[item]["Result"]["Histogram"] = renderHistogram(histogram)
-        result[item]["Result"]["Average"] = numpy.average(data)
-        result[item]["Result"]["Median"] = numpy.median(data)
-        result[item]["Result"]["Standard_deviation"] = numpy.std(data)
-        result[item]["Result"]["Variability"] = getVariability(data)
-
-        result[item]["ResultByNode"] = {}
-        for node in goodNodes:
-            data = [messages[pair][item] for pair in messages if node in pair.split(',')]
+    if messages:
+        histogramSize = min(nodesNumber, 10)
+        statisticsItems = ["Throughput"]
+        if packetSize < 65536:
+            statisticsItems.append("Latency")
+        for item in statisticsItems:
+            data = [messages[pair][item] for pair in messages]
+            golbalMin = numpy.amin(data)
+            golbalMax = numpy.amax(data)
             histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(golbalMin, golbalMax))]
-            if item == "Latency":            
-                badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold and node in pair.split(',')]
-                bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
-                worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
+
+            result[item] = {}
+            if item == "Latency":
+                unit = "us"
+                threshold = latencyThreshold
+                badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold]
+                bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMin], "Value":golbalMin}
+                worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMax], "Value":golbalMax}
             else:
-                badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] < throughputThreshold and node in pair.split(',')]
-                bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
-                worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}           
-            result[item]["ResultByNode"][node] = {}
-            result[item]["ResultByNode"][node]["Bad_pairs"] = badPairs
-            result[item]["ResultByNode"][node]["Passed"] = len(badPairs) == 0
-            result[item]["ResultByNode"][node]["Best_pairs"] = bestPairs
-            result[item]["ResultByNode"][node]["Worst_pairs"] = worstPairs
-            result[item]["ResultByNode"][node]["Histogram"] = renderHistogram(histogram)
-            result[item]["ResultByNode"][node]["Average"] = numpy.average(data)
-            result[item]["ResultByNode"][node]["Median"] = numpy.median(data)
-            result[item]["ResultByNode"][node]["Standard_deviation"] = numpy.std(data)
-            result[item]["ResultByNode"][node]["Variability"] = getVariability(data)
+                unit = "MB/s"
+                threshold = throughputThreshold
+                badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] < throughputThreshold]
+                bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMax], "Value":golbalMax}
+                worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMin], "Value":golbalMin}
+                if packetSize == 2**0:
+                    packetSize = 2**22
+
+            result[item]["Unit"] = unit
+            result[item]["Threshold"] = threshold
+            result[item]["Packet_size"] = str(packetSize) + ' Bytes'
+            result[item]["Result"] = {}
+            result[item]["Result"]["Passed"] = len(badPairs) == 0
+            result[item]["Result"]["Bad_pairs"] = badPairs
+            result[item]["Result"]["Best_pairs"] = bestPairs
+            result[item]["Result"]["Worst_pairs"] = worstPairs
+            result[item]["Result"]["Histogram"] = renderHistogram(histogram)
+            result[item]["Result"]["Average"] = numpy.average(data)
+            result[item]["Result"]["Median"] = numpy.median(data)
+            result[item]["Result"]["Standard_deviation"] = numpy.std(data)
+            result[item]["Result"]["Variability"] = getVariability(data)
+
+            result[item]["ResultByNode"] = {}
+            for node in goodNodes:
+                data = [messages[pair][item] for pair in messages if node in pair.split(',')]
+                histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(golbalMin, golbalMax))]
+                if item == "Latency":            
+                    badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold and node in pair.split(',')]
+                    bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
+                    worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
+                else:
+                    badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] < throughputThreshold and node in pair.split(',')]
+                    bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
+                    worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}           
+                result[item]["ResultByNode"][node] = {}
+                result[item]["ResultByNode"][node]["Bad_pairs"] = badPairs
+                result[item]["ResultByNode"][node]["Passed"] = len(badPairs) == 0
+                result[item]["ResultByNode"][node]["Best_pairs"] = bestPairs
+                result[item]["ResultByNode"][node]["Worst_pairs"] = worstPairs
+                result[item]["ResultByNode"][node]["Histogram"] = renderHistogram(histogram)
+                result[item]["ResultByNode"][node]["Average"] = numpy.average(data)
+                result[item]["ResultByNode"][node]["Median"] = numpy.median(data)
+                result[item]["ResultByNode"][node]["Standard_deviation"] = numpy.std(data)
+                result[item]["ResultByNode"][node]["Variability"] = getVariability(data)
             
     print(json.dumps(result))
     return 0
@@ -203,6 +207,8 @@ def getGroupsWithMasters(pairs):
 def getGroupsOfFullConnectedNodes(pairs):
     connectedNodesOfNode = getNodeMap(pairs)
     nodes = list(connectedNodesOfNode.keys())
+    if not nodes:
+        return []
     groups = [set([nodes[0]])]
     for node in nodes[1:]:
         newGroups = []
