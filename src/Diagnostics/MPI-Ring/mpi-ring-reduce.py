@@ -5,7 +5,7 @@ def main():
     job = result['Job']
     tasks = result['Tasks']
     taskResults = result['TaskResults']
-    
+
     nodes = job['TargetNodes']
     if len(nodes) < 2:
         printErrorAsJson('The number of nodes is less than 2.')
@@ -32,7 +32,6 @@ def main():
         if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
             arguments = job['DiagnosticTest']['Arguments']
             if arguments:
-                arguments = json.loads(arguments)
                 for argument in arguments:
                     if argument['name'].lower() == 'Latency threshold'.lower():
                         latencyThreshold = int(argument['value'])
@@ -66,9 +65,9 @@ def main():
         }
     print(json.dumps(result))
     return 0
-        
+
 def printErrorAsJson(errormessage):
     print(json.dumps({"Error":errormessage}))
-    
+
 if __name__ == '__main__':
     sys.exit(main())
