@@ -69,5 +69,13 @@
         {
             return await t.ExecuteAsync(TableOperation.InsertOrReplace(entity), null, null, token);
         }
+        public static async Task<TableResult> InsertAsync(this CloudTable t, JsonTableEntity entity, CancellationToken token)
+        {
+            return await t.ExecuteAsync(TableOperation.Insert(entity), null, null, token);
+        }
+        public static async Task<TableResult> ReplaceAsync(this CloudTable t, JsonTableEntity entity, CancellationToken token)
+        {
+            return await t.ExecuteAsync(TableOperation.Replace(entity), null, null, token);
+        }
     }
 }
