@@ -501,33 +501,6 @@ definitions:
         type: string
         description: The output content
 
-  DiagnoticTestParameter:
-    type: object
-    properties:
-      name:
-        type: string
-        example: Mode
-      description:
-        type: string
-        example: Select the way to run tasks
-      options:
-        type: array
-        items:
-          type: object
-        example: [Tournament, Serial]
-      defaultValue:
-        example: Tournament
-      min:
-        type: integer
-        example: 0
-      max:
-        type: integer
-        example: 100
-      type:
-        type: string
-        enum: [select, number]
-        example: select
-
   DiagnoticTest:
     type: object
     properties:
@@ -543,8 +516,9 @@ definitions:
       parameters:
         type: array
         items:
-          $ref: '#/definitions/DiagnoticTestParameter'
-        description: optional parameters for the test
+          type: object
+          example: '{ "name": "Packet size", "description": "The size of transfer messages", "type": "number", "min": 0, "max": 29, "defaultValue": 0 }'
+          description: Optional parameter for the test, varying on tests.
       arguments:
         type: string # better be an object array
         example: '[{"name":"Run with RDMA","value":"NO"},{"name":"Latency threshold","value":1000},{"name":"Throughput threshold","value":100}]'
