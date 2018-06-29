@@ -20,7 +20,7 @@
         {
             "name":"Mode",
             "description":"Select the way to run tasks.",
-            "type":"select",
+            "type":"string",
             "options":["Tournament", "Serial", "Jumble"],
             "defaultValue":"Tournament"
         }
