@@ -25,7 +25,7 @@
             {
                 var server = serverBuilder.BuildAsync().GetAwaiter().GetResult();
                 Console.CancelKeyPress += (s, e) => { serverBuilder.Stop(); };
-                var webHost = BuildWebHost(args, taskMonitor, serverBuilder.Utilities);
+                var webHost = BuildWebHost(args, taskMonitor, serverBuilder.Utilities, serverBuilder.Provider.GetRequiredService<NodeSynchronizer>());
 
                 server.Start(serverBuilder.CancelToken);
                 webHost.RunAsync(serverBuilder.CancelToken);
@@ -55,7 +55,7 @@
                     svc.AddTransient<CancelJobOrTaskProcessor>();
                 });
 
-        public static IWebHost BuildWebHost(string[] args, TaskMonitor taskMonitor, CloudUtilities utilities) =>
+        public static IWebHost BuildWebHost(string[] args, params object[] sharedServices) =>
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration(c =>
                 {
@@ -72,8 +72,10 @@
                 })
                 .ConfigureServices(services =>
                 {
-                    services.AddSingleton(taskMonitor);
-                    services.AddSingleton(utilities);
+                    foreach (var svc in sharedServices)
+                    {
+                        services.AddSingleton(svc.GetType(), svc);
+                    }
                 })
                 .UseUrls("http://*:8080", "http://*:5000")
                 .UseStartup<Startup>()

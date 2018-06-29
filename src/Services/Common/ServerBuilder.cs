@@ -92,25 +92,25 @@
                 this.serviceCollectionConfigMethod?.Invoke(this.services, configuration, token);
                 this.services.AddSingleton<Server>();
 
-                var provider = this.services.BuildServiceProvider();
+                this.Provider = this.services.BuildServiceProvider();
 
-                var server = provider.GetService<Server>();
+                var server = this.Provider.GetService<Server>();
                 server.Workers.ForEach(w =>
                 {
                     if (w is ServerObject so)
                     {
                         so.Configuration = configuration;
                         so.Logger = this.LoggerFactory.CreateLogger(w.GetType());
-                        so.CloudOptions = provider.GetService<IOptions<CloudOptions>>().Value;
-                        so.Utilities = provider.GetService<CloudUtilities>();
-                        so.ServerOptions = provider.GetService<IOptions<ServerOptions>>().Value;
-                        so.Provider = provider;
+                        so.CloudOptions = this.Provider.GetService<IOptions<CloudOptions>>().Value;
+                        so.Utilities = this.Provider.GetService<CloudUtilities>();
+                        so.ServerOptions = this.Provider.GetService<IOptions<ServerOptions>>().Value;
+                        so.Provider = this.Provider;
                     }
 
                     w.InitializeAsync(token).Wait();
                 });
 
-                this.Utilities = provider.GetRequiredService<CloudUtilities>();
+                this.Utilities = this.Provider.GetRequiredService<CloudUtilities>();
                 await this.Utilities.InitializeAsync(token);
 
                 return server;
@@ -140,6 +140,8 @@
             this.serviceCollectionConfigMethod = configMethod;
             return this;
         }
+
+        public ServiceProvider Provider { get; private set; }
 
         #endregion
 
