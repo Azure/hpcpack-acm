@@ -1,5 +1,6 @@
 @import "../../stylesheets/mixin.scss";
 @import "../../stylesheets/info.scss";
+@import "../../stylesheets/table.scss";
 .detail-header {
     @include display-flex(center, space-between);
     font-family: $font-stack;
@@ -64,29 +65,6 @@ chart {
     height: 15em;
 }
 
-table {
-    width: 100%;
-}
-
-td {
-    height: 2em;
-    padding: 0 0.5em;
-    background-color: #e8e7e7;
-}
-
-.mat-column-type,
-.mat-column-status {
-    flex: 0.3;
-}
-
-.mat-column-resourceType {
-    flex: 0.6;
-}
-
-.mat-column-id {
-    padding-right: 0.5em;
-}
-
 .node-name {
     margin-right: 1em;
 }
@@ -129,4 +107,13 @@ hr {
     background-color: #fff;
     height: 1px;
     width: 100%;
+}
+
+.mat-column-progress {
+    flex: 0.8;
+}
+
+.mat-column-content {
+    flex: 1.2;
+    @include ellipsis-text;
 }
