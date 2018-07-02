@@ -5,6 +5,7 @@
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Microsoft.WindowsAzure.Storage.Table;
+    using Microsoft.WindowsAzure.Storage.Table.Protocol;
     using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
@@ -54,7 +55,7 @@
                 catch (StorageException ex)
                 {
                     // concurrency failure or conflict
-                    if (ex.RequestInformation.IsConflict()) continue;
+                    if (ex.IsConflict()) continue;
                     throw;
                 }
             }
@@ -146,8 +147,17 @@
                 {
                     action(obj);
                     entity.PutObject(obj);
-                    var result = await table.ReplaceAsync(entity, token);
-                    if (result.IsConflict()) continue;
+                    try
+                    {
+                        var result = await table.ReplaceAsync(entity, token);
+                        if (result.IsConflict()) continue;
+                    }
+                    catch(StorageException ex)
+                    {
+                        if (ex.IsConflict()) continue;
+                        throw;
+                    }
+
                     return true;
                 }
                 else
