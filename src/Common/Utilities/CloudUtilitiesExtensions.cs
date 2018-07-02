@@ -32,21 +32,22 @@
                 {
                     int currentId = 1;
                     var entity = await idsTable.RetrieveJsonTableEntityAsync(category, usage, token);
+                    TableResult result;
                     if (entity == null)
                     {
                         entity = new JsonTableEntity() { PartitionKey = category, RowKey = usage, };
+                        entity.PutObject(currentId);
+                        result = await idsTable.InsertAsync(entity, token);
                     }
                     else
                     {
                         currentId = entity.GetObject<int>() + 1;
+                        entity.PutObject(currentId);
+                        result = await idsTable.ReplaceAsync(entity, token);
                     }
 
-                    entity.PutObject(currentId);
-
-                    var updateResult = await idsTable.InsertOrReplaceAsync(entity, token);
-
                     // concurrency failure or conflict
-                    if (updateResult.IsConflict()) continue;
+                    if (result.IsConflict()) continue;
 
                     return currentId;
                 }
@@ -145,7 +146,7 @@
                 {
                     action(obj);
                     entity.PutObject(obj);
-                    var result = await table.InsertOrReplaceAsync(entity, token);
+                    var result = await table.ReplaceAsync(entity, token);
                     if (result.IsConflict()) continue;
                     return true;
                 }

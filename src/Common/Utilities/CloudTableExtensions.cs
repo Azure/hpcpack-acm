@@ -10,11 +10,8 @@
 
     public static class CloudTableExtensions
     {
-        // TODO use the extensions
         public static async Task<IEnumerable<(string, string, T, DateTimeOffset)>> QueryAsync<T>(this CloudTable t, string queryString, int? count, CancellationToken token)
         {
-            var items = new List<(string, string, T, DateTimeOffset)>();
-
             var entities = await t.QueryAsync(new TableQuery<JsonTableEntity>().Where(queryString), count, token);
 
             return entities.Select(r => (r.PartitionKey, r.RowKey, r.GetObject<T>(), r.Timestamp));
@@ -37,7 +34,7 @@
 
                 conToken = queryResult.ContinuationToken;
             }
-            while (conToken != null && (count.HasValue ? items.Count < count.Value : true));
+            while (conToken != null && (!count.HasValue || items.Count < count.Value));
 
             return items;
         }
@@ -68,6 +65,14 @@
         public static async Task<TableResult> InsertOrReplaceAsync(this CloudTable t, JsonTableEntity entity, CancellationToken token)
         {
             return await t.ExecuteAsync(TableOperation.InsertOrReplace(entity), null, null, token);
+        }
+        public static async Task<TableResult> InsertAsync(this CloudTable t, JsonTableEntity entity, CancellationToken token)
+        {
+            return await t.ExecuteAsync(TableOperation.Insert(entity), null, null, token);
+        }
+        public static async Task<TableResult> ReplaceAsync(this CloudTable t, JsonTableEntity entity, CancellationToken token)
+        {
+            return await t.ExecuteAsync(TableOperation.Replace(entity), null, null, token);
         }
     }
 }

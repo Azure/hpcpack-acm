@@ -47,7 +47,7 @@ export class NodeListComponent {
   ngOnInit() {
     this.loadSettings();
     this.getDisplayedColumns();
-    this.api.node.getAll().subscribe(nodes => {  
+    this.api.node.getAll().subscribe(nodes => {
       this.dataSource.data = nodes;
     });
     this.subcription = this.route.queryParamMap.subscribe(params => {
@@ -96,7 +96,7 @@ export class NodeListComponent {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         let targetNodes = this.selection.selected.map(e => e.name);
-        let diagnosticTest = { name: result['selectedTest']['name'], category: result['selectedTest']['category'], arguments: JSON.stringify(result['selectedTest']['arguments']) };
+        let diagnosticTest = { name: result['selectedTest']['name'], category: result['selectedTest']['category'], arguments: result['selectedTest']['arguments'] };
         let name = result['diagTestName'];
         this.api.diag.create(name, targetNodes, diagnosticTest).subscribe(obj => {
           let returnData = obj.headers.get('location').split('/');

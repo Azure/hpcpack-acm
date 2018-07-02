@@ -125,7 +125,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
                 State = JobState.Queued,
                 TargetNodes = nodes.Split(','),
                 Type = JobType.Diagnostics,
-                DiagnosticTest = new DiagnosticsTest() { Category = "test", Name = "test", Arguments = "some arg" }
+                DiagnosticTest = new DiagnosticsTest() { Category = "test", Name = "test" }
             };
 
             return await this.provider.CreateJobAsync(job, token);

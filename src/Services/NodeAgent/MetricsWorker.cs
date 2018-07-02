@@ -102,7 +102,7 @@
                             InstanceValues = JsonConvert.DeserializeObject<Dictionary<string, double?>>(r.Item2)
                         }).ToList();
 
-                        history.Range = TimeSpan.FromSeconds(10);
+                        history.RangeSeconds = 10;
                         history.Put(time, currentMetrics);
 
                         result = await this.nodesTable.ExecuteAsync(TableOperation.InsertOrReplace(new JsonTableEntity(nodesPartitionKey, minuteHistoryKey, history)), null, null, token);
