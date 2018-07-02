@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Inject, HostListener } from '@angular/core';
+import { Component, OnInit, ViewChild, Inject, HostListener, ChangeDetectorRef } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { NodeFilterBuilderComponent } from '../../widgets/node-filter-builder/node-filter-builder.component';
 import { ApiService } from '../../services/api.service';
@@ -6,7 +6,7 @@ import { ApiService } from '../../services/api.service';
 @Component({
   selector: 'diagnostics-tests',
   templateUrl: './new-diagnostics.component.html',
-  styleUrls: ['./new-diagnostics.component.css']
+  styleUrls: ['./new-diagnostics.component.scss']
 })
 export class NewDiagnosticsComponent implements OnInit {
   @ViewChild('tree') tree;
@@ -23,6 +23,7 @@ export class NewDiagnosticsComponent implements OnInit {
   constructor(
     private api: ApiService,
     public dialogRef: MatDialogRef<NewDiagnosticsComponent>,
+    private cdRef: ChangeDetectorRef,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) { }
 
@@ -32,51 +33,57 @@ export class NewDiagnosticsComponent implements OnInit {
     });
   }
 
+  ngAfterViewChecked() {
+    this.cdRef.detectChanges();
+  }
+
   onTreeLoad(tree) {
     tree.treeModel.expandAll();
   }
 
   private check(node, checked) {
-    this.selectedDescription = node.data.description;
-    if (this.selectedDescription) {
-      let index = this.selectedDescription.indexOf('http');
-      if (index != -1) {
-        this.testInfoLink = this.selectedDescription.substr(index);
-        this.selectedDescription = this.selectedDescription.substr(0, index);
+    this.selectedDescription = '';
+    this.testInfoLink = '';
+    if (checked) {
+      this.selectedDescription = node.data.description;
+      if (this.selectedDescription) {
+        let index = this.selectedDescription.indexOf('http');
+        if (index != -1) {
+          this.testInfoLink = this.selectedDescription.substr(index);
+          this.selectedDescription = this.selectedDescription.substr(0, index);
+        }
       }
     }
-    else {
-      this.selectedDescription = '';
-      this.testInfoLink = '';
-    }
-    if (checked) {
-      this.updateCheckedNode(node);
-    }
+    this.updateCheckedNode(node, checked);
   }
 
-  private updateCheckedNode(node: any) {
+  private updateCheckedNode(node: any, checked: any) {
     let allNodes = node.treeModel.nodes;
     for (let i = 0; i < allNodes.length; i++) {
       for (let j = 0; j < allNodes[i].children.length; j++) {
         allNodes[i].children[j].checked = false;
       }
     }
-
-    node.data.checked = true;
-    this.selectedTest = node.data;
-    this.diagTestName = this.selectedTest.name + "@" + this.api.diag.getCreatedTime();
+    node.data.checked = checked;
+    if (checked) {
+      this.selectedTest = node.data;
+      this.diagTestName = `${this.selectedTest.name} created by`;
+    }
+    else {
+      this.selectedTest = undefined;
+      this.diagTestName = `created by`;
+    }
   }
 
 
   selectionChange(e) {
     if (e.selectedIndex == 2) {
       if (this.selectedTest != undefined) {
-        this.diagTestName = this.selectedTest.name + "@" + this.api.diag.getCreatedTime();
+        this.diagTestName = `${this.selectedTest.name} created by`;
       }
       else {
-        this.diagTestName = this.api.diag.getCreatedTime();
+        this.diagTestName = `created by`;
       }
-
     }
   }
 
@@ -98,9 +105,9 @@ export class NewDiagnosticsComponent implements OnInit {
 
   getTest() {
     if (this.selectedTest == undefined) {
-      this.errorMessage = 'Please select one test to run in Step 1 !';
+      this.errorMessage = 'Please select one test to run in step 1 !';
     }
-    else if (this.diagTestName == undefined) {
+    else if (this.diagTestName == undefined || this.diagTestName == "") {
       this.errorMessage = 'Please enter the diagnostic name in step 3 ! ';
     }
     else {
@@ -114,6 +121,10 @@ export class NewDiagnosticsComponent implements OnInit {
       let diagInfo = { selectedTest: this.selectedTest, diagTestName: this.diagTestName };
       this.dialogRef.close(diagInfo);
     }
+  }
+
+  clearErrorMsg() {
+    this.errorMessage = "";
   }
 
   @HostListener('window:keyup', ['$event'])
