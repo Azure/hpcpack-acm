@@ -13,7 +13,7 @@
 }
 
 .event {
-    @include display-flex($align-items: baseline);
+    @include display-flex($align-items: center);
     @include pd(0, 1em, 0, 1em);
 }
 

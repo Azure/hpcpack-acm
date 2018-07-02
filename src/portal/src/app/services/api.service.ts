@@ -74,14 +74,14 @@ export class NodeApi extends Resource<Node> {
   }
 
   protected normalizeHistory(history: any): any {
-    if (history.items) {
-      history.history = history.items.map(item => ({ label: item.span, data: item.data }));
+    if (history.data) {
+      history.history = history.data.map(item => ({ label: item.time, data: item.metricItems }));
     }
     else {
       history.history = [];
     }
-    if (history.span) {
-      history.range = history.span;
+    if (history.rangeSeconds) {
+      history.range = history.rangeSeconds;
     }
     return history;
   }
@@ -311,18 +311,15 @@ export class DiagApi extends Resource<any> {
   }
 
   getDiagJob(id: string) {
-    return this.httpGet(`${this.url}/${id}`, null, [
-      map((e: any) => {
-        if (e.aggregationResult != undefined && this.isJSON(e.aggregationResult)) {
-          e.aggregationResult = JSON.parse(e.aggregationResult);
-        }
-        return e;
-      })
-    ]);
+    return this.httpGet(`${this.url}/${id}`);
   }
 
   getDiagsByPage(lastId, count, reverse) {
     return this.httpGet(`${this.url}?lastid=${lastId}&count=${count}&reverse=${reverse}`);
+  }
+
+  getJobAggregationResult(id: string) {
+    return this.httpGet(`${this.url}/${id}/aggregationResult`);
   }
 
 

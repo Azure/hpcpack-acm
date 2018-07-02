@@ -29,9 +29,9 @@
     <ng-container matColumnDef="state">
       <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
       <mat-cell *matCellDef="let result">
-        <div class="state" style="text-align: left">
+        <div class="state">
           <i class="material-icons" [ngClass]="result.state">{{setIcon(result.state)}}</i>
-          <span>{{result.state}}</span>
+          <div class="table-state">{{result.state}}</div>
         </div>
       </mat-cell>
     </ng-container>
@@ -65,8 +65,10 @@
     <ng-container matColumnDef="progress">
       <mat-header-cell *matHeaderCellDef> Progress </mat-header-cell>
       <mat-cell *matCellDef="let result">
-        <mat-progress-bar mode="determinate" [value]="result.progress * 100"></mat-progress-bar>
-        {{result.progress | percent}}
+        <div class="table-progress">
+          <mat-progress-bar class="progress-bar" mode="determinate" [value]="result.progress * 100"></mat-progress-bar>
+          <div class="progress-num">{{result.progress | percent}}</div>
+        </div>
       </mat-cell>
     </ng-container>
 

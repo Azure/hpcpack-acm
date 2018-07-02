@@ -255,7 +255,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
       case 'Failed': return 'clear';
       case 'Running': return 'blur_on';
       case 'Canceled': return 'cancel';
-      default: return 'autonew';
+      default: return 'autorenew';
     }
   }
 

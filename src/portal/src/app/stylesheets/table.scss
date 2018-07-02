@@ -66,6 +66,38 @@ mat-header-cell {
     color: #283593;
 }
 
+.Canceled,
+.canceled {
+    color: #6c727c;
+}
+
 .state {
+    @include display-flex(center);
+    width: 8em;
+}
+
+.mat-column-state {
+    display: flex;
+    justify-content: center;
+}
+
+.table-progress {
     @include display-flex(center, center);
+    .progress-bar {
+        width: 75%;
+    }
+    .progress-num {
+        width: 25%;
+        text-align: right;
+    }
+}
+
+.state-icon {
+    width: 30%;
+}
+
+.table-state {
+    width: 70%;
+    text-align: left;
+    padding-left: .5em;
 }
