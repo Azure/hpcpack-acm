@@ -1,12 +1,12 @@
 <app-result-layout [result]="result">
   <ng-template #overview>
     <mat-tab-group>
-      <mat-tab label="Result" *ngIf="aggregationResult">
+      <mat-tab label="Result" *ngIf="!hasError">
         <ring-overview-result [result]="aggregationResult"></ring-overview-result>
       </mat-tab>
-      <mat-tab label="Error" *ngIf="isError()">
+      <mat-tab label="Error" *ngIf="hasError">
         <div class="error-message">
-          {{result.aggregationResult.Error}}
+          {{aggregationResult.Error}}
         </div>
       </mat-tab>
       <mat-tab label="Events">

@@ -319,7 +319,9 @@ export class DiagApi extends Resource<any> {
   }
 
   getJobAggregationResult(id: string) {
-    return this.httpGet(`${this.url}/${id}/aggregationResult`);
+    return this.http.get<any>(`${this.url}/${id}/aggregationResult`).pipe(catchError(err => {
+      return of({ Error: err.error });
+    }));
   }
 
 
