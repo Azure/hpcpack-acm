@@ -210,7 +210,7 @@ export class HeatmapApi extends Resource<any> {
   }
 
   protected normalize(result: any): void {
-    result.results = result.values.map(e => ({ id: e.node, value: e.data._Total || NaN }));
+    result.results = result.values.map(e => ({ id: e.node, value: e.data._Total >= 0 ? e.data._Total : NaN }));
     return result;
   }
 
