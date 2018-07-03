@@ -13,7 +13,7 @@
 }
 
 .event {
-    @include display-flex($align-items: center);
+    @include display-flex;
     @include pd(0, 1em, 0, 1em);
 }
 
@@ -32,7 +32,7 @@
 }
 
 .time-line {
-    @include pd(0em, 1.5em, 0em, 0em);
+    @include pd(1.5em, 1.5em, 0em, 0em);
     text-align: right;
     flex: 1;
 }
@@ -43,6 +43,10 @@
     @include pd(1.5em, 1em, 1.5em, 1.5em);
     border-left: .13em solid rgba(110, 122, 140, .6);
     flex: 5;
+}
+
+.info-detail {
+    flex: 4;
 }
 
 .event-type .material-icons {
