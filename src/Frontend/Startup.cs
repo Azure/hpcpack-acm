@@ -48,6 +48,8 @@ namespace Microsoft.HpcAcm.Frontend
                   .AllowCredentials()
                   .WithExposedHeaders("Location")
             );
+
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
             app.UseMvc();
         }
     }

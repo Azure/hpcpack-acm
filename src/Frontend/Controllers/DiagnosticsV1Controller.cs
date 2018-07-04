@@ -135,6 +135,11 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         [HttpPost()]
         public async T.Task<IActionResult> CreateJobAsync([FromBody] Job job, CancellationToken token)
         {
+            if (job == null)
+            {
+                return new BadRequestObjectResult("The request body doesn't contain a valid json to be deserialized.");
+            }
+
             job.Type = JobType.Diagnostics;
             if (job.DiagnosticTest?.Name == null || job.DiagnosticTest?.Category == null)
             {
