@@ -70,16 +70,16 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         [HttpGet("{id}/metadata")]
         public async T.Task<IActionResult> GetMetadataAsync(string id, CancellationToken token)
         {
-            var obj = await this.provider.GetNodeMetadataAsync(id, token);
-            return new OkObjectResult(obj);
+            var jsonString = (string)await this.provider.GetNodeMetadataAsync(id, token);
+            return new OkObjectResult(JsonConvert.DeserializeObject(jsonString));
         }
 
         // GET v1/nodes/node1/scheduledevents
         [HttpGet("{id}/scheduledevents")]
         public async T.Task<IActionResult> GetScheduledEventsAsync(string id, CancellationToken token)
         {
-            var obj = await this.provider.GetNodeScheduledEventsAsync(id, token);
-            return new OkObjectResult(obj);
+            var jsonString = (string)await this.provider.GetNodeScheduledEventsAsync(id, token);
+            return new OkObjectResult(JsonConvert.DeserializeObject(jsonString));
         }
     }
 }
