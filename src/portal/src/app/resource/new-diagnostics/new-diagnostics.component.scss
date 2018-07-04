@@ -1,0 +1,118 @@
+mat-vertical-stepper {
+    clear: both;
+}
+
+.mat-vertical-content {
+    padding: 0 24px;
+}
+
+.step-btn {
+    margin-bottom: -24px
+}
+
+mat-radio-group {
+    display: flex;
+    flex-direction: column;
+}
+
+mat-radio-button {
+    margin: 0.2em;
+}
+
+.filter {
+    min-width: 20em;
+}
+
+.name {
+    margin: 16px 0 20px;
+}
+
+.name span {
+    font-size: 1.1em;
+    padding: 5px 10px;
+    border-left: 3px solid #3f51b5;
+    color: #3f51b5;
+}
+
+.no-params {
+    margin: 1em;
+}
+
+.select-tests {
+    display: flex;
+}
+
+.diagTestName {
+    width: 100%;
+}
+
+.test-tree {
+    margin-right: 1.5em;
+    flex: 2;
+}
+
+.test-description {
+    flex: 3;
+}
+
+.test-description-title {
+    font-size: 1.1em;
+    color: #3f51b5;
+}
+
+.test-description-text {
+    text-justify: inter-word;
+    text-indent: 1em;
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.error-message {
+    color: #f44336;
+    line-height: 2em;
+    height: 2em;
+    padding: 0 1em;
+    display: flex;
+    align-items: center;
+    font-size: 1.1em;
+}
+
+.last-step {
+    display: flex;
+    justify-content: space-between;
+}
+
+.error-text {
+    padding-left: 0.5em;
+}
+
+.dialog-title {
+    display: flex;
+    justify-content: space-between;
+}
+
+.close-icon:hover {
+    cursor: pointer;
+}
+
+.diag-btns {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.diag-action {
+    margin-top: 1.2em;
+    margin-bottom: .1em;
+}
+
+.diag-run-btn {
+    margin-left: 1.2em;
+}
+
+.parameters {
+    width: 100%;
+    margin-bottom: 1.2em;
+}

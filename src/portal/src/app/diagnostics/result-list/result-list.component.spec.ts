@@ -23,10 +23,10 @@ class RouterLinkDirectiveStub {
 }
 
 class ApiServiceStub {
-  static results = [{ diagnosticTest: { name: 'test', category: 'test' }, state: 'Finished', name: 'test' }];
+  static results = [{ id: 5563, diagnosticTest: { name: 'test', category: 'test' }, progress: 0, state: 'Finished', name: 'test', createdAt: '2018-06-20T10:39:26.0930804+00:00', lastChangedAtAt: '2018-06-20T10:40:24.4964341+00:00' }];
 
   diag = {
-    getDiagsByPage: (lastId: any, count: any) => of(ApiServiceStub.results)
+    getDiagsByPage: (lastId: any, count: any, reverse: any) => of(ApiServiceStub.results)
   }
 }
 

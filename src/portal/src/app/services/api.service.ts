@@ -74,14 +74,14 @@ export class NodeApi extends Resource<Node> {
   }
 
   protected normalizeHistory(history: any): any {
-    if (history.items) {
-      history.history = history.items.map(item => ({ label: item.span, data: item.data }));
+    if (history.data) {
+      history.history = history.data.map(item => ({ label: item.time, data: item.metricItems }));
     }
     else {
       history.history = [];
     }
-    if (history.span) {
-      history.range = history.span;
+    if (history.rangeSeconds) {
+      history.range = history.rangeSeconds;
     }
     return history;
   }
@@ -210,7 +210,7 @@ export class HeatmapApi extends Resource<any> {
   }
 
   protected normalize(result: any): void {
-    result.results = result.values.map(e => ({ id: e.node, value: e.data._Total || NaN }));
+    result.results = result.values.map(e => ({ id: e.node, value: e.data._Total >= 0 ? e.data._Total : NaN }));
     return result;
   }
 
@@ -311,18 +311,17 @@ export class DiagApi extends Resource<any> {
   }
 
   getDiagJob(id: string) {
-    return this.httpGet(`${this.url}/${id}`, null, [
-      map((e: any) => {
-        if (e.aggregationResult != undefined && this.isJSON(e.aggregationResult)) {
-          e.aggregationResult = JSON.parse(e.aggregationResult);
-        }
-        return e;
-      })
-    ]);
+    return this.httpGet(`${this.url}/${id}`);
   }
 
-  getDiagsByPage(lastId: any, count: any) {
-    return this.httpGet(`${this.url}?lastid=${lastId}&count=${count}&reverse=true`);
+  getDiagsByPage(lastId, count, reverse) {
+    return this.httpGet(`${this.url}?lastid=${lastId}&count=${count}&reverse=${reverse}`);
+  }
+
+  getJobAggregationResult(id: string) {
+    return this.http.get<any>(`${this.url}/${id}/aggregationResult`).pipe(catchError(err => {
+      return of({ Error: err.error });
+    }));
   }
 
 
@@ -381,6 +380,27 @@ export class DiagApi extends Resource<any> {
   }
 }
 
+export class DashboradApi extends Resource<any>{
+  protected get url(): string {
+    return `${this.baseUrl}/dashboard`;
+  }
+
+  getNodes(): Observable<any> {
+    let url = `${this.url}/nodes`;
+    return this.httpGet(url);
+  }
+
+  getClusrun(): Observable<any> {
+    let url = `${this.url}/clusrun`;
+    return this.httpGet(url);
+  }
+
+  getDiags(): Observable<any> {
+    let url = `${this.url}/diagnostics`;
+    return this.httpGet(url);
+  }
+}
+
 @Injectable()
 export class ApiService {
   private nodeApi: NodeApi;
@@ -392,6 +412,8 @@ export class ApiService {
   private heatmapApi: HeatmapApi;
 
   private diagApi: DiagApi;
+
+  private dashboardApi: DashboradApi;
 
   constructor(private http: HttpClient) { }
 
@@ -428,6 +450,13 @@ export class ApiService {
       this.diagApi = new DiagApi(this.http);
     }
     return this.diagApi;
+  }
+
+  get dashboard(): DashboradApi {
+    if (!this.dashboardApi) {
+      this.dashboardApi = new DashboradApi(this.http);
+    }
+    return this.dashboardApi;
   }
 }
 

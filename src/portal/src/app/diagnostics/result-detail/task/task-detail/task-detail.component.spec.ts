@@ -51,6 +51,6 @@ fdescribe('TaskDetailComponent', () => {
     let text = details[0].textContent;
     expect(text).toEqual("testNode");
     text = details[1].textContent;
-    expect(text).toEqual("true");
+    expect(text).toEqual("3.7 sec");
   });
 });

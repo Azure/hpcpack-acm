@@ -25,7 +25,7 @@ export class TaskDetailComponent implements OnInit {
 
   ngOnInit() {
     this.taskState = this.data.taskState;
-    if (this.data.taskState !== "Finished") {
+    if (this.data.taskState !== "Finished" && this.data.taskState !== "Failed") {
       this.hasResult = false;
     }
     else {

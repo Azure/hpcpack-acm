@@ -37,18 +37,14 @@ export class RingReportComponent implements OnInit {
 
   ngOnInit() {
     this.jobId = this.result.id;
-    this.tasksLoop = this.getTasksInfo();
-    this.updateOverviewData();
-  }
-
-  updateOverviewData() {
-    if ((this.result.aggregationResult !== undefined && this.api.diag.isJSON(this.result.aggregationResult))) {
+    if (this.result.aggregationResult !== undefined) {
       this.aggregationResult = this.result.aggregationResult;
     }
+    this.tasksLoop = this.getTasksInfo();
   }
 
-  isError() {
-    return this.result.aggregationResult != undefined && this.result.aggregationResult.Error !== undefined;
+  get hasError() {
+    return this.aggregationResult !== undefined && this.aggregationResult['Error'] !== undefined;
   }
 
   getTasksInfo(): any {
@@ -59,6 +55,7 @@ export class RingReportComponent implements OnInit {
           this.dataSource.data = result;
           this.tasks = result;
           if (this.jobState == 'Finished' || this.jobState == 'Failed' || this.jobState == 'Canceled') {
+            this.getAggregationResult();
             return false;
           }
           else {
@@ -85,7 +82,12 @@ export class RingReportComponent implements OnInit {
       if (res.events !== undefined) {
         this.events = res.events;
       }
-      this.updateOverviewData();
+    });
+  }
+
+  getAggregationResult() {
+    this.api.diag.getJobAggregationResult(this.result.id).subscribe(res => {
+      this.aggregationResult = res;
     });
   }
 }

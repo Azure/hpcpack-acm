@@ -4,14 +4,10 @@ import { ChartModule } from 'angular2-chartjs';
 import { MaterialsModule } from '../materials.module';
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { DashboardComponent } from './dashboard.component';
-import { NodeHealthComponent } from './node-health/node-health.component';
 import { NodeStateComponent } from './node-state/node-state.component';
-import { JobsComponent } from './jobs/jobs.component';
 import { LocationComponent } from './location/location.component';
 import { NodeHealthHistoryComponent } from './node-health-history/node-health-history.component';
-import { UserInfoComponent } from './user-info/user-info.component';
-import { ExpenseInfoComponent } from './expense-info/expense-info.component';
-import { AlertInfoComponent } from './alert-info/alert-info.component';
+import { JobOverviewComponent } from './job-overview/job-overview.component';
 
 @NgModule({
   imports: [
@@ -20,7 +16,7 @@ import { AlertInfoComponent } from './alert-info/alert-info.component';
     ChartModule,
     MaterialsModule,
   ],
-  declarations: [DashboardComponent, NodeHealthComponent, NodeStateComponent, JobsComponent, LocationComponent, NodeHealthHistoryComponent, UserInfoComponent, ExpenseInfoComponent, AlertInfoComponent],
+  declarations: [DashboardComponent, NodeStateComponent, LocationComponent, NodeHealthHistoryComponent, JobOverviewComponent],
   //bootstrap: [HomeComponent]
 })
 export class DashboardModule { }

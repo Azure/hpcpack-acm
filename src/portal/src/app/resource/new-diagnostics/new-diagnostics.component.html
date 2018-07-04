@@ -9,7 +9,10 @@
 
 <mat-dialog-content>
   <div *ngIf="errorMessage" class="error-message">
-    <i class="material-icons">error_outline</i>
+    <!-- <i class="material-icons">error_outline</i> -->
+    <button mat-icon-button (click)="clearErrorMsg()">
+      <mat-icon color="warn">clear</mat-icon>
+    </button>
     <div class="error-text">
       {{errorMessage}}
     </div>
@@ -25,12 +28,15 @@
             <span *ngIf="node.children != undefined && node.children.length > 0">{{node.data.name}}</span>
           </ng-template>
         </tree-root>
-        <p class="test-description" *ngIf="selectedDescription">
-          {{selectedDescription}}
-          <a href="{{testInfoLink}}">{{testInfoLink}}</a>
-        </p>
+        <div class="test-description" *ngIf="selectedDescription">
+          <div class="test-description-title">{{selectedTest.name | titlecase}} Introduction</div>
+          <p class="test-description-text">
+            {{selectedDescription}}
+            <a href="{{testInfoLink}}">{{testInfoLink}}</a>
+          </p>
+        </div>
       </div>
-      <div class="step-btn">
+      <div class="step-btn diag-btns">
         <button mat-button color="primary" matStepperNext>Next</button>
       </div>
     </mat-step>
@@ -44,10 +50,10 @@
         </div>
         <ng-template #showParameters>
           <div class="name">
-            <span>{{selectedTest.name}}</span>
+            <span>{{selectedTest.name | titlecase}}</span>
           </div>
-          <div class="parameters" *ngFor="let parameter of selectedTest.parameters">
-            <mat-form-field>
+          <div *ngFor="let parameter of selectedTest.parameters">
+            <mat-form-field class="parameters">
               <div *ngIf="parameter.options; else noOptions">
                 <mat-select [placeholder]="parameter.name" [(ngModel)]="parameter.defaultValue" (ngModelChange)="whenChange($event, parameter, selectedTest)">
                   <mat-option *ngFor="let option of parameter.options" [value]="option">
@@ -58,11 +64,12 @@
               <ng-template #noOptions>
                 <input matInput [placeholder]="parameter.name" [(ngModel)]="parameter.defaultValue">
               </ng-template>
+              <mat-hint *ngIf="parameter">{{parameter.description}}</mat-hint>
             </mat-form-field>
           </div>
         </ng-template>
       </ng-template>
-      <div class="step-btn">
+      <div class="step-btn diag-btns">
         <button mat-button color="primary" matStepperPrevious>Back</button>
         <button mat-button color="primary" matStepperNext>Next</button>
       </div>
@@ -73,13 +80,13 @@
           <input matInput placeholder="Test name" [(ngModel)]='diagTestName' />
         </mat-form-field>
       </div>
-      <div class="step-btn last-step">
+      <div class="step-btn last-step diag-btns">
         <button mat-button color="primary" matStepperPrevious>Back</button>
       </div>
     </mat-step>
   </mat-vertical-stepper>
-  <div class="diag-btns">
-    <button mat-button color="warn" [mat-dialog-close]="false">Cancel</button>
-    <button mat-button color="primary" (click)="getTest()" (keyup.enter)="pressEnter()">Run</button>
+  <div class="diag-btns diag-action">
+    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
+    <button mat-raised-button color="primary" (click)="getTest()" (keyup.enter)="pressEnter()" class="diag-run-btn">Run</button>
   </div>
 </mat-dialog-content>

@@ -1,0 +1,78 @@
+<div class="card">
+  <div class="headline">
+    <div class="name">{{jobCategory | uppercase}}</div>
+    <div class="operation">
+      <div class="detail" (click)="autoNewAction()">
+        <i class="material-icons detail-icon">autorenew</i>
+        <span class="info-title">REFRESH</span>
+      </div>
+      <div class="detail" (click)="jobInfo()">
+        <i class="material-icons">more_horiz</i>
+        <span class="info-title">DETAIL</span>
+      </div>
+    </div>
+  </div>
+  <div class="card-content">
+    <div class="job-overview">
+      <div class="total-info">
+        <div class="outline">
+          <div class="icon job">
+            <i class="material-icons">{{icon}}</i>
+          </div>
+          <div class="info">
+            <div class="info-title">
+              <span class="active">ACTIVE JOBS</span>
+              / TOTAL
+            </div>
+            <div class="info-content-total">
+              <span class="active">{{activeJobs}}</span>
+              /
+              <span class="total">{{totalJobs}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="info-content">
+      <div class="job-item">
+        <div class="item-title Queued">Queued</div>
+        <div class="item-value">{{jobs.Queued}}</div>
+      </div>
+      <div class="job-item ">
+        <div class="item-title Running">Running</div>
+        <div class="item-value">{{jobs.Running}}</div>
+      </div>
+      <div class="job-item">
+        <div class="item-title Finishing">Finishing</div>
+        <div class="item-value">{{jobs.Finishing}}</div>
+      </div>
+      <div class="job-item">
+        <div class="item-title Finished">Finished</div>
+        <div class="item-value">{{jobs.Finished}}</div>
+      </div>
+      <div class="job-item">
+        <div class="item-title Canceling">Canceling</div>
+        <div class="item-value">{{jobs.Canceling}}</div>
+      </div>
+      <div class="job-item">
+        <div class="item-title Canceled">Canceled</div>
+        <div class="item-value">{{jobs.Canceled}}</div>
+      </div>
+      <div class="job-item">
+        <div class="item-title Failed">Failed</div>
+        <div class="item-value">{{jobs.Failed}}</div>
+      </div>
+    </div>
+
+    <div class="job-chart">
+      <chart type="bar" [data]="chartData" [options]="chartOption"></chart>
+    </div>
+
+    <div class="shade" *ngIf="loading">
+      <div class="progress">
+        <mat-progress-bar mode="buffer"></mat-progress-bar>
+      </div>
+    </div>
+  </div>
+
+</div>

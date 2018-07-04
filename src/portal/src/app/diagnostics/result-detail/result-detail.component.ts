@@ -35,11 +35,22 @@ export class ResultDetailComponent implements OnInit {
       let id = map.get('id');
       this.api.diag.getDiagJob(id).subscribe(result => {
         this.result = result;
-        this.loadComponent();
+        if (result.state == 'Finished' || result.state == 'Failed' || result.state == 'Canceled') {
+          this.getAggregationResult();
+        }
+        else {
+          this.loadComponent();
+        }
       });
     });
   }
 
+  getAggregationResult() {
+    this.api.diag.getJobAggregationResult(this.result.id).subscribe(res => {
+      this.result.aggregationResult = res;
+      this.loadComponent();
+    });
+  }
   ngOnDestroy() {
     if (this.subcription)
       this.subcription.unsubscribe();

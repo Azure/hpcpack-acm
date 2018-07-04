@@ -19,6 +19,7 @@ export class PingPongReportComponent implements OnInit {
   private jobState: string;
   private tasks = [];
   private events = [];
+  private aggregationResult: object;
 
   private componentName = "PingPongReport";
 
@@ -39,20 +40,22 @@ export class PingPongReportComponent implements OnInit {
 
   ngOnInit() {
     this.jobId = this.result.id;
+    if (this.result.aggregationResult !== undefined) {
+      this.aggregationResult = this.result.aggregationResult;
+      this.updateOverviewData();
+    }
     this.tasksLoop = this.getTasksInfo();
-    this.updateOverviewData();
   }
 
   updateOverviewData() {
-    if ((this.result.aggregationResult !== undefined && this.api.diag.isJSON(this.result.aggregationResult))) {
-      let res = this.result.aggregationResult;
-      this.latencyData = res.Latency;
-      this.throughputData = res.Throughput;
+    if (this.aggregationResult !== undefined) {
+      this.latencyData = this.aggregationResult['Latency'];
+      this.throughputData = this.aggregationResult['Throughput'];
     }
   }
 
   get hasError() {
-    return this.result.aggregationResult != undefined && this.result.aggregationResult.Error !== undefined;
+    return this.aggregationResult !== undefined && this.aggregationResult['Error'] !== undefined;
   }
 
   getTasksInfo(): any {
@@ -63,6 +66,7 @@ export class PingPongReportComponent implements OnInit {
           this.dataSource.data = result;
           this.tasks = result;
           if (this.jobState == 'Finished' || this.jobState == 'Failed' || this.jobState == 'Canceled') {
+            this.getAggregationResult();
             return false;
           }
           else {
@@ -88,6 +92,12 @@ export class PingPongReportComponent implements OnInit {
       if (res.events !== undefined) {
         this.events = res.events;
       }
+    });
+  }
+
+  getAggregationResult() {
+    this.api.diag.getJobAggregationResult(this.result.id).subscribe(res => {
+      this.aggregationResult = res;
       this.updateOverviewData();
     });
   }

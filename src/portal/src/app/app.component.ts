@@ -12,11 +12,11 @@ const now = (new Date()).getTime();
 })
 export class AppComponent {
   static items = [
-    // {
-    //   link: 'dashboard',
-    //   title: 'Dashboard',
-    //   icon: 'dashboard',
-    // },
+    {
+      link: 'dashboard',
+      title: 'Dashboard',
+      icon: 'dashboard',
+    },
     {
       link: 'resource',
       title: 'Resource',
@@ -70,7 +70,7 @@ export class AppComponent {
     public router: Router,
     public route: ActivatedRoute,
     public api: ApiService
-  ) {}
+  ) { }
 
   ngAfterViewInit(): void {
     //Open the side nav with one second delay, otherwise there may be a

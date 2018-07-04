@@ -31,13 +31,13 @@ const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: 'resource',
+    redirectTo: 'dashboard',
     pathMatch: 'full',
   },
 ];
 
 @NgModule({
-  imports: [ RouterModule.forRoot(routes, { useHash: true }) ],
-  exports: [ RouterModule ],
+  imports: [RouterModule.forRoot(routes, { useHash: true })],
+  exports: [RouterModule],
 })
 export class AppRoutingModule { }

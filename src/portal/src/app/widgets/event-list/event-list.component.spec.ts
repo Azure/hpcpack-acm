@@ -1,5 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { MaterialsModule } from '../../materials.module';
 import { EventListComponent } from './event-list.component';
 
 fdescribe('EventListComponent', () => {
@@ -8,7 +8,10 @@ fdescribe('EventListComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [EventListComponent]
+      declarations: [EventListComponent],
+      imports: [
+        MaterialsModule
+      ],
     })
       .compileComponents();
   }));

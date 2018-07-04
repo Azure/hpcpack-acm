@@ -128,15 +128,15 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
   events = [];
   scheduledEvents = [];
 
-  // events: MatTableDataSource<any> = new MatTableDataSource();
-
-  // eventColumns = ['id', 'type', 'resourceType', 'resources', 'status', 'notBefore'];
-
   private subcription: Subscription;
 
   private historyLoop: object;
 
-  private interval: number;
+  private jobLoop: object;
+
+  private historyInterval: number;
+
+  private jobInterval: number;
 
   private labels: string[];
 
@@ -148,17 +148,12 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
   private compute = {};
 
-  // private cpuUsage = [];
-
-  // private colors = ['#3e95cd', '#8e5ea2', '#3cba9f', '#e8c3b9', '#c45850', '#FFA07A', '#DB7093', '#FFA500', '#E6E6FA', '#8FBC8B', '#E0FFFF', '#B0C4DE', '#FFDEAD', '#BC8F8F',
-  //   '#A0522D', '#D3D3D3', '#778899', '#F4A460', '#ADD8E6', '#F0E68C'];
-
-
   constructor(
     private api: ApiService,
     private route: ActivatedRoute,
   ) {
-    this.interval = 10000;
+    this.historyInterval = 10000;
+    this.jobInterval = 3000;
     this.labels = [];
   }
 
@@ -174,7 +169,9 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
       //get node metadata
       this.api.node.getMetadata(id).subscribe(result => {
-        this.compute = result.compute;
+        if (result.compute !== undefined) {
+          this.compute = result.compute;
+        }
       });
 
       this.historyLoop = Loop.start(
@@ -187,7 +184,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
             return true;
           }
         },
-        this.interval
+        this.historyInterval
       );
 
       this.api.node.getNodeEvents(id).subscribe(result => {
@@ -196,51 +193,18 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
       this.api.node.getNodeSheduledEvents(id).subscribe(result => {
         this.scheduledEvents = result.Events;
-        if (this.scheduledEvents.length == 0) {
-          //   this.scheduledEvents = [
-          //     {
-          //       EventId: "f020ba2e-3bc0-4c40-a10b-86575a9eabd5",
-          //       EventType: "Freeze",
-          //       ResourceType: "VirtualMachine",
-          //       Resources: ["FrontEnd_IN_0", "BackEnd_IN_0"],
-          //       EventStatus: "Scheduled",
-          //       NotBefore: "Mon, 19 Sep 2016 18:29:47 GMT"
-          //     },
-          //     {
-          //       EventId: "f020ba2e-3bc0-4c40-a10b-86575a9eabe7",
-          //       EventType: "Reboot",
-          //       ResourceType: "VirtualMachine",
-          //       Resources: ["FrontEnd_IN_0", "BackEnd_IN_0"],
-          //       EventStatus: "Started",
-          //       NotBefore: "Mon, 19 Sep 2016 18:29:47 GMT"
-          //     },
-          //     {
-          //       EventId: "f020ba2e-3bc0-4c40-a10b-86575a9eaba9",
-          //       EventType: "Redeploy",
-          //       ResourceType: "VirtualMachine",
-          //       Resources: ["FrontEnd_IN_0", "BackEnd_IN_0"],
-          //       EventStatus: "Scheduled",
-          //       NotBefore: "Mon, 19 Sep 2016 18:29:47 GMT"
-          //     }
-          //   ];
-        }
       });
 
-      this.api.node.getNodeJobs(id).subscribe(result => {
-        let fakeData = result.map((job, index) => {
-          if (index % 3 == 0) {
-            job.type = "Diagnostic";
+      this.jobLoop = Loop.start(
+        this.api.node.getNodeJobs(id),
+        {
+          next: (res) => {
+            this.dataSource.data = res;
+            return true;
           }
-          else {
-            job.type = "ClusRun";
-          }
-          job.state = "Finished";
-          job.progress = "100%";
-          return job;
-        });
-        this.dataSource.data = fakeData;
-      });
-
+        },
+        this.jobInterval
+      );
 
     });
   }
@@ -252,19 +216,32 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     if (this.historyLoop) {
       Loop.stop(this.historyLoop);
     }
+
+    if (this.jobLoop) {
+      Loop.stop(this.jobLoop);
+    }
   }
 
+  private setIcon(state) {
+    switch (state) {
+      case 'Finished': return 'done';
+      case 'Queued': return 'blur_linear';
+      case 'Failed': return 'clear';
+      case 'Running': return 'blur_on';
+      case 'Canceled': return 'cancel';
+      default: return 'autorenew';
+    }
+  }
 
   private dataSource = new MatTableDataSource();
-  // private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'actions'];
-  private displayedColumns = ['id', 'content', 'type', 'state', 'progress'];
+  private displayedColumns = ['id', 'created', 'content', 'type', 'state', 'progress', 'updated'];
 
-  getJobContent(type) {
-    if (type == 'ClusRun') {
-      return "This should show clusrun command";
+  getJobContent(job) {
+    if (job.type == 'ClusRun') {
+      return job.commandLine;
     }
-    else if (type == 'Diagnostic') {
-      return "mpi-pingpong or other diagnostics name";
+    else if (job.type == 'Diagnostics') {
+      return `${job.diagnosticTest.category} - ${job.diagnosticTest.name}`;
     }
   }
 
@@ -275,7 +252,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
       path.push('results');
       path.push(jobId);
     }
-    else if (type == "Diagnostic") {
+    else if (type == "Diagnostics") {
       path.push('/diagnostics');
       path.push('results');
       path.push(jobId);
@@ -299,6 +276,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     labels = labels.map(v => {
       return this.dateFormat(v.getHours()) + ':' + this.dateFormat(v.getMinutes()) + ':' + this.dateFormat(v.getSeconds());
     });
+    console.log(labels);
     return labels;
   }
 
@@ -334,81 +312,4 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
     return cpuTotal;
   }
-
-  /* get every cores' resource usage
-   makeCpuUsageData(history): any {
-     let cpuHistory = [];
-
-
-     //sort history data by time
-     history.sort((a, b) => {
-       return (new Date(a.label)).getTime() - (new Date(b.label)).getTime();
-     });
-
-     //select recent cpu history data from all categories
-     //[{ category: 'cpu', instanceValues:{_Total: xxx, _1: xxx, ...} }]
-     history.forEach(h => {
-       cpuHistory = cpuHistory.concat(
-         h.data.filter(v => {
-           return v.category == 'cpu';
-         })
-       );
-     });
-
-     if (cpuHistory[0].instanceValues && this.cpuCoresName.length == 0) {
-       this.cpuCoresName = Object.keys(cpuHistory[0].instanceValues);
-     }
-
-     for (let i = 0; i < this.cpuCoresName.length; i++) {
-       if (this.cpuUsage.length !== this.cpuCoresName.length) {
-         this.cpuUsage.push({ label: this.cpuCoresName[i], data: [], borderColor: this.colors[i] });
-       }
-       else {
-         if (this.cpuUsage[i] !== undefined) {
-           this.cpuUsage[i]['data'] = [];
-         }
-       }
-     }
-
-     cpuHistory.forEach(h => {
-       for (let key in h.instanceValues) {
-         let usageIndex = this.cpuUsage.findIndex((ele) => {
-           return ele.label == key;
-         });
-         if (this.cpuUsage[usageIndex] !== undefined) {
-           this.cpuUsage[usageIndex].data.push(h.instanceValues[key]);
-         }
-       }
-     });
-
-     console.log(this.cpuUsage);
-     // return cpuUsage;
-   }
-   */
-
-  // makeNetworkData(usage): void {
-  //   let labels = this.makeLabels(usage);
-  //   let data1 = usage.map(point => point.inbound.toFixed(2));
-  //   let data2 = usage.map(point => point.outbound.toFixed(2));
-  //   this.networkData = {
-  //     labels: labels,
-  //     datasets: [
-  //       { label: 'In', data: data1, fill: false, borderColor: '#215ebb' },
-  //       { label: 'Out', data: data2, fill: false, borderColor: '#1aab02' }
-  //     ]
-  //   };
-  // }
-
-  // makeDiskData(usage): void {
-  //   let labels = this.makeLabels(usage);
-  //   let data1 = usage.map(point => point.read.toFixed(2));
-  //   let data2 = usage.map(point => point.write.toFixed(2));
-  //   this.diskData = {
-  //     labels: labels,
-  //     datasets: [
-  //       { label: 'Read', data: data1, fill: false, borderColor: '#215ebb' },
-  //       { label: 'Write', data: data2, fill: false, borderColor: '#1aab02' }
-  //     ]
-  //   };
-  // }
 }
