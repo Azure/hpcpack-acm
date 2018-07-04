@@ -1,7 +1,15 @@
-import subprocess, io, json
+import subprocess, io, json, os
 
 def main():
-    stdout = subprocess.check_output('mpi-pingpong-reduce.py', shell=True, stdin=open('unittest-reduce-stdin', 'r'), stderr=subprocess.STDOUT)
+    runOnWindows = ''
+    runOnLinux = 'python '
+    if os.name == 'nt':
+        prefix = runOnWindows
+    else:
+        prefix = runOnLinux
+
+    script = 'mpi-pingpong-reduce.py'
+    stdout = subprocess.check_output(prefix + script, shell=True, stdin=open('unittest-reduce-stdin', 'r'), stderr=subprocess.STDOUT)
         
     resultItems = [
         'GoodPairs',
