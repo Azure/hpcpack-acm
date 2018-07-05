@@ -64,7 +64,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> GetJobTasksAsync(
             int jobId,
             [FromQuery] int lastId = 0,
-            [FromQuery] int count = 1000,
+            [FromQuery] int count = 100,
             [FromQuery] int requeueCount = 0,
             CancellationToken token = default(CancellationToken))
         {

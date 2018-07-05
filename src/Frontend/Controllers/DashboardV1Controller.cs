@@ -27,8 +27,8 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> GetNodesAsync(
             CancellationToken token = default(CancellationToken))
         {
-            var nodes = await this.provider.GetDashboardNodesAsync(token);
-            return new OkObjectResult(nodes);
+            var data = await this.provider.GetDashboardNodesAsync(token);
+            return data == null ? (IActionResult)new NotFoundObjectResult("No dashboard data found.") : new OkObjectResult(data);
         }
 
         // GET v1/dashboard/diagnostics
@@ -36,8 +36,8 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> GetDiagnosticsAsync(
             CancellationToken token = default(CancellationToken))
         {
-            var obj = await this.provider.GetDashboardDiagnosticsAsync(token);
-            return new OkObjectResult(obj);
+            var data = await this.provider.GetDashboardDiagnosticsAsync(token);
+            return data == null ? (IActionResult)new NotFoundObjectResult("No dashboard data found.") : new OkObjectResult(data);
         }
 
         // GET v1/dashboard/clusrun
@@ -45,8 +45,8 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> GetClusrunAsync(
             CancellationToken token = default(CancellationToken))
         {
-            var obj = await this.provider.GetDashboardClusrunAsync(token);
-            return new OkObjectResult(obj);
+            var data = await this.provider.GetDashboardClusrunAsync(token);
+            return data == null ? (IActionResult)new NotFoundObjectResult("No dashboard data found.") : new OkObjectResult(data);
         }
     }
 }

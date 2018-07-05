@@ -29,7 +29,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> GetMetricsAsync(
             string category = "cpu",
             [FromQuery] string lastNodeId = null,
-            [FromQuery] int count = 1000,
+            [FromQuery] int count = 100,
             CancellationToken token = default(CancellationToken))
         {
             var partitionQuery = this.utilities.GetPartitionQueryString(this.utilities.MetricsValuesPartitionKey);

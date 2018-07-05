@@ -4,6 +4,7 @@
     using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
+    using Microsoft.HpcAcm.Services.Common;
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Microsoft.WindowsAzure.Storage.Table;
@@ -34,53 +35,28 @@
             this.nodesTable = this.utilities.GetNodesTable();
         }
 
-        public async T.Task<object> GetDashboardNodesAsync(CancellationToken token)
+        private async T.Task<object> GetDashboardDataAsync(string partitionName, CancellationToken token)
         {
-            var states = Enum.GetValues(typeof(NodeHealth)).Cast<NodeHealth>();
-            var result = states.ToDictionary(s => s, s => 0);
+            var dashboardTable = await this.utilities.GetOrCreateDashboardTableAsync(token);
+            var partitionKey = this.utilities.GetDashboardPartitionKey(partitionName);
+            var entryKey = this.utilities.GetDashboardEntryKey();
+            var item = await dashboardTable.RetrieveJsonTableEntityAsync(partitionKey, entryKey, token);
+            return new { LastUpdated = item.Timestamp, Data = item.GetObject<DashboardItem>()?.TotalStatistics, };
+        }
 
-            string lastNodeId = null;
-            IEnumerable<Node> nodes;
-            do
-            {
-                nodes = await this.GetNodesAsync(lastNodeId, 1000, token);
-                var dict = nodes.GroupBy(n => n.Health).ToDictionary(g => g.Key, g => g.Count());
-                foreach (var d in dict) { result[d.Key] += d.Value; }
-                lastNodeId = nodes?.LastOrDefault()?.Id;
-            }
-            while (nodes?.Count() > 0);
-
-            return result;
+        public T.Task<object> GetDashboardNodesAsync(CancellationToken token)
+        {
+            return this.GetDashboardDataAsync("node", token);
         }
 
         public T.Task<object> GetDashboardDiagnosticsAsync(CancellationToken token)
         {
-            return this.GetDashboardJobsAsync(JobType.Diagnostics, token);
+            return this.GetDashboardDataAsync(JobType.Diagnostics.ToString(), token);
         }
 
         public T.Task<object> GetDashboardClusrunAsync(CancellationToken token)
         {
-            return this.GetDashboardJobsAsync(JobType.ClusRun, token);
-        }
-
-        public async T.Task<object> GetDashboardJobsAsync(JobType jobType, CancellationToken token)
-        {
-            var states = Enum.GetValues(typeof(JobState)).Cast<JobState>();
-            var result = states.ToDictionary(s => s, s => 0);
-
-            int lastJobId = 0;
-            IEnumerable<Job> jobs;
-            do
-            {
-                jobs = await this.GetJobsAsync(lastJobId, 1000, jobType, false, token);
-                var dict = jobs.GroupBy(n => n.State).ToDictionary(g => g.Key, g => g.Count());
-                foreach (var d in dict) { result[d.Key] += d.Value; }
-                lastJobId = jobs?.LastOrDefault()?.Id ?? int.MaxValue;
-            }
-
-            while (jobs?.Count() > 0);
-
-            return result;
+            return this.GetDashboardDataAsync(JobType.ClusRun.ToString(), token);
         }
 
         public async T.Task<IActionResult> GetOutputRawAsync(JobType type, string taskResultKey, CancellationToken token)
@@ -155,63 +131,12 @@
         }
 
 
-        public async T.Task<IEnumerable<Node>> GetNodesAsync(
+        public T.Task<IEnumerable<Node>> GetNodesAsync(
             string lastId,
             int count,
             CancellationToken token)
         {
-            var partitionQuery = this.utilities.GetPartitionQueryString(this.utilities.NodesPartitionKey);
-
-            var lastRegistrationKey = this.utilities.GetRegistrationKey(lastId);
-            var registrationEnd = this.utilities.GetMaximumRegistrationKey();
-            var registrationRangeQuery = this.utilities.GetRowKeyRangeString(lastRegistrationKey, registrationEnd);
-
-            var q = TableQuery.CombineFilters(
-                partitionQuery,
-                TableOperators.And,
-                registrationRangeQuery);
-
-            var registrations = (await this.nodesTable.QueryAsync<ComputeClusterRegistrationInformation>(q, count, token)).Select(r => r.Item3);
-
-            if (!registrations.Any())
-            {
-                return new Node[0];
-            }
-
-            var firstHeartbeat = this.utilities.GetHeartbeatKey(registrations.First().NodeName.ToLowerInvariant());
-            var lastHeartbeat = this.utilities.GetHeartbeatKey(registrations.Last().NodeName.ToLowerInvariant());
-            var heartbeatRangeQuery = this.utilities.GetRowKeyRangeString(firstHeartbeat, lastHeartbeat, true);
-
-            q = TableQuery.CombineFilters(
-                partitionQuery,
-                TableOperators.And,
-                heartbeatRangeQuery);
-
-            var heartbeats = (await this.nodesTable.QueryAsync<ComputeClusterNodeInformation>(q, null, token)).ToDictionary(h => h.Item3.Name.ToLowerInvariant(), h => (h.Item3, h.Item4));
-
-            return registrations.Select(r =>
-            {
-                var nodeName = r.NodeName.ToLowerInvariant();
-                var node = new Node() { NodeRegistrationInfo = r, Name = nodeName, };
-
-                if (heartbeats.TryGetValue(nodeName, out (ComputeClusterNodeInformation, DateTimeOffset) n))
-                {
-                    if (n.Item2.AddSeconds(this.utilities.Option.MaxMissedHeartbeats * this.utilities.Option.HeartbeatIntervalSeconds) > DateTimeOffset.UtcNow)
-                    {
-                        node.Health = NodeHealth.OK;
-                        node.State = NodeState.Online;
-                        node.RunningJobCount = n.Item1.Jobs.Count;
-                        // TODO: adding events
-                        node.EventCount = 5;
-                    }
-                    else
-                    {
-                        node.Health = NodeHealth.Error;
-                    }
-                }
-
-                return node;
-            });
+            return this.utilities.GetNodesAsync(lastId, this.utilities.MaxString, count, token);
         }
 
         public async T.Task<Node> GetNodeAsync(string id, CancellationToken token)
@@ -296,29 +221,15 @@
             return testsResult.Select(tr => tr.Item3);
         }
 
-        public async T.Task<IEnumerable<Job>> GetJobsAsync(
+        public T.Task<IEnumerable<Job>> GetJobsAsync(
             int lastId,
-            int count = 1000,
+            int count = 100,
             JobType type = JobType.ClusRun,
             bool reverse = false,
             CancellationToken token = default(CancellationToken))
         {
             this.logger.LogInformation("Get {type} jobs called, lastId {id}, jobCount {count}", type, lastId, count);
-            var jobTable = this.utilities.GetJobsTable();
-
-            lastId = reverse && lastId == 0 ? int.MaxValue : lastId;
-            var lowJobPartitionKey = this.utilities.GetJobPartitionKey(type, lastId, reverse);
-            var highJobPartitionKey = this.utilities.GetJobPartitionKey(type, reverse ? 0 : int.MaxValue, reverse);
-            var partitionRange = this.utilities.GetPartitionKeyRangeString(lowJobPartitionKey, highJobPartitionKey);
-            var rowKey = utilities.JobEntryKey;
-
-            var q = TableQuery.CombineFilters(
-                partitionRange,
-                TableOperators.And,
-                TableQuery.GenerateFilterCondition(CloudUtilities.RowKeyName, QueryComparisons.Equal, rowKey));
-
-            var results = await jobTable.QueryAsync<Job>(q, count, token);
-            return results.Select(r => { r.Item3.UpdatedAt = r.Item4; return r.Item3; });
+            return this.utilities.GetJobsAsync(lastId, count: count, type: type, reverse: reverse, token: token);
         }
 
         public async T.Task<Job> GetJobAsync(
@@ -372,7 +283,7 @@
             int jobId,
             int requeueCount,
             int lastTaskId,
-            int count = 1000,
+            int count = 100,
             JobType type = JobType.ClusRun,
             CancellationToken token = default(CancellationToken))
         {

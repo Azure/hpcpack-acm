@@ -9,6 +9,7 @@
     using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Text;
     using System.Threading;
     using T = System.Threading.Tasks;
@@ -64,6 +65,11 @@
         public static CloudTable GetJobsTable(this CloudUtilities u)
         {
             return u.GetTable(u.Option.JobsTableName);
+        }
+
+        public static async T.Task<CloudTable> GetOrCreateDashboardTableAsync(this CloudUtilities u, CancellationToken token)
+        {
+            return await u.GetOrCreateTableAsync(u.Option.DashboardTableName, token);
         }
 
         public static async T.Task<CloudTable> GetOrCreateJobsTableAsync(this CloudUtilities u, CancellationToken token)
@@ -136,7 +142,13 @@
         private static T.Task<bool> UpdateJobAsync(this CloudUtilities u, string jobPartitionKey, Action<Job> action, CancellationToken token) =>
             u.UpdateObjectAsync(u.GetJobsTable(), jobPartitionKey, u.JobEntryKey, action, token);
 
-        public static async T.Task<bool> UpdateObjectAsync<TObject>(this CloudUtilities u, CloudTable table, string partitionKey, string rowKey, Action<TObject> action, CancellationToken token)
+        public static async T.Task<bool> UpdateObjectAsync<TObject>(
+            this CloudUtilities u,
+            CloudTable table,
+            string partitionKey,
+            string rowKey,
+            Action<TObject> action,
+            CancellationToken token)
         {
             while (true)
             {
@@ -150,11 +162,20 @@
                     try
                     {
                         var result = await table.ReplaceAsync(entity, token);
-                        if (result.IsConflict()) continue;
+                        if (result.IsConflict())
+                        {
+                            await T.Task.Delay(new Random().Next(3000), token);
+                            continue;
+                        }
                     }
-                    catch(StorageException ex)
+                    catch (StorageException ex)
                     {
-                        if (ex.IsConflict()) continue;
+                        if (ex.IsConflict())
+                        {
+                            await T.Task.Delay(new Random().Next(3000), token);
+                            continue;
+                        }
+
                         throw;
                     }
 
@@ -165,6 +186,104 @@
                     return false;
                 }
             }
+        }
+
+        public static async T.Task<IEnumerable<Node>> GetNodesAsync(this CloudUtilities u, string lowerNodeName, string higherNodeName, int? count, CancellationToken token)
+        {
+            var nodesTable = u.GetNodesTable();
+            var partitionQuery = u.GetPartitionQueryString(u.NodesPartitionKey);
+
+            var lastRegistrationKey = u.GetRegistrationKey(lowerNodeName);
+            var registrationEnd = u.GetRegistrationKey(higherNodeName);
+            var registrationRangeQuery = u.GetRowKeyRangeString(lastRegistrationKey, registrationEnd);
+
+            var q = TableQuery.CombineFilters(
+                partitionQuery,
+                TableOperators.And,
+                registrationRangeQuery);
+
+            var registrations = (await nodesTable.QueryAsync<ComputeClusterRegistrationInformation>(q, count, token)).Select(r => r.Item3).ToList();
+
+            if (!registrations.Any())
+            {
+                return new Node[0];
+            }
+
+            var firstHeartbeat = u.GetHeartbeatKey(registrations[0].NodeName.ToLowerInvariant());
+            var lastHeartbeat = u.GetHeartbeatKey(registrations[registrations.Count - 1].NodeName.ToLowerInvariant());
+            var heartbeatRangeQuery = u.GetRowKeyRangeString(firstHeartbeat, lastHeartbeat, true);
+
+            q = TableQuery.CombineFilters(
+                partitionQuery,
+                TableOperators.And,
+                heartbeatRangeQuery);
+
+            var heartbeats = (await nodesTable.QueryAsync<ComputeClusterNodeInformation>(q, null, token)).ToDictionary(h => h.Item3.Name.ToLowerInvariant(), h => (h.Item3, h.Item4));
+
+            return registrations.Select(r =>
+            {
+                var nodeName = r.NodeName.ToLowerInvariant();
+                var node = new Node() { NodeRegistrationInfo = r, Name = nodeName, };
+
+                if (heartbeats.TryGetValue(nodeName, out (ComputeClusterNodeInformation, DateTimeOffset) n))
+                {
+                    if (n.Item2.AddSeconds(u.Option.MaxMissedHeartbeats * u.Option.HeartbeatIntervalSeconds) > DateTimeOffset.UtcNow)
+                    {
+                        node.Health = NodeHealth.OK;
+                        node.State = NodeState.Online;
+                        node.RunningJobCount = n.Item1.Jobs.Count;
+                        // TODO: adding events
+                        node.EventCount = 5;
+                    }
+                    else
+                    {
+                        node.Health = NodeHealth.Error;
+                    }
+                }
+
+                return node;
+            });
+        }
+
+        public static async T.Task<IEnumerable<Job>> GetJobsAsync(
+            this CloudUtilities u,
+            string lowPartitionKey,
+            string highPartitionKey,
+            int count = 100,
+            JobType type = JobType.ClusRun,
+            bool reverse = false,
+            CancellationToken token = default(CancellationToken))
+        {
+            var jobTable = u.GetJobsTable();
+
+            var partitionRange = u.GetPartitionKeyRangeString(lowPartitionKey, highPartitionKey);
+            var rowKey = u.JobEntryKey;
+
+            var q = TableQuery.CombineFilters(
+                partitionRange,
+                TableOperators.And,
+                TableQuery.GenerateFilterCondition(CloudUtilities.RowKeyName, QueryComparisons.Equal, rowKey));
+
+            var results = await jobTable.QueryAsync<Job>(q, count, token);
+            return results.Select(r => { r.Item3.UpdatedAt = r.Item4; return r.Item3; });
+        }
+
+        public static T.Task<IEnumerable<Job>> GetJobsAsync(
+            this CloudUtilities u,
+            int lastId,
+            int higherId = int.MaxValue,
+            int count = 100,
+            JobType type = JobType.ClusRun,
+            bool reverse = false,
+            CancellationToken token = default(CancellationToken))
+        {
+            lastId = reverse && lastId == 0 ? int.MaxValue : lastId;
+            higherId = reverse && higherId == int.MaxValue ? 0 : higherId;
+
+            var lowJobPartitionKey = u.GetJobPartitionKey(type, lastId, reverse);
+            var highJobPartitionKey = u.GetJobPartitionKey(type, higherId, reverse);
+
+            return u.GetJobsAsync(lowJobPartitionKey, highJobPartitionKey, count, type, reverse, token);
         }
     }
 }

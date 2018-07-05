@@ -26,7 +26,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         [HttpGet()]
         public async T.Task<IActionResult> GetAsync(
             [FromQuery] string lastId,
-            [FromQuery] int count = 1000,
+            [FromQuery] int count = 100,
             CancellationToken token = default(CancellationToken))
         {
             var nodes = await this.provider.GetNodesAsync(lastId, count, token);

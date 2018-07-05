@@ -57,13 +57,13 @@
         public const string PartitionKeyName = "PartitionKey";
         public const string RowKeyName = "RowKey";
 
-        public string GetRowKeyRangeString(string lowKey, string highKey, bool inclusive = false) => GetKeyRangeString(lowKey, highKey, RowKeyName, inclusive);
-        public string GetPartitionKeyRangeString(string lowKey, string highKey, bool inclusive = false) => GetKeyRangeString(lowKey, highKey, PartitionKeyName, inclusive);
+        public string GetRowKeyRangeString(string lowKey, string highKey, bool leftInclusive = false, bool rightInclusive = true) => GetKeyRangeString(lowKey, highKey, RowKeyName, leftInclusive, rightInclusive);
+        public string GetPartitionKeyRangeString(string lowKey, string highKey, bool leftInclusive = false, bool rightInclusive = true) => GetKeyRangeString(lowKey, highKey, PartitionKeyName, leftInclusive, rightInclusive);
 
-        public string GetKeyRangeString(string lowKey, string highKey, string keyName, bool inclusive) => TableQuery.CombineFilters(
-            TableQuery.GenerateFilterCondition(keyName, inclusive ? QueryComparisons.GreaterThanOrEqual : QueryComparisons.GreaterThan, lowKey),
+        public string GetKeyRangeString(string lowKey, string highKey, string keyName, bool leftInclusive, bool rightInclusive) => TableQuery.CombineFilters(
+            TableQuery.GenerateFilterCondition(keyName, leftInclusive ? QueryComparisons.GreaterThanOrEqual : QueryComparisons.GreaterThan, lowKey),
             TableOperators.And,
-            TableQuery.GenerateFilterCondition(keyName, inclusive ? QueryComparisons.LessThanOrEqual : QueryComparisons.LessThan, highKey));
+            TableQuery.GenerateFilterCondition(keyName, rightInclusive ? QueryComparisons.LessThanOrEqual : QueryComparisons.LessThan, highKey));
 
         public string GetPartitionQueryString(string partitionKey) =>
             TableQuery.GenerateFilterCondition(PartitionKeyName, QueryComparisons.Equal, partitionKey);
@@ -71,6 +71,9 @@
         public string GetJobPartitionKey(JobType type, int jobId, bool reverse = false) => this.GetJobPartitionKey(type.ToString().ToLowerInvariant(), jobId, reverse);
         public string GetJobPartitionKey(string type, int jobId, bool reverse = false) =>
             reverse ? string.Format(this.Option.JobReversePartitionPattern, type, IntegerKey.ToStringKey(int.MaxValue - jobId)) : string.Format(this.Option.JobPartitionPattern, type, IntegerKey.ToStringKey(jobId));
+        public string GetDashboardRowKey(string rowId) => string.Format(this.Option.DashboardRowKeyPattern, rowId);
+        public string GetDashboardEntryKey() => this.Option.DashboardEntryKey;
+        public string GetDashboardPartitionKey(string category) => string.Format(this.Option.DashboardPartitionPattern, category);
         public string GetDiagPartitionKey(string category) => string.Format(this.Option.DiagnosticCategoryPattern, category);
         public string GetDiagCategoryName(string partitionKey) => partitionKey.Substring(5);
         public string GetNodePartitionKey(string nodeName) => string.Format(this.Option.NodePartitionPattern, nodeName);
