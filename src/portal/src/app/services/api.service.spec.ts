@@ -31,11 +31,11 @@ fdescribe('Resource', () => {
   it('should catch error and throw', () => {
     let value = 1;
     let error = 'Error in pipe!';
-    let mapper = map(e => { throw(error) });
+    let mapper = map(e => { throw (error) });
     httpSpy.get.and.returnValue(of(value));
     expect(() => {
-      resource.httpGet(null, null, [mapper]).subscribe(() => {})
-    }).toThrow(resource.errorMsg(error));
+      resource.httpGet(null, null, [mapper]).subscribe(() => { })
+    }).toThrow(error);
   });
 
   it('should get all', () => {
@@ -69,7 +69,7 @@ fdescribe('CommandApi', () => {
   it('should create', () => {
     let value = 1;
     let url = `basepart/${value}`;
-    let res = { headers: { get: () => url }};
+    let res = { headers: { get: () => url } };
     spyOn(res.headers, 'get').and.callThrough();
     httpSpy.post.and.returnValue(of(res));
     resource.create('a command', []).subscribe(obj => {
@@ -84,7 +84,7 @@ fdescribe('CommandApi', () => {
     let offset = 0;
     let value = { content, offset, size };
     httpSpy.get.and.returnValue(of(value));
-    resource.getOutput('key', 0, size * 2).subscribe(res =>  {
+    resource.getOutput('key', 0, size * 2).subscribe(res => {
       expect(res.content).toEqual(value.content);
       expect(res.size).toEqual(value.size);
       expect(res.offset).toEqual(value.offset);
@@ -105,7 +105,7 @@ fdescribe('CommandApi', () => {
     let value3 = { offset: size + size2, size: 0 };
     httpSpy.get.and.returnValues(of(value), of(value2), of(value3));
     let opt = { fulfill: true, over: () => true }
-    resource.getOutput('key', 0, (size + size2) * 2, opt).subscribe(res =>  {
+    resource.getOutput('key', 0, (size + size2) * 2, opt).subscribe(res => {
       expect(res.content).toEqual(content + content2);
       expect(res.offset).toEqual(offset);
       expect(res.size).toEqual(size + size2);

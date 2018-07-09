@@ -49,6 +49,18 @@ export class ResultDetailComponent implements OnInit {
     this.api.diag.getJobAggregationResult(this.result.id).subscribe(res => {
       this.result.aggregationResult = res;
       this.loadComponent();
+    }, err => {
+      let errInfo = err;
+      if (ApiService.isJSON(err)) {
+        if (err.error) {
+          errInfo = err.error;
+        }
+        else {
+          errInfo = JSON.stringify(err);
+        }
+      }
+      this.result.aggregationResult = { Error: errInfo };
+      this.loadComponent();
     });
   }
   ngOnDestroy() {

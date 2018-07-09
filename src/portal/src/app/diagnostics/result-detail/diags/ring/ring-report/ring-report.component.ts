@@ -88,6 +88,17 @@ export class RingReportComponent implements OnInit {
   getAggregationResult() {
     this.api.diag.getJobAggregationResult(this.result.id).subscribe(res => {
       this.aggregationResult = res;
+    }, err => {
+      let errInfo = err;
+      if (ApiService.isJSON(err)) {
+        if (err.error) {
+          errInfo = err.error;
+        }
+        else {
+          errInfo = JSON.stringify(err);
+        }
+      }
+      this.result.aggregationResult = { Error: errInfo };
     });
   }
 }
