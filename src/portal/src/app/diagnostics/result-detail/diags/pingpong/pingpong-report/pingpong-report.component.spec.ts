@@ -25,6 +25,12 @@ class EventListComponent {
   events: any;
 }
 
+@Component({ selector: 'app-nodes-info', template: '' })
+class NodesInfoComponent {
+  @Input()
+  nodes: any;
+}
+
 @Component({ selector: 'diag-task-table', template: '' })
 class DiagTaskTableComponent {
   @Input()
@@ -88,6 +94,7 @@ fdescribe('PingPongReportComponent', () => {
         PingPongOverviewResultComponent,
         DiagTaskTableComponent,
         EventListComponent,
+        NodesInfoComponent,
         WrapperComponent
       ],
       imports: [MaterialsModule, NoopAnimationsModule],

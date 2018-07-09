@@ -54,9 +54,9 @@ fdescribe('TaskTableComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
-    let text = fixture.nativeElement.querySelector('.mat-cell.mat-column-nodes').textContent;
+    let text = fixture.nativeElement.querySelector('.mat-cell.mat-column-nodes .icon-cell .cell-text').textContent;
     expect(text).toEqual("node1,node2");
-    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-state').textContent;
+    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-state .icon-cell .cell-text').textContent;
     expect(text).toEqual("Finished");
     text = fixture.nativeElement.querySelector('.mat-cell.mat-column-latency').textContent;
     expect(text).toEqual("0.42");

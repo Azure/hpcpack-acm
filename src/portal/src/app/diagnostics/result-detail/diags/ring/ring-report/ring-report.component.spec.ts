@@ -1,11 +1,24 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input, Directive } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { RingReportComponent } from './ring-report.component';
 import { MaterialsModule } from '../../../../../materials.module';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ApiService } from '../../../../../services/api.service';
 import { TableSettingsService } from '../../../../../services/table-settings.service';
+
+@Directive({
+  selector: '[routerLink]',
+  host: { '(click)': 'onClick()' }
+})
+class RouterLinkDirectiveStub {
+  @Input('routerLink') linkParams: any;
+  navigatedTo: any = null;
+
+  onClick() {
+    this.navigatedTo = this.linkParams;
+  }
+}
 
 @Component({ selector: 'app-result-layout', template: '' })
 class ResultLayoutComponent {
@@ -84,6 +97,7 @@ fdescribe('RingReportComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
+        RouterLinkDirectiveStub,
         RingReportComponent,
         ResultLayoutComponent,
         RingOverviewResultComponent,

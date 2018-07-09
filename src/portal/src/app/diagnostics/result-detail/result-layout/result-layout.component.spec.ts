@@ -48,6 +48,6 @@ fdescribe('ResultLayoutComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
     let text = fixture.nativeElement.querySelector('.name').textContent;
-    expect(text).toEqual("1 - test Finished");
+    expect(text).toContain("1 - test");
   });
 });
