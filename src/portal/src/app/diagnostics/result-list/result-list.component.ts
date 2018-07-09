@@ -13,8 +13,8 @@ import { TableSettingsService } from '../../services/table-settings.service';
 })
 export class ResultListComponent implements OnInit, OnDestroy {
   static customizableColumns = [
-    // { name: 'test', displayName: 'Test', displayed: true },
     { name: 'createdAt', displayName: 'Created', displayed: true },
+    { name: 'test', displayName: 'Test', displayed: true },
     { name: 'diagnostic', displayName: 'Diagnostic', displayed: true },
     { name: 'category', displayName: 'Category', displayed: true },
     { name: 'state', displayName: 'State', displayed: true },

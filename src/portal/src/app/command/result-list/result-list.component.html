@@ -29,21 +29,29 @@
   <ng-container matColumnDef="id">
     <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
     <mat-cell *matCellDef="let result">
-      <a [routerLink]="result.id">{{result.id}}</a>
+      <div class="icon-cell">
+        <i class="material-icons cell-icon">call_to_action</i>
+        <a [routerLink]="result.id" class="cell-text">{{result.id}}</a>
+      </div>
     </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="command">
     <mat-header-cell *matHeaderCellDef> Command </mat-header-cell>
-    <mat-cell *matCellDef="let result" [title]="result.command">{{result.command}}</mat-cell>
+    <mat-cell *matCellDef="let result" [title]="result.command">
+      <div class="icon-cell">
+        <i class="material-icons cell-icon">code</i>
+        <div class="cell-text">{{result.command}}</div>
+      </div>
+    </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="state">
     <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
     <mat-cell *matCellDef="let result">
-      <div class="state">
-        <i class="material-icons state-icon" [ngClass]="result.state">{{setIcon(result.state)}}</i>
-        <div class="table-state">{{result.state | titlecase}}</div>
+      <div class="icon-cell">
+        <i class="material-icons cell-icon" [ngClass]="result.state">{{setIcon(result.state)}}</i>
+        <div class="cell-text">{{result.state | titlecase}}</div>
       </div>
     </mat-cell>
   </ng-container>
@@ -53,7 +61,7 @@
     <!-- <mat-cell *matCellDef="let result"> {{result.progress | percent}} </mat-cell> -->
     <mat-cell *matCellDef="let result">
       <div class="table-progress">
-        <mat-progress-bar class="progress-bar" mode="determinate" [value]="result.progress"></mat-progress-bar>
+        <mat-progress-bar class="progress-bar" mode="determinate" [value]="result.progress * 100"></mat-progress-bar>
         <div class="progress-num"> {{result.progress | percent}} </div>
       </div>
     </mat-cell>
@@ -61,12 +69,22 @@
 
   <ng-container matColumnDef="createdAt">
     <mat-header-cell *matHeaderCellDef> Created </mat-header-cell>
-    <mat-cell *matCellDef="let result"> {{result.createdAt | date:'yyyy-MM-dd HH:mm:ss'}} </mat-cell>
+    <mat-cell *matCellDef="let result">
+      <div class="icon-cell">
+        <i class="material-icons cell-icon">access_time</i>
+        <div class="cell-text">{{result.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</div>
+      </div>
+    </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="lastChangedAt">
     <mat-header-cell *matHeaderCellDef> Last Changed </mat-header-cell>
-    <mat-cell *matCellDef="let result"> {{result.updatedAt | date:'yyyy-MM-dd HH:mm:ss'}} </mat-cell>
+    <mat-cell *matCellDef="let result">
+      <div class="icon-cell">
+        <i class="material-icons cell-icon">access_alarm</i>
+        <div class="cell-text"> {{result.updatedAt | date:'yyyy-MM-dd HH:mm:ss'}} </div>
+      </div>
+    </mat-cell>
   </ng-container>
 
   <!-- <ng-container matColumnDef="actions">

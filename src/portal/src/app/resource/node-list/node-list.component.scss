@@ -21,6 +21,10 @@ nav {
     flex: 2;
 }
 
+.mat-column-name {
+    flex: 0.8;
+}
+
 .mat-cell.mat-column-os {
     @include ellipsis-text;
 }
@@ -30,4 +34,12 @@ nav {
 .mat-column-memory,
 .mat-column-eventCount {
     text-align: right;
+}
+
+.online {
+    color: $color;
+}
+
+.healthy {
+    color: $color;
 }

@@ -22,8 +22,7 @@ mat-header-cell {
 
 .mat-cell,
 .mat-header-cell {
-    padding: 0 2px;
-    text-align: center;
+    padding: 0 2px; // text-align: center;
 }
 
 .mat-row,
@@ -32,13 +31,9 @@ mat-header-cell {
     padding: 0 10px;
 }
 
-.mat-column-id {
-    flex: 0.3;
-}
-
 .mat-column-select {
     overflow: initial;
-    flex: 0;
+    flex: 0.2;
 }
 
 .mat-column-actions {
@@ -71,16 +66,6 @@ mat-header-cell {
     color: #6c727c;
 }
 
-.state {
-    @include display-flex(center);
-    width: 8em;
-}
-
-.mat-column-state {
-    display: flex;
-    justify-content: center;
-}
-
 .table-progress {
     @include display-flex(center, center);
     .progress-bar {
@@ -88,16 +73,48 @@ mat-header-cell {
     }
     .progress-num {
         width: 25%;
-        text-align: right;
+        padding-left: .3em;
     }
 }
 
-.state-icon {
+.icon-cell {
+    @include display-flex(center);
+    min-width: 8em;
+}
+
+.cell-icon {
+    font-size: 1.5em;
+    width: auto;
+    height: auto;
+    margin-right: .3em;
+    text-align: right;
+}
+
+.cell-text {
+    @include ellipsis-text;
+    text-align: left;
+}
+
+.wd-30 {
     width: 30%;
 }
 
-.table-state {
+.wd-70 {
     width: 70%;
-    text-align: left;
-    padding-left: .5em;
+}
+
+.wd-20 {
+    width: 20%;
+}
+
+.wd-80 {
+    width: 80%;
+}
+
+.wd-10 {
+    width: 10%;
+}
+
+.wd-90 {
+    width: 90%;
 }

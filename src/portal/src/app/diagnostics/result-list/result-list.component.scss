@@ -13,8 +13,33 @@ mat-table {
     margin-top: 1em;
 }
 
+.mat-column-id {
+    flex: 0.2;
+    .icon-cell {
+        color: #3f51b5;
+    }
+}
+
 .mat-column-progress {
     flex: 0.8;
+}
+
+.mat-column-category,
+.mat-column-diagnostic {
+    flex: 0.3;
+}
+
+.mat-column-test {
+    flex: 0.7;
+}
+
+.mat-column-createdAt,
+.mat-column-lastChangedAt {
+    flex: 0.5;
+}
+
+.mat-column-state {
+    flex: 0.4;
 }
 
 .loading {

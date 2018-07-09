@@ -110,10 +110,30 @@ hr {
 }
 
 .mat-column-progress {
-    flex: 0.8;
+    flex: 1.1;
 }
 
 .mat-column-content {
     flex: 1.2;
     @include ellipsis-text;
+}
+
+.mat-column-id {
+    flex: 0.4;
+    .icon-cell {
+        color: #3f51b5;
+    }
+}
+
+.mat-column-type {
+    flex: 0.5;
+}
+
+.mat-column-state {
+    flex: 0.5;
+}
+
+.mat-column-createdAt,
+.mat-column-lastChangedAt {
+    flex: 0.5;
 }

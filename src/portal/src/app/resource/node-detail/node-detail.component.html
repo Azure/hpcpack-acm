@@ -11,7 +11,7 @@
       <div class="charts">
         <div class="chart">
           <div class="area-title">
-            <!-- <i class="material-icons title-icon">grid_on</i> -->
+            <i class="material-icons title-icon">timeline</i>
             <div>CPU</div>
           </div>
           <chart #cpuChart type="line" [data]="cpuData" [options]="cpuOptions"></chart>
@@ -37,7 +37,7 @@
       </div>
       <div class="node-info">
         <div class="area-title">
-          <!-- <i class="material-icons title-icon">grid_on</i> -->
+          <i class="material-icons title-icon">desktop_windows</i>
           <div>NODE MEATADATA</div>
         </div>
         <div class="info-item">
@@ -102,7 +102,10 @@
         </div>
       </div>
       <div class="node-info">
-        <div class="area-title">NETWORK INFO</div>
+        <div class="area-title">
+          <i class="material-icons title-icon">settings_input_antenna</i>
+          <div> NETWORK INFO</div>
+        </div>
         <div class="network" *ngFor="let n of nodeRegistrationInfo.networksInfo">
           <div class="info-item">
             <div class="overview-title">Name</div>
@@ -129,7 +132,7 @@
       </div>
       <div class="node-info">
         <div class="area-title">
-          <!-- <i class="material-icons title-icon">grid_on</i> -->
+          <i class="material-icons title-icon">important_devices</i>
           <div>NODE REGISTRATION INFO</div>
         </div>
         <div class="info-item">
@@ -154,11 +157,17 @@
   <mat-tab label="Events">
     <div class="events">
       <div class="node-events">
-        <div class="area-title">NODE EVENTS</div>
+        <div class="area-title">
+          <i class="material-icons title-icon">event</i>
+          <div>NODE EVENTS</div>
+        </div>
         <app-event-list [events]="events"></app-event-list>
       </div>
       <div class="azure-events">
-        <div class="area-title">AZURE SCHEDULED EVENTS</div>
+        <div class="area-title">
+          <i class="material-icons title-icon">cloud_queue</i>
+          <div>AZURE SCHEDULED EVENTS</div>
+        </div>
         <app-scheduled-events [events]="scheduledEvents"></app-scheduled-events>
       </div>
     </div>
@@ -171,14 +180,21 @@
       <ng-container matColumnDef="id">
         <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
         <mat-cell *matCellDef="let job">
-          <a [routerLink]="getLink(job.id, job.type)">{{job.id}}</a>
+          <div class="icon-cell">
+            <i class="material-icons cell-icon" *ngIf="job.type == 'Diagnostics'">local_hospital</i>
+            <i class="material-icons cell-icon" *ngIf="job.type == 'ClusRun'">call_to_action</i>
+            <a class="cell-text" [routerLink]="getLink(job.id, job.type)">{{job.id}}</a>
+          </div>
         </mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="created">
         <mat-header-cell *matHeaderCellDef> Created </mat-header-cell>
         <mat-cell *matCellDef="let job">
-          {{job.createdAt | date: 'yyyy-MM-dd HH:mm:ss'}}
+          <div class="icon-cell">
+            <i class="material-icons cell-icon">access_time</i>
+            <div class="cell-text"> {{job.createdAt | date: 'yyyy-MM-dd HH:mm:ss'}}</div>
+          </div>
         </mat-cell>
       </ng-container>
 
@@ -189,15 +205,17 @@
 
       <ng-container matColumnDef="type">
         <mat-header-cell *matHeaderCellDef> Type </mat-header-cell>
-        <mat-cell *matCellDef="let job"> {{job.type}} </mat-cell>
+        <mat-cell *matCellDef="let job">
+          {{job.type}}
+        </mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="state">
         <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
         <mat-cell *matCellDef="let job">
-          <div class="state">
-            <i class="material-icons" [ngClass]="job.state">{{setIcon(job.state)}}</i>
-            <span> {{job.state}} </span>
+          <div class="icon-cell">
+            <i class="material-icons cell-icon" [ngClass]="job.state">{{setIcon(job.state)}}</i>
+            <div class="cell-text"> {{job.state}} </div>
           </div>
         </mat-cell>
       </ng-container>
@@ -215,7 +233,12 @@
 
       <ng-container matColumnDef="updated">
         <mat-header-cell *matHeaderCellDef> Last Changed </mat-header-cell>
-        <mat-cell *matCellDef="let job"> {{job.updatedAt | date: 'yyyy-MM-dd HH:mm:ss'}} </mat-cell>
+        <mat-cell *matCellDef="let job">
+          <div class="icon-cell">
+            <i class="material-icons cell-icon">access_alarm</i>
+            <div> {{job.updatedAt | date: 'yyyy-MM-dd HH:mm:ss'}} </div>
+          </div>
+        </mat-cell>
       </ng-container>
     </mat-table>
   </mat-tab>

@@ -276,7 +276,6 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     labels = labels.map(v => {
       return this.dateFormat(v.getHours()) + ':' + this.dateFormat(v.getMinutes()) + ':' + this.dateFormat(v.getSeconds());
     });
-    console.log(labels);
     return labels;
   }
 
