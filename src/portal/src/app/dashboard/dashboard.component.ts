@@ -26,23 +26,23 @@ export class DashboardComponent implements OnInit {
 
   getNodes() {
     this.api.dashboard.getNodes().subscribe(res => {
-      this.nodes = res;
-      let states = Object.keys(res);
+      this.nodes = res.data;
+      let states = Object.keys(this.nodes);
       for (let i = 0; i < states.length; i++) {
-        this.totalNodes += res[states[i]];
+        this.totalNodes += this.nodes[states[i]];
       }
     });
   }
 
   getDiags() {
     this.api.dashboard.getDiags().subscribe(res => {
-      this.diags = res;
+      this.diags = res.data;
     });
   }
 
   getClusrun() {
     this.api.dashboard.getClusrun().subscribe(res => {
-      this.clusrun = res;
+      this.clusrun = res.data;
     });
   }
 
