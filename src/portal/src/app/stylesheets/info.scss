@@ -6,10 +6,13 @@
 
 .overview-title {
     @include font-basic($font-size: .8em, $font-color: #7986CB);
+    .title-icon {
+        font-size: 1.2em;
+    }
 }
 
 .overview-value {
-    @include font-basic($font-size: .8em, $font-color: rgba(0, 0, 0, .6));
+    @include font-basic($font-size: .8em, $font-color: $info-color);
 }
 
 .info-item,
@@ -83,4 +86,18 @@
 .error-message {
     padding: 1em;
     @include font-basic($font-size: .8em, $font-color: rgba(206, 80, 57, .9));
+}
+
+a {
+    color: $info-color;
+    &.link {
+        color: $info-color;
+    }
+    &:visited {
+        color: $info-color;
+    }
+    &:hover {
+        cursor: pointer;
+        color: $color;
+    }
 }

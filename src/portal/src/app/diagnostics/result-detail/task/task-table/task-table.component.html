@@ -17,17 +17,32 @@
       -->
   <ng-container matColumnDef="id">
     <mat-header-cell *matHeaderCellDef>Id</mat-header-cell>
-    <mat-cell *matCellDef="let task">{{task.id}}</mat-cell>
+    <mat-cell *matCellDef="let task">
+      <div class="icon-cell">
+        <div class="material-icons cell-icon">timelapse</div>
+        <div class="cell-text">{{task.id}}</div>
+      </div>
+    </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="nodes">
     <mat-header-cell *matHeaderCellDef>Nodes</mat-header-cell>
-    <mat-cell *matCellDef="let task">{{task.customizedData}}</mat-cell>
+    <mat-cell *matCellDef="let task">
+      <div class="icon-cell">
+        <div class="material-icons cell-icon">view_module</div>
+        <div class="cell-text">{{task.customizedData}}</div>
+      </div>
+    </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="state">
     <mat-header-cell *matHeaderCellDef>State</mat-header-cell>
-    <mat-cell *matCellDef="let task">{{task.state}}</mat-cell>
+    <mat-cell *matCellDef="let task">
+        <div class="icon-cell">
+            <i class="material-icons cell-icon" [ngClass]="task.state">{{setIcon(task.state)}}</i>
+            <div class="cell-text">{{task.state}}</div>
+          </div>
+    </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="latency">

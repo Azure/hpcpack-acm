@@ -12,6 +12,9 @@
           {{aggregationResult.Error}}
         </div>
       </mat-tab>
+      <mat-tab label="Nodes">
+        <app-nodes-info [nodes]="nodesInfo"></app-nodes-info>
+      </mat-tab>
       <mat-tab label="Events">
         <app-event-list [events]="events"></app-event-list>
       </mat-tab>

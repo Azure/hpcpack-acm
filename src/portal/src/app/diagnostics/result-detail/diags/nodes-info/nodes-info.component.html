@@ -1,0 +1,22 @@
+<div class="nodes-info">
+  <div class="overview-info">
+    <div class="overview-title">
+      <i class="material-icons title-icon">hdr_strong</i>
+      <div class="title-text">Good Nodes</div>
+    </div>
+    <div class="overview-value">
+      <a [routerLink]="getLink(node)" class="node" *ngFor="let node of nodes.GoodNodes">{{node}}</a>
+    </div>
+    <div class="overview-value" *ngIf="!hasData(nodes.GoodNodes)">No Good nodes.</div>
+  </div>
+  <div class="overview-info">
+    <div class="overview-title">
+      <i class="material-icons title-icon">hdr_weak</i>
+      <div class="title-text">Bad Nodes</div>
+    </div>
+    <div class="overview-value">
+      <div class="node" *ngFor="let node of nodes.BadNodes">{{node}}</div>
+    </div>
+    <div class="overview-value" *ngIf="!hasData(nodes.BadNodes)">No bad nodes.</div>
+  </div>
+</div>

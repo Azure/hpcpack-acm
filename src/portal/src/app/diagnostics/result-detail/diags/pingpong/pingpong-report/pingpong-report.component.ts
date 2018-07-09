@@ -20,6 +20,9 @@ export class PingPongReportComponent implements OnInit {
   private tasks = [];
   private events = [];
   private aggregationResult: object;
+  private latencyData: any;
+  private throughputData: any;
+  private nodesInfo = {};
 
   private componentName = "PingPongReport";
 
@@ -28,8 +31,7 @@ export class PingPongReportComponent implements OnInit {
     // { name: 'throughput', displayName: 'Throughput', displayed: true },
   ];
 
-  latencyData: any;
-  throughputData: any;
+
 
   constructor(
     private api: ApiService,
@@ -51,6 +53,7 @@ export class PingPongReportComponent implements OnInit {
     if (this.aggregationResult !== undefined) {
       this.latencyData = this.aggregationResult['Latency'];
       this.throughputData = this.aggregationResult['Throughput'];
+      this.nodesInfo = { GoodNodes: this.aggregationResult['GoodNodes'], BadNodes: this.aggregationResult['BadNodes'] };
     }
   }
 

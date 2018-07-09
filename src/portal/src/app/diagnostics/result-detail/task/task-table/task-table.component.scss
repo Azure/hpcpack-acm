@@ -1,5 +1,4 @@
 @import "../../../../stylesheets/table.scss";
-
 .node.success {
     background-color: #d5ffd4;
 }
@@ -20,8 +19,10 @@
 
 mat-row .mat-column-id {
     flex: 1;
-    /* text-align: right; */
-    /* padding-right: 0.5em; */
+}
+
+mat-row .mat-column-detail {
+    color: $color;
 }
 
 .mat-column-nodes {

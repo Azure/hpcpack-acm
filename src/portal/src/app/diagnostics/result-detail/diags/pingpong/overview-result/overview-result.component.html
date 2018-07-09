@@ -56,6 +56,7 @@
         <div>{{p}}</div>
         <div>{{bestPairsValue | number: '1.2-2'}} {{unit}}</div>
       </div>
+      <div class="overview-value" *ngIf="!hasData(bestPairs)">No best pairs.</div>
     </div>
     <div class="overview-info">
       <div class="overview-title"> Worst Pairs </div>
@@ -63,6 +64,7 @@
         <div>{{p}}</div>
         <div>{{worstPairsValue | number: '1.2-2'}} {{unit}}</div>
       </div>
+      <div class="overview-value" *ngIf="!hasData(worstPairs)">No worst pairs.</div>
     </div>
     <div class="overview-info">
       <div class="overview-title"> Bad Pairs </div>
@@ -70,6 +72,7 @@
         <div>{{p.Pair}}</div>
         <div>{{p.Value | number: '1.2-2'}} {{unit}}</div>
       </div>
+      <div class="overview-value" *ngIf="!hasData(badPairs)">No bad pairs.</div>
     </div>
   </div>
 </div>

@@ -1,4 +1,5 @@
 import { Component, OnInit, Input, OnChanges, SimpleChange } from '@angular/core';
+import { isArray } from 'util';
 
 @Component({
   selector: 'pingpong-overview-result',
@@ -139,5 +140,12 @@ export class PingPongOverviewResultComponent implements OnInit, OnChanges {
   changeNode() {
     let data = this.nodeData[this.selectedNode];
     this.updateView(data);
+  }
+
+  hasData(data) {
+    if (isArray(data)) {
+      return data.length > 0;
+    }
+    return data !== undefined && data !== null;
   }
 }

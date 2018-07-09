@@ -15,6 +15,7 @@ import { TaskTableComponent } from './result-detail/task/task-table/task-table.c
 import { ResultLayoutComponent } from './result-detail/result-layout/result-layout.component';
 import { RingReportComponent } from './result-detail/diags/ring/ring-report/ring-report.component';
 import { RingOverviewResultComponent } from './result-detail/diags/ring/overview-result/overview-result.component';
+import { NodesInfoComponent } from './result-detail/diags/nodes-info/nodes-info.component';
 
 @NgModule({
   imports: [
@@ -25,7 +26,7 @@ import { RingOverviewResultComponent } from './result-detail/diags/ring/overview
     ChartModule,
     FormsModule,
   ],
-  declarations: [DiagnosticsComponent, ResultListComponent, ResultDetailComponent, PingPongReportComponent, TaskDetailComponent, PingPongOverviewResultComponent, TaskTableComponent, ResultLayoutComponent, RingReportComponent, RingOverviewResultComponent],
+  declarations: [DiagnosticsComponent, ResultListComponent, ResultDetailComponent, PingPongReportComponent, TaskDetailComponent, PingPongOverviewResultComponent, TaskTableComponent, ResultLayoutComponent, RingReportComponent, RingOverviewResultComponent, NodesInfoComponent],
   entryComponents: [RingReportComponent, RingOverviewResultComponent, PingPongReportComponent, TaskDetailComponent]
 })
 export class DiagnosticsModule { }

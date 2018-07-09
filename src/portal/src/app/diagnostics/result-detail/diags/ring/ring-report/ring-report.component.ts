@@ -101,4 +101,12 @@ export class RingReportComponent implements OnInit {
       this.result.aggregationResult = { Error: errInfo };
     });
   }
+
+  getLink(node) {
+    let path = [];
+    path.push('/resource');
+    path.push(node);
+    return path;
+  }
+
 }
