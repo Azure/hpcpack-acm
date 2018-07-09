@@ -49,7 +49,7 @@ export class ResultListComponent implements OnInit {
   private setIcon(state) {
     switch (state) {
       case 'finished': return 'done';
-      case '1ueued': return 'blur_linear';
+      case 'queued': return 'blur_linear';
       case 'failed': return 'clear';
       case 'running': return 'blur_on';
       case 'canceled': return 'cancel';

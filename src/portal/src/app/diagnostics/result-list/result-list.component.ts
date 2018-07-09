@@ -61,6 +61,17 @@ export class ResultListComponent implements OnInit, OnDestroy {
     return this.api.diag.getDiagsByPage(this.lastId, this.maxPageSize, this.reverse);
   }
 
+  private stateClass(state) {
+    switch (state) {
+      case 'Finished': return 'finished';
+      case 'Queued': return 'queued';
+      case 'Failed': return 'failed';
+      case 'Running': return 'running';
+      case 'Canceled': return 'canceled';
+      default: return '';
+    }
+  }
+
   ngOnInit() {
     this.loadSettings();
     this.getDisplayedColumns();

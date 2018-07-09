@@ -30,7 +30,7 @@
       <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
       <mat-cell *matCellDef="let result">
         <div class="icon-cell">
-          <i class="material-icons cell-icon" [ngClass]="result.state">{{setIcon(result.state)}}</i>
+          <i class="material-icons cell-icon" [ngClass]="stateClass(result.state)">{{setIcon(result.state)}}</i>
           <div class="cell-text">{{result.state}}</div>
         </div>
       </mat-cell>

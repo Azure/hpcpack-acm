@@ -50,6 +50,17 @@ export class TaskTableComponent implements OnInit {
     }
   }
 
+  private stateClass(state) {
+    switch (state) {
+      case 'Finished': return 'finished';
+      case 'Queued': return 'queued';
+      case 'Failed': return 'failed';
+      case 'Running': return 'running';
+      case 'Canceled': return 'canceled';
+      default: return '';
+    }
+  }
+
   private showDetail(jobId, taskId, taskState) {
     let dialogRef = this.dialog.open(TaskDetailComponent, {
       width: '70%',

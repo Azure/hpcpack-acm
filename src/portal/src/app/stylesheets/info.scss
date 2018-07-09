@@ -20,20 +20,24 @@
     margin-bottom: 1em;
 }
 
-.Failed {
-    color: #D84315;
-}
-
-.Finished {
+.finished {
     color: #2E7D32;
 }
 
-.Running {
+.queued {
+    color: #FF8F00;
+}
+
+.failed {
+    color: #D84315;
+}
+
+.running {
     color: #283593;
 }
 
-.Queued {
-    color: #FF8F00;
+.canceled {
+    color: #6c727c;
 }
 
 .main {

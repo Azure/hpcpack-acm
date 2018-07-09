@@ -21,6 +21,17 @@ export class ResultLayoutComponent implements OnInit {
   @ContentChild('overview')
   overviewTemplate: TemplateRef<any>;
 
+  private stateClass(state) {
+    switch (state) {
+      case 'Finished': return 'finished';
+      case 'Queued': return 'queued';
+      case 'Failed': return 'failed';
+      case 'Running': return 'running';
+      case 'Canceled': return 'canceled';
+      default: return '';
+    }
+  }
+
   constructor(
     private api: ApiService,
     private dialog: MatDialog,

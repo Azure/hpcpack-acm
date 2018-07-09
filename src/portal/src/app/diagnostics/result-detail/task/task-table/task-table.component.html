@@ -39,7 +39,7 @@
     <mat-header-cell *matHeaderCellDef>State</mat-header-cell>
     <mat-cell *matCellDef="let task">
         <div class="icon-cell">
-            <i class="material-icons cell-icon" [ngClass]="task.state">{{setIcon(task.state)}}</i>
+            <i class="material-icons cell-icon" [ngClass]="stateClass(task.state)">{{setIcon(task.state)}}</i>
             <div class="cell-text">{{task.state}}</div>
           </div>
     </mat-cell>

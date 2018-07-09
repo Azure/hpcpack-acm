@@ -233,6 +233,17 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  private stateClass(state) {
+    switch (state) {
+      case 'Finished': return 'finished';
+      case 'Queued': return 'queues';
+      case 'Failed': return 'failed';
+      case 'Running': return 'running';
+      case 'Canceled': return 'canceled';
+      default: return '';
+    }
+  }
+
   private dataSource = new MatTableDataSource();
   private displayedColumns = ['id', 'created', 'content', 'type', 'state', 'progress', 'updated'];
 

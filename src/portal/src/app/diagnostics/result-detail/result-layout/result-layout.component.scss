@@ -1,15 +1,14 @@
+@import "../../../stylesheets/mixin.scss";
+@import "../../../stylesheets/info.scss";
 .title {
-    display: flex;
-    align-items: center;
+    @include display-flex(center, space-between);
     padding: 0 1em;
     background-color: #fff;
     border-left: 4px solid #3f51b5;
-    justify-content: space-between;
-    font-family: Roboto, "Helvetica Neue", sans-serif;
+    @include font-basic;
     .name {
         margin: 0 0.3em;
-        color: rgba($color: #000000, $alpha: 0.8);
-        font-size: 1.2em;
+        @include font-basic(1.2em, rgba($color: #000000, $alpha: 0.8));
         padding: 1em 0;
     }
 }
@@ -17,22 +16,6 @@
 .title-icon {
     font-size: 1em;
     padding-right: 0.2em;
-}
-
-.Failed {
-    color: #D84315;
-}
-
-.Finished {
-    color: #2E7D32;
-}
-
-.Running {
-    color: #283593;
-}
-
-.Queued {
-    color: #FF8F00;
 }
 
 .main {
@@ -62,17 +45,13 @@
 }
 
 .task-result-info {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
+    @include display-flex($justify-content: space-between);
 }
 
 .area-title {
-    font-size: .9em;
     padding: 1em 0 0 0;
-    display: flex;
-    align-items: center;
-    font-family: Roboto, "Helvetica Neue", sans-serif;
+    @include display-flex(center);
+    @include font-basic(.9em);
 }
 
 .bar-chart {
@@ -80,25 +59,21 @@
 }
 
 .latency {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include display-flex(center, center);
 }
 
 .chart-type {
-    display: flex;
-    align-items: center;
+    @include display-flex(center);
     margin-top: 10px;
 }
 
 .chart-btn {
     height: 2em;
-    font-size: .8em;
     line-height: 2em;
     padding: 0 1em;
-    color: #FFF;
     background-color: rgba(63, 81, 181, .2);
     text-align: center;
+    @include font-basic(.8em, #FFF);
 }
 
 .chart-btn:hover {
@@ -111,22 +86,17 @@
 }
 
 .overview-chart {
-    display: flex;
-    justify-content: space-between;
+    @include display-flex($justify-content: space-between);
 }
 
 .overview-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    @include display-flex(flex-start, space-between);
 }
 
 .overview-title {
-    font-size: .9em; // color:rgba(63, 81, 181, 0.9);
-    color: #7986CB;
     font-weight: 500;
-    display: flex;
-    align-items: center;
+    @include display-flex(center);
+    @include font-basic(.9em, #7986CB);
 }
 
 .overview-value {
@@ -155,9 +125,8 @@ md-select,
 
 .pair-list {
     font-size: .9em;
-    display: flex;
-    justify-content: space-between;
     padding-bottom: .5em;
+    @include display-flex($justify-content: space-between);
 }
 
 .overview-info {
@@ -177,14 +146,9 @@ md-select,
     padding: 1em;
 }
 
-.job-state {
-    display: flex;
-    align-items: center;
-}
-
+.job-state,
 .operation {
-    display: flex;
-    align-items: center;
+    @include display-flex(center);
 }
 
 .operation:hover {
@@ -192,8 +156,7 @@ md-select,
 }
 
 .operation-name {
-    font-size: .8em;
-    color: rgba(0, 0, 0, .5);
+    @include font-basic(.8em, rgba(0, 0, 0, .5));
 }
 
 .cancel {
@@ -202,4 +165,12 @@ md-select,
 
 .rerun {
     color: rgba(63, 81, 181, .9)
+}
+
+.finished,
+.queued,
+.failed,
+.running,
+.canceled {
+    display: inline-block;
 }

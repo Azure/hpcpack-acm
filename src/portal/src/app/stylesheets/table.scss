@@ -41,27 +41,22 @@ mat-header-cell {
     text-align: right;
 }
 
-.Finished,
 .finished {
     color: #2E7D32;
 }
 
-.Queued,
 .queued {
     color: #FF8F00;
 }
 
-.Failed,
 .failed {
     color: #D84315;
 }
 
-.Running,
 .running {
     color: #283593;
 }
 
-.Canceled,
 .canceled {
     color: #6c727c;
 }
