@@ -10,9 +10,9 @@
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
+    using Serilog;
 
     public class Program
     {
@@ -31,16 +31,18 @@
                         .AddEnvironmentVariables()
                         .AddCommandLine(args);
                 })
-                .ConfigureLogging((c, l) =>
-                {
-                    l.AddConfiguration(c.Configuration.GetSection("Logging"))
-                        .AddConsole()
-                        .AddDebug()
-                        .AddAzureWebAppDiagnostics();
-                })
                 .ConfigureServices((context, services) =>
                 {
+                    var logOptions = context.Configuration.GetSection("LogOptions").Get<LogOptions>() ?? new LogOptions();
+                    var loggerConfig = new LoggerConfiguration()
+                        .WriteTo.Console()
+                        .WriteTo.RollingFile(logOptions.FileName);
+
+                    ILogger logger = loggerConfig.CreateLogger();
+
+                    services.AddSingleton(logger);
                     services.Configure<CloudOptions>(context.Configuration.GetSection("CloudOptions"));
+                    services.Configure<ServerOptions>(context.Configuration.GetSection("ServerOptions"));
                     services.AddSingleton<CloudUtilities>();
                     services.AddSingleton<ServerObject>();
                     services.AddSingleton<DataProvider>();

@@ -25,7 +25,12 @@
             {
                 var server = serverBuilder.BuildAsync().GetAwaiter().GetResult();
                 Console.CancelKeyPress += (s, e) => { serverBuilder.Stop(); };
-                var webHost = BuildWebHost(args, taskMonitor, serverBuilder.Utilities, serverBuilder.GetRequiredService<NodeSynchronizer>());
+                var webHost = BuildWebHost(
+                    args,
+                    taskMonitor,
+                    serverBuilder.Utilities,
+                    serverBuilder.GetRequiredService<NodeSynchronizer>(),
+                    serverBuilder.GetRequiredService<ILogger>());
 
                 server.Start(serverBuilder.CancelToken);
                 webHost.RunAsync(serverBuilder.CancelToken);
