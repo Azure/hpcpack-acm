@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 from email.utils import COMMASPACE, formatdate
 
-def main(cluster, runtime):
+def main(cluster, runtime, mail):
     for script in ['test-functional.py', 'test-restapi-get.py']:
         if not os.path.isfile(script):
             print '{} is not in current work directory {}'.format(script, os.getcwd())
@@ -17,6 +17,9 @@ def main(cluster, runtime):
     commands = [
         [
             'test-functional.py {} --category diagnostics --timeout 100 --continuous {}'.format(cluster, runtime),
+        ],
+        [
+            'test-functional.py {} --category clusrun --command "hostname" --timeout 20 --continuous {}'.format(cluster, runtime),
         ],
         [
             'test-functional.py {} --category clusrun --command "{}" --timeout 200 --continuous {}'.format(cluster, CPU_COMMAND, runtime),
@@ -85,35 +88,39 @@ def main(cluster, runtime):
         with open('{}/{}'.format(logDir, log), 'r') as f:
             result = f.readlines()[-1]
         results[log] = result
+
+    endTime = formatdate(localtime=True)
     
-    # send notification mail
-    mailBody = '<h4>Start time:</h4>' + '<b>{}</b>'.format(startTime) \
+    mailBody = '<h4>Time:</h4>' + '<b>{}</b> &nbsp&nbsp - &nbsp&nbsp <b>{}</b>'.format(startTime, endTime) \
              + '<h4><br/>Results:</h4>' + '<br/><br/>'.join(['<br/>'.join(['{}: {}'.format(log, results[log]) for log in batch]) for batch in logs]) \
              + '<h4><br/>Details:</h4>' + '<br/><br/>'.join(['<br/>'.join(["<b>Log file</b>: {}".format(logs[i][j]), \
                                                                            "<b>Command</b>: {}".format(commands[i][j]), \
                                                                            "<b>Result</b>: {}".format(results[logs[i][j]])]) for i in range(len(commands)) for j in range(len(commands[i]))])
-    shutil.make_archive(logDir, 'zip', logDir)
-    with open(logDir+'.zip', 'rb') as f:
-        attachment = MIMEApplication(f.read())
-    attachment['Content-Disposition'] = 'attachment; filename="logs.zip"'
-    with open('{}/test-daily-mail.json'.format(os.getcwd()), 'r') as f:
-        mail = json.load(f)
-    sender = mail['Sender']
-    to = mail['To']
-    cc = mail['Cc']
-    receivers = to + cc
-    message = MIMEMultipart()
-    message['From'] = Header(socket.gethostname(), 'utf-8')
-    message['To'] = COMMASPACE.join(to)
-    message['Cc'] = COMMASPACE.join(cc)
-    message['Subject'] = 'Continuous functional test result for cluster {}'.format(cluster)
-    message.attach(MIMEText(mailBody, 'html'))
-    message.attach(attachment)
-    smtp = smtplib.SMTP(mail['SmtpServer'])
-    smtp.starttls()
-    smtp.ehlo()
-    smtp.login(mail['UserName'], mail['Password'])
-    smtp.sendmail(sender, receivers, message.as_string())
+    if mail:
+        # send notification mail
+        shutil.make_archive(logDir, 'zip', logDir)
+        with open(logDir+'.zip', 'rb') as f:
+            attachment = MIMEApplication(f.read())
+        attachment['Content-Disposition'] = 'attachment; filename="logs.zip"'
+        sender = mail['Sender']
+        to = mail['To']
+        cc = mail['Cc']
+        receivers = to + cc
+        message = MIMEMultipart()
+        message['From'] = Header(socket.gethostname(), 'utf-8')
+        message['To'] = COMMASPACE.join(to)
+        message['Cc'] = COMMASPACE.join(cc)
+        message['Subject'] = 'Continuous functional test result for cluster {}'.format(cluster)
+        message.attach(MIMEText(mailBody, 'html'))
+        message.attach(attachment)
+        smtp = smtplib.SMTP(mail['SmtpServer'])
+        smtp.starttls()
+        smtp.ehlo()
+        smtp.login(mail['UserName'], mail['Password'])
+        smtp.sendmail(sender, receivers, message.as_string())
+    else:
+        with open(logDir+'.html', 'w') as f:
+            f.write(mailBody)
 
 if __name__ == '__main__':
     def check_positive(value):
@@ -124,8 +131,15 @@ if __name__ == '__main__':
                           
     parser = argparse.ArgumentParser(description='Daily functional test aganist clusrun, diagnostics and job cancellation')
     parser.add_argument('cluster_uri', help='Specify the cluster to test')
-    parser.add_argument('runtime', type=check_positive, help='Specify the test duration as seconds for each test batch')
-    args = parser.parse_args()    
+    parser.add_argument('-r', '--runtime', type=check_positive, default=300, help='Specify the test duration as seconds for each test batch')
+    parser.add_argument('-m', '--mail', type=argparse.FileType('r'), default=None, help='Specify the mail setting json file')
 
-    main(args.cluster_uri, args.runtime)
+    args = parser.parse_args()
+
+    mail = None
+    if args.mail:
+        with args.mail as f:
+            mail = json.load(f)
+
+    main(args.cluster_uri, args.runtime, mail)
     

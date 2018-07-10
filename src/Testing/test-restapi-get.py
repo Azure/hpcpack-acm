@@ -1,11 +1,12 @@
 import sys, requests, argparse, time
+REQUEST_TIMEOUT = 300
 
 def main(uri):
     while uri[-1] == '/':
         uri = uri[:-1]
     print "Target Uri: {0}\n".format(uri)
     
-    result = [0, 0]
+    result = [0, 0, 0]
 
     try:
         api = "{0}/v1/dashboard/nodes".format(uri)
@@ -75,7 +76,7 @@ def testJobs(category, uri, result):
 
         if finishedJobIds:
             api = "{0}/v1/{1}/{2}/tasks".format(uri, category, finishedJobIds[-1])
-            response = requests.get(api)
+            response = requests.get(api, timeout = REQUEST_TIMEOUT)
             tasks = response.json()
             
             api = "{0}/v1/{1}/{2}/tasks/{3}".format(uri, category, finishedJobIds[-1], tasks[0]["id"])
@@ -99,13 +100,14 @@ def testAPI(api, result):
     result[1] += 1
     print "Test API: {0}".format(api)
     try:
-        response = requests.get(api)
+        response = requests.get(api, timeout = REQUEST_TIMEOUT)
         if response:
             result[0] += 1
         print "Result: {0}\n".format(response)
         return response
     except Exception as e:
-        print e
+        result[2] += 1
+        print 'Exception: {}\n'.format(e)
     
 if __name__ == '__main__':
     def check_positive(value):
@@ -130,7 +132,8 @@ if __name__ == '__main__':
             try:
                 result = main(args.cluster_uri)
                 testResult[0] += result[0]
-                testResult[1] += result[1]                
+                testResult[1] += result[1]
+                testResult[2] += result[2]
             except:
                 testResult[2] += 1
                 print(sys.exc_info()[0])
