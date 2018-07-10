@@ -51,8 +51,6 @@
                 {
                     var nodeName = this.ServerOptions.HostName;
 
-                    this.Logger.Information("do metrics loop on {0}", nodeName);
-
                     // TODO: different frequency
                     IList<(string, string)> metricScripts = await this.GetMetricScriptsAsync(token);
                     string toErrorJson(string e) =>

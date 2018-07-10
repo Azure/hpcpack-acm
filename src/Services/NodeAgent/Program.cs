@@ -72,6 +72,7 @@
                     foreach (var svc in sharedServices)
                     {
                         services.AddSingleton(svc.GetType(), svc);
+                        if (svc is ILogger logger) services.AddSingleton<ILogger>(logger);
                     }
                 })
                 .UseUrls("http://*:8080", "http://*:5000")
