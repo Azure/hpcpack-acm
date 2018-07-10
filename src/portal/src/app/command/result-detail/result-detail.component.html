@@ -37,9 +37,19 @@
 <ng-template #waiting>
   <div class="waiting">
     <mat-spinner></mat-spinner>
-    <p>
-      Waiting...
-    </p>
     <p>{{errorMsg}}</p>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-3 selection">
+          <node-selector [nodes]="result?.nodes">
+          </node-selector>
+        </div>
+
+        <div class="col-md-9 output">
+          <command-output [disabled]="true" [loading]="true">
+          </command-output>
+        </div>
+      </div>
+    </div>
   </div>
 </ng-template>

@@ -25,6 +25,8 @@ export class ResultDetailComponent implements OnInit {
 
   private result: any;
 
+  private gotTasks: boolean = false;
+
   private subcription: Subscription;
 
   private jobLoop: object;
@@ -61,7 +63,7 @@ export class ResultDetailComponent implements OnInit {
   }
 
   get isLoaded(): boolean {
-    return this.result && this.result.nodes.length > 0;
+    return this.gotTasks;
   }
 
   updateJob(id) {
@@ -76,6 +78,9 @@ export class ResultDetailComponent implements OnInit {
           }
           this.result.state = job.state;
           this.result.command = job.commandLine;
+          if (!this.gotTasks) {
+            this.result.nodes = job.targetNodes.map(node => ({ name: node, state: '' }));
+          }
           return !this.isJobOver(job.state);
         },
         error: (err) => {
@@ -103,6 +108,7 @@ export class ResultDetailComponent implements OnInit {
           if (id != this.id) {
             return;
           }
+          this.gotTasks = true;
           this.result.nodes = this.getNodesFromTasks(tasks);
           return !this.isOver;
         },

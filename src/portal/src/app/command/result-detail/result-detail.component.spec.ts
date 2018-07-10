@@ -56,7 +56,7 @@ class NodeSelectorStubComponent {
 }
 
 class ApiServiceStub {
-  static job = { commandLine: 'TEST COMMAND', state: 'finished' };
+  static job = { commandLine: 'TEST COMMAND', state: 'finished', targetNodes: ['TEST NODE'] };
 
   static tasks = [{ id: 1, node: 'TEST NODE', state: 'finished' }];
 
