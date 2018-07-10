@@ -12,7 +12,8 @@
   </mat-form-field>
 </div> -->
 
-<div class="diags-table" (window:scroll)="onWndScroll()">
+<div class="diags-table" appWindowScroll [currentData]="currentData" [dataSource]="dataSource" [itemHeight]="rowHeight" [reverse]="reverse"
+  [updatedSize]="updatedSize" [derelictSize]="derelictSize" [maxPageSize]="maxPageSize" (scrollEvent)="onScrollEvent($event)">
   <mat-table #table [dataSource]="dataSource">
     <ng-container matColumnDef="select">
       <mat-header-cell *matHeaderCellDef>
@@ -117,7 +118,7 @@
 <div class="loading">
   <!-- <mat-spinner *ngIf="!hasReceivedData"></mat-spinner> -->
   <mat-progress-bar *ngIf="!loadFinished" mode="buffer"></mat-progress-bar>
-  <div class="load-finish" *ngIf="loadFinish">
+  <div class="load-finish" *ngIf="loadFinished">
     No more data.
   </div>
 </div>

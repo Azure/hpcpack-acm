@@ -1,5 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Directive, Input } from '@angular/core';
+import { Component, Directive, Input, Output, EventEmitter } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { FormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -20,6 +20,20 @@ class RouterLinkDirectiveStub {
   onClick() {
     this.navigatedTo = this.linkParams;
   }
+}
+
+@Directive({
+  selector: '[appWindowScroll]',
+})
+class WindowScrollDirectiveStub {
+  @Input() currentData: Array<any>;
+  @Input() dataSource: any;
+  @Input() itemHeight: number;
+  @Input() reverse: boolean;
+  @Input() updatedSize: number;
+  @Input() derelictSize: number;
+  @Input() maxPageSize: number;
+  @Output() scrollEvent = new EventEmitter();
 }
 
 class ApiServiceStub {
@@ -44,7 +58,8 @@ fdescribe('ResultListComponent', () => {
     TestBed.configureTestingModule({
       declarations: [
         RouterLinkDirectiveStub,
-        ResultListComponent
+        ResultListComponent,
+        WindowScrollDirectiveStub
       ],
       imports: [
         NoopAnimationsModule,
