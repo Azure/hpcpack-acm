@@ -10,7 +10,6 @@
     using System.Text;
     using System.Threading;
     using T = System.Threading.Tasks;
-    using Microsoft.Extensions.Logging;
 
     class DiagnosticsJobHandler : ServerObject, IJobTypeHandler
     {
@@ -49,7 +48,7 @@
                         });
                     }, token);
 
-                    this.Logger.LogError("Dispatch failed {0}, {1}", dispatchTasks.Item1, dispatchTasks.Item3);
+                    this.Logger.Error("Dispatch failed {0}, {1}", dispatchTasks.Item1, dispatchTasks.Item3);
                     return null;
                 }
                 else
@@ -70,7 +69,7 @@
                     });
                 }, token);
 
-                this.Logger.LogError("No diag test found");
+                this.Logger.Error("No diag test found");
                 return null;
             }
         }

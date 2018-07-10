@@ -1,6 +1,6 @@
 ﻿namespace Microsoft.HpcAcm.Services.NodeAgent
 {
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.HpcAcm.Services.Common;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Common.Dto;
@@ -41,40 +41,39 @@
             //    var nodeTaskResultKey = this.Utilities.GetNodeTaskResultKey(nodeName, task.JobId, task.RequeueCount, task.Id);
             //}
 
-            using (this.Logger.BeginScope("Do work {0} for job {1} on node {2}", message.EventVerb, message.JobId, nodeName))
+            this.Logger.Information("Do work {0} for job {1} on node {2}", message.EventVerb, message.JobId, nodeName);
+
+            var jobPartitionKey = this.Utilities.GetJobPartitionKey(message.JobType, message.JobId);
+            var job = await jobsTable.RetrieveAsync<Job>(jobPartitionKey, this.Utilities.JobEntryKey, token);
+
+            if (job != null && job.RequeueCount != message.RequeueCount)
             {
-                var jobPartitionKey = this.Utilities.GetJobPartitionKey(message.JobType, message.JobId);
-                var job = await jobsTable.RetrieveAsync<Job>(jobPartitionKey, this.Utilities.JobEntryKey, token);
-
-                if (job != null && job.RequeueCount != message.RequeueCount)
-                {
-                    return true;
-                }
-
-                try
-                {
-                    await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = t.State == TaskState.Failed || t.State == TaskState.Finished ? t.State : TaskState.Canceled, token);
-                    await this.Communicator.EndJobAsync(nodeName, new EndJobArg(null, message.JobId), token);
-                    this.Monitor.CancelTask(taskKey);
-                }
-                catch (Exception ex)
-                {
-                    if (job != null)
-                    {
-                        await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                        {
-                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                            {
-                                Type = EventType.Warning,
-                                Source = EventSource.Job,
-                                Content = $"Failed to end Job {job.Id}, exception {ex}",
-                            });
-                        }, token);
-                    }
-                }
-
                 return true;
             }
+
+            try
+            {
+                await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = t.State == TaskState.Failed || t.State == TaskState.Finished ? t.State : TaskState.Canceled, token);
+                await this.Communicator.EndJobAsync(nodeName, new EndJobArg(null, message.JobId), token);
+                this.Monitor.CancelTask(taskKey);
+            }
+            catch (Exception ex)
+            {
+                if (job != null)
+                {
+                    await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
+                    {
+                        (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                        {
+                            Type = EventType.Warning,
+                            Source = EventSource.Job,
+                            Content = $"Failed to end Job {job.Id}, exception {ex}",
+                        });
+                    }, token);
+                }
+            }
+
+            return true;
         }
     }
 }

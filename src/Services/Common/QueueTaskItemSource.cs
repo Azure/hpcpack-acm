@@ -1,6 +1,5 @@
 ﻿namespace Microsoft.HpcAcm.Services.Common
 {
-    using Microsoft.Extensions.Logging;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
     using System;
@@ -24,12 +23,12 @@
         {
             do
             {
-                this.Logger.LogDebug("Fetching task item from queue {0}", this.queue.Name);
+                this.Logger.Debug("Fetching task item from queue {0}", this.queue.Name);
 
                 var message = await this.queue.GetMessageAsync(TimeSpan.FromSeconds(this.options.VisibleTimeoutSeconds), null, null, token);
                 if (message == null)
                 {
-                    this.Logger.LogDebug("No tasks fetched. Sleep for {0} seconds", this.options.RetryIntervalSeconds);
+                    this.Logger.Debug("No tasks fetched. Sleep for {0} seconds", this.options.RetryIntervalSeconds);
                     await Task.Delay(TimeSpan.FromSeconds(this.options.RetryIntervalSeconds), token);
                 }
                 else

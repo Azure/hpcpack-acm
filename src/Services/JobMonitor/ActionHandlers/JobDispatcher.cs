@@ -1,6 +1,5 @@
 ﻿namespace Microsoft.HpcAcm.Services.JobMonitor
 {
-    using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
@@ -80,7 +79,7 @@
             var (success, msg) = this.FillData(tasks, job);
             if (!success)
             {
-                this.Logger.LogError(msg);
+                this.Logger.Error(msg);
                 await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                 {
                     j.State = JobState.Failed;
@@ -158,7 +157,11 @@
             }
 
             JobState state = JobState.Queued;
-            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => state = j.State = (j.State == JobState.Queued ? JobState.Running : j.State), token);
+            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
+            {
+                state = j.State = (j.State == JobState.Queued ? JobState.Running : j.State);
+                j.TaskCount = taskInstances.Count() - 2;
+            }, token);
 
             if (state == JobState.Running)
             {

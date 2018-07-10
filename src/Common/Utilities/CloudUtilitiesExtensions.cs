@@ -164,6 +164,7 @@
                         var result = await table.ReplaceAsync(entity, token);
                         if (result.IsConflict())
                         {
+                            Console.WriteLine("----> Conflict replace {0} {1}", entity.PartitionKey, entity.RowKey);
                             await T.Task.Delay(new Random().Next(3000), token);
                             continue;
                         }

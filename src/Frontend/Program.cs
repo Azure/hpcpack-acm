@@ -12,6 +12,7 @@
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Utilities;
+    using Microsoft.HpcAcm.Services.Common;
 
     public class Program
     {
@@ -41,6 +42,7 @@
                 {
                     services.Configure<CloudOptions>(context.Configuration.GetSection("CloudOptions"));
                     services.AddSingleton<CloudUtilities>();
+                    services.AddSingleton<ServerObject>();
                     services.AddSingleton<DataProvider>();
                 })
                 .UseUrls("http://*:80", "http://*:5000")

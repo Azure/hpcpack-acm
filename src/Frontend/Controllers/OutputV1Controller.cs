@@ -6,7 +6,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using System.Threading;
     using T = System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.HpcAcm.Common.Dto;
 
     [Route("v1/output")]

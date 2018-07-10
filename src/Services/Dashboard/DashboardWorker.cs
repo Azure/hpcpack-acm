@@ -7,7 +7,6 @@
     using Microsoft.HpcAcm.Common.Dto;
     using System.Threading;
     using T = System.Threading.Tasks;
-    using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.WindowsAzure.Storage.Table;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -46,7 +45,7 @@
             {
                 try
                 {
-                    this.Logger.LogInformation("Started to calculate dashboard data for {0}", this.PartitionKey);
+                    this.Logger.Information("Started to calculate dashboard data for {0}", this.PartitionKey);
                     var partitionQuery = this.Utilities.GetPartitionQueryString(this.PartitionKey);
                     var rowQuery = this.Utilities.GetRowKeyRangeString(
                         this.Utilities.GetDashboardRowKey(this.LowestKey),
@@ -70,7 +69,7 @@
 
                         if (dash == null || dash.NextUpdateTime <= DateTimeOffset.UtcNow)
                         {
-                            this.Logger.LogInformation("Get statistics for key range {0} {1}", previous?.HigherKey ?? this.LowestKey, dash?.HigherKey);
+                            this.Logger.Information("Get statistics for key range {0} {1}", previous?.HigherKey ?? this.LowestKey, dash?.HigherKey);
                             dash = await this.GetStatisticsAsync(previous?.HigherKey ?? this.LowestKey, dash?.HigherKey, token);
                         }
 
@@ -79,12 +78,12 @@
                         previous = dash;
                     }
 
-                    this.Logger.LogInformation("Saving the dashboard data for {0}", this.PartitionKey);
+                    this.Logger.Information("Saving the dashboard data for {0}", this.PartitionKey);
                     await this.dashboardTable.InsertOrReplaceAsync(this.PartitionKey, this.Utilities.GetDashboardEntryKey(), previous, token);
                 }
                 catch (Exception ex)
                 {
-                    this.Logger.LogError(ex, "Error occurred in Dashboard worker");
+                    this.Logger.Error(ex, "Error occurred in Dashboard worker");
                 }
 
                 await T.Task.Delay(this.options.AggregationPeriodSeconds * 1000, token);

@@ -6,7 +6,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using System.Threading;
     using T = System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.WindowsAzure.Storage.Table;
@@ -15,12 +15,12 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     [Route("v1/metrics")]
     public class MetricsV1Controller : Controller
     {
-        private readonly DataProvider provider;
+        private DataProvider Provider { get; }
         private readonly CloudUtilities utilities;
 
         public MetricsV1Controller(DataProvider provider, CloudUtilities utilities)
         {
-            this.provider = provider;
+            this.Provider = provider;
             this.utilities = utilities;
         }
 

@@ -5,7 +5,6 @@
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.Extensions.Logging;
 
     public abstract class TaskItemWorker : ServerObject, IWorker
     {
@@ -45,7 +44,7 @@
                 }
                 catch (Exception ex)
                 {
-                    this.Logger.LogError(ex, $"Exception happened in {nameof(DoWorkAsync)}");
+                    this.Logger.Error(ex, $"Exception happened in {nameof(DoWorkAsync)}");
                     await Task.Delay(TimeSpan.FromSeconds(this.TaskItemSourceOptions.FailureRetryIntervalSeconds), token);
                 }
             }

@@ -5,7 +5,7 @@
     using T = System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
@@ -25,8 +25,7 @@
                 server.Start(builder.CancelToken);
 
                 while (Console.In.Peek() == -1) { T.Task.Delay(1000).Wait(); }
-                var logger = builder.LoggerFactory.CreateLogger<Program>();
-                logger.LogInformation("Stop message received, stopping");
+                builder.Logger?.Information("Stop message received, stopping");
 
                 builder.Stop();
             }

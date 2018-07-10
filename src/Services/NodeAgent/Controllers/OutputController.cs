@@ -7,7 +7,7 @@
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
 
@@ -17,13 +17,13 @@
     {
         private readonly ILogger logger;
         private readonly TaskMonitor monitor;
-        private readonly CloudUtilities utilities;
+        private CloudUtilities Utilities { get; }
 
-        public OutputController(ILogger<OutputController> logger, TaskMonitor monitor, CloudUtilities utilities)
+        public OutputController(ILogger logger, TaskMonitor monitor, CloudUtilities utilities)
         {
             this.logger = logger;
             this.monitor = monitor;
-            this.utilities = utilities;
+            this.Utilities = utilities;
         }
 
         [HttpPost("{taskkey}")]
@@ -31,12 +31,12 @@
         {
             try
             {
-                this.logger.LogInformation("TaskMessage {0}, order {1}, eof {2}", taskKey, output.Order, output.Eof);
+                this.logger.Information("TaskMessage {0}, order {1}, eof {2}", taskKey, output.Order, output.Eof);
                 await this.monitor.PutOutput(taskKey, output, token);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error occurred, TaskMessage {0}, order {1}, eof {2}", taskKey, output.Order, output.Eof);
+                this.logger.Error(ex, "Error occurred, TaskMessage {0}, order {1}, eof {2}", taskKey, output.Order, output.Eof);
             }
         }
     }

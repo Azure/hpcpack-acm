@@ -9,6 +9,8 @@
 
     class Program
     {
+        protected Program() { }
+
         static void Main(string[] args)
         {
             var serviceCollection = new Dictionary<string, string>()

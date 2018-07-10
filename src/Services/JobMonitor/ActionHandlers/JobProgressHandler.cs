@@ -16,8 +16,10 @@
 
     class JobProgressHandler : JobActionHandlerBase
     {
-        public override async T.Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token)
+        public override T.Task ProcessAsync(Job job, JobEventMessage message, CancellationToken token)
         {
+            return T.Task.CompletedTask;
+            /*
             var jobTable = this.Utilities.GetJobsTable();
 
             var jobPartitionKey = this.Utilities.GetJobPartitionKey(job.Type, job.Id);
@@ -36,8 +38,8 @@
             int total = Math.Max(allTasks.Count, 1);
 
             int ended = allTasks.Count(t => t.State == TaskState.Failed || t.State == TaskState.Finished || t.State == TaskState.Canceled);
-
-            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.Progress = 1.0 * ended / total, token);
+            */
+          //  await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.Progress = 1.0 * ended / total, token);
         }
 }
 }

@@ -2,7 +2,7 @@
 {
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Options;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
@@ -62,7 +62,7 @@
                 }
                 catch (Exception ex)
                 {
-                    this.Logger.LogError(ex, "DoWorkAsync error.");
+                    this.Logger.Error(ex, "DoWorkAsync error.");
                 }
 
                 await T.Task.Delay(TimeSpan.FromSeconds(this.workerOptions.IntervalSeconds), token);

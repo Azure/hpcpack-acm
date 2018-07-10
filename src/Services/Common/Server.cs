@@ -1,8 +1,8 @@
 ﻿namespace Microsoft.HpcAcm.Services.Common
 {
     using Microsoft.Extensions.Configuration;
-    using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Utilities;
+    using Serilog;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -10,16 +10,29 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class Server
+    public class Server : ServerObject, IWorker
     {
         public List<IWorker> Workers { get; }
-        private readonly ILogger logger;
 
-        public Server(ILogger<Server> logger, IEnumerable<IWorker> workers)
+        public Server(IEnumerable<IWorker> workers)
         {
-            this.logger = logger;
             this.Workers = workers.ToList();
         }
+
+        public async Task InitializeAsync(CancellationToken token)
+        {
+            foreach (var w in this.Workers)
+            {
+                if (w is ServerObject so)
+                {
+                    so.CopyFrom(this);
+                }
+
+                await w.InitializeAsync(token);
+            }
+        }
+
+        public Task DoWorkAsync(CancellationToken token) => this.RunAsync(token);
 
         public void Run(CancellationToken token)
         {
@@ -28,11 +41,11 @@
 
         public async Task RunAsync(CancellationToken token)
         {
-            this.logger.LogInformation("Server is starting");
+            this.Logger.Information("Server is starting");
 
             if (this.Workers == null)
             {
-                this.logger.LogError("No workers configured");
+                this.Logger.Error("No workers configured");
                 return;
             }
 

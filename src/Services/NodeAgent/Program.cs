@@ -9,7 +9,7 @@
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
 
@@ -25,13 +25,12 @@
             {
                 var server = serverBuilder.BuildAsync().GetAwaiter().GetResult();
                 Console.CancelKeyPress += (s, e) => { serverBuilder.Stop(); };
-                var webHost = BuildWebHost(args, taskMonitor, serverBuilder.Utilities, serverBuilder.Provider.GetRequiredService<NodeSynchronizer>());
+                var webHost = BuildWebHost(args, taskMonitor, serverBuilder.Utilities, serverBuilder.GetRequiredService<NodeSynchronizer>());
 
                 server.Start(serverBuilder.CancelToken);
                 webHost.RunAsync(serverBuilder.CancelToken);
                 while (Console.In.Peek() == -1) { Task.Delay(1000).Wait(); }
-                var logger = serverBuilder.LoggerFactory.CreateLogger<Program>();
-                logger.LogInformation("Stop message received, stopping");
+                serverBuilder.Logger?.Information("Stop message received, stopping");
                 serverBuilder.Stop();
             }
         }
@@ -62,13 +61,6 @@
                     c.AddJsonFile("appsettings.json")
                         .AddEnvironmentVariables()
                         .AddCommandLine(args);
-                })
-                .ConfigureLogging((c, l) =>
-                {
-                    l.AddConfiguration(c.Configuration.GetSection("Logging"))
-                        .AddConsole()
-                        .AddDebug()
-                        .AddAzureWebAppDiagnostics();
                 })
                 .ConfigureServices(services =>
                 {
