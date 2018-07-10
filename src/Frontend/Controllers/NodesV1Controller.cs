@@ -71,7 +71,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> GetMetadataAsync(string id, CancellationToken token)
         {
             var jsonString = (string)await this.provider.GetNodeMetadataAsync(id, token);
-            return new OkObjectResult(JsonConvert.DeserializeObject(jsonString));
+            return jsonString == null ? (IActionResult)new NotFoundResult() : new OkObjectResult(JsonConvert.DeserializeObject(jsonString));
         }
 
         // GET v1/nodes/node1/scheduledevents
@@ -79,7 +79,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> GetScheduledEventsAsync(string id, CancellationToken token)
         {
             var jsonString = (string)await this.provider.GetNodeScheduledEventsAsync(id, token);
-            return new OkObjectResult(JsonConvert.DeserializeObject(jsonString));
+            return jsonString == null ? (IActionResult)new NotFoundResult() : new OkObjectResult(JsonConvert.DeserializeObject(jsonString));
         }
     }
 }
