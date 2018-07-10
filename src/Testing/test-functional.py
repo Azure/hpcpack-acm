@@ -1,6 +1,8 @@
 import sys, requests, time, random, argparse, traceback, json, os
 
 def main(cluster, category, command, result, name, cancel, timeout):
+    REQUEST_TIMEOUT = 60
+    
     # format uri string
     while cluster[-1] == '/':
         cluster = cluster[:-1]
@@ -9,7 +11,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
     # check if the cluster is available for access
     try:
         api = "{0}/v1/nodes".format(cluster)
-        response = requests.get(api)
+        response = requests.get(api, timeout = REQUEST_TIMEOUT)
     except Exception as e:
         print "[Fail]: Cluster is not available."
         print e
@@ -59,7 +61,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
     # create the job
     try:
         api = "{0}/v1/{1}".format(cluster, category)
-        response = requests.post(api, json=postContent)
+        response = requests.post(api, json=postContent, timeout = REQUEST_TIMEOUT)
         if response:
             jobUri = cluster + response.headers['Location']
             startTime = time.time()
@@ -67,7 +69,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
             count = 1
             while True:
                 api = jobUri
-                response = requests.get(api)
+                response = requests.get(api, timeout = REQUEST_TIMEOUT)
                 if response:
                     jobState = response.json()['state']
                     if jobState == 'Finished' or jobState == 'Failed' or jobState == 'Canceled':
@@ -75,7 +77,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
                     if count%30 == 0:
                         print "{}: Job state is {}".format(time.ctime(), jobState)
                         api = '{}/tasks'.format(jobUri)
-                        response = requests.get(api)
+                        response = requests.get(api, timeout = REQUEST_TIMEOUT)
                         if response:
                             tasks = response.json()
                             taskStates = [task['state'] for task in tasks]
@@ -84,7 +86,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
                     # cancel the job
                     if cancel and not jobCanceled and startTime+cancel < time.time():
                         api = jobUri
-                        response = requests.patch(api, json={"Request":"cancel"})
+                        response = requests.patch(api, json={"Request":"cancel"}, timeout = REQUEST_TIMEOUT)
                         if response:
                             print '{}: Job canceled.'.format(time.ctime())
                             jobCanceled = True
@@ -92,25 +94,43 @@ def main(cluster, category, command, result, name, cancel, timeout):
                             print 'Patch {}: {}'.format(api, response)
                             if response.content:
                                 print response.content
-                            api = jobUri    
-                            response = requests.get(api)
-                            if response:
-                                jobState = response.json()['state']
+                        api = jobUri
+                        response = requests.get(api, timeout = REQUEST_TIMEOUT)
+                        if response:
+                            jobState = response.json()['state']
+                            if jobState != 'Canceled' and jobState != 'Canceling':
+                                if jobCanceled:
+                                    print '[Fail]: job state "{}" is not correct, expecting "Canceling" or "Canceled".'.format(jobState)
+                                    return 'Fail'
                                 if jobState == 'Finished' or jobState == 'Finishing':
-                                    print '[Warn]: failed to cancel the job.'
+                                    print '[Warn]: failed to cancel the {} job.'.format(jobState)
+                                    return 'Warn'
                                 else:
                                     print '[Fail]: failed to cancel the {} job.'.format(jobState)
                                     return 'Fail'
-                            else:
-                                print 'Get {}: {}'.format(api, response)
+                        else:
+                            print 'Get {}: {}'.format(api, response)
                 elif count%100 == 0:
                     print 'Get {}: {}'.format(api, response)
                 time.sleep(1)
                 count += 1
+
+                # job time out
                 if timeout and time.time() > timeout:
                     print '{}: Timeout.'.format(time.ctime())
+                    api = jobUri
+                    response = requests.patch(api, json={"Request":"cancel"}, timeout = REQUEST_TIMEOUT)
+                    if response:
+                        print '{}: Job canceled.'.format(time.ctime())
+                    else:
+                        print 'Patch {}: {}'.format(api, response)
+                        if response.content:
+                            print response.content
                     return 'Timeout'
-            print "{}: Job finished, state is {}".format(time.ctime(), jobState)
+            print "{}: Job end, state is {}, run time is {:.0f}s.".format(time.ctime(), jobState, time.time()-startTime)
+            if jobState == 'Failed':
+                print '[Warn]: job failed.'
+                return 'Warn'
             if not cancel and jobState == 'Canceled':
                 print '[Fail]: the job was canceled unexpectedly.'
                 return 'Fail'
@@ -127,11 +147,11 @@ def main(cluster, category, command, result, name, cancel, timeout):
         print 'Validating job result...'
         try:
             api = "{0}/tasks".format(jobUri)
-            response = requests.get(api)
+            response = requests.get(api, timeout = REQUEST_TIMEOUT)
             if response:
                 tasks = response.json()
                 if len(tasks) != validateTaskCount:
-                    print '[Fail]: tasks count {0} is not correct, expect {1}.'.format(len(tasks), validateTaskCount)
+                    print '[Fail]: tasks count {0} is not correct, expecting {1}.'.format(len(tasks), validateTaskCount)
                     return 'Fail'
                 nodes = set(randomNodes)
                 for task in tasks:
@@ -150,7 +170,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
 
             for taskId in [task["id"] for task in tasks]:
                 api = "{}/tasks/{}".format(jobUri, taskId)
-                response = requests.get(api)
+                response = requests.get(api, timeout = REQUEST_TIMEOUT)
                 if response:
                     jobId = int(jobUri.split('/')[-1])
                     if category == 'clusrun':
@@ -163,7 +183,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
                             print '[Fail]: no "{}" in {}.'.format(key, api)
                             return 'Fail'
                         if task[key] != value:
-                            print '[Fail]: the value "{}" of "{}" in {} is not correct, expect "{}".'.format(task[key], key, api, value)
+                            print '[Fail]: the value "{}" of "{}" in {} is not correct, expecting "{}".'.format(task[key], key, api, value)
                             return 'Fail'
                     if task['node'] not in nodes:
                         print '[Fail]: node {0} of task {1} is not in allocated nodes list.'.format(task['node'], taskId)
@@ -174,7 +194,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
                     return 'Fail'
                 
                 api = "{}/tasks/{}/result".format(jobUri, taskId)
-                response = requests.get(api)
+                response = requests.get(api, timeout = REQUEST_TIMEOUT)
                 if response:
                     jobId = int(jobUri.split('/')[-1])
                     task = response.json()
@@ -189,7 +209,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
                             print '[Fail]: no "{}" in {}.'.format(key, api)
                             return 'Fail'                            
                         if value and task[key] != value:
-                            print '[Fail]: the value "{}" of "{}" in {} is not correct, expect "{}".'.format(task[key], key, api, value)
+                            print '[Fail]: the value "{}" of "{}" in {} is not correct, expecting "{}".'.format(task[key], key, api, value)
                             return 'Fail'
                     if task['nodeName'] not in nodes:
                         print '[Fail]: node {0} of task {1} is not in allocated nodes list.'.format(task['node'], taskId)
@@ -197,20 +217,20 @@ def main(cluster, category, command, result, name, cancel, timeout):
                     if category == 'clusrun':
                         resultKey = task['resultKey']
                         api = "{}/v1/output/clusrun/{}/raw".format(cluster, resultKey)
-                        response = requests.get(api)
+                        response = requests.get(api, timeout = REQUEST_TIMEOUT)
                         if response:
                             if result and response.content != result:
-                                print '[Fail]: clusrun task result "{}" in {} is not correct, expect "()"'.format(response.content, api, result)
+                                print '[Fail]: clusrun task result "{}" in {} is not correct, expecting "()"'.format(response.content, api, result)
                                 return 'Fail'
                         else:
                             print 'Get {}: {}'.format(api, response)
                             print '[Fail]: failed to get clusrun task result.'
                             return 'Fail'                        
                         api = "{}/v1/output/clusrun/{}/page".format(cluster, resultKey)
-                        response = requests.get(api)
+                        response = requests.get(api, timeout = REQUEST_TIMEOUT)
                         if response:
                             if result and response.json()['content'] != result:
-                                print '[Fail]: clusrun task result "{}" in {} is not correct, expect "()"'.format(response.content, api, result)
+                                print '[Fail]: clusrun task result "{}" in {} is not correct, expecting "()"'.format(response.content, api, result)
                                 return 'Fail'
                         else:
                             print 'Get {}: {}'.format(api, response)
@@ -223,12 +243,12 @@ def main(cluster, category, command, result, name, cancel, timeout):
                                 
             if category == 'diagnostics':
                 api = "{0}".format(jobUri)
-                response = requests.get(api)
+                response = requests.get(api, timeout = REQUEST_TIMEOUT)
                 if response and 'aggregationResult' in response.json():
                     results = json.loads(response.json()['aggregationResult'])
                 else:
                     api = "{0}/aggregationresult".format(jobUri)
-                    response = requests.get(api)
+                    response = requests.get(api, timeout = REQUEST_TIMEOUT)
                     if response:
                         results = response.json()
                     else:
@@ -295,6 +315,7 @@ if __name__ == '__main__':
             'Timeout':0,
             'Exception':0
             }
+        runTimes = []
         while endTime > time.time():
             startTime = time.time()
             print "[Time]: {0}".format(time.ctime())
@@ -307,8 +328,10 @@ if __name__ == '__main__':
                 testResults['Exception'] += 1
                 print(sys.exc_info()[0])
                 time.sleep(60)
-            print '[Runtime]: {}s'.format(time.time() - startTime)
+            runtime = time.time() - startTime
+            runTimes.append(runtime)
+            print '[Runtime]: {:.0f}s'.format(runtime)
             print '-'*60
-        print '{}/{} {}'.format(testResults['Pass'], testResults['All'], testResults)
+        print '{}/{} {} Runtime:[Avg: {:.0f}, Min: {:.0f}, Max: {:.0f}]'.format(testResults['Pass'], testResults['All'], testResults, sum(runTimes)/len(runTimes), min(runTimes), max(runTimes))
     else:
         main(args.cluster_uri, args.category, args.command, args.result, args.name, args.cancel, 0)
