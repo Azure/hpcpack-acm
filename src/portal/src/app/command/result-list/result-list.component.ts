@@ -4,6 +4,7 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { ApiService } from '../../services/api.service';
 import { TableSettingsService } from '../../services/table-settings.service';
+import { JobStateService } from '../../services/job-state/job-state.service';
 
 @Component({
   selector: 'app-result-list',
@@ -36,6 +37,7 @@ export class ResultListComponent implements OnInit {
 
   constructor(
     private api: ApiService,
+    private jobStateService: JobStateService,
     private dialog: MatDialog,
     private settings: TableSettingsService,
   ) { }
@@ -46,15 +48,8 @@ export class ResultListComponent implements OnInit {
     this.loadMoreResults();
   }
 
-  private setIcon(state) {
-    switch (state) {
-      case 'finished': return 'done';
-      case 'queued': return 'blur_linear';
-      case 'failed': return 'clear';
-      case 'running': return 'blur_on';
-      case 'canceled': return 'cancel';
-      default: return 'autonew';
-    }
+  private stateIcon(state) {
+    return this.jobStateService.stateIcon(state);
   }
 
 
@@ -91,6 +86,7 @@ export class ResultListComponent implements OnInit {
   }
 
   private onScroll() {
+    console.log("down");
     this.loadMoreResults();
   }
 

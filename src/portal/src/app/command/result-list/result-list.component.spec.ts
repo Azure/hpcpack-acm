@@ -6,7 +6,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MaterialsModule } from '../../materials.module';
 import { ApiService } from '../../services/api.service';
 import { TableSettingsService } from '../../services/table-settings.service';
-
+import { JobStateService } from '../../services/job-state/job-state.service';
 import { ResultListComponent } from './result-list.component';
 
 @Directive({
@@ -27,6 +27,15 @@ class ApiServiceStub {
 
   command = {
     getAll: () => of(ApiServiceStub.results),
+  }
+}
+
+class JobStateServiceStub {
+  stateClass(state) {
+    return 'finished';
+  }
+  stateIcon(state) {
+    return 'done';
   }
 }
 
@@ -53,10 +62,11 @@ fdescribe('ResultListComponent', () => {
       ],
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
+        { provide: JobStateService, useClass: JobStateServiceStub },
         { provide: TableSettingsService, useValue: tableSettingsStub },
       ]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {

@@ -5,6 +5,7 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { ApiService, Loop } from '../../services/api.service';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { TableSettingsService } from '../../services/table-settings.service';
+import { JobStateService } from '../../services/job-state/job-state.service';
 
 @Component({
   selector: 'diagnostics-results',
@@ -43,9 +44,10 @@ export class ResultListComponent implements OnInit, OnDestroy {
 
   constructor(
     private api: ApiService,
+    private jobStateService: JobStateService,
     private settings: TableSettingsService,
     public dialog: MatDialog,
-    public el: ElementRef
+    public el: ElementRef,
   ) {
     this.interval = 2000;
   }
@@ -55,14 +57,11 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   private stateClass(state) {
-    switch (state) {
-      case 'Finished': return 'finished';
-      case 'Queued': return 'queued';
-      case 'Failed': return 'failed';
-      case 'Running': return 'running';
-      case 'Canceled': return 'canceled';
-      default: return '';
-    }
+    return this.jobStateService.stateClass(state);
+  }
+
+  private stateIcon(state) {
+    return this.jobStateService.stateIcon(state);
   }
 
   ngOnInit() {
@@ -154,17 +153,6 @@ export class ResultListComponent implements OnInit, OnDestroy {
   private select(node) {
     this.selection.clear();
     this.selection.toggle(node);
-  }
-
-  private setIcon(state) {
-    switch (state) {
-      case 'Finished': return 'done';
-      case 'Queued': return 'blur_linear';
-      case 'Failed': return 'clear';
-      case 'Running': return 'blur_on';
-      case 'Canceled': return 'cancel';
-      default: return 'autorenew';
-    }
   }
 
   applyFilter(text: string): void {

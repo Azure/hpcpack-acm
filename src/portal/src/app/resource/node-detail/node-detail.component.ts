@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { Node } from '../../models/node';
 import { ApiService, Loop } from '../../services/api.service';
 import { ChartComponent } from 'angular2-chartjs';
+import { JobStateService } from '../../services/job-state/job-state.service';
 
 @Component({
   selector: 'app-node-detail',
@@ -150,6 +151,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
   constructor(
     private api: ApiService,
+    private jobStateService: JobStateService,
     private route: ActivatedRoute,
   ) {
     this.historyInterval = 10000;
@@ -223,25 +225,11 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
   }
 
   private setIcon(state) {
-    switch (state) {
-      case 'Finished': return 'done';
-      case 'Queued': return 'blur_linear';
-      case 'Failed': return 'clear';
-      case 'Running': return 'blur_on';
-      case 'Canceled': return 'cancel';
-      default: return 'autorenew';
-    }
+    return this.jobStateService.stateIcon(state);
   }
 
   private stateClass(state) {
-    switch (state) {
-      case 'Finished': return 'finished';
-      case 'Queued': return 'queues';
-      case 'Failed': return 'failed';
-      case 'Running': return 'running';
-      case 'Canceled': return 'canceled';
-      default: return '';
-    }
+    return this.jobStateService.stateClass(state);
   }
 
   private dataSource = new MatTableDataSource();
