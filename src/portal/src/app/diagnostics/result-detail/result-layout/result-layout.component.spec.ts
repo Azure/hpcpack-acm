@@ -42,6 +42,7 @@ fdescribe('ResultLayoutComponent', () => {
     fixture = TestBed.createComponent(ResultLayoutComponent);
     component = fixture.componentInstance;
     component.result = { id: 1, name: "test", state: "Finished" };
+    component.aggregationResult = { Error: 'error info' };
     fixture.detectChanges();
   });
 

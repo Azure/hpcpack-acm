@@ -1,4 +1,4 @@
-<app-result-layout [result]="result">
+<app-result-layout [result]="result" [aggregationResult]="aggregationResult">
   <ng-template #overview>
     <mat-tab-group>
       <mat-tab label="Result" *ngIf="!hasError">
@@ -10,17 +10,7 @@
         </div>
       </mat-tab>
       <mat-tab label="Nodes">
-        <div class="nodes-info">
-          <div class="overview-info">
-            <div class="overview-title">
-              <i class="material-icons title-icon">device_hub</i>
-              <div class="title-text">Nodes</div>
-            </div>
-            <div class="overview-value">
-              <a [routerLink]="getLink(node)" class="node" *ngFor="let node of aggregationResult.Nodes">{{node}}</a>
-            </div>
-          </div>
-        </div>
+        <app-nodes-info [nodes]="nodes" [aggregationInfo]="undefined"></app-nodes-info>
       </mat-tab>
       <mat-tab label="Events">
         <app-event-list [events]="events"></app-event-list>

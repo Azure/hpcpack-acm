@@ -24,6 +24,18 @@ class RouterLinkDirectiveStub {
 class ResultLayoutComponent {
   @Input()
   result: any;
+
+  @Input()
+  aggregationResult: any;
+}
+
+@Component({ selector: 'app-nodes-info', template: '' })
+class NodesInfoComponent {
+  @Input()
+  nodes: Array<any>;
+
+  @Input()
+  aggregationInfo: object;
 }
 
 @Component({ selector: 'ring-overview-result', template: '' })
@@ -76,7 +88,7 @@ class ApiServiceStub {
   diag = {
     getDiagTasks: (id: any) => of(ApiServiceStub.taskResult),
     getDiagJob: (id: any) => of(ApiServiceStub.jobResult),
-    isJSON: () => { return true; }
+    getJobAggregationResult: (id: any) => of({ Error: "error message" })
   }
 }
 
@@ -100,6 +112,7 @@ fdescribe('RingReportComponent', () => {
         RouterLinkDirectiveStub,
         RingReportComponent,
         ResultLayoutComponent,
+        NodesInfoComponent,
         RingOverviewResultComponent,
         DiagTaskTableComponent,
         EventListComponent,

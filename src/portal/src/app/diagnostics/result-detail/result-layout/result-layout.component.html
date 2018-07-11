@@ -1,7 +1,7 @@
 <div class="title main">
   <div class="job-state">
     <div class="name">{{result.id}} - {{result.name}}
-      <div [ngClass]="stateClass(result.state)">{{result.state}}</div>
+      <div class="state-text" [ngClass]="stateClass(result.state)">{{result.state}}</div>
     </div>
     <mat-spinner *ngIf="!done" [diameter]="25"></mat-spinner>
   </div>
@@ -23,10 +23,10 @@
   <i class="material-icons title-icon">equalizer</i>
   <div>OVERVIEW</div>
 </div>
-<div *ngIf="!done" class="overview-progress">
+<div *ngIf="!showOverview" class="overview-progress">
   <mat-progress-bar mode="buffer"></mat-progress-bar>
 </div>
-<div class="overview" *ngIf="done">
+<div class="overview" *ngIf="showOverview">
   <ng-container *ngTemplateOutlet="overviewTemplate"></ng-container>
 </div>
 

@@ -19,6 +19,7 @@ export class PingPongReportComponent implements OnInit {
   private jobState: string;
   private tasks = [];
   private events = [];
+  private nodes = [];
   private aggregationResult: object;
   private latencyData: any;
   private throughputData: any;
@@ -92,6 +93,7 @@ export class PingPongReportComponent implements OnInit {
     this.api.diag.getDiagJob(this.result.id).subscribe(res => {
       this.jobState = res.state;
       this.result = res;
+      this.nodes = res.targetNodes;
       if (res.events !== undefined) {
         this.events = res.events;
       }

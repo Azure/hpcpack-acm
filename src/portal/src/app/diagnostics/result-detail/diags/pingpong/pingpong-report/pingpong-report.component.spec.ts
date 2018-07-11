@@ -11,6 +11,9 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 class ResultLayoutComponent {
   @Input()
   result: any;
+
+  @Input()
+  aggregationResult: any;
 }
 
 @Component({ selector: 'pingpong-overview-result', template: '' })
@@ -28,7 +31,10 @@ class EventListComponent {
 @Component({ selector: 'app-nodes-info', template: '' })
 class NodesInfoComponent {
   @Input()
-  nodes: any;
+  nodes: Array<any>;
+
+  @Input()
+  aggregationInfo: object;
 }
 
 @Component({ selector: 'diag-task-table', template: '' })
@@ -69,7 +75,7 @@ class ApiServiceStub {
   diag = {
     getDiagTasks: (id: any) => of(ApiServiceStub.taskResult),
     getDiagJob: (id: any) => of(ApiServiceStub.jobResult),
-    isJSON: () => { return true; }
+    getJobAggregationResult: (id: any) => of({ Error: "error message" })
   }
 }
 

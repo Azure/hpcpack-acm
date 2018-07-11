@@ -167,10 +167,6 @@ md-select,
     color: rgba(63, 81, 181, .9)
 }
 
-.finished,
-.queued,
-.failed,
-.running,
-.canceled {
+.state-text {
     display: inline-block;
 }

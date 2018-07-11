@@ -8,7 +8,10 @@ import { isArray } from 'util';
 })
 export class NodesInfoComponent implements OnInit {
   @Input()
-  nodes: object;
+  nodes: Array<any>;
+
+  @Input()
+  aggregationInfo: object;
 
   constructor() { }
 
