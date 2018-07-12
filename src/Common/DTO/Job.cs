@@ -38,7 +38,7 @@ namespace Microsoft.HpcAcm.Common.Dto
         public DateTimeOffset UpdatedAt { get; set; }
         public JobState State { get; set; }
         public JobType Type { get; set; }
-        public double Progress { get => 1.0 * this.CompletedTaskCount / this.TaskCount; }
+        public double Progress { get => this.TaskCount == 0 ? 0 : (1.0 * this.CompletedTaskCount / this.TaskCount); }
         public int RequeueCount { get; set; } = 0;
         public bool FailJobOnTaskFailure { get; set; } = false;
 

@@ -70,6 +70,8 @@
             }
 
             var taskResultBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(task.JobType, taskResultKey, token);
+
+            DateTimeOffset startTime = DateTimeOffset.UtcNow;
             var taskResult = new ComputeClusterTaskInformation()
             {
                 CommandLine = cmd,
@@ -77,7 +79,7 @@
                 TaskId = task.Id,
                 NodeName = nodeName,
                 ResultKey = taskResultKey,
-                StartTime = DateTimeOffset.UtcNow,
+                StartTime = startTime,
             };
 
             if (!await this.PersistTaskResult(nodeTaskResultKey, taskResult, token)) { return false; }
@@ -164,6 +166,7 @@
 
                     if (taskResult != null)
                     {
+                        taskResult.StartTime = startTime;
                         exitCode = taskResult.ExitCode;
                         taskResult.Message = rawResult.Length > MaxRawResultLength ? rawResult.ToString(0, MaxRawResultLength) : rawResult.ToString();
                         taskResult.CommandLine = cmd;
