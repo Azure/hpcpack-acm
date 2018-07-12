@@ -16,7 +16,7 @@ import { ResultLayoutComponent } from './result-detail/result-layout/result-layo
 import { RingReportComponent } from './result-detail/diags/ring/ring-report/ring-report.component';
 import { RingOverviewResultComponent } from './result-detail/diags/ring/overview-result/overview-result.component';
 import { NodesInfoComponent } from './result-detail/diags/nodes-info/nodes-info.component';
-import { WindowScrollDirective } from '../directives/window-scroll/window-scroll.directive';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
   imports: [
@@ -26,6 +26,7 @@ import { WindowScrollDirective } from '../directives/window-scroll/window-scroll
     WidgetsModule,
     ChartModule,
     FormsModule,
+    SharedModule
   ],
   declarations: [
     DiagnosticsComponent,
@@ -38,8 +39,7 @@ import { WindowScrollDirective } from '../directives/window-scroll/window-scroll
     ResultLayoutComponent,
     RingReportComponent,
     RingOverviewResultComponent,
-    NodesInfoComponent,
-    WindowScrollDirective],
+    NodesInfoComponent],
   entryComponents: [RingReportComponent, RingOverviewResultComponent, PingPongReportComponent, TaskDetailComponent]
 })
 export class DiagnosticsModule { }

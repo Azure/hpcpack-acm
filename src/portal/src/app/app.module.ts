@@ -22,7 +22,7 @@ import { NotificationComponent } from './notification/notification.component';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { WidgetsModule } from './widgets/widgets.module';
 import { JobStateService } from './services/job-state/job-state.service';
-
+import { TableDataService } from './services/table-data/table-data.service';
 
 @NgModule({
   declarations: [
@@ -44,9 +44,9 @@ import { JobStateService } from './services/job-state/job-state.service';
     //),
     MaterialsModule,
     WidgetsModule,
-    AppRoutingModule,
+    AppRoutingModule
   ],
-  providers: [AuthGuardService, AuthService, LoginGuardService, ApiService, JobStateService,
+  providers: [AuthGuardService, AuthService, LoginGuardService, ApiService, JobStateService, TableDataService,
     TableSettingsService, UserSettingsService, LocalStorageService],
   bootstrap: [AppComponent]
 })

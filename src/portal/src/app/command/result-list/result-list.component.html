@@ -4,8 +4,8 @@
   <button mat-raised-button [disabled]="hasNoSelection()">Cancel</button> -->
 </div>
 
-<mat-table #table [dataSource]="dataSource" infiniteScroll (scrolled)="onScroll()" id="table">
-
+<mat-table #table [dataSource]="dataSource" id="table" appWindowScroll [dataLength]="currentData.length" [pageSize]="maxPageSize"
+  (scrollEvent)="onScrollEvent($event)">
   <!--
    Note that these columns can be defined in any order. The actual rendered
    columns are set as a property on the row definition, displayedColumns."

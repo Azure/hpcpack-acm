@@ -6,6 +6,7 @@ import { ApiService, Loop } from '../../services/api.service';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { TableSettingsService } from '../../services/table-settings.service';
 import { JobStateService } from '../../services/job-state/job-state.service';
+import { TableDataService } from '../../services/table-data/table-data.service';
 
 @Component({
   selector: 'diagnostics-results',
@@ -26,7 +27,6 @@ export class ResultListComponent implements OnInit, OnDestroy {
   private availableColumns;
 
   private dataSource = new MatTableDataSource();
-  // private displayedColumns = ['select', 'id', 'test', 'diagnostic', 'category', 'progress', 'state', 'actions'];
   private displayedColumns = ['id', 'test', 'diagnostic', 'category', 'progress', 'state', 'createdAt', 'lastChangedAt'];
 
   private selection = new SelectionModel(true, []);
@@ -34,8 +34,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
   private diagsLoop: Object;
   private lastId = 0;
   private maxPageSize = 120;
-  private derelictSize = this.maxPageSize / 6;
-  private updatedSize = this.maxPageSize / 4;
+
   private reverse = true;
   private currentData = [];
   private rowHeight = -1;
@@ -45,6 +44,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
   constructor(
     private api: ApiService,
     private jobStateService: JobStateService,
+    private tableDataService: TableDataService,
     private settings: TableSettingsService,
     public dialog: MatDialog,
     public el: ElementRef,
@@ -72,19 +72,11 @@ export class ResultListComponent implements OnInit, OnDestroy {
       this.getDiagRequest(),
       {
         next: (result) => {
-          if (result[0]['id'] < result[result.length - 1]['id']) {
+          if (!this.reverse) {
             result = result.reverse();
           }
-
           this.currentData = result;
-          this.updateDataSource(result);
-
-          if (this.rowHeight < 0) {
-            if (document.getElementsByTagName('mat-row')[0] !== undefined) {
-              this.rowHeight = document.getElementsByTagName('mat-row')[0].clientHeight;
-            }
-
-          }
+          this.tableDataService.updateData(result, this.dataSource, 'id');
           return this.getDiagRequest();
         }
       },
@@ -98,40 +90,15 @@ export class ResultListComponent implements OnInit, OnDestroy {
     }
   }
 
-  updateDataSource(res) {
-    let firstId = res[0]['id'];
-    let lastId = res[res.length - 1]['id'];
-    let firstIndex = this.dataSource.data.findIndex(item => {
-      return item['id'] == firstId;
-    });
-    let lastIndex = this.dataSource.data.findIndex(item => {
-      return item['id'] == lastId;
-    });
-    let startPart = [];
-    let endPart = [];
-    if (firstIndex != -1) {
-      startPart = this.dataSource.data.slice(0, firstIndex);
-    }
-    if (lastIndex != -1) {
-      endPart = this.dataSource.data.slice(lastIndex + 1);
-    }
-    if (firstIndex == -1 && lastIndex == -1) {
-      this.dataSource.data = this.dataSource.data.concat(res);
-    }
-    else {
-      this.dataSource.data = startPart.concat(res).concat(endPart);
-    }
-  }
-
   private scrollToTop() {
     window.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
   }
 
   private onScrollEvent(data) {
-    this.lastId = data.lastId;
+    this.lastId = data.dataIndex == -1 ? 0 : this.dataSource.data[data.dataIndex]['id'];
     this.loadFinished = data.loadFinished;
     this.scrolled = data.scrolled;
-    this.reverse = data.reverse;
+    this.reverse = data.scrollDirection == 'down' ? true : false;
   }
 
   private hasNoSelection(): boolean {

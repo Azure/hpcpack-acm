@@ -5,24 +5,21 @@ import { Directive, ElementRef, HostListener, Input, OnDestroy, Output, EventEmi
 })
 export class WindowScrollDirective implements OnDestroy, OnInit {
 
-  constructor(private el: ElementRef) { }
-
-  @Input() currentData: Array<any>;
-  @Input() dataSource: any;
-  @Input() itemHeight: number;
-  @Input() reverse: boolean;
-  @Input() updatedSize: number;
-  @Input() derelictSize: number;
-  @Input() maxPageSize: number;
+  @Input() dataLength: number;
+  @Input() pageSize: number;
+  @Input() updatedSize = 30;
+  @Input() derelictSize = 20;
   @Output() scrollEvent = new EventEmitter();
   private scrolledHeight = 0;
   private downNum = 0;
   private upNum = 0;
   private jobIndex = 0;
   private componentPostion = 0;
-  private scrolled = false;
-  private loadFinished = false;
-  private lastId = 0;
+  public scrolled = false;
+  public loadFinished = false;
+  public dataIndex = -1;
+  public scrollDirection = 'down';
+  private reverse = true;
 
   private getEleOffset() {
     let el = this.el.nativeElement;
@@ -40,6 +37,10 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
     this.componentPostion = this.getEleOffset().top;
   }
 
+
+  constructor(private el: ElementRef) {
+  }
+
   private scrollTimer = null;
   @HostListener("window:scroll") onScroll(delay: number = 100) {
     clearTimeout(this.scrollTimer);
@@ -54,11 +55,13 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
         this.scrolled = false;
       }
 
-      let pageSize = this.currentData.length;
-      let tableSize = this.dataSource.data.length;
+      let pageSize = this.dataLength;
+      let containerHeight = this.el.nativeElement.clientHeight;
+      let itemHeight = (<HTMLElement>document.querySelector('mat-row')).offsetHeight;
+      let tableSize = Math.floor(containerHeight / itemHeight);
 
       if (!this.scrolled) {
-        this.lastId = 0;
+        this.dataIndex = -1;
         this.reverse = true;
         this.jobIndex = 0;
         this.downNum = 0;
@@ -66,51 +69,53 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
       }
 
       if (this.scrolledHeight > scrollPostion && this.scrolled) {
+        this.scrollDirection = 'up';
         if (this.reverse) {
-          this.jobIndex -= Math.floor((this.scrolledHeight - scrollPostion) / this.itemHeight);
+          this.jobIndex -= Math.floor((this.scrolledHeight - scrollPostion) / itemHeight);
           this.reverse = false;
           this.jobIndex = pageSize - this.jobIndex;
-          let itemInView = Math.floor(windowHeight / this.itemHeight);
+          let itemInView = Math.floor(windowHeight / itemHeight);
           this.jobIndex -= itemInView;
         }
         else {
-          this.jobIndex += Math.floor((this.scrolledHeight - scrollPostion) / this.itemHeight);
+          this.jobIndex += Math.floor((this.scrolledHeight - scrollPostion) / itemHeight);
         }
-        while (this.jobIndex >= this.updatedSize && (pageSize == this.maxPageSize)) {
+        while (this.jobIndex >= this.updatedSize && (pageSize == this.pageSize)) {
           this.upNum++;
           if (this.downNum > 0) {
             this.downNum--;
           }
           this.jobIndex -= this.derelictSize;
-          this.lastId = this.dataSource.data[tableSize - this.derelictSize * this.upNum]['id'];
+          this.dataIndex = tableSize - this.derelictSize * this.upNum;
         }
       }
       else if (this.scrolledHeight <= scrollPostion && this.scrolled) {
+        this.scrollDirection = 'down';
         if (!this.reverse) {
-          this.jobIndex -= Math.floor((scrollPostion - this.scrolledHeight) / this.itemHeight);
+          this.jobIndex -= Math.floor((scrollPostion - this.scrolledHeight) / itemHeight);
           this.reverse = true;
           this.jobIndex = pageSize - this.jobIndex;
-          let itemInView = Math.floor(windowHeight / this.itemHeight);
+          let itemInView = Math.floor(windowHeight / itemHeight);
           this.jobIndex -= itemInView;
         }
         else {
-          this.jobIndex += Math.floor((scrollPostion - this.scrolledHeight) / this.itemHeight);
+          this.jobIndex += Math.floor((scrollPostion - this.scrolledHeight) / itemHeight);
         }
-        while (this.jobIndex >= this.updatedSize && (pageSize == this.maxPageSize)) {
+        while (this.jobIndex >= this.updatedSize && (pageSize == this.pageSize)) {
           this.downNum++;
           if (this.upNum > 0) {
             this.upNum--;
           }
           this.jobIndex -= this.derelictSize;
-          this.lastId = this.dataSource.data[this.downNum * this.derelictSize - 1]['id'];
+          this.dataIndex = this.downNum * this.derelictSize - 1;
         }
 
-        if (this.currentData.length < this.maxPageSize) {
+        if (this.dataLength < this.pageSize) {
           this.loadFinished = true;
         }
       }
       this.scrolledHeight = scrollPostion;
-      this.scrollEvent.emit({ lastId: this.lastId, scrolled: this.scrolled, loadFinished: this.loadFinished, reverse: this.reverse });
+      this.scrollEvent.emit({ dataIndex: this.dataIndex, scrolled: this.scrolled, loadFinished: this.loadFinished, scrollDirection: this.scrollDirection });
     }, delay);
   }
 

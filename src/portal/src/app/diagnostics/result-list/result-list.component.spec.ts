@@ -1,5 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Directive, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Directive, Input, Output, EventEmitter, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { FormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -8,6 +8,7 @@ import { ApiService } from '../../services/api.service';
 import { TableSettingsService } from '../../services/table-settings.service';
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { ResultListComponent } from './result-list.component';
+import { TableDataService } from '../../services/table-data/table-data.service';
 
 @Directive({
   selector: '[routerLink]',
@@ -26,13 +27,8 @@ class RouterLinkDirectiveStub {
   selector: '[appWindowScroll]',
 })
 class WindowScrollDirectiveStub {
-  @Input() currentData: Array<any>;
-  @Input() dataSource: any;
-  @Input() itemHeight: number;
-  @Input() reverse: boolean;
-  @Input() updatedSize: number;
-  @Input() derelictSize: number;
-  @Input() maxPageSize: number;
+  @Input() dataLength: number;
+  @Input() pageSize: number;
   @Output() scrollEvent = new EventEmitter();
 }
 
@@ -59,6 +55,12 @@ const tableSettingsStub = {
   save: (key, val) => undefined
 }
 
+class TableDataServiceStub {
+  updateData(newData, dataSource, propertyName) {
+    return dataSource.data = newData;
+  }
+}
+
 fdescribe('ResultListComponent', () => {
   let component: ResultListComponent;
   let fixture: ComponentFixture<ResultListComponent>;
@@ -78,8 +80,10 @@ fdescribe('ResultListComponent', () => {
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
         { provide: JobStateService, useClass: JobStateServiceStub },
-        { provide: TableSettingsService, useValue: tableSettingsStub }
-      ]
+        { provide: TableSettingsService, useValue: tableSettingsStub },
+        { provide: TableDataService, useClass: TableDataServiceStub }
+      ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })
       .compileComponents();
   }));
