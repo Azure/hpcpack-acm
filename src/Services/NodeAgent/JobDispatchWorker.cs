@@ -8,7 +8,7 @@
     using Microsoft.HpcAcm.Common.Utilities;
     using System.Threading;
     using T = System.Threading.Tasks;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.WindowsAzure.Storage.Table;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
@@ -39,52 +39,51 @@
         {
             var message = taskItem.GetMessage<TaskEventMessage>();
 
-            using (this.Logger.BeginScope("Do work for TaskEvent {0}, {1}, {2}", message.Id, message.JobType, message.EventVerb))
+            this.Logger.Information("Do work for TaskEvent {0}, {1}, {2}", message.Id, message.JobType, message.EventVerb);
+
+            try
             {
-                try
+                // TODO: refactor the processor design.
+                JobTaskProcessor processor = null;
+                switch (message.EventVerb)
                 {
-                    // TODO: refactor the processor design.
-                    JobTaskProcessor processor = null;
-                    switch (message.EventVerb)
-                    {
-                        case "cancel":
-                            processor = this.Provider.GetService<CancelJobOrTaskProcessor>();
-                            break;
+                    case "cancel":
+                        processor = this.Provider.GetService<CancelJobOrTaskProcessor>();
+                        break;
 
-                        case "start":
-                            processor = this.Provider.GetService<StartJobAndTaskProcessor>();
-                            break;
+                    case "start":
+                        processor = this.Provider.GetService<StartJobAndTaskProcessor>();
+                        break;
 
-                        default:
-                            break;
-                    }
-
-                    if (processor is ServerObject so)
-                    {
-                        so.CopyFrom(this);
-                    }
-
-                    var result = await processor.ProcessAsync(message, token);
-                    this.Logger.LogInformation("Finished process {0} {1} {2}, result {3}", message.EventVerb, message.JobId, message.Id, result);
-                    return result;
-                }
-                catch (Exception ex)
-                {
-                    this.Logger.LogError("Exception occurred when process {0}, {1}, {2}, {3}", message.EventVerb, message.JobId, message.Id, ex);
-                    await this.Utilities.UpdateJobAsync(message.JobType, message.JobId, j =>
-                    {
-                        j.State = (j.State == JobState.Canceled || j.State == JobState.Finished) ? j.State : JobState.Failed;
-                        (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                        {
-                            Content = $"Exception occurred when process job {message.JobId} {message.JobType} {message.EventVerb}. {ex}",
-                            Source = EventSource.Job,
-                            Type = EventType.Alert,
-                        });
-                    }, token);
+                    default:
+                        break;
                 }
 
-                return true;
+                if (processor is ServerObject so)
+                {
+                    so.CopyFrom(this);
+                }
+
+                var result = await processor.ProcessAsync(message, token);
+                this.Logger.Information("Finished process {0} {1} {2}, result {3}", message.EventVerb, message.JobId, message.Id, result);
+                return result;
             }
+            catch (Exception ex)
+            {
+                this.Logger.Error("Exception occurred when process {0}, {1}, {2}, {3}", message.EventVerb, message.JobId, message.Id, ex);
+                await this.Utilities.UpdateJobAsync(message.JobType, message.JobId, j =>
+                {
+                    j.State = (j.State == JobState.Canceled || j.State == JobState.Finished) ? j.State : JobState.Failed;
+                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                    {
+                        Content = $"Exception occurred when process job {message.JobId} {message.JobType} {message.EventVerb}. {ex}",
+                        Source = EventSource.Job,
+                        Type = EventType.Alert,
+                    });
+                }, token);
+            }
+
+            return true;
         }
     }
 }

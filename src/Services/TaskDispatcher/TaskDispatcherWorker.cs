@@ -7,7 +7,7 @@
     using Microsoft.HpcAcm.Common.Dto;
     using System.Threading;
     using T = System.Threading.Tasks;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.WindowsAzure.Storage.Table;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -113,8 +113,8 @@
                     await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                     {
                         j.State = JobState.Failed;
-                            // TODO: make event separate.
-                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                        // TODO: make event separate.
+                        (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
                         {
                             Content = $"Unable to update task record {childId}",
                             Source = EventSource.Job,
@@ -148,44 +148,45 @@
         public override async T.Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
         {
             var message = taskItem.GetMessage<TaskCompletionMessage>();
-            using (this.Logger.BeginScope("Do work for TaskCompletionMessage {0}", message.Id))
+            this.Logger.Information("Do work for TaskCompletionMessage {0}", message.Id);
+
+            this.Logger.Information("{0} Job {1} task {2} requeuecount {3} completed with exit code {4}", message.JobType, message.JobId, message.Id, message.RequeueCount, message.ExitCode);
+            var jobPartitionKey = this.Utilities.GetJobPartitionKey(message.JobType, message.JobId);
+
+            var job = await this.jobsTable.RetrieveAsync<Job>(jobPartitionKey, this.Utilities.JobEntryKey, token);
+            if (job == null || job.RequeueCount != message.RequeueCount)
             {
-                this.Logger.LogInformation("{0} Job {1} task {2} requeuecount {3} completed with exit code {4}", message.JobType, message.JobId, message.Id, message.RequeueCount, message.ExitCode);
-                var jobPartitionKey = this.Utilities.GetJobPartitionKey(message.JobType, message.JobId);
-
-                var job = await this.jobsTable.RetrieveAsync<Job>(jobPartitionKey, this.Utilities.JobEntryKey, token);
-                if (job == null || job.RequeueCount != message.RequeueCount)
-                {
-                    this.Logger.LogWarning("Skip processing the task completion of {0}. Job is null = {1}, job.RequeueCount = {2}, message.RequeueCount = {3}", message.Id, job == null, job?.RequeueCount, message.RequeueCount);
-                    return true;
-                }
-
-                var jobEventQueue = await this.Utilities.GetOrCreateJobEventQueueAsync(token);
-                await jobEventQueue.AddMessageAsync(
-                    new CloudQueueMessage(JsonConvert.SerializeObject(new JobEventMessage() { Id = job.Id, EventVerb = "progress", Type = job.Type })),
-                    null, null, null, null,
-                    token);
-
-                if (job.State == JobState.Running)
-                {
-                    bool result = await this.VisitAllTasksAsync(job, message.Id, async t =>
-                    {
-                        var queue = await this.Utilities.GetOrCreateNodeDispatchQueueAsync(t.Node, token);
-                        await queue.AddMessageAsync(
-                            new CloudQueueMessage(JsonConvert.SerializeObject(new TaskEventMessage() { EventVerb = "start", Id = t.Id, JobId = t.JobId, JobType = t.JobType, RequeueCount = t.RequeueCount }, Formatting.Indented)),
-                            null,
-                            null,
-                            null,
-                            null,
-                            token);
-                        this.Logger.LogInformation("Dispatched job {0} task {1} to node {2}", t.JobId, t.Id, t.Node);
-                    }, token);
-
-                    return result;
-                }
-
+                this.Logger.Warning("Skip processing the task completion of {0}. Job is null = {1}, job.RequeueCount = {2}, message.RequeueCount = {3}", message.Id, job == null, job?.RequeueCount, message.RequeueCount);
                 return true;
             }
+
+            if (message.Id != 0 && message.Id != int.MaxValue)
+            {
+                await this.Utilities.UpdateJobAsync(message.JobType, message.JobId, j =>
+                {
+                    j.CompletedTaskCount = Math.Min(++j.CompletedTaskCount, j.TaskCount);
+                }, token);
+            }
+
+            if (job.State == JobState.Running)
+            {
+                bool result = await this.VisitAllTasksAsync(job, message.Id, async t =>
+                {
+                    var queue = await this.Utilities.GetOrCreateNodeDispatchQueueAsync(t.Node, token);
+                    await queue.AddMessageAsync(
+                        new CloudQueueMessage(JsonConvert.SerializeObject(new TaskEventMessage() { EventVerb = "start", Id = t.Id, JobId = t.JobId, JobType = t.JobType, RequeueCount = t.RequeueCount }, Formatting.Indented)),
+                        null,
+                        null,
+                        null,
+                        null,
+                        token);
+                    this.Logger.Information("Dispatched job {0} task {1} to node {2}", t.JobId, t.Id, t.Node);
+                }, token);
+
+                return result;
+            }
+
+            return true;
         }
     }
 }

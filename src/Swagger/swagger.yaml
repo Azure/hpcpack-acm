@@ -282,12 +282,12 @@ definitions:
   NodeMetrics:
     type: object
     properties:
-      span:
+      range:
         type: number
         format: double
         example: 10.0
         description: Time span in second of the metric data
-      items:
+      data:
         type: array
         items:
           type: object
@@ -296,7 +296,7 @@ definitions:
               type: string
               format: date-time
               description: Time of the metric data
-            data:
+            metricItems:
               type: array
               items:
                 type: object
@@ -529,40 +529,26 @@ definitions:
   NodeSummary:
     type: object
     properties:
-      OK:
-        type: number
-        description: number of nodes that are OK
-      Warning:
-        type: number
-        description: number of nodes that has warning
-      Error:
-        type: number
-        description: number of nodes that has error
+      lastUpdated:
+        type: string
+        format: date-time
+      data:
+        type: object
+        additionalProperties:
+          type: number
+        example: '{ "OK": 100, "Warning": 10, "Error": 0 }'
 
   JobSummary:
     type: object
     properties:
-      Queued:
-        type: number
-        description: number of jobs that are queued
-      Running:
-        type: number
-        description: number of jobs that are running
-      Finishing:
-        type: number
-        description: number of jobs that are finishing
-      Finished:
-        type: number
-        description: number of jobs that are finished
-      Canceling:
-        type: number
-        description: number of jobs that are canceling
-      Canceled:
-        type: number
-        description: number of jobs that are canceled
-      Failed:
-        type: number
-        description: number of jobs that are failed
+      lastUpdated:
+        type: string
+        format: date-time
+      data:
+        type: object
+        additionalProperties:
+          type: number
+          example: '{ "Queued": 100, "Running": 10, "Finishing": 0, "Finished": 2, "Canceling": 0, "Canceled": 1, "Failed": 0 }'
 
 parameters:
   nodeId:

@@ -6,7 +6,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using System.Threading;
     using T = System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.WindowsAzure.Storage.Table;
@@ -15,12 +15,12 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     [Route("v1/metrics")]
     public class MetricsV1Controller : Controller
     {
-        private readonly DataProvider provider;
+        private DataProvider Provider { get; }
         private readonly CloudUtilities utilities;
 
         public MetricsV1Controller(DataProvider provider, CloudUtilities utilities)
         {
-            this.provider = provider;
+            this.Provider = provider;
             this.utilities = utilities;
         }
 
@@ -29,7 +29,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> GetMetricsAsync(
             string category = "cpu",
             [FromQuery] string lastNodeId = null,
-            [FromQuery] int count = 1000,
+            [FromQuery] int count = 100,
             CancellationToken token = default(CancellationToken))
         {
             var partitionQuery = this.utilities.GetPartitionQueryString(this.utilities.MetricsValuesPartitionKey);

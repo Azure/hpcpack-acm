@@ -1,12 +1,12 @@
 ﻿namespace Microsoft.HpcAcm.Services.NodeAgent
 {
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
     using Microsoft.WindowsAzure.Storage.Table;
     using Newtonsoft.Json;
+    using Serilog;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -23,7 +23,7 @@
         private readonly CloudUtilities utilities;
         private readonly NodeSynchronizer synchronizer;
 
-        public CallbackController(ILogger<CallbackController> logger, TaskMonitor monitor, CloudUtilities utilities, NodeSynchronizer synchronizer)
+        public CallbackController(ILogger logger, TaskMonitor monitor, CloudUtilities utilities, NodeSynchronizer synchronizer)
         {
             this.logger = logger;
             this.monitor = monitor;
@@ -39,7 +39,7 @@
                 token.ThrowIfCancellationRequested();
                 var nodeName = nodeInfo?.Name?.ToLowerInvariant();
 
-                this.logger.LogInformation("ComputeNodeReported. NodeName {0}, JobCount {1}", nodeName, nodeInfo?.Jobs?.Count);
+                this.logger.Information("ComputeNodeReported. NodeName {0}, JobCount {1}", nodeName, nodeInfo?.Jobs?.Count);
 
                 var nodeTable = this.utilities.GetNodesTable();
 
@@ -61,7 +61,7 @@
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "ComputeNodeReported. NodeName {0}, JobCount {1}", nodeInfo?.Name, nodeInfo?.Jobs?.Count);
+                this.logger.Error(ex, "ComputeNodeReported. NodeName {0}, JobCount {1}", nodeInfo?.Name, nodeInfo?.Jobs?.Count);
             }
 
             return this.utilities.Option.RetryOnFailureSeconds * 1000;
@@ -75,7 +75,7 @@
 
             try
             {
-                this.logger.LogInformation("TaskCompleted. NodeName {0}, TaskKey {1} ExitCode {2} TaskMessage {3}",
+                this.logger.Information("TaskCompleted. NodeName {0}, TaskKey {1} ExitCode {2} TaskMessage {3}",
                     taskInfo.NodeName,
                     taskKey,
                     taskInfo.TaskInfo.ExitCode,
@@ -87,7 +87,7 @@
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Linux TaskCompleted. NodeName {0}, TaskId {1} ExitCode {2} TaskMessage {3}",
+                this.logger.Error(ex, "Linux TaskCompleted. NodeName {0}, TaskId {1} ExitCode {2} TaskMessage {3}",
                     taskInfo.NodeName,
                     taskInfo.TaskInfo.TaskId,
                     taskInfo.TaskInfo.ExitCode,
@@ -105,7 +105,7 @@
             try
             {
                 var nodeName = registerInfo.NodeName.ToLowerInvariant();
-                this.logger.LogInformation("RegisterRequested, NodeName {0}, Distro {1} ", nodeName, registerInfo.DistroInfo);
+                this.logger.Information("RegisterRequested, NodeName {0}, Distro {1} ", nodeName, registerInfo.DistroInfo);
                 var nodeTable = this.utilities.GetNodesTable();
 
                 var jsonTableEntity = new JsonTableEntity(this.utilities.NodesPartitionKey, this.utilities.GetRegistrationKey(nodeName), registerInfo);
@@ -121,7 +121,7 @@
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "RegisterRequested. NodeName {0}, Distro {1}",
+                this.logger.Error(ex, "RegisterRequested. NodeName {0}, Distro {1}",
                     registerInfo.NodeName, registerInfo.DistroInfo);
             }
 

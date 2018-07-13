@@ -41,7 +41,7 @@
     /// </summary>
     public class StartJobArg : NodeCommunicatorCallBackArg
     {
-        int jobId;
+        private readonly int jobId;
 
         public StartJobArg(IEnumerable<int> resIds, int jobId)
             : base(resIds)
@@ -83,29 +83,20 @@
     /// </summary>
     public class StartTaskArg : NodeCommunicatorCallBackArg
     {
-        int jobId;
-        int taskId;
-
         public StartTaskArg(IEnumerable<int> resIds, int jobId, int taskId)
             : base(resIds)
         {
-            this.jobId = jobId;
-            this.taskId = taskId;
+            this.JobId = jobId;
+            this.TaskId = taskId;
         }
 
-        public int JobId
-        {
-            get { return jobId; }
-        }
+        public int JobId { get; private set; }
 
-        public int TaskId
-        {
-            get { return taskId; }
-        }
+        public int TaskId { get; private set; }
 
         public override string ToString()
         {
-            return "Start task " + jobId + "." + taskId;
+            return "Start task " + this.JobId + "." + this.TaskId;
         }
     }
 
@@ -117,42 +108,33 @@
     /// </summary>
     public class EndTaskArg : NodeCommunicatorCallBackArg
     {
-        int taskId;
-        int gracePeriod;
-
         public EndTaskArg(IEnumerable<int> resIds, int jobId, int taskId)
             : base(resIds)
         {
             this.JobId = jobId;
-            this.taskId = taskId;
-            this.gracePeriod = 0;
+            this.TaskId = taskId;
+            this.TaskCancelGracePeriod = 0;
         }
 
         public EndTaskArg(IEnumerable<int> resIds, int jobId, int taskId, int gracePeriod)
             : base(resIds)
         {
             this.JobId = jobId;
-            this.taskId = taskId;
-            this.gracePeriod = gracePeriod;
+            this.TaskId = taskId;
+            this.TaskCancelGracePeriod = gracePeriod;
         }
 
         public int JobId { get; }
 
-        public int TaskId
-        {
-            get { return taskId; }
-        }
+        public int TaskId { get; }
 
-        public int TaskCancelGracePeriod
-        {
-            get { return gracePeriod; }
-        }
+        public int TaskCancelGracePeriod { get; }
 
         public ComputeClusterTaskInformation TaskInfo { get; set; }
 
         public override string ToString()
         {
-            return "End task " + this.JobId + "." + taskId;
+            return "End task " + this.JobId + "." + this.TaskId;
         }
     }
 

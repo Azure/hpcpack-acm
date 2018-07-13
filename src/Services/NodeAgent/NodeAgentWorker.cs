@@ -8,7 +8,7 @@
     using Microsoft.HpcAcm.Common.Utilities;
     using System.Threading;
     using T = System.Threading.Tasks;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.WindowsAzure.Storage.Table;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;

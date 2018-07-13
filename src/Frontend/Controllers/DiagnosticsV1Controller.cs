@@ -8,7 +8,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using System.Threading;
     using T = System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -64,7 +64,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> GetJobTasksAsync(
             int jobId,
             [FromQuery] int lastId = 0,
-            [FromQuery] int count = 1000,
+            [FromQuery] int count = 100,
             [FromQuery] int requeueCount = 0,
             CancellationToken token = default(CancellationToken))
         {
@@ -135,6 +135,11 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         [HttpPost()]
         public async T.Task<IActionResult> CreateJobAsync([FromBody] Job job, CancellationToken token)
         {
+            if (job == null)
+            {
+                return new BadRequestObjectResult("The request body doesn't contain a valid json to be deserialized.");
+            }
+
             job.Type = JobType.Diagnostics;
             if (job.DiagnosticTest?.Name == null || job.DiagnosticTest?.Category == null)
             {

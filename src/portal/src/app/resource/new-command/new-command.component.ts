@@ -10,8 +10,12 @@ import { NodeFilterBuilderComponent } from '../../widgets/node-filter-builder/no
 export class NewCommandComponent implements OnInit {
   private command: string = '';
 
-  constructor(public dialog: MatDialog) {}
+  constructor(public dialog: MatDialogRef<NewCommandComponent>) {}
 
   ngOnInit() {
+  }
+
+  close() {
+    this.dialog.close(this.command);
   }
 }

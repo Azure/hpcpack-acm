@@ -1,8 +1,8 @@
 ﻿namespace Microsoft.HpcAcm.Services.Common
 {
-    using Microsoft.Extensions.Logging;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
+    using Serilog;
     using System;
     using System.Collections.Generic;
     using System.Text;
@@ -55,7 +55,7 @@
             }
             catch (OperationCanceledException)
             {
-                this.logger.LogInformation("Ensure Invisible stopped for message {0}", this.QueueMessage.Id);
+                this.logger.Information("Ensure Invisible stopped for message {0}", this.QueueMessage.Id);
             }
         }
 

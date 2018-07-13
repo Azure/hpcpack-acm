@@ -1,7 +1,15 @@
-import subprocess, io, json
+import subprocess, io, json, os
 
 def main():
-    stdout = subprocess.check_output('mpi-ring-map.py', shell=True, stdin=open('unittest-map-stdin', 'r'), stderr=subprocess.STDOUT)
+    runOnWindows = ''
+    runOnLinux = 'python '
+    if os.name == 'nt':
+        prefix = runOnWindows
+    else:
+        prefix = runOnLinux
+
+    script = 'mpi-ring-map.py'
+    stdout = subprocess.check_output(prefix + script, shell=True, stdin=open('unittest-map-stdin', 'r'), stderr=subprocess.STDOUT)
         
     taskTemplateItems = [
         "Id",

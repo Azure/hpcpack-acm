@@ -38,10 +38,12 @@ namespace Microsoft.HpcAcm.Common.Dto
         public DateTimeOffset UpdatedAt { get; set; }
         public JobState State { get; set; }
         public JobType Type { get; set; }
-        public double Progress { get; set; }
+        public double Progress { get => this.TaskCount == 0 ? 0 : (1.0 * this.CompletedTaskCount / this.TaskCount); }
         public int RequeueCount { get; set; } = 0;
         public bool FailJobOnTaskFailure { get; set; } = false;
 
+        public int CompletedTaskCount { get; set; }
+        public int TaskCount { get; set; }
         public DiagnosticsTest DiagnosticTest { get; set; }
         public string CommandLine { get; set; }
         public string[] TargetNodes { get; set; }

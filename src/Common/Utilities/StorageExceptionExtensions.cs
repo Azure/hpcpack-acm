@@ -10,8 +10,8 @@
     {
         public static bool IsConflict(this StorageException ex)
         {
-            return ex.RequestInformation.ErrorCode == TableErrorCodeStrings.UpdateConditionNotSatisfied ||
-                ex.RequestInformation.ErrorCode == TableErrorCodeStrings.EntityAlreadyExists;
+            return ex.RequestInformation.HttpStatusCode == 409 ||
+                ex.RequestInformation.HttpStatusCode == 412;
         }
     }
 }

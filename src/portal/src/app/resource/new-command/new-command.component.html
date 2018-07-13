@@ -1,7 +1,7 @@
 <h2 mat-dialog-title>Run Command</h2>
 <mat-dialog-content>
   <mat-form-field class="cmd-line">
-    <input [(ngModel)]="command" matInput placeholder="Your command here" value="">
+    <input [(ngModel)]="command" (keyup.enter)="close()" matInput placeholder="Your command here" value="">
   </mat-form-field>
 </mat-dialog-content>
 <mat-dialog-actions>

@@ -1,7 +1,7 @@
 ﻿namespace Microsoft.HpcAcm.Services.NodeAgent
 {
     using Microsoft.Extensions.Configuration;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.Extensions.Options;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Services.Common;
@@ -20,7 +20,7 @@
         private readonly HttpClient client;
 
         private readonly ILogger logger;
-        public NodeCommunicator(ILogger<NodeCommunicator> logger, IOptions<NodeAgentWorkerOptions> options)
+        public NodeCommunicator(ILogger logger, IOptions<NodeAgentWorkerOptions> options)
         {
             this.logger = logger;
             this.Options = options.Value;
@@ -55,15 +55,15 @@
 
         private async Tasks.Task<string> SendRequestInternalAsync<T>(string action, string callbackUri, string nodeName, T arg, int retryCount, CancellationToken token)
         {
-            this.logger.LogInformation("Sending out request, action {0}, callback {1}, nodeName {2}", action, callbackUri, nodeName);
+            this.logger.Information("Sending out request, action {0}, callback {1}, nodeName {2}", action, callbackUri, nodeName);
 
             try
             {
                 var uri = this.GetResoureUri(nodeName, action);
-                this.logger.LogInformation("Sending request to {0}", uri);
+                this.logger.Information("Sending request to {0}", uri);
                 using (var response = await this.client.PostAsJsonAsync(uri, arg, new Dictionary<string, string>() { { CallbackUriHeaderName, callbackUri } }, token))
                 {
-                    this.logger.LogInformation("Sending out request task completed, action {0}, callback {1}, nodeName {2} response code {3}",
+                    this.logger.Information("Sending out request task completed, action {0}, callback {1}, nodeName {2} response code {3}",
                         action, callbackUri, nodeName, response.StatusCode);
                     response.EnsureSuccessStatusCode();
                     return await response.Content.ReadAsStringAsync();
@@ -71,7 +71,7 @@
             }
             catch (Exception e)
             {
-                this.logger.LogError(e, "Sending out request, action {0}, callback {1}, nodeName {2}", action, callbackUri, nodeName);
+                this.logger.Error(e, "Sending out request, action {0}, callback {1}, nodeName {2}", action, callbackUri, nodeName);
                 if (this.CanRetry(e) && retryCount < this.Options.AutoResendLimit)
                 {
                     await Tasks.Task.Delay(TimeSpan.FromSeconds(this.Options.ResendIntervalSeconds), token);
@@ -88,7 +88,7 @@
         {
             return await this.SendRequestInternalAsync(action, callbackUri, nodeName, arg, retryCount, token).ContinueWith(t =>
             {
-                this.logger.LogInformation("Finished sending, action {0}, callback {1}, nodeName {2} retry count {3}", action, callbackUri, nodeName, retryCount);
+                this.logger.Information("Finished sending, action {0}, callback {1}, nodeName {2} retry count {3}", action, callbackUri, nodeName, retryCount);
                 return t.Result;
             });
         }

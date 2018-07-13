@@ -7,7 +7,6 @@
     using Microsoft.HpcAcm.Common.Dto;
     using System.Threading;
     using T = System.Threading.Tasks;
-    using Microsoft.Extensions.Logging;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.WindowsAzure.Storage.Table;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -56,73 +55,72 @@
         public override async T.Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
         {
             var message = taskItem.GetMessage<JobEventMessage>();
-            using (this.Logger.BeginScope("Do work for JobEvent {0}, {1}, {2}", message.Id, message.Type, message.EventVerb))
+            this.Logger.Information("Do work for JobEvent {0}, {1}, {2}", message.Id, message.Type, message.EventVerb);
+
+            var jobPartitionKey = this.Utilities.GetJobPartitionKey(message.Type, message.Id);
+            var jobEntryKey = this.Utilities.JobEntryKey;
+            var job = await this.jobsTable.RetrieveAsync<Job>(
+                jobPartitionKey,
+                jobEntryKey,
+                token);
+
+            this.Logger.Information("Queried job table entity for job id {0}", message.Id);
+
+            if (job != null)
             {
-                var jobPartitionKey = this.Utilities.GetJobPartitionKey(message.Type, message.Id);
-                var jobEntryKey = this.Utilities.JobEntryKey;
-                var job = await this.jobsTable.RetrieveAsync<Job>(
-                    jobPartitionKey,
-                    jobEntryKey,
-                    token);
-
-                this.Logger.LogInformation("Queried job table entity for job id {0}", message.Id);
-
-                if (job != null)
+                try
                 {
-                    try
+                    IJobTypeHandler typeHandler;
+                    IJobActionHandler actionHandler;
+                    if (this.ActionHandlerTypes.TryGetValue(message.EventVerb, out Type actionType)
+                        && this.JobTypeHandlers.TryGetValue(message.Type, out Type jobType)
+                        && (null != (actionHandler = (IJobActionHandler)this.Provider.GetService(actionType)))
+                        && (null != (typeHandler = (IJobTypeHandler)this.Provider.GetService(jobType))))
                     {
-                        IJobTypeHandler typeHandler;
-                        IJobActionHandler actionHandler;
-                        if (this.ActionHandlerTypes.TryGetValue(message.EventVerb, out Type actionType) 
-                            && this.JobTypeHandlers.TryGetValue(message.Type, out Type jobType)
-                            && (null != (actionHandler = (IJobActionHandler)this.Provider.GetService(actionType)))
-                            && (null != (typeHandler = (IJobTypeHandler)this.Provider.GetService(jobType))))
-                        {
-                            ((ServerObject)actionHandler).CopyFrom(this);
-                            ((ServerObject)typeHandler).CopyFrom(this);
-                            actionHandler.JobTypeHandler = typeHandler;
-                            await actionHandler.ProcessAsync(job, message, token);
-                            this.Logger.LogInformation("Processed {0} job {1} {2}", job.Type, job.Id, job.State);
-                        }
-                        else
-                        {
-                            this.Logger.LogWarning("No processors found for job type {0}, {1}, {2}", job.Type, job.Id, message.EventVerb);
-
-                            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                            {
-                                j.State = JobState.Failed;
-                                (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                                {
-                                    Content = $"No processors found for job type {j.Type}, event {message.EventVerb}",
-                                    Source = EventSource.Job,
-                                    Type = EventType.Alert,
-                                });
-                            }, token);
-                        }
+                        ((ServerObject)actionHandler).CopyFrom(this);
+                        ((ServerObject)typeHandler).CopyFrom(this);
+                        actionHandler.JobTypeHandler = typeHandler;
+                        await actionHandler.ProcessAsync(job, message, token);
+                        this.Logger.Information("Processed {0} job {1} {2}", job.Type, job.Id, job.State);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        this.Logger.LogError("Exception occurred when process job {0}, {1}, {2}, {3}", job.Id, job.Type, message.EventVerb, ex);
+                        this.Logger.Warning("No processors found for job type {0}, {1}, {2}", job.Type, job.Id, message.EventVerb);
+
                         await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                         {
                             j.State = JobState.Failed;
                             (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
                             {
-                                Content = $"Exception occurred when process job {job.Id} {job.Type} {message.EventVerb}. {ex}",
+                                Content = $"No processors found for job type {j.Type}, event {message.EventVerb}",
                                 Source = EventSource.Job,
                                 Type = EventType.Alert,
                             });
                         }, token);
                     }
-
-                    return true;
                 }
-                else
+                catch (Exception ex)
                 {
-                    Debug.Assert(false);
-                    this.Logger.LogWarning("The entity queried is not of job type, {0}", message.Id);
-                    return false;
+                    this.Logger.Error("Exception occurred when process job {0}, {1}, {2}, {3}", job.Id, job.Type, message.EventVerb, ex);
+                    await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
+                    {
+                        j.State = JobState.Failed;
+                        (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                        {
+                            Content = $"Exception occurred when process job {job.Id} {job.Type} {message.EventVerb}. {ex}",
+                            Source = EventSource.Job,
+                            Type = EventType.Alert,
+                        });
+                    }, token);
                 }
+
+                return true;
+            }
+            else
+            {
+                Debug.Assert(false);
+                this.Logger.Warning("The entity queried is not of job type, {0}", message.Id);
+                return false;
             }
         }
     }

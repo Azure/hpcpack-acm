@@ -59,6 +59,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
 
         #region Jobs table
 
+        public string DashboardTableName { get; set; } = "dashboardtable";
         public string JobsTableName { get; set; } = "jobstable";
         public string JobEntryKey { get; internal set; } = "jobentry";
         public string JobAggregationResultPattern { get; internal set; } = "aggregationresult-{0}";
@@ -66,6 +67,9 @@ namespace Microsoft.HpcAcm.Common.Utilities
         public string JobReversePartitionPattern { get; internal set; } = "jobreverse-{0}-{1}";
         public string JobPartitionPattern { get; internal set; } = "job-{0}-{1}";
         public string DiagnosticCategoryPattern { get; internal set; } = "diag-{0}";
+        public string DashboardRowKeyPattern { get; internal set; } = "range-{0}";
+        public string DashboardPartitionPattern { get; internal set; } = "dashboard-{0}";
+        public string DashboardEntryKey { get; internal set; } = "entry";
 
         #endregion
 

@@ -9,9 +9,11 @@
     using System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
     using Microsoft.HpcAcm.Common.Utilities;
+    using Serilog;
+    using Serilog.Sinks.RollingFile;
+    using Serilog.Sinks.SystemConsole;
 
     public class ServerBuilder : IDisposable
     {
@@ -72,52 +74,45 @@
                 var configuration = configBuilder.Build();
 
                 this.services.AddSingleton<IConfiguration>(configuration);
-
-                this.LoggerFactory = new LoggerFactory()
-                    .AddConsole(configuration.GetSection("Logging").GetSection("Console"))
-                  //  .AddAzureWebAppDiagnostics()
-                    .AddDebug(LogLevel.Debug);
-
-                this.loggerFactoryConfigMethod?.Invoke(configuration, this.LoggerFactory);
-
-                this.logger = this.LoggerFactory.CreateLogger<ServerBuilder>();
-                this.services.AddSingleton(this.LoggerFactory).AddLogging();
-
                 this.services.AddOptions();
                 this.services.Configure<CloudOptions>(configuration.GetSection("CloudOptions"));
                 this.services.Configure<ServerOptions>(configuration.GetSection("ServerOptions"));
+                this.services.Configure<LogOptions>(configuration.GetSection("LogOptions"));
+
+                var logOptions = configuration.GetSection("LogOptions").Get<LogOptions>() ?? new LogOptions();
+                this.LoggerConfig = new LoggerConfiguration()
+                    .WriteTo.Console()
+                    .WriteTo.RollingFile(logOptions.FileName);
+
+                this.loggerConfigMethod?.Invoke(configuration, this.LoggerConfig);
+
+                this.Logger = this.LoggerConfig.CreateLogger();
+
+                this.services.AddSingleton(this.LoggerConfig);
+                this.services.AddSingleton(this.Logger);
 
                 this.services.AddSingleton<CloudUtilities>();
 
                 this.serviceCollectionConfigMethod?.Invoke(this.services, configuration, token);
                 this.services.AddSingleton<Server>();
+                this.services.AddSingleton<ServerObject>();
 
                 this.Provider = this.services.BuildServiceProvider();
 
-                var server = this.Provider.GetService<Server>();
-                server.Workers.ForEach(w =>
-                {
-                    if (w is ServerObject so)
-                    {
-                        so.Configuration = configuration;
-                        so.Logger = this.LoggerFactory.CreateLogger(w.GetType());
-                        so.CloudOptions = this.Provider.GetService<IOptions<CloudOptions>>().Value;
-                        so.Utilities = this.Provider.GetService<CloudUtilities>();
-                        so.ServerOptions = this.Provider.GetService<IOptions<ServerOptions>>().Value;
-                        so.Provider = this.Provider;
-                    }
-
-                    w.InitializeAsync(token).Wait();
-                });
-
                 this.Utilities = this.Provider.GetRequiredService<CloudUtilities>();
                 await this.Utilities.InitializeAsync(token);
+                var serverObjectTemplate = this.Provider.GetRequiredService<ServerObject>();
+                serverObjectTemplate.Provider = this.Provider;
+
+                var server = this.Provider.GetService<Server>();
+                server.CopyFrom(serverObjectTemplate);
+                await server.InitializeAsync(token);
 
                 return server;
             }
             catch (Exception ex)
             {
-                this.logger?.LogError(ex, $"Error happened in {nameof(BuildAsync)}");
+                this.Logger?.Error(ex, $"Error happened in {nameof(BuildAsync)}");
                 throw;
             }
         }
@@ -143,20 +138,33 @@
 
         public ServiceProvider Provider { get; private set; }
 
+        public T GetRequiredService<T>()
+        {
+            // language 7.0 constraint.
+            var svc = this.Provider.GetRequiredService(typeof(T));
+            if (svc is ServerObject so)
+            {
+                so.CopyFrom(this.Provider.GetRequiredService<ServerObject>());
+            }
+
+            return (T)svc;
+        }
+
         #endregion
 
-        #region Logger factory
+        #region Serilog
 
-        public ILoggerFactory LoggerFactory { get; private set; }
-        private Action<IConfiguration, ILoggerFactory> loggerFactoryConfigMethod;
+        public LoggerConfiguration LoggerConfig { get; private set; }
 
-        public ServerBuilder ConfigureLogging(Action<IConfiguration, ILoggerFactory> configMethod)
+        private Action<IConfiguration, LoggerConfiguration> loggerConfigMethod;
+
+        public ServerBuilder ConfigureLogging(Action<IConfiguration, LoggerConfiguration> configMethod)
         {
-            this.loggerFactoryConfigMethod = configMethod;
+            this.loggerConfigMethod = configMethod;
             return this;
         }
 
-        private ILogger<ServerBuilder> logger;
+        public ILogger Logger { get; private set; }
 
         #endregion
 

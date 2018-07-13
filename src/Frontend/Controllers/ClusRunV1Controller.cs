@@ -8,7 +8,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using System.Threading;
     using T = System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -27,7 +27,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
 
         // GET v1/clusrun?lastid=3&count=10
         [HttpGet()]
-        public async T.Task<IActionResult> GetJobsAsync([FromQuery] int lastId, [FromQuery] int count = 1000, [FromQuery] bool reverse = false, CancellationToken token = default(CancellationToken))
+        public async T.Task<IActionResult> GetJobsAsync([FromQuery] int lastId, [FromQuery] int count = 100, [FromQuery] bool reverse = false, CancellationToken token = default(CancellationToken))
         {
             return new OkObjectResult(await this.provider.GetJobsAsync(lastId, count, JobType.ClusRun, reverse, token));
         }
@@ -57,7 +57,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         public async T.Task<IActionResult> GetJobTasksAsync(
             int jobId,
             [FromQuery] int lastId = 0,
-            [FromQuery] int count = 1000,
+            [FromQuery] int count = 100,
             [FromQuery] int requeueCount = 0,
             CancellationToken token = default(CancellationToken))
         {

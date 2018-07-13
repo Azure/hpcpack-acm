@@ -6,7 +6,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using System.Threading;
     using T = System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging;
+    using Serilog;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.WindowsAzure.Storage.Table;
@@ -26,7 +26,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         [HttpGet()]
         public async T.Task<IActionResult> GetAsync(
             [FromQuery] string lastId,
-            [FromQuery] int count = 1000,
+            [FromQuery] int count = 100,
             CancellationToken token = default(CancellationToken))
         {
             var nodes = await this.provider.GetNodesAsync(lastId, count, token);
@@ -70,16 +70,16 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         [HttpGet("{id}/metadata")]
         public async T.Task<IActionResult> GetMetadataAsync(string id, CancellationToken token)
         {
-            var obj = await this.provider.GetNodeMetadataAsync(id, token);
-            return new OkObjectResult(obj);
+            var jsonString = (string)await this.provider.GetNodeMetadataAsync(id, token);
+            return jsonString == null ? (IActionResult)new NotFoundResult() : new OkObjectResult(JsonConvert.DeserializeObject(jsonString));
         }
 
         // GET v1/nodes/node1/scheduledevents
         [HttpGet("{id}/scheduledevents")]
         public async T.Task<IActionResult> GetScheduledEventsAsync(string id, CancellationToken token)
         {
-            var obj = await this.provider.GetNodeScheduledEventsAsync(id, token);
-            return new OkObjectResult(obj);
+            var jsonString = (string)await this.provider.GetNodeScheduledEventsAsync(id, token);
+            return jsonString == null ? (IActionResult)new NotFoundResult() : new OkObjectResult(JsonConvert.DeserializeObject(jsonString));
         }
     }
 }

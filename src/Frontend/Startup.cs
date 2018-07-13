@@ -8,15 +8,14 @@ namespace Microsoft.HpcAcm.Frontend
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
+    using Serilog;
 
     public class Startup
     {
-        public Startup(IConfiguration configuration, ILoggerFactory loggerFactory)
+        public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            this.Logger = loggerFactory.CreateLogger<Startup>();
         }
 
         public ILogger Logger { get; }
@@ -34,7 +33,7 @@ namespace Microsoft.HpcAcm.Frontend
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -48,6 +47,8 @@ namespace Microsoft.HpcAcm.Frontend
                   .AllowCredentials()
                   .WithExposedHeaders("Location")
             );
+
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
             app.UseMvc();
         }
     }
