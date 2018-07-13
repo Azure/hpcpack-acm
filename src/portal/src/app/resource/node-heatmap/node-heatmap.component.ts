@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 @Component({
   selector: 'resource-node-heatmap',
   templateUrl: './node-heatmap.component.html',
-  styleUrls: ['./node-heatmap.component.css']
+  styleUrls: ['./node-heatmap.component.scss']
 })
 export class NodeHeatmapComponent implements OnInit, OnDestroy {
   private nodes = [];
@@ -59,44 +59,50 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
     );
   }
 
+  private colorMap = [{
+    value: 0, color: 'ten'
+  }, {
+    value: 1, color: 'twenty'
+  }, {
+    value: 2, color: 'thirty'
+  }, {
+    value: 3, color: 'forty'
+  }, {
+    value: 4, color: 'fifty'
+  }, {
+    value: 5, color: 'sixty'
+  }, {
+    value: 6, color: 'seventy'
+  }, {
+    value: 7, color: 'eighty'
+  }, {
+    value: 8, color: 'ninety'
+  }, {
+    value: 9, color: 'full'
+  }];
+
   nodeClass(node): string {
     let res;
     if (isNaN(node.value)) {
       return;
     }
 
-    if (node.value < 10) {
-      res = 'ten';
+    if (node.value == 0) {
+      return res = 'empty';
     }
-    else if (node.value < 20) {
-      res = 'twenty';
+    if (node.value == 100) {
+      return res = 'full';
     }
-    else if (node.value < 30) {
-      res = 'thirty';
-    }
-    else if (node.value < 40) {
-      res = 'forty';
-    }
-    else if (node.value < 50) {
-      res = 'fifty';
-    }
-    else if (node.value < 60) {
-      res = 'sixty';
-    }
-    else if (node.value < 70) {
-      res = 'seventy';
-    }
-    else if (node.value < 80) {
-      res = 'eighty';
-    }
-    else if (node.value < 90) {
-      res = 'ninety';
-    }
+    let val = Math.floor(node.value / 10);
+    let item = this.colorMap.find(item => {
+      return item.value == val;
+    })
+    res = item.color;
     return res;
   }
 
   nodeTip(node): string {
-    return `${node.id} : `.concat(isNaN(node.value) ? 'offline' : `${node.value} %`);
+    return `${node.id} : `.concat(isNaN(node.value) ? `realtime data is not available` : `${node.value} %`);
   }
 
   clickNode(node): void {
