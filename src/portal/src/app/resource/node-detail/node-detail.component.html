@@ -14,6 +14,9 @@
             <i class="material-icons title-icon">timeline</i>
             <div>CPU</div>
           </div>
+          <div class="overview-title metric-date">
+            {{metricDate}}
+          </div>
           <chart #cpuChart type="line" [data]="cpuData" [options]="cpuOptions"></chart>
         </div>
         <!-- <div class="chart">

@@ -61,7 +61,7 @@
     <mat-cell *matCellDef="let node">
       <div class="icon-cell">
         <mat-icon class="cell-icon healthy" *ngIf="node.health == 'OK'">check</mat-icon>
-        <mat-icon class="cell-icon" *ngIf="!(node.health == 'OK')">error_outline</mat-icon>
+        <mat-icon class="cell-icon error" *ngIf="!(node.health == 'OK')">error_outline</mat-icon>
         <div class="cell-text">{{node.health | titlecase }}</div>
       </div>
     </mat-cell>

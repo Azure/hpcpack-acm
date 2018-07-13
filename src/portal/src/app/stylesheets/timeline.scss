@@ -57,5 +57,5 @@
 
 .empty-msg {
     @include pd(1em, 1em, 1em, 1em);
-    @include font-basic($font-size: .9em, $font-color: #3f51b5);
+    @include font-basic($font-size: .8em, $font-color: #3f51b5);
 }

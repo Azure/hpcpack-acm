@@ -20,6 +20,8 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
   cpuData: any = {};
 
+  private metricDate: string;
+
   cpuOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -272,8 +274,9 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     labels.sort((a, b) => {
       return a - b;
     });
+    this.metricDate = `${this.dateFormat(labels[0].getFullYear())}-${this.dateFormat(labels[0].getMonth() + 1)}-${this.dateFormat(labels[0].getDate())}`;
     labels = labels.map(v => {
-      return this.dateFormat(v.getHours()) + ':' + this.dateFormat(v.getMinutes()) + ':' + this.dateFormat(v.getSeconds());
+      return `${this.dateFormat(v.getHours())}:${this.dateFormat(v.getMinutes())}:${this.dateFormat(v.getSeconds())}`;
     });
     return labels;
   }
