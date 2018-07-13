@@ -63,6 +63,7 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
       if (!this.scrolled) {
         this.dataIndex = -1;
         this.reverse = true;
+        this.scrollDirection = 'down';
         this.jobIndex = 0;
         this.downNum = 0;
         this.upNum = 0;

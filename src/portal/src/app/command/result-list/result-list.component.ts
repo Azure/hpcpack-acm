@@ -58,10 +58,9 @@ export class ResultListComponent implements OnInit {
       this.getCommandRequest(),
       {
         next: (result) => {
-          if (!this.reverse) {
+          if (result.length > 0 && result[0]['id'] <= result[result.length - 1]['id']) {
             result = result.reverse();
           }
-
           this.currentData = result;
           this.tableDataService.updateData(result, this.dataSource, 'id');
           return this.getCommandRequest();

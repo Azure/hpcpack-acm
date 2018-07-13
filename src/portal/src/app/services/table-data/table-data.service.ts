@@ -22,7 +22,7 @@ export class TableDataService {
       return;
     }
     let firstPropVal = newData[0][propertyName];
-    let lastPropVal = newData[newData.length - 1][propertyName];
+    let lastPropVal = newData[length - 1][propertyName];
     let firstIndex = data.findIndex(item => {
       return item[propertyName] == firstPropVal;
     });
