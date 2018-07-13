@@ -100,7 +100,7 @@ export class RingReportComponent implements OnInit {
           errInfo = JSON.stringify(err);
         }
       }
-      this.result.aggregationResult = { Error: errInfo };
+      this.aggregationResult = { Error: errInfo };
     });
   }
 

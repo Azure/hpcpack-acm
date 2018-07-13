@@ -114,7 +114,7 @@ export class PingPongReportComponent implements OnInit {
           errInfo = JSON.stringify(err);
         }
       }
-      this.result.aggregationResult = { Error: errInfo };
+      this.aggregationResult = { Error: errInfo };
     });
   }
 }

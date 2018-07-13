@@ -8,7 +8,7 @@
       <a [routerLink]="getLink(node)" class="node" *ngFor="let node of nodes">{{node}}</a>
     </div>
   </div>
-  <div class="overview-info" *ngIf="hasData(aggregationInfo)">
+  <div class="overview-info" *ngIf="hasData(aggregationInfo.GoodNodes)">
     <div class="overview-title">
       <i class="material-icons title-icon">hdr_strong</i>
       <div class="title-text">Good Nodes</div>
@@ -18,7 +18,7 @@
     </div>
     <div class="overview-value" *ngIf="!hasData(aggregationInfo.GoodNodes)">No Good nodes.</div>
   </div>
-  <div class="overview-info" *ngIf="hasData(aggregationInfo)">
+  <div class="overview-info" *ngIf="hasData(aggregationInfo.BadNodes)">
     <div class="overview-title">
       <i class="material-icons title-icon">hdr_weak</i>
       <div class="title-text">Bad Nodes</div>
