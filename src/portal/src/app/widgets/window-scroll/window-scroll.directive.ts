@@ -10,7 +10,7 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
   @Input() updatedSize = 30;
   @Input() derelictSize = 20;
   @Output() scrollEvent = new EventEmitter();
-  private scrolledHeight = 0;
+  private lastScrolledPosition = 0;
   private downNum = 0;
   private upNum = 0;
   private jobIndex = 0;
@@ -46,9 +46,9 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
     clearTimeout(this.scrollTimer);
     this.scrollTimer = setTimeout(() => {
       const windowHeight = window.innerHeight;
-      const scrollPostion = window.pageYOffset;
+      const scrollPosition = window.pageYOffset;
 
-      if (scrollPostion >= this.componentPostion) {
+      if (scrollPosition >= this.componentPostion) {
         this.scrolled = true;
       }
       else {
@@ -69,19 +69,19 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
         this.upNum = 0;
       }
 
-      if (this.scrolledHeight > scrollPostion && this.scrolled) {
+      if (this.lastScrolledPosition > scrollPosition && this.scrolled) {
         this.scrollDirection = 'up';
         if (this.reverse) {
-          this.jobIndex -= Math.floor((this.scrolledHeight - scrollPostion) / itemHeight);
+          this.jobIndex -= Math.floor((this.lastScrolledPosition - scrollPosition) / itemHeight);
           this.reverse = false;
           this.jobIndex = pageSize - this.jobIndex;
           let itemInView = Math.floor(windowHeight / itemHeight);
           this.jobIndex -= itemInView;
         }
         else {
-          this.jobIndex += Math.floor((this.scrolledHeight - scrollPostion) / itemHeight);
+          this.jobIndex += Math.floor((this.lastScrolledPosition - scrollPosition) / itemHeight);
         }
-        while (this.jobIndex >= this.updatedSize && (pageSize == this.pageSize)) {
+        while (this.jobIndex >= (this.updatedSize - 1) && (pageSize == this.pageSize)) {
           this.upNum++;
           if (this.downNum > 0) {
             this.downNum--;
@@ -90,19 +90,19 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
           this.dataIndex = tableSize - this.derelictSize * this.upNum;
         }
       }
-      else if (this.scrolledHeight <= scrollPostion && this.scrolled) {
+      else if (this.lastScrolledPosition < scrollPosition && this.scrolled) {
         this.scrollDirection = 'down';
         if (!this.reverse) {
-          this.jobIndex -= Math.floor((scrollPostion - this.scrolledHeight) / itemHeight);
+          this.jobIndex -= Math.floor((scrollPosition - this.lastScrolledPosition) / itemHeight);
           this.reverse = true;
           this.jobIndex = pageSize - this.jobIndex;
           let itemInView = Math.floor(windowHeight / itemHeight);
           this.jobIndex -= itemInView;
         }
         else {
-          this.jobIndex += Math.floor((scrollPostion - this.scrolledHeight) / itemHeight);
+          this.jobIndex += Math.floor((scrollPosition - this.lastScrolledPosition) / itemHeight);
         }
-        while (this.jobIndex >= this.updatedSize && (pageSize == this.pageSize)) {
+        while (this.jobIndex >= (this.updatedSize - 1) && (pageSize == this.pageSize)) {
           this.downNum++;
           if (this.upNum > 0) {
             this.upNum--;
@@ -115,7 +115,7 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
           this.loadFinished = true;
         }
       }
-      this.scrolledHeight = scrollPostion;
+      this.lastScrolledPosition = scrollPosition;
       this.scrollEvent.emit({ dataIndex: this.dataIndex, scrolled: this.scrolled, loadFinished: this.loadFinished, scrollDirection: this.scrollDirection });
     }, delay);
   }

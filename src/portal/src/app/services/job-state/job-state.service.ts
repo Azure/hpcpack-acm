@@ -30,7 +30,7 @@ export class JobStateService {
   }
 
   stateIcon(state) {
-    return this.icon[state] || 'autonew';
+    return this.icon[state] || 'autorenew';
   }
 
 }
