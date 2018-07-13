@@ -105,13 +105,12 @@
   <mat-row *matRowDef="let result; columns: displayedColumns;" (click)="selection.toggle(result)"></mat-row>
 </mat-table>
 
-<div class="control" *ngIf="loading">
-  <mat-progress-bar mode="buffer"></mat-progress-bar>
+<div class="loading">
+  <!-- <mat-spinner *ngIf="!hasReceivedData"></mat-spinner> -->
+  <mat-progress-bar *ngIf="!loadFinished" mode="buffer"></mat-progress-bar>
+  <div class="load-finish" *ngIf="loadFinished">
+    No more data.
+  </div>
 </div>
 
-<div class="up-to-top">
-  <!-- It seems a known issue about hash in URL. Anyway, it works here except a console error. Just ignore it. -->
-  <a href="#table">
-    <i class="material-icons upward">arrow_upward</i>
-  </a>
-</div>
+<app-scroll-to-top [scrolled]="scrolled"></app-scroll-to-top>

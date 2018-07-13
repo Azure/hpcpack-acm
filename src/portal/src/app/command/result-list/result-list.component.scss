@@ -33,20 +33,8 @@ mat-table {
     margin-top: 1em;
 }
 
-.up-to-top {
-    position: fixed;
-    z-index: 200;
-    width: 2.5em;
-    height: 2.5em;
-    bottom: 1em;
-    right: 1em;
-    background: rgba(0, 0, 0, .08);
+.loading {
     display: flex;
     justify-content: center;
-    align-items: center;
-}
-
-.up-to-top a,
-.up-to-top a:visited {
-    color: inherit;
+    margin: 20px auto;
 }

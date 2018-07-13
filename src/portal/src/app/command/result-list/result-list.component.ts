@@ -76,6 +76,10 @@ export class ResultListComponent implements OnInit {
     }
   }
 
+  private scrollToTop() {
+    window.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
+  }
+
   private onScrollEvent(data) {
     this.lastId = data.dataIndex == -1 ? 0 : this.dataSource.data[data.dataIndex]['id'];
     this.loadFinished = data.loadFinished;
