@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { isArray } from 'util';
+import { isArray, isObject } from 'util';
 
 @Component({
   selector: 'app-nodes-info',
@@ -21,6 +21,12 @@ export class NodesInfoComponent implements OnInit {
   hasData(data) {
     if (isArray(data)) {
       return data.length > 0;
+    }
+    if (isObject(data)) {
+      let keys = Object.keys(data);
+      return keys.every(item => {
+        return data[item] !== undefined && data[item] !== null;
+      })
     }
     return data !== undefined && data !== null;
   }
