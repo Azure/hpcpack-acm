@@ -6,6 +6,7 @@ import { Node } from '../../models/node';
 import { ApiService, Loop } from '../../services/api.service';
 import { ChartComponent } from 'angular2-chartjs';
 import { JobStateService } from '../../services/job-state/job-state.service';
+import { DateFormatterService } from '../../services/date-formatter/date-formatter.service';
 
 @Component({
   selector: 'app-node-detail',
@@ -154,6 +155,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
   constructor(
     private api: ApiService,
     private jobStateService: JobStateService,
+    private dateFormatterService: DateFormatterService,
     private route: ActivatedRoute,
   ) {
     this.historyInterval = 10000;
@@ -261,10 +263,6 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     return path;
   }
 
-  dateFormat(value): string {
-    return value >= 10 ? value.toString() : '0' + value;
-  }
-
   //get history lables sort by time
   makeLabels(history): string[] {
     let labels = [];
@@ -274,9 +272,9 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     labels.sort((a, b) => {
       return a - b;
     });
-    this.metricDate = `${this.dateFormat(labels[0].getFullYear())}-${this.dateFormat(labels[0].getMonth() + 1)}-${this.dateFormat(labels[0].getDate())}`;
+    this.metricDate = this.dateFormatterService.dateString(labels[0]);
     labels = labels.map(v => {
-      return `${this.dateFormat(v.getHours())}:${this.dateFormat(v.getMinutes())}:${this.dateFormat(v.getSeconds())}`;
+      return this.dateFormatterService.timeString(v);
     });
     return labels;
   }

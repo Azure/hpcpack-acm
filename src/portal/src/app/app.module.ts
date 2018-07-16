@@ -4,8 +4,6 @@ import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
 import { MaterialsModule } from './materials.module';
-
-
 import { environment as env } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AuthGuardService } from './services/auth-guard.service';
@@ -23,6 +21,7 @@ import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { WidgetsModule } from './widgets/widgets.module';
 import { JobStateService } from './services/job-state/job-state.service';
 import { TableDataService } from './services/table-data/table-data.service';
+import { DateFormatterService } from './services/date-formatter/date-formatter.service';
 
 @NgModule({
   declarations: [
@@ -46,7 +45,7 @@ import { TableDataService } from './services/table-data/table-data.service';
     WidgetsModule,
     AppRoutingModule
   ],
-  providers: [AuthGuardService, AuthService, LoginGuardService, ApiService, JobStateService, TableDataService,
+  providers: [AuthGuardService, AuthService, LoginGuardService, ApiService, JobStateService, DateFormatterService, TableDataService,
     TableSettingsService, UserSettingsService, LocalStorageService],
   bootstrap: [AppComponent]
 })
