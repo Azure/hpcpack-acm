@@ -101,20 +101,22 @@ export class PingPongReportComponent implements OnInit {
   }
 
   getAggregationResult() {
-    this.api.diag.getJobAggregationResult(this.result.id).subscribe(res => {
-      this.aggregationResult = res;
-      this.updateOverviewData();
-    }, err => {
-      let errInfo = err;
-      if (ApiService.isJSON(err)) {
-        if (err.error) {
-          errInfo = err.error;
+    this.api.diag.getJobAggregationResult(this.result.id).subscribe(
+      res => {
+        this.aggregationResult = res;
+        this.updateOverviewData();
+      },
+      err => {
+        let errInfo = err;
+        if (ApiService.isJSON(err)) {
+          if (err.error) {
+            errInfo = err.error;
+          }
+          else {
+            errInfo = JSON.stringify(err);
+          }
         }
-        else {
-          errInfo = JSON.stringify(err);
-        }
-      }
-      this.aggregationResult = { Error: errInfo };
-    });
+        this.aggregationResult = { Error: errInfo };
+      });
   }
 }
