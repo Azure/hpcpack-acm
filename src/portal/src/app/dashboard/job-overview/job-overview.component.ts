@@ -39,6 +39,9 @@ export class JobOverviewComponent implements OnInit, OnChanges {
 
   chartOption = {
     responsive: true,
+    animation: {
+      duration: 0
+    },
     maintainAspectRatio: false,
     legend: {
       display: false
@@ -69,6 +72,8 @@ export class JobOverviewComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    this.totalJobs = 0;
+    this.activeJobs = 0;
     let states = Object.keys(this.jobs);
     if (states.length > 0) {
       this.loading = false;
@@ -97,11 +102,6 @@ export class JobOverviewComponent implements OnInit, OnChanges {
         backgroundColor: this.colors
       }]
     };
-  }
-
-  autoNewAction() {
-    this.loading = true;
-    this.autoNew.emit(this.jobCategory);
   }
 
   jobInfo() {
