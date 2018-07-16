@@ -19,7 +19,7 @@ def main(cluster, runtime, mail):
             'test-functional.py {} --category diagnostics --timeout 100 --continuous {}'.format(cluster, runtime),
         ],
         [
-            'test-functional.py {} --category clusrun --command "hostname" --timeout 20 --continuous {}'.format(cluster, runtime),
+            'test-functional.py {} --category clusrun --command "hostname" --timeout 25 --continuous {}'.format(cluster, runtime),
         ],
         [
             'test-functional.py {} --category clusrun --command "{}" --timeout 200 --continuous {}'.format(cluster, CPU_COMMAND, runtime),
@@ -40,25 +40,6 @@ def main(cluster, runtime, mail):
             'test-functional.py {} --category diagnostics --cancel 60 --timeout 200 --continuous {}'.format(cluster, runtime),
             'test-restapi-get.py {} --continuous {}'.format(cluster, runtime)
         ],
-        [
-            'test-functional.py {} --category clusrun --command "{}" --timeout 2000 --continuous {}'.format(cluster, CPU_COMMAND, runtime),
-            'test-functional.py {} --category clusrun --command "ping localhost" --cancel 10 --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "ping localhost" --cancel 30 --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "ping localhost" --cancel 60 --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "sleep 10" --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "sleep 30" --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "sleep 60" --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "echo -n test" --result "test" --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "whoami" --result "root\\n" --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "hostname" --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category diagnostics --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category diagnostics --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category diagnostics --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category diagnostics --cancel 10 --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category diagnostics --cancel 30 --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category diagnostics --cancel 60 --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-restapi-get.py {} --continuous {}'.format(cluster, runtime)
-        ]
     ]
 
     startTime = formatdate(localtime=True)
