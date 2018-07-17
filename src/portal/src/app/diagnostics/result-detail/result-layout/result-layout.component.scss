@@ -1,44 +1,4 @@
-@import "../../../stylesheets/mixin.scss";
-@import "../../../stylesheets/info.scss";
-.title {
-    @include display-flex(center, space-between);
-    padding: 0 1em;
-    background-color: #fff;
-    border-left: 4px solid #3f51b5;
-    @include font-basic;
-    .name {
-        margin: 0 0.3em;
-        @include font-basic(1.2em, rgba($color: #000000, $alpha: 0.8));
-        padding: 1em 0;
-    }
-}
-
-.title-icon {
-    font-size: 1em;
-    padding-right: 0.2em;
-}
-
-.main {
-    clear: both;
-}
-
-.time {
-    margin-top: 8px;
-    font-size: small;
-}
-
-.tasks {
-    margin-top: 1em;
-}
-
-.overview {
-    margin: 1em 0;
-    chart {
-        height: 200px;
-        max-width: 400px;
-    }
-}
-
+@import "../../../stylesheets/job-result.scss";
 .aggregationResult {
     white-space: pre-line;
     line-height: 2em;
@@ -112,17 +72,6 @@
     margin-left: 1em;
 }
 
-.mat-form-field-hide-placeholder .mat-select-placeholder {
-    font-size: .9em !important;
-}
-
-md-select,
-.mat-select-placeholder,
-.mat-select-trigger {
-    font-size: .9em !important;
-    color: #3f51b5 !important;
-}
-
 .pair-list {
     font-size: .9em;
     padding-bottom: .5em;
@@ -144,29 +93,4 @@ md-select,
 .error-message {
     color: rgba(206, 80, 57, .9);
     padding: 1em;
-}
-
-.job-state,
-.operation {
-    @include display-flex(center);
-}
-
-.operation:hover {
-    cursor: pointer;
-}
-
-.operation-name {
-    @include font-basic(.8em, rgba(0, 0, 0, .5));
-}
-
-.cancel {
-    color: rgba(206, 80, 57, .9);
-}
-
-.rerun {
-    color: rgba(63, 81, 181, .9)
-}
-
-.state-text {
-    display: inline-block;
 }

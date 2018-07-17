@@ -7,7 +7,7 @@ export class JobStateService {
     'Queued': 'queued',
     'Failed': 'failed',
     'Running': 'running',
-    'Canceled': 'canceld'
+    'Canceled': 'canceled'
   };
 
   private icon = {

@@ -3,6 +3,7 @@ import { ApiService } from '../../../services/api.service';
 import { MatDialog } from '@angular/material';
 import { ConfirmDialogComponent } from '../../../widgets/confirm-dialog/confirm-dialog.component';
 import { Router } from '@angular/router';
+import { JobStateService } from '../../../services/job-state/job-state.service';
 
 @Component({
   selector: 'app-result-layout',
@@ -26,18 +27,12 @@ export class ResultLayoutComponent implements OnInit {
   overviewTemplate: TemplateRef<any>;
 
   private stateClass(state) {
-    switch (state) {
-      case 'Finished': return 'finished';
-      case 'Queued': return 'queued';
-      case 'Failed': return 'failed';
-      case 'Running': return 'running';
-      case 'Canceled': return 'canceled';
-      default: return '';
-    }
+    return this.jobStateService.stateClass(state);
   }
 
   constructor(
     private api: ApiService,
+    private jobStateService: JobStateService,
     private dialog: MatDialog,
     private router: Router,
   ) { }
@@ -58,7 +53,7 @@ export class ResultLayoutComponent implements OnInit {
       }
     }
   }
-  private disabledCancel = false;
+  private canceling = false;
 
   cancelDiag() {
     let dialogRef = this.dialog.open(ConfirmDialogComponent, {
@@ -70,7 +65,7 @@ export class ResultLayoutComponent implements OnInit {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.disabledCancel = true;
+        this.canceling = true;
         this.api.diag.cancel(this.result.id).subscribe(res => { });
       }
     });

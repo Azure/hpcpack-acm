@@ -1,11 +1,23 @@
-<div class="title" [ngClass]="result?.state">
-  <div class="command">{{result?.command}}</div>
-  <div class="state">{{result?.state | titlecase }}</div>
+<div class="title main">
+  <div class="job-state">
+    <div class="name">{{id}} - {{result.command}}
+      <div class="state-text" [ngClass]="result.state">{{result.state | titlecase}}</div>
+    </div>
+    <mat-spinner *ngIf="!isOver" [diameter]="25"></mat-spinner>
+  </div>
+  <div class="cancel-job">
+    <div class="operation-text" *ngIf="!isOver && canceling">
+      <div class="operation-name">Waiting for cancel request finish...</div>
+    </div>
+    <div class="operation" *ngIf="!isOver" (click)="cancelCommand()">
+      <i class="material-icons cancel">clear</i>
+      <div class="operation-name">Cancel</div>
+    </div>
+  </div>
+  <div class="operation" *ngIf="isOver" (click)="newCommand()">
+    <i class="material-icons rerun">content_copy</i>
+    <div class="operation-name">Copy</div>
 </div>
-
-<div class="actions">
-  <button mat-raised-button (click)="newCommand()" [disabled]="!result">New Run...</button>
-  <button mat-raised-button (click)="cancelCommand()" [disabled]="isOver">Cancel...</button>
 </div>
 
 <ng-container *ngIf="isLoaded; else waiting">
@@ -27,7 +39,7 @@
           <a [href]="currentOutputUrl" *ngIf="currentOutputUrl">
             <i class="material-icons">file_download</i> Download the whole output
           </a>
-          <mat-checkbox [disabled]="loading && loading != 'auto'" [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoscroll</mat-checkbox>
+          <mat-checkbox color="primary" [disabled]="loading && loading != 'auto'" [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoscroll</mat-checkbox>
         </div>
       </div>
     </div>

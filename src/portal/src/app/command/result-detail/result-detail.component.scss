@@ -1,65 +1,34 @@
-.title {
-  clear: both;
-  font-size: 120%;
-  padding: 0.5em;
-  border-radius: 0.5em;
-
-  .command {
-    font-weight: bold;
-  }
-
-  .state {
-    font-size: small;
-    font-style: italic;
-  }
-}
-
-.title.failed {
-  color: red;
-  background-color: #ffdada;
-}
-
-.title.running {
-  color: blue;
-  background-color: #b3c4ff;
-}
-
-.title.finished {
-  color: green;
-  background-color: #d5ffd4;
-}
-
+@import "../../stylesheets/job-result.scss";
 .waiting {
-  mat-spinner {
-    margin: 1em auto;
-  }
-  text-align: center;
+    mat-spinner {
+        margin: 1em auto;
+    }
+    text-align: center;
 }
 
 .actions {
-  margin-top: 1em;
+    margin-top: 1em;
 }
 
 .container-fluid {
-  margin-top: 1em;
+    margin-top: 1em;
 }
 
-.selection, .output {
-  max-height: 800px;
-  margin-bottom: 1em;
+.selection,
+.output {
+    max-height: 800px;
+    margin-bottom: 1em;
 }
 
 .control.bottom {
-  display: flex;
-  justify-content: space-between;
-  padding: 5px;
-  margin-top: 0.5em;
-
-  a {
-    color: inherit;
-  }
-
-  a .material-icons {
-    vertical-align: top;
-  }
+    display: flex;
+    justify-content: space-between;
+    padding: 5px;
+    margin-top: 0.5em;
+    a {
+        color: inherit;
+    }
+    a .material-icons {
+        vertical-align: top;
+    }
 }

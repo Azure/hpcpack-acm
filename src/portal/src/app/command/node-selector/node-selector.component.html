@@ -18,7 +18,10 @@
 
   <ng-container matColumnDef="state">
     <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
-    <mat-cell *matCellDef="let node">{{node.state | titlecase }}</mat-cell>
+    <mat-cell *matCellDef="let node" class="icon-cell">
+      <i class="material-icons cell-icon" [ngClass]="stateClass(node.state)">{{stateIcon(node.state)}}</i>
+      <div class="cell-text">{{node.state | titlecase}}</div>
+    </mat-cell>
   </ng-container>
 
   <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
