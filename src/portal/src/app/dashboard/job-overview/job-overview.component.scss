@@ -85,21 +85,3 @@ chart {
 .operation {
     @include display-flex;
 }
-
-.card-content {
-    position: relative;
-}
-
-.shade {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    background: rgba(255, 255, 255, .7);
-    .progress {
-        @include display-flex(center, center);
-        height: 100%;
-    }
-}

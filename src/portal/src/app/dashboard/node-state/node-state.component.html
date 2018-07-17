@@ -6,7 +6,7 @@
             <span class="info-title">DETAIL</span>
         </div>
     </div>
-    <div class="outline">
+    <div class="outline card-content">
         <div class="icon" [ngClass]="state">
             <i class="material-icons">{{stateIcon}}</i>
         </div>
@@ -19,6 +19,11 @@
                 <span [ngClass]="state">{{stateNum}}</span>
                 /
                 <span class="total">{{total}}</span>
+            </div>
+        </div>
+        <div class="shade" *ngIf="loading">
+            <div class="progress">
+                <mat-progress-bar mode="buffer"></mat-progress-bar>
             </div>
         </div>
     </div>
