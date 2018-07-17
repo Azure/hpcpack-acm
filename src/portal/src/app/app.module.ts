@@ -4,8 +4,6 @@ import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
 import { MaterialsModule } from './materials.module';
-
-
 import { environment as env } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AuthGuardService } from './services/auth-guard.service';
@@ -15,20 +13,22 @@ import { ApiService } from './services/api.service';
 import { TableSettingsService } from './services/table-settings.service';
 import { UserSettingsService } from './services/user-settings.service';
 import { LocalStorageService } from './services/local-storage.service';
-import { InMemoryDataService }  from './services/in-memory-data.service';
+import { InMemoryDataService } from './services/in-memory-data.service';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
 import { NotificationComponent } from './notification/notification.component';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { WidgetsModule } from './widgets/widgets.module';
-
+import { JobStateService } from './services/job-state/job-state.service';
+import { TableDataService } from './services/table-data/table-data.service';
+import { DateFormatterService } from './services/date-formatter/date-formatter.service';
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,
     NotificationComponent,
-    BreadcrumbComponent,
+    BreadcrumbComponent
   ],
   imports: [
     BrowserModule,
@@ -43,9 +43,9 @@ import { WidgetsModule } from './widgets/widgets.module';
     //),
     MaterialsModule,
     WidgetsModule,
-    AppRoutingModule,
+    AppRoutingModule
   ],
-  providers: [AuthGuardService, AuthService, LoginGuardService, ApiService,
+  providers: [AuthGuardService, AuthService, LoginGuardService, ApiService, JobStateService, DateFormatterService, TableDataService,
     TableSettingsService, UserSettingsService, LocalStorageService],
   bootstrap: [AppComponent]
 })

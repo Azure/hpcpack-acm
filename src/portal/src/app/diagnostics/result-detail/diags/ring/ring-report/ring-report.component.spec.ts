@@ -1,5 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input, Directive } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { RingReportComponent } from './ring-report.component';
 import { MaterialsModule } from '../../../../../materials.module';
@@ -7,10 +7,35 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ApiService } from '../../../../../services/api.service';
 import { TableSettingsService } from '../../../../../services/table-settings.service';
 
+@Directive({
+  selector: '[routerLink]',
+  host: { '(click)': 'onClick()' }
+})
+class RouterLinkDirectiveStub {
+  @Input('routerLink') linkParams: any;
+  navigatedTo: any = null;
+
+  onClick() {
+    this.navigatedTo = this.linkParams;
+  }
+}
+
 @Component({ selector: 'app-result-layout', template: '' })
 class ResultLayoutComponent {
   @Input()
   result: any;
+
+  @Input()
+  aggregationResult: any;
+}
+
+@Component({ selector: 'app-nodes-info', template: '' })
+class NodesInfoComponent {
+  @Input()
+  nodes: Array<any>;
+
+  @Input()
+  aggregationInfo: object;
 }
 
 @Component({ selector: 'ring-overview-result', template: '' })
@@ -63,7 +88,7 @@ class ApiServiceStub {
   diag = {
     getDiagTasks: (id: any) => of(ApiServiceStub.taskResult),
     getDiagJob: (id: any) => of(ApiServiceStub.jobResult),
-    isJSON: () => { return true; }
+    getJobAggregationResult: (id: any) => of({ Error: "error message" })
   }
 }
 
@@ -84,8 +109,10 @@ fdescribe('RingReportComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
+        RouterLinkDirectiveStub,
         RingReportComponent,
         ResultLayoutComponent,
+        NodesInfoComponent,
         RingOverviewResultComponent,
         DiagTaskTableComponent,
         EventListComponent,

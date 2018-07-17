@@ -39,9 +39,31 @@ export class TaskTableComponent implements OnInit {
     this.getDisplayedColumns();
   }
 
+  private setIcon(state) {
+    switch (state) {
+      case 'Finished': return 'done';
+      case 'Queued': return 'blur_linear';
+      case 'Failed': return 'clear';
+      case 'Running': return 'blur_on';
+      case 'Canceled': return 'cancel';
+      default: return 'autorenew';
+    }
+  }
+
+  private stateClass(state) {
+    switch (state) {
+      case 'Finished': return 'finished';
+      case 'Queued': return 'queued';
+      case 'Failed': return 'failed';
+      case 'Running': return 'running';
+      case 'Canceled': return 'canceled';
+      default: return '';
+    }
+  }
+
   private showDetail(jobId, taskId, taskState) {
     let dialogRef = this.dialog.open(TaskDetailComponent, {
-      width: '60%',
+      width: '70%',
       data: { jobId: jobId, taskId: taskId, taskState: taskState }
     });
   }

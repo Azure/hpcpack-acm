@@ -3,6 +3,7 @@ import { ApiService } from '../../../services/api.service';
 import { MatDialog } from '@angular/material';
 import { ConfirmDialogComponent } from '../../../widgets/confirm-dialog/confirm-dialog.component';
 import { Router } from '@angular/router';
+import { JobStateService } from '../../../services/job-state/job-state.service';
 
 @Component({
   selector: 'app-result-layout',
@@ -13,7 +14,11 @@ export class ResultLayoutComponent implements OnInit {
   @Input()
   result: any;
 
-  private done: boolean;
+  @Input()
+  aggregationResult: any;
+
+  private done = false;
+  private showOverview = false;
 
   @ContentChild('task')
   taskTemplate: TemplateRef<any>;
@@ -21,8 +26,13 @@ export class ResultLayoutComponent implements OnInit {
   @ContentChild('overview')
   overviewTemplate: TemplateRef<any>;
 
+  private stateClass(state) {
+    return this.jobStateService.stateClass(state);
+  }
+
   constructor(
     private api: ApiService,
+    private jobStateService: JobStateService,
     private dialog: MatDialog,
     private router: Router,
   ) { }
@@ -38,9 +48,12 @@ export class ResultLayoutComponent implements OnInit {
   isDone() {
     if (this.result.state == "Failed" || this.result.state == "Finished" || this.result.state == "Canceled") {
       this.done = true;
+      if (this.aggregationResult !== undefined && this.aggregationResult !== null) {
+        this.showOverview = true;
+      }
     }
   }
-  private disabledCancel = false;
+  private canceling = false;
 
   cancelDiag() {
     let dialogRef = this.dialog.open(ConfirmDialogComponent, {
@@ -52,7 +65,7 @@ export class ResultLayoutComponent implements OnInit {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
-        this.disabledCancel = true;
+        this.canceling = true;
         this.api.diag.cancel(this.result.id).subscribe(res => { });
       }
     });

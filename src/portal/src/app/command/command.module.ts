@@ -11,6 +11,7 @@ import { ResultDetailComponent } from './result-detail/result-detail.component';
 import { CommandOutputComponent } from './command-output/command-output.component';
 import { NodeSelectorComponent } from './node-selector/node-selector.component';
 import { CommandInputComponent } from './command-input/command-input.component';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
   imports: [
@@ -20,6 +21,7 @@ import { CommandInputComponent } from './command-input/command-input.component';
     WidgetsModule,
     FormsModule,
     ChartModule,
+    SharedModule
   ],
   declarations: [CommandComponent, ResultListComponent, ResultDetailComponent, CommandOutputComponent, NodeSelectorComponent, CommandInputComponent],
   entryComponents: [CommandInputComponent],

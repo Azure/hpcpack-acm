@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MaterialsModule } from '../../materials.module';
 import { ResultDetailComponent } from './result-detail.component';
+import { JobStateService } from '../../services/job-state/job-state.service';
 
 @Component({ selector: 'command-output', template: '' })
 class CommandOutputStubComponent {
@@ -87,6 +88,15 @@ const routerStub = {
   navigate: () => {},
 }
 
+class JobStateServiceStub {
+  stateClass(state) {
+    return 'finished';
+  }
+  stateIcon(state) {
+    return 'done';
+  }
+}
+
 fdescribe('ResultDetailComponent', () => {
   let component: ResultDetailComponent;
   let fixture: ComponentFixture<ResultDetailComponent>;
@@ -105,6 +115,7 @@ fdescribe('ResultDetailComponent', () => {
       ],
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
+        { provide: JobStateService, useClass: JobStateServiceStub },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
         { provide: Router, useValue: routerStub },
       ]
@@ -122,9 +133,9 @@ fdescribe('ResultDetailComponent', () => {
     flush();
 
     expect(component).toBeTruthy();
-    let text = fixture.nativeElement.querySelector('.command').textContent;
+    let text = fixture.nativeElement.querySelector('.job-state .name').textContent;
     expect(text).toContain(ApiServiceStub.job.commandLine);
-    text = fixture.nativeElement.querySelector('.state').textContent;
+    text = fixture.nativeElement.querySelector('.state-text').textContent;
     expect(text).toContain('Finished');
 
     expect(component.currentOutput.content).toEqual(ApiServiceStub.outputContent);

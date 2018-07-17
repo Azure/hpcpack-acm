@@ -1,4 +1,4 @@
-<app-result-layout [result]="result">
+<app-result-layout [result]="result" [aggregationResult]="aggregationResult">
   <ng-template #overview>
     <mat-tab-group>
       <mat-tab label="Result" *ngIf="!hasError">
@@ -8,6 +8,9 @@
         <div class="error-message">
           {{aggregationResult.Error}}
         </div>
+      </mat-tab>
+      <mat-tab label="Nodes">
+        <app-nodes-info [nodes]="nodes" [aggregationInfo]="undefined"></app-nodes-info>
       </mat-tab>
       <mat-tab label="Events">
         <app-event-list [events]="events"></app-event-list>

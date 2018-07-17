@@ -5,11 +5,14 @@
 }
 
 .overview-title {
-    @include font-basic($font-size: .8em, $font-color: #7986CB);
+    @include font-basic($font-size: .8em, $font-color: #3f51b5);
+    .title-icon {
+        font-size: 1.2em;
+    }
 }
 
 .overview-value {
-    @include font-basic($font-size: .8em, $font-color: rgba(0, 0, 0, .6));
+    @include font-basic($font-size: .8em, $font-color: $info-color);
 }
 
 .info-item,
@@ -17,20 +20,24 @@
     margin-bottom: 1em;
 }
 
-.Failed {
+.finished {
+    color: #49a067;
+}
+
+.queued {
+    color: #FF8F00;
+}
+
+.failed {
     color: #D84315;
 }
 
-.Finished {
-    color: #2E7D32;
-}
-
-.Running {
+.running {
     color: #283593;
 }
 
-.Queued {
-    color: #FF8F00;
+.canceled {
+    color: #6c727c;
 }
 
 .main {
@@ -82,5 +89,19 @@
 
 .error-message {
     padding: 1em;
-    @include font-basic($font-size: .9em, $font-color: rgba(206, 80, 57, .9));
+    @include font-basic($font-size: .8em, $font-color: rgba(206, 80, 57, .9));
+}
+
+a {
+    color: $info-color;
+    &.link {
+        color: $info-color;
+    }
+    &:visited {
+        color: $info-color;
+    }
+    &:hover {
+        cursor: pointer;
+        color: $color;
+    }
 }

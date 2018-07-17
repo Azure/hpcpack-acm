@@ -3,7 +3,7 @@ import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef }
 @Component({
   selector: 'command-output',
   templateUrl: './command-output.component.html',
-  styleUrls: ['./command-output.component.css']
+  styleUrls: ['./command-output.component.scss']
 })
 export class CommandOutputComponent implements OnInit {
   @Output()

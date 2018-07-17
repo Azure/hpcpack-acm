@@ -1,10 +1,11 @@
 import { Component, OnChanges, SimpleChanges, Input, Output, EventEmitter } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
+import { JobStateService } from '../../services/job-state/job-state.service';
 
 @Component({
   selector: 'node-selector',
   templateUrl: './node-selector.component.html',
-  styleUrls: ['./node-selector.component.css']
+  styleUrls: ['./node-selector.component.scss']
 })
 export class NodeSelectorComponent implements OnChanges {
   @Input()
@@ -25,12 +26,22 @@ export class NodeSelectorComponent implements OnChanges {
 
   private dataSource = new MatTableDataSource();
 
-  constructor() {}
+  constructor(
+    private jobStateService: JobStateService
+  ) { }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.nodes) {
       this.filter();
     }
+  }
+
+  stateClass(state) {
+    return this.jobStateService.stateClass(state);
+  }
+
+  stateIcon(state) {
+    return this.jobStateService.stateIcon(state);
   }
 
   isSelected(node) {

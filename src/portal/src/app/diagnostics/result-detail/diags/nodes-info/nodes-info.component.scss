@@ -1,0 +1,23 @@
+@import "../../../../stylesheets/mixin.scss";
+@import "../../../../stylesheets/info.scss";
+.nodes-info {
+    padding-top: 1em;
+    padding-left: 1em;
+}
+
+.overview-title {
+    @include display-flex(center);
+    .title-text {
+        padding-left: .5em;
+    }
+}
+
+.overview-value {
+    word-break: keep-all;
+    word-wrap: break-word;
+}
+
+.node {
+    display: inline-block;
+    padding-right: 1em;
+}

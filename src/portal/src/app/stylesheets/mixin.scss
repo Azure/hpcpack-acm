@@ -3,6 +3,8 @@ $font-stack: Roboto,
 sans-serif;
 $font-size: 16px;
 $font-weight: normal;
+$color: #3f51b5;
+$info-color: rgba(0, 0, 0, .8);
 @mixin display-flex($align-items: stretch, $justify-content: normal, $flex-direction: row) {
     display: -webkit-flex;
     display: flex;
@@ -83,6 +85,7 @@ $font-weight: normal;
 @mixin ellipsis-text() {
     white-space: nowrap;
     text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 @mixin width-height($width, $height) {

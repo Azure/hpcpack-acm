@@ -8,6 +8,7 @@ import { NodeSelectorComponent } from '../node-selector/node-selector.component'
 import { CommandOutputComponent } from '../command-output/command-output.component';
 import { CommandInputComponent } from '../command-input/command-input.component';
 import { ConfirmDialogComponent } from '../../widgets/confirm-dialog/confirm-dialog.component';
+import { JobStateService } from '../../services/job-state/job-state.service';
 
 @Component({
   selector: 'app-result-detail',
@@ -45,12 +46,15 @@ export class ResultDetailComponent implements OnInit {
 
   private outputPageSize = 8192;
 
+  private canceling = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private api: ApiService,
+    private jobStateService: JobStateService,
     private dialog: MatDialog,
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
@@ -263,7 +267,7 @@ export class ResultDetailComponent implements OnInit {
       return false;
     }
     //Update start field when and only when it's not updated yet.
-    if (typeof(output.start) === 'undefined') {
+    if (typeof (output.start) === 'undefined') {
       output.start = result.offset;
     }
     //NOTE: result.end depends on passing an opt.over parameter to API getOutput.
@@ -366,7 +370,7 @@ export class ResultDetailComponent implements OnInit {
   }
 
   get currentOutputUrl(): string {
-    return this.isOutputDisabled ? '' :  this.api.command.getDownloadUrl(this.currentOutput.key);
+    return this.isOutputDisabled ? '' : this.api.command.getDownloadUrl(this.currentOutput.key);
   }
 
   scrollOutputToBottom(): void {
@@ -528,6 +532,7 @@ export class ResultDetailComponent implements OnInit {
     });
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
+        this.canceling = true;
         this.api.command.cancel(this.id).subscribe();
       }
     });

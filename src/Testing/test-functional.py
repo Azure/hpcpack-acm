@@ -104,7 +104,6 @@ def main(cluster, category, command, result, name, cancel, timeout):
                                     return 'Fail'
                                 if jobState == 'Finished' or jobState == 'Finishing':
                                     print '[Warn]: failed to cancel the {} job.'.format(jobState)
-                                    return 'Warn'
                                 else:
                                     print '[Fail]: failed to cancel the {} job.'.format(jobState)
                                     return 'Fail'

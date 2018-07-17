@@ -23,15 +23,11 @@ export abstract class Resource<T> {
 
   protected normalize(e: any): T { return e as T; }
 
-  errorMsg(error) {
-    return `Caught error: "${error}"`;
-  }
-
   get errorHandler() {
     return catchError(error => {
       console.error(error);
       //ErrorObservable is effectively an exception, like throw(...)
-      return new ErrorObservable(this.errorMsg(error));
+      return new ErrorObservable(error);
     })
   }
 
@@ -284,25 +280,6 @@ export class DiagApi extends Resource<any> {
     }
     return data;
   }
-
-  isJSON(item) {
-    item = typeof item !== "string"
-      ? JSON.stringify(item)
-      : item;
-
-    try {
-      item = JSON.parse(item);
-    } catch (e) {
-      return false;
-    }
-
-    if (typeof item === "object" && item !== null) {
-      return true;
-    }
-
-    return false;
-  }
-
   getDiagTests() {
     let url = `${this.url}/tests`;
     return this.httpGet(url, null, [
@@ -319,42 +296,17 @@ export class DiagApi extends Resource<any> {
   }
 
   getJobAggregationResult(id: string) {
-    return this.http.get<any>(`${this.url}/${id}/aggregationResult`).pipe(catchError(err => {
-      return of({ Error: err.error });
-    }));
-  }
-
-
-  protected normalizeTasks(result: any): any {
-    for (let i = 0; i < result.length; i++) {
-      if (result[i].taskInfo == undefined) {
-        result[i].taskInfo = {};
-        result[i].taskInfo.message = { Latency: 'calculating', Throughput: 'calculating', Detail: '' };
-      }
-      else {
-        if (this.isJSON(result[i].taskInfo.message)) {
-          result[i].taskInfo.message = JSON.parse(result[i].taskInfo.message);
-        }
-        else {
-          result[i].taskInfo.message = { Latency: 'no result', Throughput: 'no result', Detail: '' };
-        }
-      }
-    }
+    return this.httpGet(`${this.url}/${id}/aggregationResult`);
   }
 
   getDiagTasks(id: string) {
-    return this.httpGet(`${this.url}/${id}/tasks`, null, [
-      map(item => {
-        this.normalizeTasks(item);
-        return item;
-      })
-    ]);
+    return this.httpGet(`${this.url}/${id}/tasks`);
   }
 
   getDiagTaskResult(jobId: string, taskId: string) {
     return this.httpGet(`${this.url}/${jobId}/tasks/${taskId}/result`, null, [
       map((item: any) => {
-        if (this.isJSON(item.message)) {
+        if (ApiService.isJSON(item.message)) {
           item.message = JSON.parse(item.message);
         }
         return item;
@@ -458,6 +410,25 @@ export class ApiService {
     }
     return this.dashboardApi;
   }
+
+  static isJSON(item) {
+    item = typeof item !== "string"
+      ? JSON.stringify(item)
+      : item;
+
+    try {
+      item = JSON.parse(item);
+    } catch (e) {
+      return false;
+    }
+
+    if (typeof item === "object" && item !== null) {
+      return true;
+    }
+
+    return false;
+  }
+
 }
 
 export class Loop {

@@ -19,6 +19,7 @@ export class RingReportComponent implements OnInit {
   private jobState: string;
   private tasks = [];
   private events = [];
+  private nodes = [];
   private aggregationResult: any;
 
   private componentName = "RingReport";
@@ -79,6 +80,7 @@ export class RingReportComponent implements OnInit {
     this.api.diag.getDiagJob(this.result.id).subscribe(res => {
       this.jobState = res.state;
       this.result = res;
+      this.nodes = res.targetNodes;
       if (res.events !== undefined) {
         this.events = res.events;
       }
@@ -86,8 +88,29 @@ export class RingReportComponent implements OnInit {
   }
 
   getAggregationResult() {
-    this.api.diag.getJobAggregationResult(this.result.id).subscribe(res => {
-      this.aggregationResult = res;
-    });
+    this.api.diag.getJobAggregationResult(this.result.id).subscribe(
+      res => {
+        this.aggregationResult = res;
+      },
+      err => {
+        let errInfo = err;
+        if (ApiService.isJSON(err)) {
+          if (err.error) {
+            errInfo = err.error;
+          }
+          else {
+            errInfo = JSON.stringify(err);
+          }
+        }
+        this.aggregationResult = { Error: errInfo };
+      });
   }
+
+  getLink(node) {
+    let path = [];
+    path.push('/resource');
+    path.push(node);
+    return path;
+  }
+
 }

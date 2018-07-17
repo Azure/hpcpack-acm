@@ -1,8 +1,13 @@
 <ng-container *ngIf="isLoggedIn; else bare">
-  <mat-toolbar color="primary">
+  <mat-toolbar color="primary" class="toolbar">
     <div class="left">
-      <button mat-icon-button (click)="side.toggle()"><i class="material-icons">menu</i></button>
-      <a class="home" routerLink="/"><i class="material-icons">home</i><h1>Microsoft HPC</h1></a>
+      <button mat-icon-button (click)="side.toggle()">
+        <i class="material-icons">menu</i>
+      </button>
+      <a class="home" routerLink="/">
+        <i class="material-icons">home</i>
+        <h1>Microsoft HPC</h1>
+      </a>
       <app-breadcrumb></app-breadcrumb>
     </div>
     <div class="right">
@@ -15,10 +20,11 @@
   </mat-toolbar>
 
   <mat-sidenav-container class="app-container">
-    <mat-sidenav #side mode="side" opened="false">
+    <mat-sidenav #side mode="side" opened="false" class="sidenav">
       <mat-nav-list>
         <a *ngFor="let item of items" class="nav-list" mat-list-item routerLinkActive="active" [routerLink]="item.link">
-          <i class="material-icons nav-icon">{{item.icon}}</i><span class="title">{{item.title}}</span>
+          <i class="material-icons nav-icon">{{item.icon}}</i>
+          <span class="title">{{item.title}}</span>
         </a>
       </mat-nav-list>
     </mat-sidenav>

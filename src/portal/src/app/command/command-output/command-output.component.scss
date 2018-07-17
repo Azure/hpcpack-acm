@@ -1,0 +1,51 @@
+.content {
+    position: relative;
+}
+
+.content .up-to-top {
+    position: absolute;
+    bottom: 2em;
+    right: 1.5em;
+    color: floralwhite;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+pre {
+    color: white;
+    background-color: black;
+    overflow: auto;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 1em;
+    height: 600px;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.attention {
+    animation: blink 1s 5;
+}
+
+button.control {
+    width: 100%;
+    background-color: #ffffff;
+    border: 1px solid rgba(109, 122, 196, 0.7);
+}
+
+.control+.control {
+    margin-top: 5px;
+}
+
+.control.static {
+    text-align: center;
+    background-color: #ffffff;
+    padding: 8px;
+    border: 1px solid rgba(109, 122, 196, 0.7);
+}

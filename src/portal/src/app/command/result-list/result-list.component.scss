@@ -4,6 +4,13 @@ mat-table {
     margin-top: 1em;
 }
 
+.mat-column-id {
+    flex: 0.2;
+    .icon-cell {
+        color: #3f51b5;
+    }
+}
+
 .mat-column-command {
     // flex: 2.5;
     @include ellipsis-text;
@@ -13,27 +20,21 @@ mat-table {
     flex: 0.8; // text-align: right;
 }
 
-// .mat-column-state {
-//   flex: 0.5;
-// }
+.mat-column-lastChangedAt {
+    flex: 0.4;
+}
+
+.mat-column-createdAt,
+.mat-column-state {
+    flex: 0.4;
+}
+
 .control {
     margin-top: 1em;
 }
 
-.up-to-top {
-    position: fixed;
-    z-index: 200;
-    width: 2.5em;
-    height: 2.5em;
-    bottom: 1em;
-    right: 1em;
-    background: rgba(0, 0, 0, .08);
+.loading {
     display: flex;
     justify-content: center;
-    align-items: center;
-}
-
-.up-to-top a,
-.up-to-top a:visited {
-    color: inherit;
+    margin: 20px auto;
 }

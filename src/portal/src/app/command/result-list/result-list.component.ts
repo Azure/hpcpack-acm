@@ -2,8 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { MatTableDataSource, MatDialog } from '@angular/material';
 import { SelectionModel } from '@angular/cdk/collections';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
-import { ApiService } from '../../services/api.service';
+import { ApiService, Loop } from '../../services/api.service';
 import { TableSettingsService } from '../../services/table-settings.service';
+import { JobStateService } from '../../services/job-state/job-state.service';
+import { TableDataService } from '../../services/table-data/table-data.service';
 
 @Component({
   selector: 'app-result-list',
@@ -30,12 +32,20 @@ export class ResultListComponent implements OnInit {
 
   private lastId = 0;
 
-  private pageSize = 25;
+  private commandLoop: object;
+  private maxPageSize = 120;
+  private reverse = true;
+  private currentData = [];
+  private scrolled = false;
+  private loadFinished = false;
+  private interval = 2000;
 
   private loading = false;
 
   constructor(
     private api: ApiService,
+    private jobStateService: JobStateService,
+    private tableDataService: TableDataService,
     private dialog: MatDialog,
     private settings: TableSettingsService,
   ) { }
@@ -43,30 +53,43 @@ export class ResultListComponent implements OnInit {
   ngOnInit() {
     this.loadSettings();
     this.getDisplayedColumns();
-    this.loadMoreResults();
+
+    this.commandLoop = Loop.start(
+      this.getCommandRequest(),
+      {
+        next: (result) => {
+          if (result.length > 0 && result[0]['id'] <= result[result.length - 1]['id']) {
+            result = result.reverse();
+          }
+          this.currentData = result;
+          this.tableDataService.updateData(result, this.dataSource, 'id');
+          return this.getCommandRequest();
+        }
+      },
+      this.interval
+    );
   }
 
-  private setIcon(state) {
-    switch (state) {
-      case 'finished': return 'done';
-      case '1ueued': return 'blur_linear';
-      case 'failed': return 'clear';
-      case 'running': return 'blur_on';
-      case 'canceled': return 'cancel';
-      default: return 'autonew';
+  ngOnDestroy() {
+    if (this.commandLoop) {
+      Loop.stop(this.commandLoop);
     }
   }
 
+  private onScrollEvent(data) {
+    this.lastId = data.dataIndex == -1 ? 0 : this.dataSource.data[data.dataIndex]['id'];
+    this.loadFinished = data.loadFinished;
+    this.scrolled = data.scrolled;
+    this.reverse = data.scrollDirection == 'down' ? true : false;
+  }
 
-  private loadMoreResults() {
-    this.loading = true;
-    this.api.command.getAll({ lastId: this.lastId, count: this.pageSize, reverse: true }).subscribe(results => {
-      this.loading = false;
-      if (results.length > 0) {
-        this.dataSource.data = this.dataSource.data.concat(results);
-        this.lastId = results[results.length - 1].id;
-      }
-    });
+  private stateIcon(state) {
+    return this.jobStateService.stateIcon(state);
+  }
+
+
+  private getCommandRequest() {
+    return this.api.command.getAll({ lastId: this.lastId, count: this.maxPageSize, reverse: this.reverse });
   }
 
   private hasNoSelection(): boolean {
@@ -88,10 +111,6 @@ export class ResultListComponent implements OnInit {
   private select(node) {
     this.selection.clear();
     this.selection.toggle(node);
-  }
-
-  private onScroll() {
-    this.loadMoreResults();
   }
 
   getDisplayedColumns(): void {

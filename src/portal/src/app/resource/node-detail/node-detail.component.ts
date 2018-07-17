@@ -5,6 +5,8 @@ import { Subscription } from 'rxjs/Subscription';
 import { Node } from '../../models/node';
 import { ApiService, Loop } from '../../services/api.service';
 import { ChartComponent } from 'angular2-chartjs';
+import { JobStateService } from '../../services/job-state/job-state.service';
+import { DateFormatterService } from '../../services/date-formatter/date-formatter.service';
 
 @Component({
   selector: 'app-node-detail',
@@ -18,6 +20,8 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
   nodeProperties: any = {};
 
   cpuData: any = {};
+
+  private metricDate: string;
 
   cpuOptions = {
     responsive: true,
@@ -150,6 +154,8 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
   constructor(
     private api: ApiService,
+    private jobStateService: JobStateService,
+    private dateFormatterService: DateFormatterService,
     private route: ActivatedRoute,
   ) {
     this.historyInterval = 10000;
@@ -223,14 +229,11 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
   }
 
   private setIcon(state) {
-    switch (state) {
-      case 'Finished': return 'done';
-      case 'Queued': return 'blur_linear';
-      case 'Failed': return 'clear';
-      case 'Running': return 'blur_on';
-      case 'Canceled': return 'cancel';
-      default: return 'autorenew';
-    }
+    return this.jobStateService.stateIcon(state);
+  }
+
+  private stateClass(state) {
+    return this.jobStateService.stateClass(state);
   }
 
   private dataSource = new MatTableDataSource();
@@ -260,10 +263,6 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     return path;
   }
 
-  dateFormat(value): string {
-    return value >= 10 ? value.toString() : '0' + value;
-  }
-
   //get history lables sort by time
   makeLabels(history): string[] {
     let labels = [];
@@ -273,10 +272,10 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     labels.sort((a, b) => {
       return a - b;
     });
+    this.metricDate = this.dateFormatterService.dateString(labels[0]);
     labels = labels.map(v => {
-      return this.dateFormat(v.getHours()) + ':' + this.dateFormat(v.getMinutes()) + ':' + this.dateFormat(v.getSeconds());
+      return this.dateFormatterService.timeString(v);
     });
-    console.log(labels);
     return labels;
   }
 

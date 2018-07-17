@@ -50,7 +50,7 @@
 }
 
 .pair-list {
-    @include font-basic($font-size: .8em, $font-color: rgba(0, 0, 0, .6));
+    @include font-basic($font-size: .8em, $font-color: $info-color);
     @include display-flex($justify-content: space-between);
     padding-bottom: .5em;
 }
