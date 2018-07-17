@@ -35,6 +35,7 @@
 
         public async T.Task InitializeAsync(CancellationToken token)
         {
+            await this.Utilities.GetOrCreateNodeCancelQueueAsync(this.ServerOptions.HostName, token);
             var dispatchWorkers = Enumerable.Range(0, this.options.DispatchWorkerCount).Select(i => (IWorker)this.Provider.GetRequiredService<JobDispatchWorker>());
             var cancelWorkers = Enumerable.Range(0, this.options.CancelWorkerCount).Select(i => (IWorker)this.Provider.GetRequiredService<JobCancelWorker>());
 
