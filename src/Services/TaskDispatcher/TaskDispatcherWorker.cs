@@ -32,6 +32,7 @@
         public override async T.Task InitializeAsync(CancellationToken token)
         {
             this.jobsTable = await this.Utilities.GetOrCreateJobsTableAsync(token);
+            await this.Utilities.GetOrCreateJobEventQueueAsync(token);
 
             this.Source = new QueueTaskItemSource(
                 await this.Utilities.GetOrCreateTaskCompletionQueueAsync(token),
@@ -129,7 +130,7 @@
                     if (isEndTask)
                     {
                         await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.State = j.State == JobState.Running ? JobState.Finishing : j.State, token);
-                        var jobEventQueue = await this.Utilities.GetOrCreateJobEventQueueAsync(token);
+                        var jobEventQueue = this.Utilities.GetJobEventQueue();
                         await jobEventQueue.AddMessageAsync(
                             new CloudQueueMessage(JsonConvert.SerializeObject(new JobEventMessage() { Id = job.Id, EventVerb = "finish", Type = job.Type })),
                             null, null, null, null,
@@ -172,7 +173,7 @@
             {
                 bool result = await this.VisitAllTasksAsync(job, message.Id, async t =>
                 {
-                    var queue = await this.Utilities.GetOrCreateNodeDispatchQueueAsync(t.Node, token);
+                    var queue = this.Utilities.GetNodeDispatchQueue(t.Node);
                     await queue.AddMessageAsync(
                         new CloudQueueMessage(JsonConvert.SerializeObject(new TaskEventMessage() { EventVerb = "start", Id = t.Id, JobId = t.JobId, JobType = t.JobType, RequeueCount = t.RequeueCount }, Formatting.Indented)),
                         null,

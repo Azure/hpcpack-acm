@@ -16,7 +16,7 @@ def main():
     for nodeInfo in nodesInfo:
         node = nodeInfo["Node"]
         try:
-            if nodeInfo["Metadata"]["compute"]["vmSize"].lower() in rdmaVmSizes:
+            if json.loads(nodeInfo["Metadata"])["compute"]["vmSize"].lower() in rdmaVmSizes:
                 rdmaNodes.append(node)
             else:
                 normalNodes.append(node)

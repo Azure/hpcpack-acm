@@ -101,9 +101,16 @@
             return await u.GetOrCreateQueueAsync(u.Option.JobEventQueueName, token);
         }
 
+        public static CloudQueue GetNodeDispatchQueue(this CloudUtilities u, string nodeName) => u.GetQueue(string.Format(u.Option.NodeDispatchQueuePattern, nodeName));
+
         public static async T.Task<CloudQueue> GetOrCreateNodeDispatchQueueAsync(this CloudUtilities u, string nodeName, CancellationToken token)
         {
             return await u.GetOrCreateQueueAsync(string.Format(u.Option.NodeDispatchQueuePattern, nodeName), token);
+        }
+
+        public static CloudQueue GetNodeCancelQueue(this CloudUtilities u, string nodeName)
+        {
+            return u.GetQueue(string.Format(u.Option.NodeCancelQueuePattern, nodeName));
         }
 
         public static async T.Task<CloudQueue> GetOrCreateNodeCancelQueueAsync(this CloudUtilities u, string nodeName, CancellationToken token)

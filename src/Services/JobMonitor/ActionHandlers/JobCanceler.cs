@@ -41,7 +41,7 @@
 
             foreach(var task in allTasks.Where(t => t.CustomizedData != Task.EndTaskMark))
             {
-                var q = await this.Utilities.GetOrCreateNodeCancelQueueAsync(task.Node, token);
+                var q = this.Utilities.GetNodeCancelQueue(task.Node);
                 await q.AddMessageAsync(new CloudQueueMessage(
                     JsonConvert.SerializeObject(new TaskEventMessage() { JobId = job.Id, Id = task.Id, JobType = job.Type, RequeueCount = job.RequeueCount, EventVerb = "cancel" })),
                     null, null, null, null, token);
