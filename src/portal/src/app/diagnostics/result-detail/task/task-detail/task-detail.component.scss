@@ -57,3 +57,10 @@ mat-divider {
     font-family: Roboto, "Helvetica Neue", sans-serif;
     margin: 0;
 }
+
+.title {
+    @include display-flex(center);
+    .diag-title-icon {
+        padding-right: .3em;
+    }
+}

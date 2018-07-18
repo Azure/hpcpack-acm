@@ -3,7 +3,7 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 
 @Component({
   templateUrl: './table-option.component.html',
-  styleUrls: ['./table-option.component.css']
+  styleUrls: ['./table-option.component.scss']
 })
 export class TableOptionComponent implements OnInit {
   private options: any[];

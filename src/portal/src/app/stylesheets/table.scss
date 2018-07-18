@@ -113,3 +113,16 @@ mat-header-cell {
 .wd-90 {
     width: 90%;
 }
+
+.btn-icon {
+    font-size: 1.3em;
+    padding-right: .3em;
+}
+
+.action-btn {
+    @include display-flex(center);
+}
+
+.actions button {
+    margin-right: .5em;
+}

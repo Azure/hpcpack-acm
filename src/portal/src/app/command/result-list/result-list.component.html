@@ -1,5 +1,10 @@
 <div class="actions">
-  <button mat-raised-button (click)="customizeTable()">Customize Columns...</button>
+  <button mat-raised-button (click)="customizeTable()">
+    <div class="action-btn">
+      <i class="material-icons btn-icon">settings</i>
+      <div>Customize Columns...</div>
+    </div>
+  </button>
   <!-- <button mat-raised-button [disabled]="hasNoSelection()">Rerun</button>
   <button mat-raised-button [disabled]="hasNoSelection()">Cancel</button> -->
 </div>

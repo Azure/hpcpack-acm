@@ -1,5 +1,9 @@
 @import "../../stylesheets/mixin.scss";
 @import "../../stylesheets/table.scss";
+mat-table {
+    margin-top: 1em;
+}
+
 .id {
     text-decoration: underline #3f51b5;
     color: #3f51b5
@@ -7,10 +11,6 @@
 
 .id:hover {
     cursor: pointer;
-}
-
-mat-table {
-    margin-top: 1em;
 }
 
 .mat-column-id {

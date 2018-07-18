@@ -4,9 +4,24 @@
 </nav>
 
 <div class="actions">
-  <button mat-raised-button (click)="customizeTable()">Customize Columns...</button>
-  <button mat-raised-button [disabled]="hasNoSelection()" (click)="runDiagnostics()">Run Diagnostics...</button>
-  <button mat-raised-button [disabled]="hasNoSelection()" (click)="runCommand()">Run Command...</button>
+  <button mat-raised-button (click)="customizeTable()">
+    <div class="action-btn">
+      <i class="material-icons btn-icon">settings</i>
+      <div class="action-text">Customize Columns...</div>
+    </div>
+  </button>
+  <button mat-raised-button [disabled]="hasNoSelection()" (click)="runDiagnostics()">
+    <div class="action-btn">
+      <i class="material-icons btn-icon">local_hospital</i>
+      <div class="action-text">Run Diagnostics...</div>
+    </div>
+  </button>
+  <button mat-raised-button [disabled]="hasNoSelection()" (click)="runCommand()">
+    <div class="action-btn">
+      <i class="material-icons btn-icon">call_to_action</i>
+      <div class="action-text">Run Command...</div>
+    </div>
+  </button>
 </div>
 
 <div class="filter">
