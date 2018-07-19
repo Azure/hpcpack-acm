@@ -151,7 +151,7 @@
             {
                 node.Health = NodeHealth.OK;
                 node.RunningJobCount = nodeInfo.GetObject<ComputeClusterNodeInformation>().Jobs.Count;
-                node.EventCount = 5;
+                node.EventCount = 2;
             }
             else
             {
