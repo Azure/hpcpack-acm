@@ -3,5 +3,5 @@
 .result-detail {
     @include display-flex($justify-content: space-around);
     font-family: $font-stack;
-    margin: 1em 0;
+    margin: 1em 0 0;
 }

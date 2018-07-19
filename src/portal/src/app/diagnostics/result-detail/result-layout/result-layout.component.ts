@@ -83,7 +83,7 @@ export class ResultLayoutComponent implements OnInit {
       if (res) {
         let targetNodes = this.result.targetNodes;
         let diagnosticTest = this.result.diagnosticTest;
-        let name = `${this.result.name.split('@')[0]}@${this.api.diag.getCreatedTime()}`;
+        let name = this.result.name == undefined ? '' : `${this.result.name}`;
         this.api.diag.create(name, targetNodes, diagnosticTest).subscribe(obj => {
           let returnData = obj.headers.get('location').split('/');
           let jobId = returnData[returnData.length - 1];

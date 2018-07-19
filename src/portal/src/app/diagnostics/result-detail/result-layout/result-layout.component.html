@@ -5,20 +5,20 @@
     </div>
     <mat-spinner *ngIf="!done" [diameter]="25"></mat-spinner>
   </div>
-
-  <div class="cancel-job">
-    <div class="operation-text" *ngIf="!done && canceling">
-      <div class="operation-name">Waiting for cancel request finish...</div>
+  <div class="operations">
+    <div class="cancel-job">
+      <div class="operation" *ngIf="!done" (click)="cancelDiag()">
+        <i class="material-icons operation-icon cancel">clear</i>
+        <div class="operation-name">Cancel</div>
+      </div>
+      <div class="operation-text" *ngIf="!done && canceling">
+        <div class="operation-name">Waiting for cancel request finish...</div>
+      </div>
     </div>
-    <div class="operation" *ngIf="!done" (click)="cancelDiag()">
-      <i class="material-icons cancel">clear</i>
-      <div class="operation-name">Cancel</div>
+    <div class="operation" *ngIf="done" (click)="rerunDiag()">
+      <i class="material-icons operation-icon rerun">content_copy</i>
+      <div class="operation-name">Copy</div>
     </div>
-  </div>
-
-  <div class="operation" *ngIf="done" (click)="rerunDiag()">
-    <i class="material-icons rerun">content_copy</i>
-    <div class="operation-name">Copy</div>
   </div>
 </div>
 <div class="area-title">

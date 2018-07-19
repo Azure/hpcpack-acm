@@ -1,7 +1,7 @@
 @import "./mixin.scss";
 @import "./info.scss";
 .title {
-    @include display-flex(center, space-between);
+    @include display-flex(center);
     padding: 0 1em;
     background-color: #fff;
     border-left: 4px solid #3f51b5;
@@ -59,12 +59,17 @@ md-select,
     @include display-flex(center);
 }
 
+.operation {
+    padding: .3em .5em;
+}
+
 .operation:hover {
     cursor: pointer;
+    background-color: rgba(182, 186, 193, .2);
 }
 
 .operation-name {
-    @include font-basic(.8em, rgba(0, 0, 0, .5));
+    @include font-basic(.9em, rgba(0, 0, 0, .7));
 }
 
 .cancel {
@@ -84,5 +89,9 @@ md-select,
 }
 
 .operation-text {
-    padding-right: 1em;
+    padding-left: 1em;
+}
+
+.operations {
+    margin-left: 1em;
 }
