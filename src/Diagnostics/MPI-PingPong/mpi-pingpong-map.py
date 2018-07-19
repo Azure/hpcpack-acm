@@ -36,17 +36,7 @@ def main():
         except:
             raise Exception("Neither VM size from Metadata nor IsIB from NodeRegistrationInfo of node {0} could be found.".format(node))
 
-    if len(normalNodes) != 0 and len(rdmaNodes) != 0:
-        # Mixed normal nodes and rdma nodes
-        raise Exception("Mixed nodes. Normal nodes: {0}. RDMA nodes: {1}.".format(','.join(normalNodes), ','.join(rdmaNodes)))
-
-    if len(rdmaNodes) != 0:
-        isRdma = True
-        allNodes = set([node.lower() for node in rdmaNodes])
-    else:
-        isRdma = False
-        allNodes = set([node.lower() for node in normalNodes])
-
+    allNodes = set([node.lower() for node in normalNodes + rdmaNodes])
     for node in nodelist:
         if node.lower() not in allNodes:
             raise Exception("Missing node info: {0}".format(node))
@@ -90,14 +80,23 @@ def main():
         "CustomizedData":None,
     }
 
+    commonArguments = taskTemplateOrigin, commandClearSshKnowhosts, commandAddSshKnowhosts, mode, level
+    tasks = createTasks(rdmaNodes, True, 1, *commonArguments)
+    tasks += createTasks(normalNodes, False, len(tasks)+1, *commonArguments)
+    print(json.dumps(tasks))
+
+def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, commandClearSshKnowhosts, commandAddSshKnowhosts, mode, level):
+    tasks = []
+    if len(nodelist) == 0:
+        return tasks
+
     rdmaOption = ""
     if isRdma:
         rdmaOption = " -env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0 -env I_MPI_DYNAMIC_CONNECTION=0 -env I_MPI_FALLBACK_DEVICE=0"
 
-    headingStartId = 100000000
+    headingStartId = startId
     headingIdGroup = list(range(headingStartId, headingStartId + len(nodelist)))
-
-    tasks = []
+    taskStartId = headingStartId + len(nodelist)
 
     # Create task for every node to run Intel MPI Benchmark - PingPong between processors within each node.
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
@@ -121,12 +120,11 @@ def main():
         task["Id"] = id
         id += 1
         task["Node"] = node
-        task["CustomizedData"] = node
+        task["CustomizedData"] = "[RDMA] {}".format(node) if isRdma else node
         tasks.append(task)
 
     if len(nodelist) < 2:
-        print(json.dumps(tasks))
-        return
+        return tasks
 
     # Create tasks to run Intel MPI Benchmark - PingPong between all node pairs in selected nodes.
 
@@ -159,12 +157,12 @@ def main():
     if mode == 'Tournament'.lower():
         taskgroups = getGroupsOptimal(nodelist)
         idGroups = []
-        id = 1
+        id = taskStartId
         for taskgroup in taskgroups:
             ids = list(range(id, id + len(taskgroup)))
             idGroups.append(ids)
             id += len(ids)
-        id = 1
+        id = taskStartId
         for i in range(0, len(taskgroups)):
             for nodepair in taskgroups[i]:
                 task = copy.deepcopy(taskTemplate)
@@ -179,11 +177,11 @@ def main():
                 task["CommandLine"] = task["CommandLine"].replace("[pairednode]", nodepair[1])
                 task["CommandLine"] = task["CommandLine"].replace("[timeout]", str(timeout))
                 task["Node"] = nodepair[0]
-                task["CustomizedData"] = nodes
+                task["CustomizedData"] = "[RDMA] {}".format(nodes) if isRdma else nodes
                 #task["EnvironmentVariables"] = {"CCP_NODES":"2 "+" 1 ".join(nodepair)+" 1"}
                 tasks.append(task)
     else:
-        id = 1
+        id = taskStartId
         delay = 0
         nodepairs = []
         for i in range(0, len(nodelist)):
@@ -205,10 +203,9 @@ def main():
             task["CommandLine"] = task["CommandLine"].replace("[delay]", str(delay))
             task["Node"] = nodepair[0]
             #task["EnvironmentVariables"] = {"CCP_NODES":"2 "+" 1 ".join(nodepair)+" 1"}
-            task["CustomizedData"] = nodes
+            task["CustomizedData"] = "[RDMA] {}".format(nodes) if isRdma else nodes
             tasks.append(task)
-
-    print(json.dumps(tasks))
+    return tasks
 
 def getGroupsOptimal(nodelist):
     n = len(nodelist)
