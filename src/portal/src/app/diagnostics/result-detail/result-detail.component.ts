@@ -3,13 +3,15 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TestResult } from '../../models/test-result';
 import { ApiService } from '../../services/api.service';
-import { PingPongReportComponent } from './diags/pingpong/pingpong-report/pingpong-report.component';
-import { RingReportComponent } from './diags/ring/ring-report/ring-report.component';
+import { PingPongReportComponent } from './diags/mpi/pingpong/pingpong-report/pingpong-report.component';
+import { RingReportComponent } from './diags/mpi/ring/ring-report/ring-report.component';
+import { CpuReportComponent } from './diags/benchmark/cpu/cpu-report/cpu-report.component';
 
 const map = {
   'test': PingPongReportComponent,
   'pingpong': PingPongReportComponent,
-  'ring': RingReportComponent
+  'ring': RingReportComponent,
+  'cpu': CpuReportComponent
 }
 
 @Component({

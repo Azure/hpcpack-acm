@@ -5,11 +5,21 @@ import { MaterialsModule } from '../../../../materials.module';
 import { TableSettingsService } from '../../../../services/table-settings.service';
 import { MatTableDataSource } from '@angular/material';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { JobStateService } from '../../../../services/job-state/job-state.service';
 
 const tableSettingsStub = {
   load: (key, initVal) => initVal,
 
   save: (key, val) => undefined
+}
+
+class JobStateServiceStub {
+  stateClass(state) {
+    return 'finished';
+  }
+  stateIcon(state) {
+    return 'done';
+  }
 }
 
 fdescribe('TaskTableComponent', () => {
@@ -26,7 +36,8 @@ fdescribe('TaskTableComponent', () => {
         NoopAnimationsModule
       ],
       providers: [
-        { provide: TableSettingsService, useValue: tableSettingsStub }
+        { provide: TableSettingsService, useValue: tableSettingsStub },
+        { provide: JobStateService, useClass: JobStateServiceStub },
       ]
     })
       .compileComponents();
@@ -37,6 +48,7 @@ fdescribe('TaskTableComponent', () => {
     component = fixture.componentInstance;
     component.tableName = "test";
     component.customizableColumns = [
+      { name: 'nodes', displayName: 'Nodes', displayed: true },
       { name: 'latency', displayName: 'Latency', displayed: true },
       { name: 'throughput', displayName: 'Throughput', displayed: true },
     ];

@@ -35,13 +35,33 @@
     </mat-cell>
   </ng-container>
 
+  <ng-container matColumnDef="node">
+    <mat-header-cell *matHeaderCellDef>Node</mat-header-cell>
+    <mat-cell *matCellDef="let task">
+      <div class="icon-cell">
+        <div class="material-icons cell-icon">view_module</div>
+        <div class="cell-text">{{task.node}}</div>
+      </div>
+    </mat-cell>
+  </ng-container>
+
+  <ng-container matColumnDef="size">
+    <mat-header-cell *matHeaderCellDef>Size</mat-header-cell>
+    <mat-cell *matCellDef="let task">
+      <div class="icon-cell">
+        <!-- <div class="material-icons cell-icon">view_module</div> -->
+        <div class="cell-text">{{task.customizedData}}</div>
+      </div>
+    </mat-cell>
+  </ng-container>
+
   <ng-container matColumnDef="state">
     <mat-header-cell *matHeaderCellDef>State</mat-header-cell>
     <mat-cell *matCellDef="let task">
-        <div class="icon-cell">
-            <i class="material-icons cell-icon" [ngClass]="stateClass(task.state)">{{setIcon(task.state)}}</i>
-            <div class="cell-text">{{task.state}}</div>
-          </div>
+      <div class="icon-cell">
+        <i class="material-icons cell-icon" [ngClass]="stateClass(task.state)">{{setIcon(task.state)}}</i>
+        <div class="cell-text">{{task.state}}</div>
+      </div>
     </mat-cell>
   </ng-container>
 

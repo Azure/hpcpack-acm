@@ -1,0 +1,24 @@
+<app-result-layout [result]="result" [aggregationResult]="aggregationResult">
+  <ng-template #overview>
+    <mat-tab-group>
+      <mat-tab label="Result" *ngIf="!hasError">
+        <cpu-overview-result [result]="aggregationResult"></cpu-overview-result>
+      </mat-tab>
+      <mat-tab label="Error" *ngIf="hasError">
+        <div class="error-message">
+          {{aggregationResult.Error}}
+        </div>
+      </mat-tab>
+      <mat-tab label="Nodes">
+        <app-nodes-info [nodes]="nodes" [aggregationInfo]="undefined"></app-nodes-info>
+      </mat-tab>
+      <mat-tab label="Events">
+        <app-event-list [events]="events"></app-event-list>
+      </mat-tab>
+    </mat-tab-group>
+  </ng-template>
+
+  <ng-template #task>
+    <diag-task-table [dataSource]="dataSource" [customizableColumns]="customizableColumns" [tableName]="componentName"></diag-task-table>
+  </ng-template>
+</app-result-layout>

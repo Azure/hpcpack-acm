@@ -4,6 +4,7 @@ import { TableSettingsService } from '../../../../services/table-settings.servic
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { MatTableDataSource } from '@angular/material';
 import { TaskDetailComponent } from '../task-detail/task-detail.component';
+import { JobStateService } from '../../../../services/job-state/job-state.service';
 
 @Component({
   selector: 'diag-task-table',
@@ -32,6 +33,7 @@ export class TaskTableComponent implements OnInit {
   constructor(
     private dialog: MatDialog,
     private settings: TableSettingsService,
+    private jobStateService: JobStateService
   ) { }
 
   ngOnInit() {
@@ -40,25 +42,11 @@ export class TaskTableComponent implements OnInit {
   }
 
   private setIcon(state) {
-    switch (state) {
-      case 'Finished': return 'done';
-      case 'Queued': return 'blur_linear';
-      case 'Failed': return 'clear';
-      case 'Running': return 'blur_on';
-      case 'Canceled': return 'cancel';
-      default: return 'autorenew';
-    }
+    return this.jobStateService.stateIcon(state);
   }
 
   private stateClass(state) {
-    switch (state) {
-      case 'Finished': return 'finished';
-      case 'Queued': return 'queued';
-      case 'Failed': return 'failed';
-      case 'Running': return 'running';
-      case 'Canceled': return 'canceled';
-      default: return '';
-    }
+    return this.jobStateService.stateClass(state);
   }
 
   private showDetail(jobId, taskId, taskState) {
@@ -70,8 +58,9 @@ export class TaskTableComponent implements OnInit {
 
   getDisplayedColumns(): void {
     let columns = this.availableColumns.filter(e => e.displayed).map(e => e.name);
+    columns.push('state');
     columns.push('detail');
-    this.displayedColumns = ['id', 'nodes', 'state'].concat(columns);
+    this.displayedColumns = ['id'].concat(columns);
   }
 
   customizeTable(): void {

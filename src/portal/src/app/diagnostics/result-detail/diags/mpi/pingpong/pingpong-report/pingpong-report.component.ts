@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
-import { ApiService, Loop } from '../../../../../services/api.service';
-import { TableSettingsService } from '../../../../../services/table-settings.service';
+import { ApiService, Loop } from '../../../../../../services/api.service';
+import { TableSettingsService } from '../../../../../../services/table-settings.service';
 
 @Component({
   selector: 'app-pingpong-report',
@@ -28,8 +28,7 @@ export class PingPongReportComponent implements OnInit {
   private componentName = "PingPongReport";
 
   private customizableColumns = [
-    // { name: 'latency', displayName: 'Latency', displayed: true },
-    // { name: 'throughput', displayName: 'Throughput', displayed: true },
+    { name: 'nodes', displayName: 'Nodes', displayed: true },
   ];
 
 

@@ -1,7 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PingPongOverviewResultComponent } from './overview-result.component';
-import { MaterialsModule } from '../../../../../materials.module';
+import { MaterialsModule } from '../../../../../../materials.module';
 import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'angular2-chartjs';
 

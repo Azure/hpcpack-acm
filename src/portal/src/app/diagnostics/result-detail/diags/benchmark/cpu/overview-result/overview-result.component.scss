@@ -1,0 +1,21 @@
+@import "../../../../../../stylesheets/mixin.scss";
+@import "../../../../../../stylesheets/info.scss";
+.result-detail {
+    @include display-flex;
+    font-family: $font-stack;
+    margin: .5em 0 0;
+    .overview-info {
+        padding: 0 1em;
+    }
+}
+
+.benchmark-title {
+    padding: 1em 1em .5em;
+    font-size: .9em;
+}
+
+.benchmark-description {
+    font-size: .8em;
+    color: #3f51b5;
+    padding-left: 1em;
+}

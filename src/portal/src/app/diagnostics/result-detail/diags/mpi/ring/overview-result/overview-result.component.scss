@@ -1,5 +1,5 @@
-@import "../../../../../stylesheets/mixin.scss";
-@import "../../../../../stylesheets/info.scss";
+@import "../../../../../../stylesheets/mixin.scss";
+@import "../../../../../../stylesheets/info.scss";
 .result-detail {
     @include display-flex($justify-content: space-around);
     font-family: $font-stack;

@@ -1,0 +1,24 @@
+<div class="benchmark-title">
+  {{title}}
+</div>
+<div class="benchmark-description">
+  {{description}}
+</div>
+<div class="result-detail" *ngFor="let result of results">
+  <div class="overview-info">
+    <div class="overview-title"> Node </div>
+    <div class="overview-value">{{result.Node}}</div>
+  </div>
+  <div class="overview-info">
+    <div class="overview-title">Core Number</div>
+    <div class="overview-value">{{result.CoreNumber}}</div>
+  </div>
+  <div class="overview-info">
+    <div class="overview-title"> Result </div>
+    <div class="overview-value">{{result.Result}}</div>
+  </div>
+  <div class="overview-info">
+    <div class="overview-title"> Size </div>
+    <div class="overview-value">{{result.Size}}</div>
+  </div>
+</div>

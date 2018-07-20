@@ -2,9 +2,9 @@ import { async, fakeAsync, ComponentFixture, TestBed, flush } from '@angular/cor
 import { Component, Input, ViewChild } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { PingPongReportComponent } from './pingpong-report.component';
-import { MaterialsModule } from '../../../../../materials.module';
-import { ApiService } from '../../../../../services/api.service';
-import { TableSettingsService } from '../../../../../services/table-settings.service';
+import { MaterialsModule } from '../../../../../../materials.module';
+import { ApiService } from '../../../../../../services/api.service';
+import { TableSettingsService } from '../../../../../../services/table-settings.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 @Component({ selector: 'app-result-layout', template: '' })

@@ -2,10 +2,10 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, Input, Directive } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { RingReportComponent } from './ring-report.component';
-import { MaterialsModule } from '../../../../../materials.module';
+import { MaterialsModule } from '../../../../../../materials.module';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ApiService } from '../../../../../services/api.service';
-import { TableSettingsService } from '../../../../../services/table-settings.service';
+import { ApiService } from '../../../../../../services/api.service';
+import { TableSettingsService } from '../../../../../../services/table-settings.service';
 
 @Directive({
   selector: '[routerLink]',

@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
-import { ApiService, Loop } from '../../../../../services/api.service';
-import { TableSettingsService } from '../../../../../services/table-settings.service';
+import { ApiService, Loop } from '../../../../../../services/api.service';
+import { TableSettingsService } from '../../../../../../services/table-settings.service';
 
 @Component({
   selector: 'app-ring-report',
@@ -25,8 +25,7 @@ export class RingReportComponent implements OnInit {
   private componentName = "RingReport";
 
   private customizableColumns = [
-    // { name: 'latency', displayName: 'Latency', displayed: true },
-    // { name: 'throughput', displayName: 'Throughput', displayed: true },
+    { name: 'nodes', displayName: 'nodes', displayed: true },
   ];
 
   constructor(
