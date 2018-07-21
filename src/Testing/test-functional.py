@@ -1,8 +1,8 @@
 import sys, requests, time, random, argparse, traceback, json, os
 
-def main(cluster, category, command, result, name, cancel, timeout):
-    REQUEST_TIMEOUT = 60
-    
+REQUEST_TIMEOUT = 60
+
+def main(cluster, category, command, result, name, cancel, timeout, timeoutToCleanJob):    
     # format uri string
     while cluster[-1] == '/':
         cluster = cluster[:-1]
@@ -34,14 +34,12 @@ def main(cluster, category, command, result, name, cancel, timeout):
     print '[Allocated Nodes]: {}'.format(randomNodes)
 
     # check clusrun or diagnostics job
-    nodesCount = len(randomNodes)
     if category == 'clusrun':
         postContent = {
             "name":name,
             "commandLine":command,
             "targetNodes":randomNodes
             }
-        validateTaskCount = nodesCount
         print '[Command]: {}'.format(command)
     elif category == 'diagnostics':
         postContent = {
@@ -53,10 +51,10 @@ def main(cluster, category, command, result, name, cancel, timeout):
             },
             "targetNodes":randomNodes
         }
-        validateTaskCount = nodesCount + nodesCount*(nodesCount-1)/2
     else:
         raise Exception('Invalid category: {0}'.format(category))
 
+    jobCreated = False
     jobCanceled = False
     # create the job
     try:
@@ -64,6 +62,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
         response = requests.post(api, json=postContent, timeout = REQUEST_TIMEOUT)
         if response:
             jobUri = cluster + response.headers['Location']
+            jobCreated = True
             startTime = time.time()
             print "{}: Job created at {}".format(time.ctime(), jobUri)
             count = 1
@@ -85,15 +84,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
                         
                     # cancel the job
                     if cancel and not jobCanceled and startTime+cancel < time.time():
-                        api = jobUri
-                        response = requests.patch(api, json={"Request":"cancel"}, timeout = REQUEST_TIMEOUT)
-                        if response:
-                            print '{}: Job canceled.'.format(time.ctime())
-                            jobCanceled = True
-                        else:
-                            print 'Patch {}: {}'.format(api, response)
-                            if response.content:
-                                print response.content
+                        jobCanceled = cancelJob(jobUri)
                         api = jobUri
                         response = requests.get(api, timeout = REQUEST_TIMEOUT)
                         if response:
@@ -117,14 +108,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
                 # job time out
                 if timeout and time.time() > timeout:
                     print '{}: Timeout.'.format(time.ctime())
-                    api = jobUri
-                    response = requests.patch(api, json={"Request":"cancel"}, timeout = REQUEST_TIMEOUT)
-                    if response:
-                        print '{}: Job canceled.'.format(time.ctime())
-                    else:
-                        print 'Patch {}: {}'.format(api, response)
-                        if response.content:
-                            print response.content
+                    cancelJob(jobUri)
                     return 'Timeout'
             print "{}: Job end, state is {}, run time is {:.0f}s.".format(time.ctime(), jobState, time.time()-startTime)
             if jobState == 'Failed':
@@ -139,6 +123,15 @@ def main(cluster, category, command, result, name, cancel, timeout):
             return 'Fail'
     except Exception as e:
         print '[Exception]: {0}'.format(e)
+        while jobCreated and not jobCanceled and time.time() < timeoutToCleanJob:
+            try:
+                print '{}: Try to cancel job {}'.format(time.ctime(), jobUri)
+                jobCanceled = cancelJob(jobUri)
+            except Exception as ex:
+                print '[Exception]: {0}'.format(ex)
+            time.sleep(5)
+        if jobCreated and not jobCanceled:
+            print '{}: Cleaning up job timeout.'.format(time.ctime())
         return 'Exception'
 
     # validate result
@@ -149,7 +142,7 @@ def main(cluster, category, command, result, name, cancel, timeout):
             response = requests.get(api, timeout = REQUEST_TIMEOUT)
             if response:
                 tasks = response.json()
-                if len(tasks) != validateTaskCount:
+                if category == 'clusrun' and len(tasks) != len(randomNodes):
                     print '[Fail]: tasks count {0} is not correct, expecting {1}.'.format(len(tasks), validateTaskCount)
                     return 'Fail'
                 nodes = set(randomNodes)
@@ -265,9 +258,10 @@ def main(cluster, category, command, result, name, cancel, timeout):
                         'LargestGoodNodesGroups',
                         'LargestGoodNodesGroupsWithMasters',
                         'GoodNodes',
-                        'BadPairs',
+                        'FailedPairs',
                         'FailedNodes',
-                        'BadNodes'
+                        'BadNodes',
+                        'RdmaNodes'
                         ]
                     for item in resultItems:
                         if item not in results:
@@ -281,7 +275,18 @@ def main(cluster, category, command, result, name, cancel, timeout):
             return 'Exception'
     print '[Pass]'
     return 'Pass'
-    
+
+def cancelJob(jobUri):
+    response = requests.patch(jobUri, json={"Request":"cancel"}, timeout = REQUEST_TIMEOUT)
+    if response:
+        print '{}: Job canceled.'.format(time.ctime())
+        return True
+    else:
+        print 'Patch {}: {}'.format(jobUri, response)
+        if response.content:
+            print response.content
+        return False
+
 if __name__ == '__main__':
     def check_positive(value):
         ivalue = int(value)
@@ -297,7 +302,7 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--name', help='Specify the job name', default='Functional test by chenling')
     parser.add_argument('-c', '--cancel', type=check_positive, default=0, help='Specify the time(seconds) to cancel the job')
     parser.add_argument('-t', '--continuous', type=check_positive, help='Specify the time(seconds) to run the test continuously until this time out')
-    parser.add_argument('-o', '--timeout', type=check_positive, help='Specify the max time(seconds) to run the test for once')
+    parser.add_argument('-o', '--timeout', type=check_positive, default=60*60*24*365, help='Specify the max time(seconds) to wait for the job until canceling it in one test')
     args = parser.parse_args()
 
     if args.result:
@@ -321,11 +326,11 @@ if __name__ == '__main__':
             print "[Test Number]: {0}".format(testResults['All'])
             testResults['All'] += 1
             try:
-                result = main(args.cluster_uri, args.category, args.command, args.result, args.name, args.cancel, args.timeout + time.time())
+                result = main(args.cluster_uri, args.category, args.command, args.result, args.name, args.cancel, args.timeout + time.time(), endTime)
                 testResults[result] += 1
-            except:
+            except Exception as e:
                 testResults['Exception'] += 1
-                print(sys.exc_info()[0])
+                print 'Line {}: {}'.format(sys.exc_info()[2].tb_lineno, e)
                 time.sleep(60)
             runtime = time.time() - startTime
             runTimes.append(runtime)
@@ -333,4 +338,4 @@ if __name__ == '__main__':
             print '-'*60
         print '{}/{} {} Runtime:[Avg: {:.0f}, Min: {:.0f}, Max: {:.0f}]'.format(testResults['Pass'], testResults['All'], testResults, sum(runTimes)/len(runTimes), min(runTimes), max(runTimes))
     else:
-        main(args.cluster_uri, args.category, args.command, args.result, args.name, args.cancel, 0)
+        main(args.cluster_uri, args.category, args.command, args.result, args.name, args.cancel, 0, 0)
