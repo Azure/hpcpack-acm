@@ -65,7 +65,7 @@ def main():
     commandGenerateErrorAsJson = (" || (errorcode=$?"
                                   " && echo -n '{\"Latency\":-1,\"Throughput\":-1' > json"
                                   " && echo -n ',\"Time\":' >> json && cat timeResult | tr -d '\n' >> json"
-                                  " && echo -n ',\"Detail\":\"' >> json && cat stdout stderr | awk '{printf \"%s\\\\n\", $0}' >> json && echo -n '\"}' >> json"
+                                  " && echo -n ',\"Detail\":\"' >> json && cat stdout stderr | awk '{printf \"%s\\\\n\", $0}' | sed 's/\\\"/\\\\\\\"/g' >> json && echo -n '\"}' >> json"
                                   " && cat json"
                                   " && exit $errorcode)")
     commandLine = "TIMEFORMAT='%3R' && (time timeout [timeout]s bash -c 'source /opt/intel/impi/`ls /opt/intel/impi`/bin64/mpivars.sh && [mpicommand]' >stdout 2>stderr) 2>timeResult" + commandParseResult + commandGenerateOutputAsJson + commandGenerateErrorAsJson
