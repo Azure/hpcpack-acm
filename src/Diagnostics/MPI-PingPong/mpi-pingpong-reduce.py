@@ -12,12 +12,8 @@ def main():
         printErrorAsJson('The number of nodes is less than 2.')
         return -1
 
-    expectedTaskCount = nodesNumber + nodesNumber*(nodesNumber-1)/2
-    if len(tasks) != expectedTaskCount:
-        printErrorAsJson('Task count ' + str(len(tasks)) + ' is not correct, should be ' + str(expectedTaskCount) + '.')
-        return -1
-    if len(taskResults) != expectedTaskCount:
-        printErrorAsJson('Task result count ' + str(len(tasks)) + ' is not correct, should be ' + str(expectedTaskCount) + '.')
+    if len(tasks) != len(taskResults):
+        printErrorAsJson('Task count {} is not equal to task result count {}.'.format(len(tasks), len(taskResults)))
         return -1
 
     latencyThreshold = 1000
@@ -46,19 +42,26 @@ def main():
     taskStateFailed = 4
 
     taskId2nodePair = {}
-    badPairs = []
+    failedPairs = []
     tasksForStatistics = set()
+    rdmaNodes = []
     try:
         for task in tasks:
             taskId = task['Id']
             state = task['State']
             nodePair = task['CustomizedData']
+            isRdma = False
+            if len(nodePair) > 6 and nodePair[:6] == '[RDMA]':
+                nodePair = nodePair[7:]
+                isRdma = True
             taskId2nodePair[taskId] = nodePair
             if ',' in nodePair:
                 if state == taskStateFailed:
-                    badPairs.append(nodePair)
+                    failedPairs.append(nodePair)
                 if state == taskStateFinished:
                     tasksForStatistics.add(taskId)
+            elif isRdma:
+                rdmaNodes.append(nodePair)
     except Exception as e:
         printErrorAsJson('Failed to parse tasks. ' + str(e))
         return -1
@@ -106,9 +109,10 @@ def main():
         'LargestGoodNodesGroups':largestGoodNodesGroups,
         'LargestGoodNodesGroupsWithMasters':largestGoodNodesGroupsWithMasters,
         'GoodNodes':goodNodes,
-        'BadPairs':badPairs,
+        'FailedPairs':failedPairs,
         'FailedNodes':failedNodes,
-        'BadNodes':badNodes
+        'BadNodes':badNodes,
+        'RdmaNodes':rdmaNodes
         }
 
     if messages:
