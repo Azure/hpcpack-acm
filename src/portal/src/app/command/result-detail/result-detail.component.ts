@@ -85,7 +85,7 @@ export class ResultDetailComponent implements OnInit {
           if (!this.gotTasks) {
             this.result.nodes = job.targetNodes.map(node => ({ name: node, state: '' }));
           }
-          return !this.isJobOver(job.state);
+          return true;
         },
         error: (err) => {
           this.errorMsg = err;
@@ -114,7 +114,7 @@ export class ResultDetailComponent implements OnInit {
           }
           this.gotTasks = true;
           this.result.nodes = this.getNodesFromTasks(tasks);
-          return !this.isOver;
+          return true;
         },
         error: (err) => {
           this.errorMsg = err;
@@ -184,7 +184,7 @@ export class ResultDetailComponent implements OnInit {
             observer.complete();
           },
           error => {
-            observer.next(null);
+            observer.next({ error: error.message });
             observer.complete();
           }
         );
@@ -192,7 +192,13 @@ export class ResultDetailComponent implements OnInit {
       //observer:
       {
         next: (key) => {
-          if (key) {
+          if (ApiService.isJSON(key)) {
+            let output = this.getNodeOutput(node);
+            output.loading = false;
+            output.content = key.error;
+            return false;
+          }
+          else if (key) {
             onGot(key);
             return false;
           }

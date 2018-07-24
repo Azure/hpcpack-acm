@@ -70,12 +70,9 @@ export class PingPongReportComponent implements OnInit {
           this.tasks = result;
           if (this.jobState == 'Finished' || this.jobState == 'Failed' || this.jobState == 'Canceled') {
             this.getAggregationResult();
-            return false;
           }
-          else {
-            this.getJobInfo();
-            return true;
-          }
+          this.getJobInfo();
+          return true;
         }
       },
       this.interval
