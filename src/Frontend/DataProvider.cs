@@ -332,7 +332,7 @@
 
             if (!await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
-                state = j.State = (j.State == JobState.Queued || j.State == JobState.Running) ? JobState.Canceling : j.State;
+                state = j.State = (j.State == JobState.Queued || j.State == JobState.Running || j.State == JobState.Finishing) ? JobState.Canceling : j.State;
             }, token))
             {
                 return new NotFoundObjectResult($"{job.Type} job {job.Id} was not found.");
