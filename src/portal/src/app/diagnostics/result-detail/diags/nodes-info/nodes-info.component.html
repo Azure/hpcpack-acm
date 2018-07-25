@@ -25,7 +25,7 @@
         <div class="title-text">Bad Nodes</div>
       </div>
       <div class="overview-value">
-        <div class="node" *ngFor="let node of aggregationInfo.BadNodes">{{node}}</div>
+        <a [routerLink]="getLink(node)" class="node" *ngFor="let node of aggregationInfo.BadNodes">{{node}}</a>
       </div>
       <div class="overview-value" *ngIf="!hasData(aggregationInfo.BadNodes)">No bad nodes.</div>
     </div>
