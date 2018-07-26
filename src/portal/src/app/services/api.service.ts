@@ -57,6 +57,10 @@ export class NodeApi extends Resource<Node> {
     return `${this.baseUrl}/nodes`;
   }
 
+  getNodesByPage(lastId, count): Observable<any> {
+    return this.httpGet(`${this.url}?lastid=${lastId}&count=${count}`);
+  }
+
   getHistoryData(id: string): Observable<any> {
     return this.httpGet(`${this.url}/${id}/metrichistory`, null, [
       map(e => this.normalizeHistory(e)),

@@ -1,5 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Directive, Input } from '@angular/core';
+import { Component, Directive, Input, Output, EventEmitter, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../services/api.service';
@@ -8,8 +8,8 @@ import { FormsModule } from '@angular/forms'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material';
 import { MaterialsModule } from '../../materials.module';
-
 import { NodeListComponent } from './node-list.component';
+import { TableDataService } from '../../services/table-data/table-data.service';
 
 @Directive({
   selector: '[routerLink]',
@@ -22,6 +22,15 @@ class RouterLinkDirectiveStub {
   onClick() {
     this.navigatedTo = this.linkParams;
   }
+}
+
+@Directive({
+  selector: '[appWindowScroll]',
+})
+class WindowScrollDirectiveStub {
+  @Input() dataLength: number;
+  @Input() pageSize: number;
+  @Output() scrollEvent = new EventEmitter();
 }
 
 const routerStub = {
@@ -53,6 +62,7 @@ class ApiServiceStub {
 
   node = {
     getAll: () => of(ApiServiceStub.nodes),
+    getNodesByPage: () => of(ApiServiceStub.nodes)
   }
 
   command = {
@@ -66,6 +76,12 @@ const tableSettingsStub = {
   save: (key, val) => undefined,
 }
 
+class TableDataServiceStub {
+  updateData(newData, dataSource, propertyName) {
+    return dataSource.data = newData;
+  }
+}
+
 fdescribe('NodeListComponent', () => {
   let component: NodeListComponent;
   let fixture: ComponentFixture<NodeListComponent>;
@@ -75,6 +91,7 @@ fdescribe('NodeListComponent', () => {
       declarations: [
         RouterLinkDirectiveStub,
         NodeListComponent,
+        WindowScrollDirectiveStub
       ],
       imports: [
         NoopAnimationsModule,
@@ -83,10 +100,12 @@ fdescribe('NodeListComponent', () => {
       ],
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
+        { provide: TableDataService, useClass: TableDataServiceStub },
         { provide: Router, useValue: routerStub },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
         { provide: TableSettingsService, useValue: tableSettingsStub },
-      ]
+      ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })
       //We want to stub out MatDialog only for this component.
       .overrideComponent(NodeListComponent, {

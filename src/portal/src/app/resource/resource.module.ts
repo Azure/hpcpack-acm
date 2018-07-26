@@ -13,6 +13,7 @@ import { NodeHeatmapComponent } from './node-heatmap/node-heatmap.component';
 import { NewDiagnosticsComponent } from './new-diagnostics/new-diagnostics.component';
 import { NewCommandComponent } from './new-command/new-command.component';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
   imports: [
@@ -24,6 +25,7 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
     TreeModule,
     WidgetsModule,
     ChartModule,
+    SharedModule
   ],
   declarations: [ResourceComponent, NodeListComponent, NodeDetailComponent, NodeHeatmapComponent, NewDiagnosticsComponent, NewCommandComponent],
   entryComponents: [NewDiagnosticsComponent, NewCommandComponent],

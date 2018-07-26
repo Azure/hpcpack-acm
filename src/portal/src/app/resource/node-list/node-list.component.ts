@@ -6,8 +6,9 @@ import { Subscription } from 'rxjs/Subscription';
 import { NewDiagnosticsComponent } from '../new-diagnostics/new-diagnostics.component';
 import { NewCommandComponent } from '../new-command/new-command.component';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
-import { ApiService } from '../../services/api.service';
+import { ApiService, Loop } from '../../services/api.service';
 import { TableSettingsService } from '../../services/table-settings.service';
+import { TableDataService } from '../../services/table-data/table-data.service';
 
 @Component({
   selector: 'resource-node-list',
@@ -36,24 +37,65 @@ export class NodeListComponent {
 
   private selection = new SelectionModel(true, []);
 
+  private lastId = 0;
+  private nodeLoop: object;
+  private maxPageSize = 120;
+  private currentData = [];
+  private scrolled = false;
+  private loadFinished = false;
+  private interval = 3000;
+  private loading = false;
+  private scrollDirection = 'down';
+
   constructor(
     private dialog: MatDialog,
     private api: ApiService,
     private router: Router,
     private route: ActivatedRoute,
     private settings: TableSettingsService,
+    private tableDataService: TableDataService
   ) { }
 
   ngOnInit() {
     this.loadSettings();
     this.getDisplayedColumns();
-    this.api.node.getAll().subscribe(nodes => {
-      this.dataSource.data = nodes;
-    });
+    // this.api.node.getAll().subscribe(nodes => {
+    //   this.dataSource.data = nodes;
+    // });
+    this.nodeLoop == Loop.start(
+      this.getNodesRequest(),
+      {
+        next: (result) => {
+          this.currentData = result;
+          if (this.scrollDirection == 'down' && result.length < this.maxPageSize) {
+            this.loadFinished = true;
+          }
+          this.tableDataService.updateData(result, this.dataSource, 'id');
+          return this.getNodesRequest();
+        }
+      }
+    );
     this.subcription = this.route.queryParamMap.subscribe(params => {
       this.query.filter = params.get('filter');
       this.updateUI();
     });
+  }
+
+  ngOnDestroy() {
+    if (this.nodeLoop) {
+      Loop.stop(this.nodeLoop);
+    }
+  }
+
+  private onScrollEvent(data) {
+    this.lastId = data.dataIndex == -1 ? 0 : this.dataSource.data[data.dataIndex]['id'];
+    this.loadFinished = data.loadFinished;
+    this.scrolled = data.scrolled;
+    this.scrollDirection = data.scrollDirection;
+  }
+
+  private getNodesRequest() {
+    return this.api.node.getNodesByPage(this.lastId, this.maxPageSize)
   }
 
   updateUI() {

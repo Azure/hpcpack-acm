@@ -117,14 +117,7 @@
   <mat-row class="table-row" *matRowDef="let result; columns: displayedColumns;" (click)="selection.toggle(result)"></mat-row>
 </mat-table>
 
-<div class="loading">
-  <!-- <mat-spinner *ngIf="!hasReceivedData"></mat-spinner> -->
-  <mat-progress-bar *ngIf="!loadFinished" mode="buffer"></mat-progress-bar>
-  <div class="load-finish" *ngIf="loadFinished">
-    No more data.
-  </div>
-</div>
-
+<app-loading-progress-bar [loadFinished]="loadFinished"></app-loading-progress-bar>
 <app-scroll-to-top [scrolled]="scrolled"></app-scroll-to-top>
 <!-- <mat-paginator #paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 25, 100]" [showFirstLastButtons]="true"
   (page)="changePage($event)">

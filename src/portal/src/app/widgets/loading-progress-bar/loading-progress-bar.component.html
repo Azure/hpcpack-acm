@@ -1,0 +1,6 @@
+<div class="loading">
+  <mat-progress-bar *ngIf="!loadFinished" mode="buffer"></mat-progress-bar>
+  <div class="load-finish" *ngIf="loadFinished">
+    No more data.
+  </div>
+</div>

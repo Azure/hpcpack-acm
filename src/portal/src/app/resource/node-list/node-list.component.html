@@ -32,7 +32,7 @@
   </mat-form-field>
 </div>
 
-<mat-table #table [dataSource]="dataSource">
+<mat-table #table [dataSource]="dataSource" appWindowScroll [dataLength]="currentData.length" [pageSize]="maxPageSize" (scrollEvent)="onScrollEvent($event)">
   <!--
    Note that these columns can be defined in any order. The actual rendered
    columns are set as a property on the row definition, that is displayedColumns."
@@ -126,3 +126,5 @@
   <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
   <mat-row *matRowDef="let node; columns: displayedColumns;" (click)="selection.toggle(node)"></mat-row>
 </mat-table>
+<app-loading-progress-bar [loadFinished]="loadFinished"></app-loading-progress-bar>
+<app-scroll-to-top [scrolled]="scrolled"></app-scroll-to-top>

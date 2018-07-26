@@ -109,13 +109,5 @@
   <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
   <mat-row *matRowDef="let result; columns: displayedColumns;" (click)="selection.toggle(result)"></mat-row>
 </mat-table>
-
-<div class="loading">
-  <!-- <mat-spinner *ngIf="!hasReceivedData"></mat-spinner> -->
-  <mat-progress-bar *ngIf="!loadFinished" mode="buffer"></mat-progress-bar>
-  <div class="load-finish" *ngIf="loadFinished">
-    No more data.
-  </div>
-</div>
-
+<app-loading-progress-bar [loadFinished]="loadFinished"></app-loading-progress-bar>
 <app-scroll-to-top [scrolled]="scrolled"></app-scroll-to-top>
