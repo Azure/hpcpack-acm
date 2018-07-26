@@ -184,21 +184,14 @@ export class ResultDetailComponent implements OnInit {
             observer.complete();
           },
           error => {
-            observer.next({ error: error.message });
-            observer.complete();
+            observer.error(error);
           }
         );
       }),
       //observer:
       {
         next: (key) => {
-          if (ApiService.isJSON(key)) {
-            let output = this.getNodeOutput(node);
-            output.loading = false;
-            output.content = key.error;
-            return false;
-          }
-          else if (key) {
+          if (key) {
             onGot(key);
             return false;
           }
@@ -208,6 +201,10 @@ export class ResultDetailComponent implements OnInit {
           //  return false;
           //}
           return true;
+        },
+        error: (err) => {
+          onGot(err);
+          return false;
         }
       },
       //interval(in ms):
@@ -231,10 +228,15 @@ export class ResultDetailComponent implements OnInit {
           if (!output.keyLoop) {
             output.loading = 'key';
             output.keyLoop = this.getNodeOutputKey(node, (key) => {
+              let keyType = typeof (key);
               output.loading = false;
-              if (key) {
+              if (key && keyType == 'string') {
                 output.key = key;
                 callback(true);
+              }
+              else if (key && keyType == 'object') {
+                output.content = key.message;
+                callback(false);
               }
               else {
                 output.key = false;
