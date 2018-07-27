@@ -6,20 +6,20 @@
     <mat-spinner *ngIf="!isOver" [diameter]="25"></mat-spinner>
   </div>
   <div class="operations">
-  <div class="cancel-job">
+    <div class="cancel-job">
       <div class="operation" *ngIf="!isOver" (click)="cancelCommand()">
         <i class="material-icons operation-icon cancel">clear</i>
         <div class="operation-name">Cancel</div>
       </div>
-    <div class="operation-text" *ngIf="!isOver && canceling">
-      <div class="operation-name">Waiting for cancel request finish...</div>
+      <div class="operation-text" *ngIf="!isOver && canceling">
+        <div class="operation-name">Waiting for cancel request finish...</div>
+      </div>
+    </div>
+    <div class="operation" *ngIf="isOver" (click)="newCommand()">
+      <i class="material-icons rerun">content_copy</i>
+      <div class="operation-name">Copy</div>
     </div>
   </div>
-  <div class="operation" *ngIf="isOver" (click)="newCommand()">
-    <i class="material-icons rerun">content_copy</i>
-    <div class="operation-name">Copy</div>
-</div>
-</div>
 </div>
 
 <ng-container *ngIf="isLoaded; else waiting">
@@ -33,7 +33,7 @@
       <div class="col-md-9 output">
         <command-output (loadPrev)="loadPrevAndScroll(selectedNode, $event)" (loadNext)="loadNext(selectedNode)"
           (gotoTop)="loadFromBeginAndScroll(selectedNode, $event)"
-          [content]="currentOutput?.content" [disabled]="isOutputDisabled" [loading]="loading"
+          [content]="(currentOutput?.content) || (currentOutput?.error)" [disabled]="isOutputDisabled" [loading]="loading"
           [bof]="currentOutput?.start === 0" [eof]="currentOutput?.end">
         </command-output>
 

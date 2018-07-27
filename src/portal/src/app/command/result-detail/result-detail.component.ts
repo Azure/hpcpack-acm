@@ -222,6 +222,7 @@ export class ResultDetailComponent implements OnInit {
         end: undefined,
         loading: false,
         key: null,
+        error: ''
       };
       let onKeyReady = (callback) => {
         if (output.key === null) {
@@ -235,7 +236,7 @@ export class ResultDetailComponent implements OnInit {
                 callback(true);
               }
               else if (key && keyType == 'object') {
-                output.content = key.message;
+                output.error = key.message;
                 callback(false);
               }
               else {
