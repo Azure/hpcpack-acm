@@ -98,6 +98,7 @@
             }
 
             await blob.FetchAttributesAsync();
+            result.Eof = blob.Metadata["Eof"] == true.ToString();
             var blobLength = blob.Properties.Length;
             if (blobLength == 0) { return result; }
 
@@ -122,6 +123,8 @@
                 result.Content = await sr.ReadToEndAsync();
                 result.Size = stream.Position;
             }
+
+            result.Eof = result.Eof && (result.Size + result.Offset >= blobLength);
 
             return result;
         }

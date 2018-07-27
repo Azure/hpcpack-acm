@@ -6,6 +6,7 @@
 
     public class TaskOutputPage
     {
+        public bool Eof { get; set; }
         public long Offset { get; set; }
         public long Size { get; set; }
         public string Content { get; set; }
