@@ -491,6 +491,9 @@ definitions:
     type: object
     description: The end of the output can only be told by size of value 0 and the end of the task.
     properties:
+      eof:
+        type: boolean
+        description: Whether the end of output is reached
       offset:
         type: integer
         description: Distance between the start of the returned content and the start of the whole output
@@ -858,10 +861,9 @@ paths:
         name: pageSize
         description: The size of requested piece of output
         type: integer
-
     get:
       summary: Get partial output of a task
-      operationId: getClusrunOutput2
+      operationId: getClusrunOutputInPage
       responses:
         200:
           description: OK
