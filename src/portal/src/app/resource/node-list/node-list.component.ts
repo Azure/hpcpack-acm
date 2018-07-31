@@ -43,9 +43,10 @@ export class NodeListComponent {
   private currentData = [];
   private scrolled = false;
   private loadFinished = false;
-  private interval = 3000;
+  private interval = 5000;
   private loading = false;
   private scrollDirection = 'down';
+  private selectedNodes = [];
 
   constructor(
     private dialog: MatDialog,
@@ -58,11 +59,11 @@ export class NodeListComponent {
 
   ngOnInit() {
     this.loadSettings();
-    this.getDisplayedColumns();
+    this.getDisplayedColumns(); 
     // this.api.node.getAll().subscribe(nodes => {
     //   this.dataSource.data = nodes;
     // });
-    this.nodeLoop == Loop.start(
+    this.nodeLoop = Loop.start(
       this.getNodesRequest(),
       {
         next: (result) => {
@@ -73,7 +74,8 @@ export class NodeListComponent {
           this.tableDataService.updateData(result, this.dataSource, 'id');
           return this.getNodesRequest();
         }
-      }
+      },
+      this.interval
     );
     this.subcription = this.route.queryParamMap.subscribe(params => {
       this.query.filter = params.get('filter');
@@ -107,25 +109,42 @@ export class NodeListComponent {
     this.router.navigate(['.'], { relativeTo: this.route, queryParams: this.query });
   }
 
-  get selectedData(): any[] {
-    return this.selection.selected;
-  }
-
   private isAllSelected() {
-    const numSelected = this.selection.selected.length;
+    const numSelected = this.selectedNodes.length;
     const numRows = this.dataSource.data.length;
     return numSelected == numRows;
   }
 
   private masterToggle() {
     this.isAllSelected() ?
-      this.selection.clear() :
-      this.dataSource.data.forEach(row => this.selection.select(row));
+      this.selectedNodes = [] :
+      this.dataSource.data.forEach(row => {
+        let index = this.selectedNodes.findIndex(n => {
+          return n.id == row.id;
+        });
+        if (index == -1) {
+          this.selectedNodes.push(row);
+        }
+      });
   }
 
-  private select(node) {
-    this.selection.clear();
-    this.selection.toggle(node);
+  private isSelected(node) {
+    let index = this.selectedNodes.findIndex(n => {
+      return n.id == node.id;
+    });
+    return index == -1 ? false : true;
+  }
+
+  private updateSelectedNodes(node): void {
+    let index = this.selectedNodes.findIndex(n => {
+      return n.id == node.id;
+    });
+    if (index != -1) {
+      this.selectedNodes.splice(index, 1);
+    }
+    else {
+      this.selectedNodes.push(node);
+    }
   }
 
   runDiagnostics() {
@@ -137,7 +156,7 @@ export class NodeListComponent {
     //TODO: Run diagnostic tests on user selected nodes...
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        let targetNodes = this.selection.selected.map(e => e.name);
+        let targetNodes = this.selectedNodes.map(e => e.name);
         let diagnosticTest = { name: result['selectedTest']['name'], category: result['selectedTest']['category'], arguments: result['selectedTest']['arguments'] };
         let name = result['diagTestName'];
         this.api.diag.create(name, targetNodes, diagnosticTest).subscribe(obj => {
@@ -157,7 +176,7 @@ export class NodeListComponent {
 
     dialogRef.afterClosed().subscribe(cmd => {
       if (cmd) {
-        let names = this.selection.selected.map(e => e.name);
+        let names = this.selectedNodes.map(e => e.name);
         this.api.command.create(cmd, names).subscribe(obj => {
           this.router.navigate([`/command/results/${obj.id}`]);
         });
@@ -166,12 +185,11 @@ export class NodeListComponent {
   }
 
   hasNoSelection(): boolean {
-    return this.selectedData.length == 0;
+    return this.selectedNodes.length == 0;
   }
 
   getDisplayedColumns(): void {
     let columns = this.availableColumns.filter(e => e.displayed).map(e => e.name);
-    columns.push('actions');
     this.displayedColumns = ['select', 'name'].concat(columns);
   }
 
