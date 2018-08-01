@@ -2,6 +2,7 @@ import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
 import { ApiService, Loop } from '../../../../../../services/api.service';
 import { TableSettingsService } from '../../../../../../services/table-settings.service';
+import { TableDataService } from '../../../../../../services/table-data/table-data.service';
 
 @Component({
   selector: 'app-ring-report',
@@ -12,15 +13,20 @@ export class RingReportComponent implements OnInit {
   @Input() result: any;
 
   private dataSource = new MatTableDataSource();
+  private currentData = [];
+  private lastId = 0;
+  private pageSize = 120;
+  private loadFinished = false;
+  private scrollDirection = 'down';
 
   private jobId: string;
   private interval: number;
   private tasksLoop: Object;
   private jobState: string;
-  private tasks = [];
   private events = [];
   private nodes = [];
   private aggregationResult: any;
+
 
   private componentName = "RingReport";
 
@@ -31,6 +37,7 @@ export class RingReportComponent implements OnInit {
   constructor(
     private api: ApiService,
     private settings: TableSettingsService,
+    private tableDataService: TableDataService
   ) {
     this.interval = 5000;
   }
@@ -47,22 +54,34 @@ export class RingReportComponent implements OnInit {
     return this.aggregationResult !== undefined && this.aggregationResult['Error'] !== undefined;
   }
 
+  getTasksRequest() {
+    return this.api.diag.getDiagTasksByPage(this.jobId, this.lastId, this.pageSize);
+  }
+
   getTasksInfo(): any {
     return Loop.start(
-      this.api.diag.getDiagTasks(this.jobId),
+      this.getTasksRequest(),
       {
         next: (result) => {
-          this.dataSource.data = result;
-          this.tasks = result;
+          this.currentData = result;
+          this.tableDataService.updateData(result, this.dataSource, 'id');
+          if (result.length < this.pageSize && this.scrollDirection == 'down') {
+            this.loadFinished = true;
+          }
           if (this.jobState == 'Finished' || this.jobState == 'Failed' || this.jobState == 'Canceled') {
             this.getAggregationResult();
           }
           this.getJobInfo();
-          return true;
+          return this.getTasksRequest();
         }
       },
       this.interval
     );
+  }
+
+  onUpdateLastIdEvent(data) {
+    this.lastId = data.lastId;
+    this.scrollDirection = data.direction;
   }
 
   ngOnDestroy() {

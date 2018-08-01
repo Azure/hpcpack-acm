@@ -1,11 +1,12 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Input, Directive } from '@angular/core';
+import { Component, Input, Directive, Output, EventEmitter } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { RingReportComponent } from './ring-report.component';
 import { MaterialsModule } from '../../../../../../materials.module';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ApiService } from '../../../../../../services/api.service';
 import { TableSettingsService } from '../../../../../../services/table-settings.service';
+import { TableDataService } from '../../../../../../services/table-data/table-data.service';
 
 @Directive({
   selector: '[routerLink]',
@@ -56,10 +57,22 @@ class DiagTaskTableComponent {
   dataSource: any;
 
   @Input()
+  currentData: any;
+
+  @Input()
   customizableColumns: any;
 
   @Input()
   tableName: any;
+
+  @Input()
+  loadFinished: boolean;
+
+  @Input()
+  maxPageSize: number;
+
+  @Output()
+  updateLastIdEvent = new EventEmitter();
 }
 
 @Component({
@@ -86,7 +99,7 @@ class ApiServiceStub {
   };
 
   diag = {
-    getDiagTasks: (id: any) => of(ApiServiceStub.taskResult),
+    getDiagTasksByPage: (id: any, lastId, count) => of(ApiServiceStub.taskResult),
     getDiagJob: (id: any) => of(ApiServiceStub.jobResult),
     getJobAggregationResult: (id: any) => of({ Error: "error message" })
   }
@@ -98,6 +111,11 @@ const tableSettingsStub = {
   save: (key, val) => undefined
 }
 
+class TableDataServiceStub {
+  updateData(newData, dataSource, propertyName) {
+    return dataSource.data = newData;
+  }
+}
 
 fdescribe('RingReportComponent', () => {
   let component: RingReportComponent;
@@ -121,7 +139,8 @@ fdescribe('RingReportComponent', () => {
       imports: [MaterialsModule, NoopAnimationsModule],
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
-        { provide: TableSettingsService, useValue: tableSettingsStub }
+        { provide: TableSettingsService, useValue: tableSettingsStub },
+        { provide: TableDataService, useClass: TableDataServiceStub }
       ]
     })
       .compileComponents();

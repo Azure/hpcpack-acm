@@ -9,12 +9,6 @@
         <div *ngFor="let trace of event.content.errorStack"> {{trace}} </div>
       </div>
     </div>
-    <div *ngIf="event.content.errorStack">
-      <button mat-icon-button (click)="showEventDetail(event)">
-        <mat-icon *ngIf="!event.content.showDetail">zoom_in</mat-icon>
-        <mat-icon *ngIf="event.content.showDetail">zoom_out</mat-icon>
-      </button>
-    </div>
   </div>
 </div>
 <div class="event empty-msg" *ngIf="events.length < 1">

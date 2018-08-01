@@ -303,9 +303,10 @@ export class DiagApi extends Resource<any> {
     return this.httpGet(`${this.url}/${id}/aggregationResult`);
   }
 
-  getDiagTasks(id: string) {
-    return this.httpGet(`${this.url}/${id}/tasks`);
+  getDiagTasksByPage(id: string, lastId, count) {
+    return this.httpGet(`${this.url}/${id}/tasks?lastid=${lastId}&count=${count}`);
   }
+
 
   getDiagTaskResult(jobId: string, taskId: string) {
     return this.httpGet(`${this.url}/${jobId}/tasks/${taskId}/result`, null, [

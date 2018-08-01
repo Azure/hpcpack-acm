@@ -6,6 +6,7 @@ import { TableSettingsService } from '../../../../services/table-settings.servic
 import { MatTableDataSource } from '@angular/material';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { JobStateService } from '../../../../services/job-state/job-state.service';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 const tableSettingsStub = {
   load: (key, initVal) => initVal,
@@ -38,7 +39,8 @@ fdescribe('TaskTableComponent', () => {
       providers: [
         { provide: TableSettingsService, useValue: tableSettingsStub },
         { provide: JobStateService, useClass: JobStateServiceStub },
-      ]
+      ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })
       .compileComponents();
   }));
@@ -60,6 +62,9 @@ fdescribe('TaskTableComponent', () => {
         }
       }
     }];
+    component.currentData = [];
+    component.loadFinished = false;
+    component.maxPageSize = 120;
 
     fixture.detectChanges();
   });
