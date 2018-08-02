@@ -98,6 +98,7 @@
             }
 
             await blob.FetchAttributesAsync();
+            result.Eof = blob.Metadata["Eof"] == true.ToString();
             var blobLength = blob.Properties.Length;
             if (blobLength == 0) { return result; }
 
@@ -122,6 +123,8 @@
                 result.Content = await sr.ReadToEndAsync();
                 result.Size = stream.Position;
             }
+
+            result.Eof = result.Eof && (result.Size + result.Offset >= blobLength);
 
             return result;
         }
@@ -332,7 +335,7 @@
 
             if (!await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
-                state = j.State = (j.State == JobState.Queued || j.State == JobState.Running) ? JobState.Canceling : j.State;
+                state = j.State = (j.State == JobState.Queued || j.State == JobState.Running || j.State == JobState.Finishing) ? JobState.Canceling : j.State;
             }, token))
             {
                 return new NotFoundObjectResult($"{job.Type} job {job.Id} was not found.");

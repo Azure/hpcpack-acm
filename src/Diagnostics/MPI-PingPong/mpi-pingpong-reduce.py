@@ -1,3 +1,5 @@
+#v0.3
+
 import sys, json, copy, numpy
 
 def main():
@@ -8,9 +10,6 @@ def main():
 
     allNodes = job['TargetNodes']
     nodesNumber = len(allNodes)
-    if nodesNumber < 2:
-        printErrorAsJson('The number of nodes is less than 2.')
-        return -1
 
     if len(tasks) != len(taskResults):
         printErrorAsJson('Task count {} is not equal to task result count {}.'.format(len(tasks), len(taskResults)))
@@ -19,6 +18,7 @@ def main():
     latencyThreshold = 1000
     throughputThreshold = 100
     packetSize = 2**22
+    mode = 'Tournament'.lower()
     try:
         if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
             arguments = job['DiagnosticTest']['Arguments']
@@ -34,15 +34,19 @@ def main():
                         packetSize = 2**int(argument['value'])
                         # if packetSize > somevalue, the Latency is invalid
                         continue
+                    if argument['name'].lower() == 'Mode'.lower():
+                        mode = argument['value'].lower()
+                        continue
     except Exception as e:
         printErrorAsJson('Failed to parse arguments. ' + str(e))
         return -1
+    if mode == 'Jumble'.lower():
+        throughputThreshold = 0
 
     taskStateFinished = 3
     taskStateFailed = 4
 
     taskId2nodePair = {}
-    failedPairs = []
     tasksForStatistics = set()
     rdmaNodes = []
     try:
@@ -50,18 +54,13 @@ def main():
             taskId = task['Id']
             state = task['State']
             nodePair = task['CustomizedData']
-            isRdma = False
             if len(nodePair) > 6 and nodePair[:6] == '[RDMA]':
                 nodePair = nodePair[7:]
-                isRdma = True
+                if ',' not in nodePair:
+                    rdmaNodes.append(nodePair)
             taskId2nodePair[taskId] = nodePair
-            if ',' in nodePair:
-                if state == taskStateFailed:
-                    failedPairs.append(nodePair)
-                if state == taskStateFinished:
-                    tasksForStatistics.add(taskId)
-            elif isRdma:
-                rdmaNodes.append(nodePair)
+            if ',' in nodePair and state == taskStateFinished:
+                tasksForStatistics.add(taskId)
     except Exception as e:
         printErrorAsJson('Failed to parse tasks. ' + str(e))
         return -1
@@ -87,32 +86,28 @@ def main():
                     }
                 failedNodes.append(failedNode)
     except Exception as e:
-        printErrorAsJson('Failed to parse task results. ' + str(e))
+        printErrorAsJson('Failed to parse task result. Task id: {}. {}'.format(taskId, e))
         return -1
 
-    goodPairs = list(messages.keys())
+    goodPairs = [pair for pair in messages if messages[pair]["Throughput"] > throughputThreshold]
     goodNodesGroups = getGroupsOfFullConnectedNodes(goodPairs)
-    largestGoodNodesGroups = [group for group in goodNodesGroups if len(group) == max([len(groupInner) for groupInner in goodNodesGroups])]
-    goodNodesGroupsWithMasters = getGroupsWithMasters(goodPairs)
-    largestGoodNodesGroupsWithMasters = [group for group in goodNodesGroupsWithMasters if len(group["Nodes"]) == max([len(groupInner["Nodes"]) for groupInner in goodNodesGroupsWithMasters])]
     goodNodes = set([node for group in goodNodesGroups for node in group])
     if goodNodes != set([node for pair in goodPairs for node in pair.split(',')]):
         printErrorAsJson('Should not get here!')
         return -1
+    if nodesNumber == 1 or nodesNumber == 2 and len(rdmaNodes) == 1:
+        goodNodes = [task['Node'] for task in tasks if task['State'] == taskStateFinished]
     badNodes = [node for node in allNodes if node not in goodNodes]
     goodNodes = list(goodNodes)
+    failedReasons = getFailedReasons(failedNodes)
 
     result = {
-        'GoodPairs':goodPairs,
         'GoodNodesGroups':goodNodesGroups,
-        'GoodNodesGroupsWithMasters':goodNodesGroupsWithMasters,
-        'LargestGoodNodesGroups':largestGoodNodesGroups,
-        'LargestGoodNodesGroupsWithMasters':largestGoodNodesGroupsWithMasters,
         'GoodNodes':goodNodes,
-        'FailedPairs':failedPairs,
         'FailedNodes':failedNodes,
         'BadNodes':badNodes,
-        'RdmaNodes':rdmaNodes
+        'RdmaNodes':rdmaNodes,
+        'FailedReasons':failedReasons
         }
 
     if messages:
@@ -181,6 +176,26 @@ def main():
 
     print(json.dumps(result))
     return 0
+
+def getFailedReasons(failedNodes):
+    INTEL_MPI_INSTALL_CLUSRUN_HINT = "wget [intel_mpi_binary_location(eg. https://your_storage_account.blob.core.windows.net/your_container_name/[l_mpi_version].tgz)] && tar -zxvf [l_mpi_version].tgz && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./[l_mpi_version]/silent.cfg && ./[l_mpi_version]/install.sh --silent ./[l_mpi_version]/silent.cfg"
+    reasonMpiNotInstalled = 'Intel MPI is not found in default directory "/opt/intel".'
+    solutionMpiNotInstalled = 'If Intel MPI is installed on other location, specify the directory in parameter "MPI install directory" of diagnostics test MPI-PingPong. Or download from https://software.intel.com/en-us/intel-mpi-library and install with clusrun command: "{}".'.format(INTEL_MPI_INSTALL_CLUSRUN_HINT)
+    reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
+    solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
+    failedReasons = {}
+    for failedNode in failedNodes:
+        reason = "Unknown"
+        if "mpivars.sh: No such file or directory" in failedNode['Detail']:
+            reason = reasonMpiNotInstalled
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode['NodeName'])
+        elif "Host {} not found:".format(failedNode['NodePair'].split(',')[1]) in failedNode['Detail']:
+            reason = reasonHostNotFound
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHostNotFound, 'NodePairs':[]})['NodePairs'].append(failedNode['NodePair'])
+        failedNode['Reason'] = reason
+    if reasonMpiNotInstalled in failedReasons:
+        failedReasons[reasonMpiNotInstalled]['Nodes'] = list(failedReasons[reasonMpiNotInstalled]['Nodes'])
+    return failedReasons.values()
 
 def getNodeMap(pairs):
     connectedNodesOfNode = {}

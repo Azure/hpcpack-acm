@@ -47,7 +47,7 @@
             private readonly string key;
             private readonly TaskMonitor monitor;
 
-            public OutputSorter(string key, TaskMonitor monitor, Func<string, CancellationToken, T.Task> processor)
+            public OutputSorter(string key, TaskMonitor monitor, Func<string, bool, CancellationToken, T.Task> processor)
             {
                 this.processor = processor;
                 this.key = key;
@@ -95,7 +95,7 @@
                             }
                         }
 
-                        await this.processor(builder.ToString(), token);
+                        await this.processor(builder.ToString(), i.Eof, token);
                         if (i != null && i.Eof)
                         {
                             this.Dispose();
@@ -115,13 +115,13 @@
             }
 
             private readonly SemaphoreSlim sem = new SemaphoreSlim(1);
-            private readonly Func<string, CancellationToken, T.Task> processor;
+            private readonly Func<string, bool, CancellationToken, T.Task> processor;
         }
 
         private readonly ConcurrentDictionary<string, TaskResultMonitor> taskResults = new ConcurrentDictionary<string, TaskResultMonitor>();
         private readonly ConcurrentDictionary<string, OutputSorter> taskOutputs = new ConcurrentDictionary<string, OutputSorter>();
 
-        public TaskResultMonitor StartMonitorTask(string key, Func<string, CancellationToken, T.Task> outputProcessor)
+        public TaskResultMonitor StartMonitorTask(string key, Func<string, bool, CancellationToken, T.Task> outputProcessor)
         {
             this.taskOutputs.GetOrAdd(key, new OutputSorter(key, this, outputProcessor));
             return this.taskResults.GetOrAdd(key, new TaskResultMonitor(key, this));
