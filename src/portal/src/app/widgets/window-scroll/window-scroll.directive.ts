@@ -110,10 +110,9 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
           this.jobIndex -= this.derelictSize;
           this.dataIndex = this.downNum * this.derelictSize - 1;
         }
-
-        if (this.dataLength < this.pageSize) {
-          this.loadFinished = true;
-        }
+      }
+      if (this.scrollDirection == 'down' && this.dataLength < this.pageSize) {
+        this.loadFinished = true;
       }
       this.lastScrolledPosition = scrollPosition;
       this.scrollEvent.emit({ dataIndex: this.dataIndex, scrolled: this.scrolled, loadFinished: this.loadFinished, scrollDirection: this.scrollDirection });
