@@ -31,6 +31,22 @@ export class NodesInfoComponent implements OnInit {
     return data !== undefined && data !== null;
   }
 
+  isExist(node, obj, propertyName) {
+    if (this.hasData(obj) && this.hasData(obj[propertyName])) {
+      let index = obj[propertyName].findIndex(item => {
+        return item == node;
+      });
+      return index == -1 ? false : true;
+    }
+  }
+  isGood(node) {
+    return this.isExist(node, this.aggregationInfo, 'GoodNodes');
+  }
+
+  isBad(node) {
+    return this.isExist(node, this.aggregationInfo, 'BadNodes');
+  }
+
   getLink(node) {
     let path = [];
     path.push('/resource');
