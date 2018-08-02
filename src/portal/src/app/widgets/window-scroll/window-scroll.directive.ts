@@ -57,7 +57,11 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
 
       let pageSize = this.dataLength;
       let containerHeight = this.el.nativeElement.clientHeight;
-      let itemHeight = (<HTMLElement>document.querySelector('mat-row')).offsetHeight;
+      let rowItem = <HTMLElement>document.querySelector('mat-row');
+      if (!rowItem) {
+        return;
+      }
+      let itemHeight = rowItem.offsetHeight;
       let tableSize = Math.floor(containerHeight / itemHeight);
 
       if (!this.scrolled) {
