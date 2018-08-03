@@ -190,6 +190,7 @@
                         ExitCode = exitCode,
                         JobType = task.JobType,
                         RequeueCount = task.RequeueCount,
+                        ChildIds = task.ChildIds,
                     }, Formatting.Indented)), null, null, null, null, token);
                 }
             }

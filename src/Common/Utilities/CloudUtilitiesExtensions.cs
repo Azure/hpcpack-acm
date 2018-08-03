@@ -85,6 +85,14 @@
                 token);
         }
 
+        public static async T.Task<CloudAppendBlob> CreateOrReplaceTaskChildrenBlobAsync(this CloudUtilities u, string key, CancellationToken token)
+        {
+            return await u.GetOrCreateAppendBlobAsync(
+                u.Option.TaskChildrenContainerName,
+                key,
+                token);
+        }
+
         public static CloudAppendBlob GetJobOutputBlob(this CloudUtilities u, JobType jobType, string key) => u.GetAppendBlob(
             string.Format(u.Option.JobResultContainerPattern, jobType.ToString().ToLowerInvariant()),
             key);
@@ -292,6 +300,19 @@
             var highJobPartitionKey = u.GetJobPartitionKey(type, higherId, reverse);
 
             return u.GetJobsAsync(lowJobPartitionKey, highJobPartitionKey, count, type, reverse, token);
+        }
+
+        public static async T.Task<List<int>> LoadTaskChildIdsAsync(
+            this CloudUtilities u,
+            int taskId,
+            int jobId,
+            int jobRequeueCount,
+            CancellationToken token)
+        {
+            var taskKey = u.GetTaskKey(jobId, taskId, jobRequeueCount);
+            var childIdBlob = u.GetAppendBlob(u.Option.TaskChildrenContainerName, taskKey);
+            var content = await childIdBlob.DownloadTextAsync(Encoding.UTF8, null, null, null, token);
+            return JsonConvert.DeserializeObject<List<int>>(content);
         }
     }
 }

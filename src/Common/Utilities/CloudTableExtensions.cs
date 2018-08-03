@@ -74,5 +74,38 @@
         {
             return await t.ExecuteAsync(TableOperation.Replace(entity), null, null, token);
         }
+        public static async Task InsertOrReplaceBatchAsync(this CloudTable t, CancellationToken token, params JsonTableEntity[] entities)
+        {
+            Func<TableBatchOperation, Task> submitBatch = async (TableBatchOperation batchOperation) =>
+            {
+                if (batchOperation.Count > 0)
+                {
+                    var tableResults = await t.ExecuteBatchAsync(batchOperation, null, null, token);
+                    if (!tableResults.All(r => r.IsSuccessfulStatusCode()))
+                    {
+                        throw new InvalidOperationException("Not all tasks dispatched successfully");
+                    }
+
+                    batchOperation.Clear();
+                }
+            };
+
+            const int MaxBatchSize = 100;
+            var batches = entities
+                .Zip(Enumerable.Range(0, entities.Length), (en, i) => new { Entity = en, Index = i })
+                .GroupBy(en => en.Index / MaxBatchSize)
+                .Select(g =>
+                {
+                    var batch = new TableBatchOperation();
+                    foreach (var en in g)
+                    {
+                        batch.InsertOrReplace(en.Entity);
+                    }
+
+                    return batch;
+                });
+
+            await Task.WhenAll(batches.Select(b => submitBatch(b)));
+        }
     }
 }

@@ -18,7 +18,7 @@
         {
         }
 
-        public virtual T GetMessage<T>() => default(T);
+        public virtual T GetMessage<T>() where T : class => default(T);
         public virtual Task FinishAsync(CancellationToken token) => Task.CompletedTask;
         public virtual Task ReturnAsync(CancellationToken token) => Task.CompletedTask;
     }

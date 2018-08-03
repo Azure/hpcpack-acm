@@ -20,9 +20,9 @@
 
     internal class JobDispatchWorker : TaskItemWorker, IWorker
     {
-        private readonly NodeAgentWorkerOptions options;
+        private readonly TaskItemSourceOptions options;
 
-        public JobDispatchWorker(IOptions<NodeAgentWorkerOptions> options) : base(options.Value)
+        public JobDispatchWorker(IOptions<TaskItemSourceOptions> options) : base(options.Value)
         {
             this.options = options.Value;
         }

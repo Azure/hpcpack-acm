@@ -20,15 +20,14 @@
         private readonly HttpClient client;
 
         private readonly ILogger logger;
-        public NodeCommunicator(ILogger logger, IOptions<NodeAgentWorkerOptions> options)
+        public NodeCommunicator(ILogger logger, IOptions<NodeCommunicatorOptions> options)
         {
             this.logger = logger;
             this.Options = options.Value;
             this.client = new HttpClient();
         }
 
-        // TODO make node communicator options.
-        public NodeAgentWorkerOptions Options { get; }
+        public NodeCommunicatorOptions Options { get; }
 
         public async Tasks.Task<string> EndJobAsync(string nodeName, EndJobArg arg,
             CancellationToken token)

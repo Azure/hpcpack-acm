@@ -20,9 +20,9 @@
 
     internal class JobCancelWorker : TaskItemWorker, IWorker
     {
-        private readonly NodeAgentWorkerOptions options;
+        private readonly TaskItemSourceOptions options;
 
-        public JobCancelWorker(IOptions<NodeAgentWorkerOptions> options) : base(options.Value)
+        public JobCancelWorker(IOptions<TaskItemSourceOptions> options) : base(options.Value)
         {
             this.options = options.Value;
         }

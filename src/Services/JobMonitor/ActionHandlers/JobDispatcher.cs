@@ -94,20 +94,32 @@
                 return;
             }
 
+            const int MaxChildIds = 1000;
+
             var taskInstances = tasks.Select(it => new Task()
             {
-                ChildIds = it.ChildIds,
+                ChildIds = it.ChildIds == null ? new List<int>() : (it.ChildIds.Count > MaxChildIds ? null : it.ChildIds),
                 CommandLine = it.CommandLine,
                 CustomizedData = it.CustomizedData,
                 Id = it.Id,
                 JobId = it.JobId,
                 JobType = it.JobType,
                 Node = it.Node,
-                ParentIds = it.ParentIds,
-                RemainingParentIds = it.RemainingParentIds,
+                RemainingParentCount = it.RemainingParentIds?.Count ?? 0,
                 RequeueCount = it.RequeueCount,
                 State = string.Equals(it.CustomizedData, Task.StartTaskMark, StringComparison.OrdinalIgnoreCase) ? TaskState.Finished : TaskState.Queued,
             });
+
+            var childIdsContent = tasks
+                .Where(it => (it.ChildIds?.Count ?? 0) > MaxChildIds)
+                .Select(it => new
+                {
+                    it.Id,
+                    it.JobId,
+                    it.RequeueCount,
+                    it.ChildIds,
+                })
+                .ToList();
 
             var taskInfos = tasks.Select(it => new TaskStartInfo()
             {
@@ -122,39 +134,25 @@
                 StartInfo = new HpcAcm.Common.Dto.ProcessStartInfo(it.CommandLine, it.WorkingDirectory, null, null, null, it.EnvironmentVariables, null, it.RequeueCount),
             });
 
-            // TODO: batch size.
-            var batch = new TableBatchOperation();
             var jobPartitionKey = this.Utilities.GetJobPartitionKey(job.Type, job.Id);
-            foreach (var e in taskInstances.Select(t => new JsonTableEntity(
+            await jobTable.InsertOrReplaceBatchAsync(token, taskInstances.Select(t => new JsonTableEntity(
                 jobPartitionKey,
-                 this.Utilities.GetTaskKey(job.Id, t.Id, job.RequeueCount),
-                 t)))
+                this.Utilities.GetTaskKey(job.Id, t.Id, job.RequeueCount),
+                t)).ToArray());
+
+            await T.Task.WhenAll(childIdsContent.Select(async childIds =>
             {
-                batch.InsertOrReplace(e);
-            }
+                var taskKey = this.Utilities.GetTaskKey(childIds.JobId, childIds.Id, childIds.RequeueCount);
+                var childIdsBlob = await this.Utilities.CreateOrReplaceTaskChildrenBlobAsync(taskKey, token);
 
-            var tableResults = await jobTable.ExecuteBatchAsync(batch, null, null, token);
+                var jsonContent = JsonConvert.SerializeObject(childIds.ChildIds);
+                await childIdsBlob.UploadTextAsync(jsonContent, Encoding.UTF8, null, null, null, token);
+            }));
 
-            if (!tableResults.All(r => r.IsSuccessfulStatusCode()))
-            {
-                throw new InvalidOperationException("Not all tasks dispatched successfully");
-            }
-
-            batch.Clear();
-            foreach (var e in taskInfos.Select(t => new JsonTableEntity(
+            await jobTable.InsertOrReplaceBatchAsync(token, taskInfos.Select(t => new JsonTableEntity(
                 jobPartitionKey,
-                 this.Utilities.GetTaskInfoKey(job.Id, t.Id, job.RequeueCount),
-                 t)))
-            {
-                batch.InsertOrReplace(e);
-            }
-
-            tableResults = await jobTable.ExecuteBatchAsync(batch, null, null, token);
-
-            if (!tableResults.All(r => r.IsSuccessfulStatusCode()))
-            {
-                throw new InvalidOperationException("Not all tasks dispatched successfully");
-            }
+                this.Utilities.GetTaskInfoKey(job.Id, t.Id, job.RequeueCount),
+                t)).ToArray());
 
             JobState state = JobState.Queued;
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
@@ -167,7 +165,7 @@
             {
                 var taskCompletionQueue = await this.Utilities.GetOrCreateTaskCompletionQueueAsync(token);
                 await taskCompletionQueue.AddMessageAsync(new CloudQueueMessage(
-                    JsonConvert.SerializeObject(new TaskCompletionMessage() { JobId = job.Id, Id = 0, JobType = job.Type, RequeueCount = job.RequeueCount })),
+                    JsonConvert.SerializeObject(new TaskCompletionMessage() { JobId = job.Id, Id = 0, JobType = job.Type, RequeueCount = job.RequeueCount, ChildIds = startTask.ChildIds })),
                     null, null, null, null, token);
             }
         }
