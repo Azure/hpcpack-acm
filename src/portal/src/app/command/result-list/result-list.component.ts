@@ -62,6 +62,9 @@ export class ResultListComponent implements OnInit {
             result = result.reverse();
           }
           this.currentData = result;
+          if (this.reverse && result.length < this.maxPageSize) {
+            this.loadFinished = true;
+          }
           this.tableDataService.updateData(result, this.dataSource, 'id');
           return this.getCommandRequest();
         }

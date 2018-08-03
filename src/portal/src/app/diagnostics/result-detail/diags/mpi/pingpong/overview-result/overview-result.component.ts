@@ -24,12 +24,19 @@ export class PingPongOverviewResultComponent implements OnInit, OnChanges {
   showOverview() {
     if (this.result != undefined) {
       this.nodeData = this.result.ResultByNode;
-      this.overviewResult = this.result.Result;
       this.nodes = Object.keys(this.result.ResultByNode);
+      if (!this.selectedNode) {
+        this.selectedNode = this.nodes[0];
+      }
+      if (this.activeMode == 'total') {
+        this.overviewResult = this.result.Result;
+      }
+      else {
+        this.overviewResult = this.nodeData[this.selectedNode];
+      }
       this.packetSize = this.result['Packet_size'];
       this.unit = this.result['Unit'];
       this.threshold = this.result['Threshold'];
-      this.selectedNode = this.nodes[0];
       this.updateView(this.overviewResult);
       this.overviewOption.scales.yAxes = [{
         display: true,
@@ -129,7 +136,7 @@ export class PingPongOverviewResultComponent implements OnInit, OnChanges {
         }
       }
       else if (mode == 'total') {
-        data = this.overviewResult;
+        data = this.result.Result;
       }
       if (data != undefined) {
         this.updateView(data);

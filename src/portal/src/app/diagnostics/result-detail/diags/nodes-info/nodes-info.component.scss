@@ -12,12 +12,39 @@
     }
 }
 
-.overview-value {
-    word-break: keep-all;
-    word-wrap: break-word;
-}
-
 .node {
     display: inline-block;
     padding-right: 1em;
+    padding-top: 1em;
+    width: 20%;
+    text-decoration: none;
+}
+
+.node-info {
+    @include display-flex(center);
+}
+
+.node-name {
+    text-decoration: underline;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.good-node {
+    color: #3f51b5;
+}
+
+.bad-node {
+    color: #6c727c;
+}
+
+.hint-area {
+    font-size: .8em;
+    @include display-flex(center);
+}
+
+.hint {
+    @include display-flex(center);
+    margin-right: 2em;
 }

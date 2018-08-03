@@ -85,7 +85,7 @@ export class ResultDetailComponent implements OnInit {
           if (!this.gotTasks) {
             this.result.nodes = job.targetNodes.map(node => ({ name: node, state: '' }));
           }
-          return !this.isJobOver(job.state);
+          return true;
         },
         error: (err) => {
           this.errorMsg = err;
@@ -114,7 +114,7 @@ export class ResultDetailComponent implements OnInit {
           }
           this.gotTasks = true;
           this.result.nodes = this.getNodesFromTasks(tasks);
-          return !this.isOver;
+          return true;
         },
         error: (err) => {
           this.errorMsg = err;
@@ -184,8 +184,7 @@ export class ResultDetailComponent implements OnInit {
             observer.complete();
           },
           error => {
-            observer.next(null);
-            observer.complete();
+            observer.error(error);
           }
         );
       }),
@@ -202,6 +201,10 @@ export class ResultDetailComponent implements OnInit {
           //  return false;
           //}
           return true;
+        },
+        error: (err) => {
+          onGot(err);
+          return false;
         }
       },
       //interval(in ms):
@@ -219,16 +222,22 @@ export class ResultDetailComponent implements OnInit {
         end: undefined,
         loading: false,
         key: null,
+        error: ''
       };
       let onKeyReady = (callback) => {
         if (output.key === null) {
           if (!output.keyLoop) {
             output.loading = 'key';
             output.keyLoop = this.getNodeOutputKey(node, (key) => {
+              let keyType = typeof (key);
               output.loading = false;
-              if (key) {
+              if (key && keyType == 'string') {
                 output.key = key;
                 callback(true);
+              }
+              else if (key && keyType == 'object') {
+                output.error = key.message;
+                callback(false);
               }
               else {
                 output.key = false;

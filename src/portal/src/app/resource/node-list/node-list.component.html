@@ -32,7 +32,7 @@
   </mat-form-field>
 </div>
 
-<mat-table #table [dataSource]="dataSource">
+<mat-table #table [dataSource]="dataSource" appWindowScroll [dataLength]="currentData.length" [pageSize]="maxPageSize" (scrollEvent)="onScrollEvent($event)">
   <!--
    Note that these columns can be defined in any order. The actual rendered
    columns are set as a property on the row definition, that is displayedColumns."
@@ -40,12 +40,11 @@
 
   <ng-container matColumnDef="select">
     <mat-header-cell *matHeaderCellDef>
-      <mat-checkbox color="primary" (change)="$event ? masterToggle() : null" [checked]="selection.hasValue() && isAllSelected()"
-        [indeterminate]="false">
+      <mat-checkbox color="primary" (change)="$event ? masterToggle() : null" [checked]="selectedNodes.length > 0 && isAllSelected()">
       </mat-checkbox>
     </mat-header-cell>
     <mat-cell *matCellDef="let node">
-      <mat-checkbox color="primary" (click)="$event.stopPropagation()" (change)="$event ? selection.toggle(node) : null" [checked]="selection.isSelected(node)">
+      <mat-checkbox color="primary" (click)="$event.stopPropagation();" (change)="$event? updateSelectedNodes(node) : null" [checked]="isSelected(node)">
       </mat-checkbox>
     </mat-cell>
   </ng-container>
@@ -108,21 +107,8 @@
     <mat-cell *matCellDef="let node" title="MB"> {{node.nodeRegistrationInfo.memoryMegabytes}} </mat-cell>
   </ng-container>
 
-
-  <ng-container matColumnDef="actions">
-    <mat-header-cell *matHeaderCellDef></mat-header-cell>
-    <mat-cell *matCellDef="let node">
-      <button mat-icon-button [matMenuTriggerFor]="appMenu" (click)="$event.stopPropagation(); select(node)">
-        <i class="material-icons">more_horiz</i>
-      </button>
-    </mat-cell>
-  </ng-container>
-
-  <mat-menu #appMenu="matMenu">
-    <button mat-menu-item (click)="runDiagnostics()">Run Diagnostics...</button>
-    <button mat-menu-item (click)="runCommand()">Run Command...</button>
-  </mat-menu>
-
   <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
   <mat-row *matRowDef="let node; columns: displayedColumns;" (click)="selection.toggle(node)"></mat-row>
 </mat-table>
+<app-loading-progress-bar [loadFinished]="loadFinished"></app-loading-progress-bar>
+<app-scroll-to-top [scrolled]="scrolled"></app-scroll-to-top>

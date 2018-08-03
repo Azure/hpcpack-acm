@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { TableOptionComponent } from '../../../../widgets/table-option/table-option.component';
 import { TableSettingsService } from '../../../../services/table-settings.service';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
@@ -26,6 +26,21 @@ export class TaskTableComponent implements OnInit {
   @Input()
   dataSource: any;
 
+  @Input()
+  currentData: any;
+
+  @Input()
+  loadFinished: boolean;
+
+  @Input()
+  maxPageSize: number;
+
+  @Output()
+  updateLastIdEvent = new EventEmitter();
+
+  private scrolled = false;
+  private direction = 'down';
+
   private availableColumns;
 
   tasks = [];
@@ -39,6 +54,13 @@ export class TaskTableComponent implements OnInit {
   ngOnInit() {
     this.loadSettings();
     this.getDisplayedColumns();
+  }
+
+  private onScrollEvent(data) {
+    this.loadFinished = data.loadFinished;
+    this.scrolled = data.scrolled;
+    this.direction = data.direction;
+    this.updateLastIdEvent.emit({ lastId: data.dataIndex == -1 ? 0 : this.dataSource.data[data.dataIndex]['id'], direction: this.direction });
   }
 
   private setIcon(state) {

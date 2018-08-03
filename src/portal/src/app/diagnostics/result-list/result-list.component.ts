@@ -34,10 +34,8 @@ export class ResultListComponent implements OnInit, OnDestroy {
   private diagsLoop: Object;
   private lastId = 0;
   private maxPageSize = 120;
-
   private reverse = true;
   private currentData = [];
-  private rowHeight = -1;
   private scrolled = false;
   private loadFinished = false;
 
@@ -76,6 +74,9 @@ export class ResultListComponent implements OnInit, OnDestroy {
             result = result.reverse();
           }
           this.currentData = result;
+          if (this.reverse && result.length < this.maxPageSize) {
+            this.loadFinished = true;
+          }
           this.tableDataService.updateData(result, this.dataSource, 'id');
           return this.getDiagRequest();
         }

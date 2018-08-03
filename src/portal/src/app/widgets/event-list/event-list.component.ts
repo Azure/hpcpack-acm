@@ -22,7 +22,7 @@ export class EventListComponent implements OnInit {
     }
     else {
       this.events.forEach(element => {
-        element.content = this.getErrorInfo(element.content);
+        element.content = this.getEventInfo(element.content);
       });
     }
   }
@@ -31,10 +31,7 @@ export class EventListComponent implements OnInit {
     if (this.events.length > 0) {
       this.events.forEach(element => {
         if (element.content) {
-          element.content = this.getErrorInfo(element.content);
-        }
-        else {
-          element.content = { exception: '' };
+          element.content = this.getEventInfo(element.content);
         }
       });
     }
@@ -51,19 +48,9 @@ export class EventListComponent implements OnInit {
     }
   }
 
-  getErrorInfo(content: string) {
-    let exceptionIndex = content.indexOf('\n');
-    if (exceptionIndex == -1) {
-      return { exception: content };
-    }
-    let exception = content.substring(0, exceptionIndex);
-    let stacks = content.substring(exceptionIndex);
-    let errorStack = stacks.split('\n');
-    return { exception: exception, errorStack: errorStack, showDetail: false };
-  }
-
-  showEventDetail(event) {
-    event.content.showDetail = !event.content.showDetail;
+  getEventInfo(content: string) {
+    let _content = content.split('\n');
+    return _content;
   }
 
 }

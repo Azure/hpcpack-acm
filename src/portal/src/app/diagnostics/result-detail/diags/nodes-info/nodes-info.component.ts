@@ -31,11 +31,25 @@ export class NodesInfoComponent implements OnInit {
     return data !== undefined && data !== null;
   }
 
+  inGroup(node, obj, propertyName) {
+    if (this.hasData(obj) && this.hasData(obj[propertyName])) {
+      let index = obj[propertyName].findIndex(item => item == node);
+      return index == -1 ? false : true;
+    }
+  }
+
+  isGood(node) {
+    return this.inGroup(node, this.aggregationInfo, 'GoodNodes');
+  }
+
+  isBad(node) {
+    return this.inGroup(node, this.aggregationInfo, 'BadNodes');
+  }
+
   getLink(node) {
     let path = [];
     path.push('/resource');
     path.push(node);
     return path;
   }
-
 }

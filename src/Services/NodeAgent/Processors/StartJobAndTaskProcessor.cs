@@ -70,7 +70,6 @@
             }
 
             var taskResultBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(task.JobType, taskResultKey, token);
-
             DateTimeOffset startTime = DateTimeOffset.UtcNow;
             var taskResult = new ComputeClusterTaskInformation()
             {
@@ -86,7 +85,7 @@
             if (!await this.PersistTaskResult(taskResultKey, taskResult, token)) { return false; }
 
             var rawResult = new StringBuilder();
-            using (var monitor = string.IsNullOrEmpty(cmd) ? null : this.Monitor.StartMonitorTask(taskKey, async (output, cancellationToken) =>
+            using (var monitor = string.IsNullOrEmpty(cmd) ? null : this.Monitor.StartMonitorTask(taskKey, async (output, eof, cancellationToken) =>
             {
                 try
                 {
@@ -96,6 +95,8 @@
                     }
 
                     await taskResultBlob.AppendTextAsync(output, Encoding.UTF8, null, null, null, cancellationToken);
+                    taskResultBlob.Metadata[TaskOutputPage.EofMark] = eof.ToString();
+                    await taskResultBlob.SetMetadataAsync(null, null, null, cancellationToken);
                 }
                 catch (Exception ex)
                 {

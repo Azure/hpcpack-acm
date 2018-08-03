@@ -15,6 +15,8 @@
 .event {
     @include display-flex;
     @include pd(0, 1em, 0, 1em);
+    width: 100%;
+    overflow-wrap: break-word;
 }
 
 .event-time {
@@ -28,25 +30,21 @@
 
 .event-content {
     color: $info-color;
-    font-size: .8em;
+    font-size: .8em; 
+    word-break: break-word;
 }
 
 .time-line {
     @include pd(1.5em, 1.5em, 0em, 0em);
     text-align: right;
-    flex: 1;
+    flex-shrink: 0;
 }
 
 .event-info {
-    @include display-flex;
+    // @include display-flex;
     @include position-relative;
     @include pd(1.5em, 1em, 1.5em, 1.5em);
     border-left: .13em solid rgba(110, 122, 140, .6);
-    flex: 5;
-}
-
-.info-detail {
-    flex: 4;
 }
 
 .event-type .material-icons {

@@ -57,7 +57,11 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
 
       let pageSize = this.dataLength;
       let containerHeight = this.el.nativeElement.clientHeight;
-      let itemHeight = (<HTMLElement>document.querySelector('mat-row')).offsetHeight;
+      let rowItem = <HTMLElement>document.querySelector('mat-row');
+      if (!rowItem) {
+        return;
+      }
+      let itemHeight = rowItem.offsetHeight;
       let tableSize = Math.floor(containerHeight / itemHeight);
 
       if (!this.scrolled) {
@@ -110,10 +114,9 @@ export class WindowScrollDirective implements OnDestroy, OnInit {
           this.jobIndex -= this.derelictSize;
           this.dataIndex = this.downNum * this.derelictSize - 1;
         }
-
-        if (this.dataLength < this.pageSize) {
-          this.loadFinished = true;
-        }
+      }
+      if (this.scrollDirection == 'down' && this.dataLength < this.pageSize) {
+        this.loadFinished = true;
       }
       this.lastScrolledPosition = scrollPosition;
       this.scrollEvent.emit({ dataIndex: this.dataIndex, scrolled: this.scrolled, loadFinished: this.loadFinished, scrollDirection: this.scrollDirection });
