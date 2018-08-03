@@ -95,7 +95,7 @@
                     }
 
                     await taskResultBlob.AppendTextAsync(output, Encoding.UTF8, null, null, null, cancellationToken);
-                    taskResultBlob.Metadata["Eof"] = eof.ToString();
+                    taskResultBlob.Metadata[TaskOutputPage.EofMark] = eof.ToString();
                     await taskResultBlob.SetMetadataAsync(null, null, null, cancellationToken);
                 }
                 catch (Exception ex)

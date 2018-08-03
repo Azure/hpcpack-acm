@@ -98,7 +98,9 @@
             }
 
             await blob.FetchAttributesAsync();
-            result.Eof = blob.Metadata["Eof"] == true.ToString();
+
+            result.Eof = blob.Metadata.TryGetValue(TaskOutputPage.EofMark, out string value) && Boolean.TryParse(value, out bool eof) && eof;
+
             var blobLength = blob.Properties.Length;
             if (blobLength == 0) { return result; }
 
