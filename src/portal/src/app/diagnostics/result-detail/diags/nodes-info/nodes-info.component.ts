@@ -31,20 +31,19 @@ export class NodesInfoComponent implements OnInit {
     return data !== undefined && data !== null;
   }
 
-  isExist(node, obj, propertyName) {
+  inGroup(node, obj, propertyName) {
     if (this.hasData(obj) && this.hasData(obj[propertyName])) {
-      let index = obj[propertyName].findIndex(item => {
-        return item == node;
-      });
+      let index = obj[propertyName].findIndex(item => item == node);
       return index == -1 ? false : true;
     }
   }
+
   isGood(node) {
-    return this.isExist(node, this.aggregationInfo, 'GoodNodes');
+    return this.inGroup(node, this.aggregationInfo, 'GoodNodes');
   }
 
   isBad(node) {
-    return this.isExist(node, this.aggregationInfo, 'BadNodes');
+    return this.inGroup(node, this.aggregationInfo, 'BadNodes');
   }
 
   getLink(node) {
@@ -53,5 +52,4 @@ export class NodesInfoComponent implements OnInit {
     path.push(node);
     return path;
   }
-
 }
