@@ -83,7 +83,7 @@
         }
         public static async Task InsertOrReplaceBatchAsync(this CloudTable t, CancellationToken token, params JsonTableEntity[] entities)
         {
-            Func<TableBatchOperation, Task> submitBatch = async (TableBatchOperation batchOperation) =>
+            async Task SubmitBatch(TableBatchOperation batchOperation)
             {
                 if (batchOperation.Count > 0)
                 {
@@ -95,7 +95,7 @@
 
                     batchOperation.Clear();
                 }
-            };
+            }
 
             const int MaxBatchSize = 100;
             var batches = entities
@@ -112,7 +112,7 @@
                     return batch;
                 });
 
-            await Task.WhenAll(batches.Select(b => submitBatch(b)));
+            await Task.WhenAll(batches.Select(b => SubmitBatch(b)));
         }
     }
 }

@@ -41,6 +41,7 @@
 
         public async T.Task DoWorkAsync(string uri, string storageKey, CancellationToken token)
         {
+            int failureCount = 0;
             while (!token.IsCancellationRequested)
             {
                 try
@@ -59,13 +60,20 @@
                     var nodesPartitionKey = this.Utilities.GetNodePartitionKey(nodeName);
 
                     await this.nodesTable.InsertOrReplaceAsync(nodesPartitionKey, storageKey, content, token);
+                    failureCount = 0;
+                    await T.Task.Delay(TimeSpan.FromSeconds(this.workerOptions.IntervalSeconds), token);
                 }
                 catch (Exception ex)
                 {
                     this.Logger.Error(ex, "DoWorkAsync error.");
-                }
+                    if (++failureCount >= this.workerOptions.MaxFailureCount)
+                    {
+                        this.Logger.Error("Stopping metadata for {0}", uri);
+                        break;
+                    }
 
-                await T.Task.Delay(TimeSpan.FromSeconds(this.workerOptions.IntervalSeconds), token);
+                    await T.Task.Delay(TimeSpan.FromSeconds(this.workerOptions.FailureRetryIntervalSeconds), token);
+                }
             }
         }
     }

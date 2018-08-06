@@ -19,6 +19,7 @@
         }
 
         public virtual T GetMessage<T>() where T : class => default(T);
+        public virtual DateTimeOffset? GetInsertionTime() => default(DateTimeOffset?);
         public virtual Task FinishAsync(CancellationToken token) => Task.CompletedTask;
         public virtual Task ReturnAsync(CancellationToken token) => Task.CompletedTask;
     }

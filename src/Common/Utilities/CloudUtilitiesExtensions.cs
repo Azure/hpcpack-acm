@@ -99,6 +99,8 @@
 
         public static CloudQueue GetJobEventQueue(this CloudUtilities u) => u.GetQueue(u.Option.JobEventQueueName);
 
+        public static CloudQueue GetTaskCompletionQueue(this CloudUtilities u) => u.GetQueue(u.Option.TaskCompletionQueueName);
+
         public static async T.Task<CloudQueue> GetOrCreateTaskCompletionQueueAsync(this CloudUtilities u, CancellationToken token)
         {
             return await u.GetOrCreateQueueAsync(u.Option.TaskCompletionQueueName, token);

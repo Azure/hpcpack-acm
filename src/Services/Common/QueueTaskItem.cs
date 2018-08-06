@@ -76,6 +76,7 @@
         }
 
         public override T GetMessage<T>() => JsonConvert.DeserializeObject<T>(this.QueueMessage.AsString);
+        public override DateTimeOffset? GetInsertionTime() => this.QueueMessage.InsertionTime;
 
         public async Task StopEnsureInvisible()
         {

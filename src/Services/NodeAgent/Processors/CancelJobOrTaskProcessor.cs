@@ -24,7 +24,7 @@
             this.Monitor = monitor;
         }
 
-        public override async T.Task<bool> ProcessAsync(TaskEventMessage message, CancellationToken token)
+        public override async T.Task<bool> ProcessAsync(TaskEventMessage message, DateTimeOffset? insertionTime, CancellationToken token)
         {
             var jobsTable = this.Utilities.GetJobsTable();
             var nodeName = this.ServerOptions.HostName;

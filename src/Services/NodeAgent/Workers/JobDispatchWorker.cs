@@ -64,7 +64,7 @@
                     so.CopyFrom(this);
                 }
 
-                var result = await processor.ProcessAsync(message, token);
+                var result = await processor.ProcessAsync(message, taskItem.GetInsertionTime(), token);
                 this.Logger.Information("Finished process {0} {1} {2}, result {3}", message.EventVerb, message.JobId, message.Id, result);
                 return result;
             }
