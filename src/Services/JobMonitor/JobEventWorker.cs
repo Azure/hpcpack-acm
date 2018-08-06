@@ -22,7 +22,6 @@
         private readonly Dictionary<string, Type> ActionHandlerTypes = new Dictionary<string, Type>()
         {
             { "cancel", typeof(JobCanceler) },
-            { "progress", typeof(JobProgressHandler) },
             { "finish", typeof(JobFinisher) },
             { "dispatch", typeof(JobDispatcher) },
         };

@@ -38,7 +38,6 @@
                 svc.AddTransient<JobCanceler>();
                 svc.AddTransient<JobDispatcher>();
                 svc.AddTransient<JobFinisher>();
-                svc.AddTransient<JobProgressHandler>();
                 svc.AddTransient<ClusrunJobHandler>();
                 svc.AddTransient<DiagnosticsJobHandler>();
                 svc.AddTransient<JobEventWorker>();
