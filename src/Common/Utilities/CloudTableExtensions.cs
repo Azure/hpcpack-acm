@@ -39,12 +39,19 @@
             return items;
         }
 
-        public static async Task<T> RetrieveAsync<T>(this CloudTable t, string partition, string key, CancellationToken token)
+        public static Task<T> RetrieveAsync<T>(this CloudTable t, string partition, string key, CancellationToken token)
+        {
+            return t.RetrieveAsync<T>(partition, key, null, token);
+        }
+
+        public static async Task<T> RetrieveAsync<T>(this CloudTable t, string partition, string key, Action<JsonTableEntity, T> resolver, CancellationToken token)
         {
             var result = await t.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(partition, key), null, null, token);
             if (result.Result is JsonTableEntity entity)
             {
-                return entity.GetObject<T>();
+                var obj = entity.GetObject<T>();
+                resolver?.Invoke(entity, obj);
+                return obj;
             }
             else
             {

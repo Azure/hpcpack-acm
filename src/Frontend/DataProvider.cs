@@ -177,8 +177,8 @@
             if (nodeInfo == null) return null;
 
             var jobs = await T.Task.WhenAll(nodeInfo.Jobs.Select(async j =>
-                await this.jobsTable.RetrieveAsync<Job>(this.Utilities.GetJobPartitionKey(JobType.ClusRun, j.JobId), this.Utilities.JobEntryKey, token)
-                    ?? await this.jobsTable.RetrieveAsync<Job>(this.Utilities.GetJobPartitionKey(JobType.Diagnostics, j.JobId), this.Utilities.JobEntryKey, token)));
+                await this.jobsTable.RetrieveAsync<Job>(this.Utilities.GetJobPartitionKey(JobType.ClusRun, j.JobId), this.Utilities.JobEntryKey, (e, job) => job.UpdatedAt = e.Timestamp, token)
+                    ?? await this.jobsTable.RetrieveAsync<Job>(this.Utilities.GetJobPartitionKey(JobType.Diagnostics, j.JobId), this.Utilities.JobEntryKey, (e, job) => job.UpdatedAt = e.Timestamp, token)));
 
             return jobs.Where(j => j != null);
         }
