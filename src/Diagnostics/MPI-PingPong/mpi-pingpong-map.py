@@ -1,4 +1,4 @@
-#v0.3
+#v0.4
 
 import sys, json, copy, random
 
@@ -102,7 +102,8 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
 
     sshcommand = "rm -f ~/.ssh/known_hosts" # Clear ssh knownhosts
-    mpicommand = "mpirun -env I_MPI_SHM_LMT=shm" + rdmaOption + " IMB-MPI1 pingpong"
+    checkcore = ' && bash -c "if [ `grep -c ^processor /proc/cpuinfo` -eq 1 ]; then exit -10; fi"' # MPI Ping Pong can not get result but return 0 if core number is less than 2, so check core number
+    mpicommand = "mpirun -env I_MPI_SHM_LMT=shm" + rdmaOption + " IMB-MPI1 pingpong" + checkcore
     parseResult = "tail -n29 | head -n25"
     columns = "$3,$4"
     parseValue = "sed -n '3p;$p'"

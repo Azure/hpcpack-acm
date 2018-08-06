@@ -1,4 +1,4 @@
-#v0.3
+#v0.4
 
 import sys, json, copy, numpy
 
@@ -183,19 +183,25 @@ def getFailedReasons(failedNodes):
     solutionMpiNotInstalled = 'If Intel MPI is installed on other location, specify the directory in parameter "MPI install directory" of diagnostics test MPI-PingPong. Or download from https://software.intel.com/en-us/intel-mpi-library and install with clusrun command: "{}".'.format(INTEL_MPI_INSTALL_CLUSRUN_HINT)
     reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
+    reasonFireWall = 'The connection was block by firewall.'
+    solutionFireWall = 'Check and configure the firewall properly.'
     failedReasons = {}
     for failedNode in failedNodes:
         reason = "Unknown"
         if "mpivars.sh: No such file or directory" in failedNode['Detail']:
             reason = reasonMpiNotInstalled
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode['NodeName'])
-        elif "Host {} not found:".format(failedNode['NodePair'].split(',')[1]) in failedNode['Detail']:
+        elif "Host {} not found:".format(failedNode['NodePair'].split(',')[-1]) in failedNode['Detail']:
             reason = reasonHostNotFound
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHostNotFound, 'NodePairs':[]})['NodePairs'].append(failedNode['NodePair'])
+        elif "check for firewalls!" in failedNode['Detail']:
+            reason = reasonFireWall
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedNode['NodePair'])
         failedNode['Reason'] = reason
     if reasonMpiNotInstalled in failedReasons:
         failedReasons[reasonMpiNotInstalled]['Nodes'] = list(failedReasons[reasonMpiNotInstalled]['Nodes'])
-    return failedReasons.values()
+    return list(failedReasons.values())
+
 
 def getNodeMap(pairs):
     connectedNodesOfNode = {}

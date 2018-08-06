@@ -1,4 +1,5 @@
-import sys, requests, time, random, argparse, traceback, json, os
+import sys, requests, time, random, argparse, traceback, json, os, math
+from random import sample
 
 REQUEST_TIMEOUT = 60
 
@@ -27,10 +28,9 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
         return 'Warn'
 
     # pick nodes randomly
-    while True:
-        randomNodes = [ node for node in healthynodes if random.random() < 0.5 ]
-        if len(randomNodes) > 1:
-            break
+    randomNodeCount = int(math.ceil(random.random()*len(healthynodes)))
+    print '[Random Node Count]: {}'.format(randomNodeCount)
+    randomNodes = sample(healthynodes, randomNodeCount)
     print '[Allocated Nodes]: {}'.format(randomNodes)
 
     # check clusrun or diagnostics job
@@ -48,6 +48,7 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
             "diagnosticTest":{
                 "name": "pingpong",
                 "category": "mpi",
+                "arguments": [{"name":"Mode", "value": "Jumble"}]
             },
             "targetNodes":randomNodes
         }
@@ -119,6 +120,8 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
                 return 'Fail'
         else:
             print 'Post {}: {}'.format(api, response)
+            if response.content:
+                print response.content
             print '[Fail]: failed to create job.'
             return 'Fail'
     except Exception as e:
@@ -191,8 +194,6 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
                     jobId = int(jobUri.split('/')[-1])
                     task = response.json()
                     if category == 'clusrun':
-                        if command == 'hostname':
-                            result = task['nodeName'] + '\n'
                         taskValidation = [("jobId", jobId), ("taskId", taskId), ("commandLine", command), ("message", result), ("resultKey", None)]
                     elif category == 'diagnostics':
                         taskValidation = [("jobId", jobId), ("taskId", taskId), ]
@@ -212,7 +213,7 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
                         response = requests.get(api, timeout = REQUEST_TIMEOUT)
                         if response:
                             if result and response.content != result:
-                                print '[Fail]: clusrun task result "{}" in {} is not correct, expecting "()"'.format(response.content, api, result)
+                                print '[Fail]: clusrun task result "{}" in {} is not correct, expecting "{}"'.format(response.content, api, result)
                                 return 'Fail'
                         else:
                             print 'Get {}: {}'.format(api, response)
@@ -222,7 +223,7 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
                         response = requests.get(api, timeout = REQUEST_TIMEOUT)
                         if response:
                             if result and response.json()['content'] != result:
-                                print '[Fail]: clusrun task result "{}" in {} is not correct, expecting "()"'.format(response.content, api, result)
+                                print '[Fail]: clusrun task result "{}" in {} is not correct, expecting "{}"'.format(response.content, api, result)
                                 return 'Fail'
                         else:
                             print 'Get {}: {}'.format(api, response)
@@ -252,16 +253,12 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
                     return 'Warn'
                 else:
                     resultItems = [
-                        'GoodPairs',
                         'GoodNodesGroups',
-                        'GoodNodesGroupsWithMasters',
-                        'LargestGoodNodesGroups',
-                        'LargestGoodNodesGroupsWithMasters',
                         'GoodNodes',
-                        'FailedPairs',
                         'FailedNodes',
                         'BadNodes',
-                        'RdmaNodes'
+                        'RdmaNodes',
+                        'FailedReasons'
                         ]
                     for item in resultItems:
                         if item not in results:
