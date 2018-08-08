@@ -45,10 +45,12 @@ def main():
 
     taskStateFinished = 3
     taskStateFailed = 4
+    taskStateCanceled = 5
 
     taskId2nodePair = {}
     tasksForStatistics = set()
     rdmaNodes = []
+    canceledNodePairs = []
     try:
         for task in tasks:
             taskId = task['Id']
@@ -61,6 +63,8 @@ def main():
             taskId2nodePair[taskId] = nodePair
             if ',' in nodePair and state == taskStateFinished:
                 tasksForStatistics.add(taskId)
+            if state == taskStateCanceled:
+                canceledNodePairs.append(nodePair)
     except Exception as e:
         printErrorAsJson('Failed to parse tasks. ' + str(e))
         return -1
@@ -73,18 +77,19 @@ def main():
             nodeName = taskResult['NodeName']
             nodePair = taskId2nodePair[taskId]
             exitCode = taskResult['ExitCode']
-            message = json.loads(taskResult['Message'])
-            detail = message['Detail']
-            if taskId in tasksForStatistics:
-                messages[taskId2nodePair[taskId]] = message
-            if exitCode != 0:
-                failedNode = {
-                    'NodeName':nodeName,
-                    'NodePair':nodePair,
-                    'ExitCode':exitCode,
-                    'Detail':detail
-                    }
-                failedNodes.append(failedNode)
+            if 'Message' in taskResult:
+                message = json.loads(taskResult['Message'])
+                detail = message['Detail']
+                if taskId in tasksForStatistics:
+                    messages[taskId2nodePair[taskId]] = message
+                if exitCode != 0:
+                    failedNode = {
+                        'NodeName':nodeName,
+                        'NodePair':nodePair,
+                        'ExitCode':exitCode,
+                        'Detail':detail
+                        }
+                    failedNodes.append(failedNode)
     except Exception as e:
         printErrorAsJson('Failed to parse task result. Task id: {}. {}'.format(taskId, e))
         return -1
@@ -99,7 +104,7 @@ def main():
         goodNodes = [task['Node'] for task in tasks if task['State'] == taskStateFinished]
     badNodes = [node for node in allNodes if node not in goodNodes]
     goodNodes = list(goodNodes)
-    failedReasons = getFailedReasons(failedNodes)
+    failedReasons = getFailedReasons(failedNodes) 
 
     result = {
         'GoodNodesGroups':goodNodesGroups,
@@ -107,7 +112,8 @@ def main():
         'FailedNodes':failedNodes,
         'BadNodes':badNodes,
         'RdmaNodes':rdmaNodes,
-        'FailedReasons':failedReasons
+        'FailedReasons':failedReasons,
+        'CanceledNodePairs':canceledNodePairs
         }
 
     if messages:
@@ -202,6 +208,7 @@ def getFailedReasons(failedNodes):
             reason = reasonFireWallProbably
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedNode['NodePair'])
         failedNode['Reason'] = reason
+        del failedNode['Detail']
     if reasonMpiNotInstalled in failedReasons:
         failedReasons[reasonMpiNotInstalled]['Nodes'] = list(failedReasons[reasonMpiNotInstalled]['Nodes'])
     return list(failedReasons.values())
