@@ -1,4 +1,4 @@
-#v0.5
+#v0.6
 
 import sys, json, copy, random
 
@@ -164,30 +164,27 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
 
     if mode == 'Tournament'.lower():
         taskgroups = getGroupsOptimal(nodelist)
-        idGroups = []
         id = taskStartId
+        firstGroup = True
         for taskgroup in taskgroups:
-            ids = list(range(id, id + len(taskgroup)))
-            idGroups.append(ids)
-            id += len(ids)
-        id = taskStartId
-        for i in range(0, len(taskgroups)):
-            for nodepair in taskgroups[i]:
+            nodeToIdNext = {}
+            for nodepair in taskgroup:
                 task = copy.deepcopy(taskTemplate)
-                task["Id"] = id
-                id += 1
-                if i == 0:
-                    task["ParentIds"] = headingIdGroup
-                else:
-                    task["ParentIds"] = idGroups[i-1]
                 nodes = ','.join(nodepair)
+                task["Id"] = id
+                task["Node"] = nodepair[0]
+                task["ParentIds"] = headingIdGroup if firstGroup else [nodeToId[nodepair[i]] for i in [0,1] if nodepair[i] in nodeToId]
                 task["CommandLine"] = task["CommandLine"].replace("[dummynodes]", nodes)
                 task["CommandLine"] = task["CommandLine"].replace("[pairednode]", nodepair[1])
                 task["CommandLine"] = task["CommandLine"].replace("[timeout]", str(timeout))
-                task["Node"] = nodepair[0]
                 task["CustomizedData"] = "[RDMA] {}".format(nodes) if isRdma else nodes
                 #task["EnvironmentVariables"] = {"CCP_NODES":"2 "+" 1 ".join(nodepair)+" 1"}
                 tasks.append(task)
+                nodeToIdNext[nodepair[0]] = id
+                nodeToIdNext[nodepair[1]] = id
+                id += 1
+            firstGroup = False
+            nodeToId = nodeToIdNext
     else:
         id = taskStartId
         delay = 0

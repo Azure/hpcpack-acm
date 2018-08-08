@@ -1,4 +1,4 @@
-#v0.5
+#v0.6
 
 import sys, json, copy, numpy
 
@@ -192,6 +192,8 @@ def getFailedReasons(failedNodes):
     reasonFireWall = 'The connection was blocked by firewall.'
     reasonFireWallProbably = 'The connection may be blocked by firewall.'
     solutionFireWall = 'Check and configure the firewall properly.'
+    reasonNodeSingleCore = 'MPI PingPong can not run inside a node with only 1 core.'
+    solutionNodeSingleCore = 'Ignore this failure.'
     failedReasons = {}
     for failedNode in failedNodes:
         reason = "Unknown"
@@ -207,6 +209,9 @@ def getFailedReasons(failedNodes):
         elif "Assertion failed in file ../../src/mpid/ch3/channels/nemesis/netmod/tcp/socksm.c at line 2988: (it_plfd->revents & POLLERR) == 0" in failedNode['Detail']:
             reason = reasonFireWallProbably
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedNode['NodePair'])
+        elif "Benchmark PingPong invalid for 1 processes" in failedNode['Detail']:
+            reason = reasonNodeSingleCore
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionNodeSingleCore, 'Nodes':[]})['Nodes'].append(failedNode['NodeName'])
         failedNode['Reason'] = reason
         del failedNode['Detail']
     if reasonMpiNotInstalled in failedReasons:
