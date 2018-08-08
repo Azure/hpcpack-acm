@@ -1,4 +1,4 @@
-#v0.4
+#v0.5
 
 import sys, json, copy, numpy
 
@@ -36,7 +36,7 @@ def main():
                         continue
                     if argument['name'].lower() == 'Mode'.lower():
                         mode = argument['value'].lower()
-                        continue
+                        continue                        
     except Exception as e:
         printErrorAsJson('Failed to parse arguments. ' + str(e))
         return -1
@@ -150,7 +150,7 @@ def main():
             result[item]["Result"]["Median"] = numpy.median(data)
             result[item]["Result"]["Standard_deviation"] = numpy.std(data)
             result[item]["Result"]["Variability"] = getVariability(data)
-
+            
             result[item]["ResultByNode"] = {}
             for node in goodNodes:
                 data = [messages[pair][item] for pair in messages if node in pair.split(',')]
@@ -180,10 +180,11 @@ def main():
 def getFailedReasons(failedNodes):
     INTEL_MPI_INSTALL_CLUSRUN_HINT = "wget [intel_mpi_binary_location(eg. https://your_storage_account.blob.core.windows.net/your_container_name/[l_mpi_version].tgz)] && tar -zxvf [l_mpi_version].tgz && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./[l_mpi_version]/silent.cfg && ./[l_mpi_version]/install.sh --silent ./[l_mpi_version]/silent.cfg"
     reasonMpiNotInstalled = 'Intel MPI is not found in default directory "/opt/intel".'
-    solutionMpiNotInstalled = 'If Intel MPI is installed on other location, specify the directory in parameter "MPI install directory" of diagnostics test MPI-PingPong. Or download from https://software.intel.com/en-us/intel-mpi-library and install with clusrun command: "{}".'.format(INTEL_MPI_INSTALL_CLUSRUN_HINT)
+    solutionMpiNotInstalled = 'If Intel MPI is installed on other location, specify the directory in parameter "Intel MPI location" of diagnostics test MPI-PingPong. Or download from https://software.intel.com/en-us/intel-mpi-library and install with clusrun command: "{}".'.format(INTEL_MPI_INSTALL_CLUSRUN_HINT)
     reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
-    reasonFireWall = 'The connection was block by firewall.'
+    reasonFireWall = 'The connection was blocked by firewall.'
+    reasonFireWallProbably = 'The connection may be blocked by firewall.'
     solutionFireWall = 'Check and configure the firewall properly.'
     failedReasons = {}
     for failedNode in failedNodes:
@@ -196,6 +197,9 @@ def getFailedReasons(failedNodes):
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHostNotFound, 'NodePairs':[]})['NodePairs'].append(failedNode['NodePair'])
         elif "check for firewalls!" in failedNode['Detail']:
             reason = reasonFireWall
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedNode['NodePair'])
+        elif "Assertion failed in file ../../src/mpid/ch3/channels/nemesis/netmod/tcp/socksm.c at line 2988: (it_plfd->revents & POLLERR) == 0" in failedNode['Detail']:
+            reason = reasonFireWallProbably
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedNode['NodePair'])
         failedNode['Reason'] = reason
     if reasonMpiNotInstalled in failedReasons:
@@ -252,8 +256,9 @@ def addToGroups(groups, new):
     groups.append(new)
 
 def renderHistogram(histogram):
+    values = [int(value) for value in histogram[0]]
     binEdges = histogram[1]
-    return [histogram[0], ["{0:.2f}".format(binEdges[i-1]) + '-' + "{0:.2f}".format(binEdges[i]) for i in range(1, len(binEdges))]]
+    return [values, ["{0:.2f}".format(binEdges[i-1]) + '-' + "{0:.2f}".format(binEdges[i]) for i in range(1, len(binEdges))]]
 
 def getVariability(data):
     variability = numpy.std(data)/max(numpy.average(data), 10**-6)

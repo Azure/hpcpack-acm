@@ -23,6 +23,12 @@
             "type":"string",
             "options":["Tournament", "Serial", "Jumble"],
             "defaultValue":"Tournament"
+        },
+        {
+            "name":"Intel MPI location",
+            "description":"Specify the location of Intel MPI that is installed on the nodes.",
+            "type":"string",
+            "defaultValue":"/opt/intel"
         }
     ]
 }
