@@ -8,6 +8,7 @@
     using Microsoft.WindowsAzure.Storage.Table;
     using System;
     using System.Collections.Generic;
+    using System.Net;
     using System.Text;
     using System.Threading;
     using T = System.Threading.Tasks;
@@ -17,6 +18,9 @@
         public CloudUtilities(IOptions<CloudOptions> cloudOption)
         {
             this.Option = cloudOption.Value;
+            ServicePointManager.DefaultConnectionLimit = Environment.ProcessorCount * 12;
+            ServicePointManager.Expect100Continue = false;
+            ServicePointManager.UseNagleAlgorithm = false;
 
             account = string.IsNullOrEmpty(this.Option.ConnectionString) ?
                 new CloudStorageAccount(

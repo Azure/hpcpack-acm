@@ -10,6 +10,7 @@
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+    using System.Net;
     using System.Text;
     using System.Threading;
     using T = System.Threading.Tasks;
@@ -37,15 +38,18 @@
                 null,
                 token))
                 .Select(t => t.Item3)
+                .Select(t => new { t.Id, t.Node })
+                .Where(t => t.Id > 0 && t.Id < int.MaxValue)
                 .ToList();
 
-            foreach(var task in allTasks.Where(t => t.CustomizedData != Task.EndTaskMark))
+            await T.Task.WhenAll(allTasks.Select(async task =>
             {
                 var q = this.Utilities.GetNodeCancelQueue(task.Node);
-                await q.AddMessageAsync(new CloudQueueMessage(
-                    JsonConvert.SerializeObject(new TaskEventMessage() { JobId = job.Id, Id = task.Id, JobType = job.Type, RequeueCount = job.RequeueCount, EventVerb = "cancel" })),
-                    null, null, null, null, token);
-            }
+                var msg = new CloudQueueMessage(
+                    JsonConvert.SerializeObject(new TaskEventMessage() { JobId = job.Id, Id = task.Id, JobType = job.Type, RequeueCount = job.RequeueCount, EventVerb = "cancel" }));
+                await q.AddMessageAsync(msg, null, null, null, null, token);
+                this.Logger.Information("Added task cancel {0} to queue {1}, {2}", task.Id, q.Name, msg.Id);
+            }));
 
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.State = JobState.Canceled, token);
         }

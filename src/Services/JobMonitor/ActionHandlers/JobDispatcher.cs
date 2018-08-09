@@ -57,21 +57,22 @@
 
             var tasks = await this.JobTypeHandler.GenerateTasksAsync(job, token);
             if (tasks == null) { return; }
-            var ids = tasks.Select(t => t.Id).ToList();
+            var allParentIds = new HashSet<int>(tasks.SelectMany(t => t.ParentIds ?? new List<int>()));
+            var endingIds = tasks.Where(t => !allParentIds.Contains(t.Id)).Select(t => t.Id).ToList();
 
             var startTask = InternalTask.CreateFrom(job);
             startTask.Id = 0;
             startTask.CustomizedData = InternalTask.StartTaskMark;
             tasks.ForEach(t =>
             {
-                (t.ParentIds ?? (t.ParentIds = new List<int>())).Add(startTask.Id);
+                if (t.ParentIds == null || t.ParentIds.Count == 0) t.ParentIds = new List<int>() { startTask.Id };
                 t.ChildIds?.Clear();
             });
 
             var endTask = InternalTask.CreateFrom(job);
             endTask.Id = int.MaxValue;
             endTask.CustomizedData = InternalTask.EndTaskMark;
-            endTask.ParentIds = ids;
+            endTask.ParentIds = endingIds;
 
             tasks.Add(startTask);
             tasks.Add(endTask);
@@ -96,19 +97,29 @@
 
             const int MaxChildIds = 1000;
 
-            var taskInstances = tasks.Select(it => new Task()
+            var taskInstances = tasks.Select(it =>
             {
-                ChildIds = it.ChildIds == null ? new List<int>() : (it.ChildIds.Count > MaxChildIds ? null : it.ChildIds),
-                CommandLine = it.CommandLine,
-                CustomizedData = it.CustomizedData,
-                Id = it.Id,
-                JobId = it.JobId,
-                JobType = it.JobType,
-                Node = it.Node,
-                RemainingParentCount = it.RemainingParentIds?.Count ?? 0,
-                RequeueCount = it.RequeueCount,
-                State = string.Equals(it.CustomizedData, Task.StartTaskMark, StringComparison.OrdinalIgnoreCase) ? TaskState.Finished : TaskState.Queued,
-            });
+                string zipppedParentIds = Compress.GZip(string.Join(",", it.ParentIds ?? new List<int>()));
+
+                var childIds = it.ChildIds;
+                childIds = childIds ?? new List<int>();
+                childIds = childIds.Count > MaxChildIds ? null : childIds;
+
+                return new Task()
+                {
+                    ChildIds = childIds,
+                    ZippedParentIds = zipppedParentIds,
+                    CommandLine = it.CommandLine,
+                    CustomizedData = it.CustomizedData,
+                    Id = it.Id,
+                    JobId = it.JobId,
+                    JobType = it.JobType,
+                    Node = it.Node,
+                    RemainingParentCount = it.RemainingParentIds?.Count ?? 0,
+                    RequeueCount = it.RequeueCount,
+                    State = string.Equals(it.CustomizedData, Task.StartTaskMark, StringComparison.OrdinalIgnoreCase) ? TaskState.Finished : TaskState.Queued,
+                };
+            }).ToList();
 
             var childIdsContent = tasks
                 .Where(it => (it.ChildIds?.Count ?? 0) > MaxChildIds)
@@ -132,7 +143,7 @@
                 PublicKey = it.PublicKey,
                 UserName = it.UserName,
                 StartInfo = new HpcAcm.Common.Dto.ProcessStartInfo(it.CommandLine, it.WorkingDirectory, null, null, null, it.EnvironmentVariables, null, it.RequeueCount),
-            });
+            }).ToList();
 
             var jobPartitionKey = this.Utilities.GetJobPartitionKey(job.Type, job.Id);
             await jobTable.InsertOrReplaceBatchAsync(token, taskInstances.Select(t => new JsonTableEntity(

@@ -140,24 +140,41 @@
 
                 if (job.State == JobState.Running)
                 {
-                    var childIds = await T.Task.WhenAll(tasks.Select(async t =>
-                    {
-                        return t.ChildIds ?? await this.Utilities.LoadTaskChildIdsAsync(t.Id, job.Id, job.RequeueCount, token);
-                    }));
+                    var childIds = await T.Task.WhenAll(tasks.Select(async t => new { t.Id, ChildIds = t.ChildIds ?? await this.Utilities.LoadTaskChildIdsAsync(t.Id, job.Id, job.RequeueCount, token) }));
 
-                    var childIdGroups = childIds.SelectMany(ids => ids).GroupBy(id => id).Select(g => new { TaskId = g.Key, Count = g.Count() }).ToList();
+                    foreach (var cids in childIds)
+                    {
+                        this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} completed, child ids {4}", job.Type, job.Id, job.RequeueCount, cids.Id, string.Join(",", cids.ChildIds));
+                    }
+
+                    var childIdGroups = childIds
+                        .SelectMany(ids => ids.ChildIds.Select(cid => new { ParentId = ids.Id, ChildId = cid }))
+                        .GroupBy(idPair => idPair.ChildId)
+                        .Select(g => new { ChildId = g.Key, Count = g.Count(), ParentIds = g.Select(idPair => idPair.ParentId).ToList() }).ToList();
 
                     var childResults = await T.Task.WhenAll(childIdGroups.Select(async cid =>
                     {
-                        this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} has {4} ancestor tasks completed", job.Type, job.Id, job.RequeueCount, cid.TaskId, cid.Count);
-                        var childTaskKey = this.Utilities.GetTaskKey(job.Id, cid.TaskId, job.RequeueCount);
+                        this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} has {4} ancestor tasks completed {5}", job.Type, job.Id, job.RequeueCount, cid.ChildId, cid.Count, string.Join(",", cid.ParentIds));
+                        var childTaskKey = this.Utilities.GetTaskKey(job.Id, cid.ChildId, job.RequeueCount);
 
                         bool unlocked = false;
                         bool isEndTask = false;
                         Task childTask = null;
                         if (!await this.Utilities.UpdateTaskAsync(jobPartitionKey, childTaskKey, t =>
                         {
-                            t.RemainingParentCount -= cid.Count;
+                            var parentIds = new HashSet<int>(Compress.UnZip(t.ZippedParentIds).Split(',').Select(_ => int.Parse(_)));
+                            var oldParentIdsCount = parentIds.Count;
+                            this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} has {4} parent tasks {5}", job.Type, job.Id, job.RequeueCount, cid.ChildId, oldParentIdsCount, string.Join(",", parentIds));
+                            cid.ParentIds.ForEach(_ => parentIds.Remove(_));
+                            var newParentIdsStr = string.Join(",", parentIds);
+                            this.Logger.Information("{0} Job {1} requeuecount {2}, after remove, task {3} has {4} parent tasks {5}", job.Type, job.Id, job.RequeueCount, cid.ChildId, parentIds.Count, newParentIdsStr);
+                            if (parentIds.Count + cid.Count != oldParentIdsCount)
+                            {
+                                this.Logger.Warning("{0} Job {1} requeuecount {2}, task {3}, ids mismatch!", job.Type, job.Id, job.RequeueCount, cid.ChildId);
+                            }
+
+                            t.RemainingParentCount = parentIds.Count;
+                            t.ZippedParentIds = Compress.GZip(newParentIdsStr);
                             unlocked = t.RemainingParentCount == 0;
                             isEndTask = t.Id == int.MaxValue;
                             if (unlocked)
@@ -174,7 +191,7 @@
                                 // TODO: make event separate.
                                 (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
                                 {
-                                    Content = $"Unable to update task record {cid.TaskId}",
+                                    Content = $"Unable to update task record {cid.ChildId}",
                                     Source = EventSource.Job,
                                     Type = EventType.Alert
                                 });

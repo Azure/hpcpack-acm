@@ -40,5 +40,6 @@
         public string Node { get; set; }
         public string CustomizedData { get; set; }
         public List<int> ChildIds { get; set; }
+        public string ZippedParentIds { get; set; }
     }
 }
