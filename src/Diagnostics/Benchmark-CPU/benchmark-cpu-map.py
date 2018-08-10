@@ -1,4 +1,4 @@
-#v0.2
+#v0.3
 
 import sys, json, copy
 
@@ -36,6 +36,7 @@ def main():
     commandInstallSysbenchOnUbuntu = "(apt install -y sysbench || apt update && apt install -y sysbench) >/dev/null 2>&1 && "
     commandInstallSysbenchOnCentos = "(yum install -y epel-release && yum install -y sysbench) >/dev/null 2>&1 && "
     commandInstallSysbenchOnRedhat = "(curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | bash && yum install -y sysbench) >/dev/null 2>&1 && "
+    commandRunLscpu = "lscpu && "
     commandRunSysbench = "sysbench --test=cpu --num-threads=`grep -c ^processor /proc/cpuinfo` run >output 2>&1 && cat output"
     commandDetectDistroAndRun = ("cat /etc/*release > distroInfo && "
                                  "if cat distroInfo | grep -Fiq 'Ubuntu'; then ({});"
@@ -61,14 +62,15 @@ def main():
         id += 1
         task["Node"] = node
         task["CustomizedData"] = nodeSize[node]
+        task["CommandLine"] = commandRunLscpu
         if nodeOS[node] == "ubuntu":
-            task["CommandLine"] = commandInstallSysbenchOnUbuntu + commandRunSysbench
+            task["CommandLine"] += commandInstallSysbenchOnUbuntu + commandRunSysbench
         elif nodeOS[node] == "centos":
-            task["CommandLine"] = commandInstallSysbenchOnCentos + commandRunSysbench
+            task["CommandLine"] += commandInstallSysbenchOnCentos + commandRunSysbench
         elif nodeOS[node] == "redhat":
-            task["CommandLine"] = commandInstallSysbenchOnRedhat + commandRunSysbench
+            task["CommandLine"] += commandInstallSysbenchOnRedhat + commandRunSysbench
         else:
-            task["CommandLine"] = commandDetectDistroAndRun
+            task["CommandLine"] += commandDetectDistroAndRun
         tasks.append(task)
 
     print(json.dumps(tasks))
