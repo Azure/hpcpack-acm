@@ -1,12 +1,6 @@
 <app-result-layout [result]="result" [aggregationResult]="aggregationResult">
   <ng-template #overview>
     <mat-tab-group>
-      <mat-tab label="Latency" *ngIf="latencyData">
-        <pingpong-overview-result [result]="latencyData"></pingpong-overview-result>
-      </mat-tab>
-      <mat-tab label="Throughput" *ngIf="throughputData">
-        <pingpong-overview-result [result]="throughputData"></pingpong-overview-result>
-      </mat-tab>
       <mat-tab label="Error" *ngIf="hasError">
         <div class="error-message">
           {{aggregationResult.Error}}
@@ -17,6 +11,31 @@
       </mat-tab>
       <mat-tab label="Events">
         <app-event-list [events]="events"></app-event-list>
+      </mat-tab>
+      <mat-tab label="Statistics" *ngIf="!hasError">
+        <div class="overview-progress">
+          <mat-progress-bar mode="indeterminate" *ngIf="!aggregationResult"></mat-progress-bar>
+        </div>
+        <mat-accordion multi=true>
+          <mat-expansion-panel *ngIf="latencyData" expanded=true>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Latency
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <pingpong-overview-result [result]="latencyData" [nodes]="nodes" [failedNodes]="failedNodes" [failedReasons]="failedReasons"
+              class="overview-data"></pingpong-overview-result>
+          </mat-expansion-panel>
+          <mat-expansion-panel *ngIf="throughputData" expanded=true>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Throughput
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <pingpong-overview-result [result]="throughputData" [nodes]="nodes" [failedNodes]="failedNodes" [failedReasons]="failedReasons"
+              class="overview-data"></pingpong-overview-result>
+          </mat-expansion-panel>
+        </mat-accordion>
       </mat-tab>
     </mat-tab-group>
   </ng-template>

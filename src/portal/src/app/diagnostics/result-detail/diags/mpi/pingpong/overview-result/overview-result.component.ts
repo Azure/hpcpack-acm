@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnChanges, SimpleChange } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, ElementRef, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { isArray } from 'util';
 
 @Component({
@@ -6,38 +6,95 @@ import { isArray } from 'util';
   templateUrl: './overview-result.component.html',
   styleUrls: ['./overview-result.component.scss']
 })
-export class PingPongOverviewResultComponent implements OnInit, OnChanges {
+export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
+  @ViewChild('chart')
+  chart: any;
 
   @Input()
   result: any;
 
-  ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
-    this.showOverview();
-  }
+  @Input()
+  nodes: any;
 
-  constructor() { }
+  @Input()
+  failedNodes: any;
+
+  @Input()
+  failedReasons: any;
+
+  activeMode = "total";
+  overviewData: any = {};
+  bestPairs = [];
+  bestPairsValue: number;
+  badPairs = [];
+  worstPairs = [];
+  worstPairsValue: number;
+  overviewResult: any;
+  unit: any;
+  threshold: any;
+
+  average: number;
+  median: number;
+  passed: boolean;
+  packetSize: string;
+  standardDeviation: number;
+  variability: string;
+  overviewThroughputData: any;
+  nodeData: any;
+
+  resultNodes = [];
+  selectedNode: string;
+
+  normal = true;
+  failure = [];
+  reasons = [];
+
+  constructor(private cd: ChangeDetectorRef) { }
 
   ngOnInit() {
+
+  }
+
+  ngAfterViewInit() {
     this.showOverview();
+    this.cd.detectChanges();
   }
 
   showOverview() {
     if (this.result != undefined) {
       this.nodeData = this.result.ResultByNode;
-      this.nodes = Object.keys(this.result.ResultByNode);
+      this.resultNodes = Object.keys(this.result.ResultByNode);
       if (!this.selectedNode) {
         this.selectedNode = this.nodes[0];
       }
       if (this.activeMode == 'total') {
         this.overviewResult = this.result.Result;
+        this.normal = true;
+        this.failure = [];
+        this.reasons = this.failedReasons;
       }
       else {
-        this.overviewResult = this.nodeData[this.selectedNode];
+        if (this.selectedNode in this.result.ResultByNode) {
+          this.overviewResult = this.nodeData[this.selectedNode];
+          this.normal = true;
+        }
+        else {
+          this.normal = false;
+        }
+        if (this.failedNodes[this.selectedNode]) {
+          this.failure = Object.keys(this.failedNodes[this.selectedNode]);
+        }
+        else {
+          this.failure = [];
+        }
       }
       this.packetSize = this.result['Packet_size'];
       this.unit = this.result['Unit'];
       this.threshold = this.result['Threshold'];
-      this.updateView(this.overviewResult);
+      if (this.normal) {
+        this.updateView(this.overviewResult);
+        this.chart.canvas.parentNode.style.height = `${this.overviewResult.Histogram[1].length * 40}px`;
+      }
       this.overviewOption.scales.yAxes = [{
         display: true,
         ticks: {
@@ -50,8 +107,7 @@ export class PingPongOverviewResultComponent implements OnInit, OnChanges {
   }
 
   overviewOption = {
-    responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: false,
     scaleOverride: true,
     animation: false,
     legend: {
@@ -80,37 +136,16 @@ export class PingPongOverviewResultComponent implements OnInit, OnChanges {
       }]
     }
   };
-  activeMode = "total";
-  overviewData: any = {};
-  bestPairs = [];
-  bestPairsValue: number;
-  badPairs = [];
-  worstPairs = [];
-  worstPairsValue: number;
-  overviewResult: any;
-  unit: any;
-  threshold: any;
-
-  average: number;
-  median: number;
-  passed: boolean;
-  packetSize: string;
-  standardDeviation: number;
-  variability: string;
-  overviewThroughputData: any;
-  nodeData: any;
-
-  nodes = [];
-  selectedNode: string;
 
   updateView(data) {
+    // this.chart.canvas.style.height = `${50 * data.Histogram[0].length}px`;
     this.overviewData = {
       labels: data.Histogram[1],
       datasets: [{
         borderColor: 'rgb(63, 81, 181)',
         borderWidth: 1,
         data: data.Histogram[0],
-        backgroundColor: 'rgba(63, 81, 181, .5)'
+        backgroundColor: 'rgba(63, 81, 181, .7)'
       }]
     };
 
@@ -128,25 +163,11 @@ export class PingPongOverviewResultComponent implements OnInit, OnChanges {
 
   setActiveMode(mode: string) {
     this.activeMode = mode;
-    let data;
-    if (this.result !== undefined) {
-      if (mode == 'node') {
-        if (this.nodeData != undefined) {
-          data = this.nodeData[this.selectedNode];
-        }
-      }
-      else if (mode == 'total') {
-        data = this.result.Result;
-      }
-      if (data != undefined) {
-        this.updateView(data);
-      }
-    }
+    this.showOverview();
   }
 
   changeNode() {
-    let data = this.nodeData[this.selectedNode];
-    this.updateView(data);
+    this.showOverview();
   }
 
   hasData(data) {

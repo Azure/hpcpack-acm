@@ -4,6 +4,7 @@ import { PingPongOverviewResultComponent } from './overview-result.component';
 import { MaterialsModule } from '../../../../../../materials.module';
 import { FormsModule } from '@angular/forms';
 import { ChartModule } from 'angular2-chartjs';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 fdescribe('PingPongOverviewResultComponent', () => {
   let component: PingPongOverviewResultComponent;
@@ -15,7 +16,8 @@ fdescribe('PingPongOverviewResultComponent', () => {
       imports: [
         MaterialsModule,
         FormsModule,
-        ChartModule
+        ChartModule,
+        BrowserAnimationsModule
       ]
     })
       .compileComponents();
@@ -52,6 +54,15 @@ fdescribe('PingPongOverviewResultComponent', () => {
       },
       Unit: "us", Packet_size: "1 Bytes"
     };
+    component.failedReasons = [{
+      NodePairs: ["evancvmss000002,evancvmss000006"],
+      Reason: "The connection may be blocked by firewall.",
+      Solution: "Check and configure the firewall properly."
+    }];
+    component.failedNodes = {
+      evancvmss000002: { 'The node pair may be not in the same network or there is issue when parsing host name': ["evancvmss000002,evancvmss000006"] }
+    };
+    component.nodes = ["evancvmss000002,evancvmss000006"];
     fixture.detectChanges();
   });
 

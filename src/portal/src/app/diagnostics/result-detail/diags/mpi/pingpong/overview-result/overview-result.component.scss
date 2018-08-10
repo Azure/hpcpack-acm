@@ -1,7 +1,7 @@
 @import "../../../../../../stylesheets/mixin.scss";
 @import "../../../../../../stylesheets/info.scss";
-.bar-chart {
-    width: 30em;
+.overview-result {
+    @include display-flex($justify-content: space-between);
 }
 
 .latency {
@@ -32,8 +32,9 @@
     background-color: rgba(63, 81, 181, .9);
 }
 
-.overview-chart {
-    @include display-flex($justify-content: space-between);
+.overview-content {
+    @include display-flex($justify-content: flex-start);
+    width: 65%;
 }
 
 .overview-header {
@@ -53,4 +54,54 @@
     @include font-basic($font-size: .8em, $font-color: $info-color);
     @include display-flex($justify-content: space-between);
     padding-bottom: .5em;
+}
+
+.chart-container {
+    position: relative;
+    width: 37%;
+    float: left;
+    padding-right: 1.2em;
+}
+
+.pair-name {
+    padding-right: .5em;
+}
+
+.result-pair {
+    flex: 2;
+    margin-left: 1.5em;
+}
+
+.mat-expansion-panel-header {
+    height: auto !important;
+    padding: 10px !important;
+}
+
+.mat-expansion-panel-header-title {
+    color: $color !important;
+    font-size: .9em;
+}
+
+.result-pair {
+    overflow: hidden !important;
+}
+
+::ng-deep .result-pair .mat-expansion-panel-body {
+    padding: 0 0.8em 0.8em;
+    font-size: 16px; // overflow: hidden !important;
+    .pair-area {
+        max-height: 400px;
+        overflow: auto;
+        padding-right: 10px;
+    }
+}
+
+mat-accordion {
+    height: 100%;
+}
+
+.solution {
+    font-size: 0.85em;
+    color: $color;
+    padding-bottom: 1em;
 }

@@ -1,5 +1,5 @@
 import { async, fakeAsync, ComponentFixture, TestBed, flush } from '@angular/core/testing';
-import { Component, Input, ViewChild, Output, EventEmitter } from '@angular/core';
+import { Component, Input, ViewChild, Output, EventEmitter, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { PingPongReportComponent } from './pingpong-report.component';
 import { MaterialsModule } from '../../../../../../materials.module';
@@ -127,7 +127,8 @@ fdescribe('PingPongReportComponent', () => {
         { provide: ApiService, useClass: ApiServiceStub },
         { provide: TableSettingsService, useValue: tableSettingsStub },
         { provide: TableDataService, useClass: TableDataServiceStub }
-      ]
+      ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })
       .compileComponents();
   }));
