@@ -1,4 +1,4 @@
-#v0.6
+#v0.7
 
 import sys, json, copy, numpy
 
@@ -70,26 +70,26 @@ def main():
         return -1
 
     messages = {}
-    failedNodes = []
+    failedPairs = []
     try:
         for taskResult in taskResults:
             taskId = taskResult['TaskId']
             nodeName = taskResult['NodeName']
             nodePair = taskId2nodePair[taskId]
             exitCode = taskResult['ExitCode']
-            if 'Message' in taskResult:
+            if 'Message' in taskResult and taskResult['Message']:
                 message = json.loads(taskResult['Message'])
                 detail = message['Detail']
                 if taskId in tasksForStatistics:
                     messages[taskId2nodePair[taskId]] = message
                 if exitCode != 0:
-                    failedNode = {
+                    failedPair = {
                         'NodeName':nodeName,
                         'NodePair':nodePair,
                         'ExitCode':exitCode,
                         'Detail':detail
                         }
-                    failedNodes.append(failedNode)
+                    failedPairs.append(failedPair)
     except Exception as e:
         printErrorAsJson('Failed to parse task result. Task id: {}. {}'.format(taskId, e))
         return -1
@@ -104,7 +104,8 @@ def main():
         goodNodes = [task['Node'] for task in tasks if task['State'] == taskStateFinished]
     badNodes = [node for node in allNodes if node not in goodNodes]
     goodNodes = list(goodNodes)
-    failedReasons = getFailedReasons(failedNodes) 
+    failedReasons = getFailedReasons(failedPairs)
+    failedNodes = getFailedNodes(failedPairs)
 
     result = {
         'GoodNodesGroups':goodNodesGroups,
@@ -117,10 +118,12 @@ def main():
         }
 
     if messages:
+        nodesInMessages = [node for nodepair in messages.keys() for node in nodepair.split(',')]
+        nodesInMessages = list(set(nodesInMessages))
         histogramSize = min(nodesNumber, 10)
-        statisticsItems = ["Throughput"]
-        if packetSize < 65536:
-            statisticsItems.append("Latency")
+        statisticsItems = ["Throughput", "Latency"]
+#        if packetSize < 65536:
+#            statisticsItems.append("Latency")
         for item in statisticsItems:
             data = [messages[pair][item] for pair in messages]
             golbalMin = numpy.amin(data)
@@ -158,7 +161,7 @@ def main():
             result[item]["Result"]["Variability"] = getVariability(data)
             
             result[item]["ResultByNode"] = {}
-            for node in goodNodes:
+            for node in nodesInMessages:
                 data = [messages[pair][item] for pair in messages if node in pair.split(',')]
                 histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(golbalMin, golbalMax))]
                 if item == "Latency":
@@ -183,7 +186,7 @@ def main():
     print(json.dumps(result))
     return 0
 
-def getFailedReasons(failedNodes):
+def getFailedReasons(failedPairs):
     INTEL_MPI_INSTALL_CLUSRUN_HINT = "wget [intel_mpi_binary_location(eg. https://your_storage_account.blob.core.windows.net/your_container_name/[l_mpi_version].tgz)] && tar -zxvf [l_mpi_version].tgz && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./[l_mpi_version]/silent.cfg && ./[l_mpi_version]/install.sh --silent ./[l_mpi_version]/silent.cfg"
     reasonMpiNotInstalled = 'Intel MPI is not found in default directory "/opt/intel".'
     solutionMpiNotInstalled = 'If Intel MPI is installed on other location, specify the directory in parameter "Intel MPI location" of diagnostics test MPI-PingPong. Or download from https://software.intel.com/en-us/intel-mpi-library and install with clusrun command: "{}".'.format(INTEL_MPI_INSTALL_CLUSRUN_HINT)
@@ -195,29 +198,35 @@ def getFailedReasons(failedNodes):
     reasonNodeSingleCore = 'MPI PingPong can not run inside a node with only 1 core.'
     solutionNodeSingleCore = 'Ignore this failure.'
     failedReasons = {}
-    for failedNode in failedNodes:
+    for failedPair in failedPairs:
         reason = "Unknown"
-        if "mpivars.sh: No such file or directory" in failedNode['Detail']:
+        if "mpivars.sh: No such file or directory" in failedPair['Detail']:
             reason = reasonMpiNotInstalled
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode['NodeName'])
-        elif "Host {} not found:".format(failedNode['NodePair'].split(',')[-1]) in failedNode['Detail']:
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedPair['NodeName'])
+        elif "Host {} not found:".format(failedPair['NodePair'].split(',')[-1]) in failedPair['Detail']:
             reason = reasonHostNotFound
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHostNotFound, 'NodePairs':[]})['NodePairs'].append(failedNode['NodePair'])
-        elif "check for firewalls!" in failedNode['Detail']:
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHostNotFound, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
+        elif "check for firewalls!" in failedPair['Detail']:
             reason = reasonFireWall
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedNode['NodePair'])
-        elif "Assertion failed in file ../../src/mpid/ch3/channels/nemesis/netmod/tcp/socksm.c at line 2988: (it_plfd->revents & POLLERR) == 0" in failedNode['Detail']:
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
+        elif "Assertion failed in file ../../src/mpid/ch3/channels/nemesis/netmod/tcp/socksm.c at line 2988: (it_plfd->revents & POLLERR) == 0" in failedPair['Detail']:
             reason = reasonFireWallProbably
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedNode['NodePair'])
-        elif "Benchmark PingPong invalid for 1 processes" in failedNode['Detail']:
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
+        elif "Benchmark PingPong invalid for 1 processes" in failedPair['Detail']:
             reason = reasonNodeSingleCore
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionNodeSingleCore, 'Nodes':[]})['Nodes'].append(failedNode['NodeName'])
-        failedNode['Reason'] = reason
-        del failedNode['Detail']
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionNodeSingleCore, 'Nodes':[]})['Nodes'].append(failedPair['NodeName'])
+        failedPair['Reason'] = reason
+        del failedPair['Detail']
     if reasonMpiNotInstalled in failedReasons:
         failedReasons[reasonMpiNotInstalled]['Nodes'] = list(failedReasons[reasonMpiNotInstalled]['Nodes'])
     return list(failedReasons.values())
 
+def getFailedNodes(failedPairs):
+    failedNodes = {}
+    for failedPair in failedPairs:
+        for node in failedPair['NodePair'].split(','):
+            failedNodes.setdefault(node, {}).setdefault(failedPair['Reason'], []).append(failedPair['NodePair'])
+    return failedNodes
 
 def getNodeMap(pairs):
     connectedNodesOfNode = {}

@@ -1,4 +1,4 @@
-#v0.6
+#v0.7
 
 import sys, json, copy, random
 
