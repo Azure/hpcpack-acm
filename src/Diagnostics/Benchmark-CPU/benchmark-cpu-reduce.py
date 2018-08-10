@@ -1,4 +1,4 @@
-#v0.1
+#v0.2
 
 import sys, json, copy, numpy
 
@@ -93,8 +93,8 @@ td, th {
     result = {
         'Title': 'Benchmark-CPU',
         'Description': 'The result for each node is the number of times per second that calculating the prime number less than 10000.',
-        'Results': taskDetail.values(),
-        'Html' : html
+        'Results': list(taskDetail.values()),
+        'Html': html
         }
 
     print(json.dumps(result, indent = 4))
