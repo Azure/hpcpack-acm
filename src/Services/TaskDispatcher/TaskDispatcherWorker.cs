@@ -121,10 +121,18 @@
                     if (diagTest?.TaskResultFilterScript?.Name != null)
                     {
                         var scriptBlob = this.Utilities.GetBlob(diagTest.TaskResultFilterScript.ContainerName, diagTest.TaskResultFilterScript.Name);
+
                         var path = Path.GetTempFileName();
-                        await scriptBlob.DownloadToFileAsync(path, FileMode.Create, null, null, null, token);
-                        var hookResults = await T.Task.WhenAll(tasks.Select(tid => this.TaskResultHook(job, tid.Id, path, token)));
-                        if (hookResults.Any(r => !r)) return false;
+                        try
+                        {
+                            await scriptBlob.DownloadToFileAsync(path, FileMode.Create, null, null, null, token);
+                            var hookResults = await T.Task.WhenAll(tasks.Select(tid => this.TaskResultHook(job, tid.Id, path, token)));
+                            if (hookResults.Any(r => !r)) return false;
+                        }
+                        finally
+                        {
+                            File.Delete(path);
+                        }
                     }
                 }
 

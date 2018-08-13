@@ -15,15 +15,29 @@
         public static async Task<(int, string, string)> ExecuteAsync(CloudBlob blob, object stdin = null, CancellationToken token = default(CancellationToken))
         {
             var path = Path.GetTempFileName();
-            await blob.DownloadToFileAsync(path, FileMode.Create, null, null, null, token);
-            return await ExecuteAsync(path, stdin, token);
+            try
+            {
+                await blob.DownloadToFileAsync(path, FileMode.Create, null, null, null, token);
+                return await ExecuteAsync(path, stdin, token);
+            }
+            finally
+            {
+                File.Delete(path);
+            }
         }
 
         public static async Task<(int, string, string)> ExecuteScriptAsync(string script, object stdin = null, CancellationToken token = default(CancellationToken))
         {
             var path = Path.GetTempFileName();
-            File.WriteAllText(path, script);
-            return await ExecuteAsync(path, stdin, token);
+            try
+            {
+                File.WriteAllText(path, script);
+                return await ExecuteAsync(path, stdin, token);
+            }
+            finally
+            {
+                File.Delete(path);
+            }
         }
 
         public static async Task<(int, string, string)> ExecuteAsync(string path, object stdin = null, CancellationToken token = default(CancellationToken))

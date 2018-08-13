@@ -9,6 +9,7 @@
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.IO;
     using System.Linq;
     using System.Text;
     using System.Threading;
@@ -150,6 +151,22 @@
                 jobPartitionKey,
                 this.Utilities.GetTaskKey(job.Id, t.Id, job.RequeueCount),
                 t)).ToArray());
+
+            if (childIdsContent.Select(cid => cid.Id).Distinct().Count() != childIdsContent.Count())
+            {
+                await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
+                {
+                    j.State = JobState.Failed;
+                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                    {
+                        Content = $"Duplicate task ids found.",
+                        Source = EventSource.Job,
+                        Type = EventType.Alert,
+                    });
+                }, token);
+
+                return;
+            }
 
             await T.Task.WhenAll(childIdsContent.Select(async childIds =>
             {
