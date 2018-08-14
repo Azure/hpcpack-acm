@@ -13,7 +13,9 @@
 <mat-table #table [dataSource]="dataSource">
   <ng-container matColumnDef="name">
     <mat-header-cell *matHeaderCellDef> Node </mat-header-cell>
-    <mat-cell *matCellDef="let node">{{node.name}}</mat-cell>
+    <mat-cell *matCellDef="let node" class="icon-cell">
+      <div class="cell-text">{{node.name}}</div>
+    </mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="state">

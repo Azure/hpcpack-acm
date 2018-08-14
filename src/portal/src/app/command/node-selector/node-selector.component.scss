@@ -20,6 +20,15 @@ mat-row:hover {
     background-color: rgba(0, 0, 0, 0.08);
 }
 
-.mat-input-container {
+.mat-form-field input {
+    font-size: .9em;
+}
+
+.mat-table {
+    max-height: 60vh;
+    overflow: auto;
+}
+
+.mat-select {
     font-size: .9em;
 }
