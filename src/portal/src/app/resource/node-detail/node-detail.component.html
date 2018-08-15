@@ -1,7 +1,7 @@
 <div class="detail-header">
   <div class="header-info">
     <div class="node-name">{{nodeInfo.name}}</div>
-    <div class="node-tag" [ngClass]="nodeInfo.health == 'Error' ? 'error-tag' : 'healthy-tag'"> {{nodeInfo.health}} </div>
+    <div class="node-tag" *ngIf="nodeInfo.health" [ngClass]="nodeInfo.health == 'Error' ? 'error-tag' : 'healthy-tag'"> {{nodeInfo.health}} </div>
     <!-- <div class="node-tag" [ngClass]="nodeInfo.state == 'Online' ? 'online-tag' : 'offline-tag'"> {{nodeInfo.state}} </div> -->
   </div>
 </div>
