@@ -34,8 +34,10 @@
         static ServerBuilder BuildServer(string[] args) => new ServerBuilder(args)
             .ConfigServiceCollection((svc, config, token) =>
             {
-                svc.Configure<TaskDispatcherOptions>(config.GetSection(nameof(TaskDispatcherOptions)));
-                svc.AddSingleton<IWorker, TaskDispatcherWorker>();
+                svc.Configure<TaskItemSourceOptions>(config.GetSection(nameof(TaskItemSourceOptions)));
+                svc.Configure<TaskDispatcherWorkerGroupOptions>(config.GetSection(nameof(TaskDispatcherWorkerGroupOptions)));
+                svc.AddSingleton<IWorker, TaskDispatcherWorkerGroup>();
+                svc.AddTransient<TaskDispatcherWorker>();
             });
     }
 }

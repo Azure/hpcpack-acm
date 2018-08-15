@@ -39,12 +39,19 @@
             return items;
         }
 
-        public static async Task<T> RetrieveAsync<T>(this CloudTable t, string partition, string key, CancellationToken token)
+        public static Task<T> RetrieveAsync<T>(this CloudTable t, string partition, string key, CancellationToken token)
+        {
+            return t.RetrieveAsync<T>(partition, key, null, token);
+        }
+
+        public static async Task<T> RetrieveAsync<T>(this CloudTable t, string partition, string key, Action<JsonTableEntity, T> resolver, CancellationToken token)
         {
             var result = await t.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(partition, key), null, null, token);
             if (result.Result is JsonTableEntity entity)
             {
-                return entity.GetObject<T>();
+                var obj = entity.GetObject<T>();
+                resolver?.Invoke(entity, obj);
+                return obj;
             }
             else
             {
@@ -73,6 +80,39 @@
         public static async Task<TableResult> ReplaceAsync(this CloudTable t, JsonTableEntity entity, CancellationToken token)
         {
             return await t.ExecuteAsync(TableOperation.Replace(entity), null, null, token);
+        }
+        public static async Task InsertOrReplaceBatchAsync(this CloudTable t, CancellationToken token, params JsonTableEntity[] entities)
+        {
+            async Task SubmitBatch(TableBatchOperation batchOperation)
+            {
+                if (batchOperation.Count > 0)
+                {
+                    var tableResults = await t.ExecuteBatchAsync(batchOperation, null, null, token);
+                    if (!tableResults.All(r => r.IsSuccessfulStatusCode()))
+                    {
+                        throw new InvalidOperationException("Not all tasks dispatched successfully");
+                    }
+
+                    batchOperation.Clear();
+                }
+            }
+
+            const int MaxBatchSize = 100;
+            var batches = entities
+                .Zip(Enumerable.Range(0, entities.Length), (en, i) => new { Entity = en, Index = i })
+                .GroupBy(en => en.Index / MaxBatchSize)
+                .Select(g =>
+                {
+                    var batch = new TableBatchOperation();
+                    foreach (var en in g)
+                    {
+                        batch.InsertOrReplace(en.Entity);
+                    }
+
+                    return batch;
+                });
+
+            await Task.WhenAll(batches.Select(b => SubmitBatch(b)));
         }
     }
 }

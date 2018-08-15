@@ -18,11 +18,11 @@
     using Microsoft.Extensions.Options;
     using Microsoft.Extensions.DependencyInjection;
 
-    internal class JobCancelWorker : TaskItemWorker, IWorker
+    internal class JobDispatchWorker : TaskItemWorker, IWorker
     {
-        private readonly NodeAgentWorkerOptions options;
+        private readonly TaskItemSourceOptions options;
 
-        public JobCancelWorker(IOptions<NodeAgentWorkerOptions> options) : base(options.Value)
+        public JobDispatchWorker(IOptions<TaskItemSourceOptions> options) : base(options.Value)
         {
             this.options = options.Value;
         }
@@ -30,9 +30,8 @@
         public override async T.Task InitializeAsync(CancellationToken token)
         {
             this.Source = new QueueTaskItemSource(
-                await this.Utilities.GetOrCreateNodeCancelQueueAsync(this.ServerOptions.HostName, token),
+                await this.Utilities.GetOrCreateNodeDispatchQueueAsync(this.ServerOptions.HostName, token),
                 this.options);
-
             await base.InitializeAsync(token);
         }
 
@@ -65,15 +64,16 @@
                     so.CopyFrom(this);
                 }
 
-                var result = await processor.ProcessAsync(message, token);
+                var result = await processor.ProcessAsync(message, taskItem.GetInsertionTime(), token);
                 this.Logger.Information("Finished process {0} {1} {2}, result {3}", message.EventVerb, message.JobId, message.Id, result);
+                return result;
             }
             catch (Exception ex)
             {
                 this.Logger.Error("Exception occurred when process {0}, {1}, {2}, {3}", message.EventVerb, message.JobId, message.Id, ex);
                 await this.Utilities.UpdateJobAsync(message.JobType, message.JobId, j =>
                 {
-                    j.State = JobState.Failed;
+                    j.State = (j.State == JobState.Canceled || j.State == JobState.Finished) ? j.State : JobState.Failed;
                     (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
                     {
                         Content = $"Exception occurred when process job {message.JobId} {message.JobType} {message.EventVerb}. {ex}",

@@ -45,14 +45,18 @@
                 .ConfigServiceCollection((svc, config, token) =>
                 {
                     svc.AddSingleton(monitor);
+                    svc.Configure<TaskItemSourceOptions>(config.GetSection(nameof(TaskItemSourceOptions)));
+                    svc.Configure<NodeCommunicatorOptions>(config.GetSection(nameof(NodeCommunicatorOptions)));
                     svc.AddSingleton<NodeCommunicator>();
                     svc.AddSingleton<NodeSynchronizer>();
                     svc.Configure<MetadataWorkerOptions>(config.GetSection(nameof(MetadataWorkerOptions)));
                     svc.AddSingleton<IWorker, MetadataWorker>();
                     svc.Configure<MetricsWorkerOptions>(config.GetSection(nameof(MetricsWorkerOptions)));
                     svc.AddSingleton<IWorker, MetricsWorker>();
-                    svc.Configure<NodeAgentWorkerOptions>(config.GetSection(nameof(NodeAgentWorkerOptions)));
-                    svc.AddSingleton<IWorker, NodeAgentWorker>();
+                    svc.Configure<JobDispatchWorkerGroupOptions>(config.GetSection(nameof(JobDispatchWorkerGroupOptions)));
+                    svc.Configure<JobCancelWorkerGroupOptions>(config.GetSection(nameof(JobCancelWorkerGroupOptions)));
+                    svc.AddSingleton<IWorker, JobDispatchWorkerGroup>();
+                    svc.AddSingleton<IWorker, JobCancelWorkerGroup>();
                     svc.AddTransient<JobCancelWorker>();
                     svc.AddTransient<JobDispatchWorker>();
                     svc.AddTransient<StartJobAndTaskProcessor>();

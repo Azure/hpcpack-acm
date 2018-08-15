@@ -1,4 +1,4 @@
-#v0.1
+#v0.3
 
 import sys, json, copy
 
@@ -26,17 +26,27 @@ def main():
                 nodeOS[node] = "ubuntu"
             elif "CentOS".lower() in distroInfo.lower():
                 nodeOS[node] = "centos"
+            elif "Redhat".lower() in distroInfo.lower():
+                nodeOS[node] = "redhat"
             else:
                 nodeOS[node] = "other"
         except Exception as e:
             raise Exception("Can not retrive distroInfo from NodeRegistrationInfo of node {0}. Exception: {1}".format(node, e))
 
-    commandInstallSysbenchOnUbuntu = "apt install -y sysbench >/dev/null 2>&1 && "
-    commandInstallSysbenchOnCentos = "yum install -y epel-release >/dev/null 2>&1 && yum install -y sysbench >/dev/null 2>&1 && "
-    commandLine = "sysbench --test=cpu --num-threads=`grep -c ^processor /proc/cpuinfo` run >output 2>&1 && cat output"
-    #commandSysbenchV0 = "sysbench --test=cpu --num-threads=`grep -c ^processor /proc/cpuinfo` run"
-    #commandSysbenchV1 = "sysbench cpu --threads=`grep -c ^processor /proc/cpuinfo` run"
-    #commandLine = "if [[ $(sysbench --version) = *'sysbench 0.'* ]]; then {}; else {}; fi".format(commandSysbenchV0, commandSysbenchV1)
+    commandInstallSysbenchOnUbuntu = "(apt install -y sysbench || apt update && apt install -y sysbench) >/dev/null 2>&1 && "
+    commandInstallSysbenchOnCentos = "(yum install -y epel-release && yum install -y sysbench) >/dev/null 2>&1 && "
+    commandInstallSysbenchOnRedhat = "(curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | bash && yum install -y sysbench) >/dev/null 2>&1 && "
+    commandRunLscpu = "lscpu && "
+    commandRunSysbench = "sysbench --test=cpu --num-threads=`grep -c ^processor /proc/cpuinfo` run >output 2>&1 && cat output"
+    commandDetectDistroAndRun = ("cat /etc/*release > distroInfo && "
+                                 "if cat distroInfo | grep -Fiq 'Ubuntu'; then ({});"
+                                 "elif cat distroInfo | grep -Fiq 'CentOS'; then ({});"
+                                 "elif cat distroInfo | grep -Fiq 'Redhat'; then ({});"
+                                 "elif cat distroInfo | grep -Fiq 'Red Hat'; then ({});"
+                                 "fi").format(commandInstallSysbenchOnUbuntu + commandRunSysbench, 
+                                              commandInstallSysbenchOnCentos + commandRunSysbench,
+                                              commandInstallSysbenchOnRedhat + commandRunSysbench,
+                                              commandInstallSysbenchOnRedhat + commandRunSysbench)
     taskTemplate = {
         "Id":0,
         "CommandLine":None,
@@ -52,12 +62,15 @@ def main():
         id += 1
         task["Node"] = node
         task["CustomizedData"] = nodeSize[node]
+        task["CommandLine"] = commandRunLscpu
         if nodeOS[node] == "ubuntu":
-            task["CommandLine"] = commandInstallSysbenchOnUbuntu + commandLine
+            task["CommandLine"] += commandInstallSysbenchOnUbuntu + commandRunSysbench
         elif nodeOS[node] == "centos":
-            task["CommandLine"] = commandInstallSysbenchOnCentos + commandLine
+            task["CommandLine"] += commandInstallSysbenchOnCentos + commandRunSysbench
+        elif nodeOS[node] == "redhat":
+            task["CommandLine"] += commandInstallSysbenchOnRedhat + commandRunSysbench
         else:
-            raise Exception("The OS distribution version of node {0} is neither ubuntu nor centos.".format(node))
+            task["CommandLine"] += commandDetectDistroAndRun
         tasks.append(task)
 
     print(json.dumps(tasks))

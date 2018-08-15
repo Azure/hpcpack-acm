@@ -1,4 +1,4 @@
-#v0.1
+#v0.3
 
 import sys, json, copy, numpy
 
@@ -41,19 +41,20 @@ def main():
     for task in taskDetail.values():
         if task['State'] == TASK_STATE_FINISHED:
             try:
-                totalNumber, totalTime, coreNumber = parseTaskOutput(task['Output'])
+                totalNumber, totalTime, coreNumber, clock = parseTaskOutput(task['Output'])
             except Exception as e:
                 printErrorAsJson('Failed to parse task output. ' + str(e))
                 return -1
             task['Result'] = '{:.2f}'.format(totalNumber/totalTime) if totalNumber and totalTime else None
             task['CoreNumber'] = coreNumber
+            task['Clock'] = clock
             del task['State']
             del task['Output']
             del task['ExitCode']
             htmlRows.append(
                 '\n'.join([
                     '  <tr>',
-                    '\n'.join(['    <td>{}</td>'.format(task[column]) for column in ['Node', 'Size', 'CoreNumber', 'Result']]),
+                    '\n'.join(['    <td>{}</td>'.format(task[column]) for column in ['Node', 'Size', 'CoreNumber', 'Clock', 'Result']]),
                     '  </tr>'
                     ]))
 
@@ -81,6 +82,7 @@ td, th {
     <th>Node</th>
     <th>Size</th>
     <th>Cores</th>
+    <th>Freq(Mhz)</th>
     <th>Result</th>
   </tr>
 ''' + '\n'.join(htmlRows) + '''
@@ -93,15 +95,15 @@ td, th {
     result = {
         'Title': 'Benchmark-CPU',
         'Description': 'The result for each node is the number of times per second that calculating the prime number less than 10000.',
-        'Results': taskDetail.values(),
-        'Html' : html
+        'Results': list(taskDetail.values()),
+        'Html': html
         }
 
     print(json.dumps(result, indent = 4))
     return 0
 
 def parseTaskOutput(raw):
-    totalTime = totalNumber = coreNumber = None
+    totalTime = totalNumber = coreNumber = clock = None
     lines = raw.split('\n')
     for line in lines:
         if 'total time:' in line:
@@ -110,7 +112,9 @@ def parseTaskOutput(raw):
             totalNumber = int(line.split(' ')[-1])
         if 'Number of threads:' in line:
             coreNumber = int(line.split(' ')[-1])
-    return (totalNumber, totalTime, coreNumber)
+        if 'CPU MHz:' in line:
+            clock = float(line.split(' ')[-1])
+    return (totalNumber, totalTime, coreNumber, clock)
 
 def printErrorAsJson(errormessage):
     print(json.dumps({"Error":errormessage}))

@@ -16,10 +16,10 @@ def main(cluster, runtime, mail):
     # 3 test batches currently
     commands = [
         [
-            'test-functional.py {} --category diagnostics --timeout 100 --continuous {}'.format(cluster, runtime),
+            'test-functional.py {} --category diagnostics --timeout 200 --continuous {}'.format(cluster, runtime),
         ],
         [
-            'test-functional.py {} --category clusrun --command "hostname" --timeout 25 --continuous {}'.format(cluster, runtime),
+            'test-functional.py {} --category clusrun --command "echo -n test" --result "test" --timeout 200 --continuous {}'.format(cluster, runtime),
         ],
         [
             'test-functional.py {} --category clusrun --command "{}" --timeout 200 --continuous {}'.format(cluster, CPU_COMMAND, runtime),

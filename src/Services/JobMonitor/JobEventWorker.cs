@@ -18,11 +18,10 @@
 
     internal class JobEventWorker : TaskItemWorker, IWorker
     {
-        private readonly JobEventWorkerOptions options;
+        private readonly TaskItemSourceOptions options;
         private readonly Dictionary<string, Type> ActionHandlerTypes = new Dictionary<string, Type>()
         {
             { "cancel", typeof(JobCanceler) },
-            { "progress", typeof(JobProgressHandler) },
             { "finish", typeof(JobFinisher) },
             { "dispatch", typeof(JobDispatcher) },
         };
@@ -33,7 +32,7 @@
             { JobType.Diagnostics, typeof(DiagnosticsJobHandler) },
         };
 
-        public JobEventWorker(IOptions<JobEventWorkerOptions> options)
+        public JobEventWorker(IOptions<TaskItemSourceOptions> options)
            : base(options.Value)
         {
             this.options = options.Value;
@@ -43,10 +42,10 @@
 
         public override async T.Task InitializeAsync(CancellationToken token)
         {
-            this.jobsTable = await this.Utilities.GetOrCreateJobsTableAsync(token);
+            this.jobsTable = this.Utilities.GetJobsTable();
 
             this.Source = new QueueTaskItemSource(
-                await this.Utilities.GetOrCreateJobEventQueueAsync(token),
+                this.Utilities.GetJobEventQueue(),
                 this.options);
 
             await base.InitializeAsync(token);

@@ -88,10 +88,15 @@
                         {
                             builder.Append(i.Content);
 
+
                             leftKey++;
-                            if (!this.cache.TryRemove(leftKey, out i))
+                            if (!this.cache.TryRemove(leftKey, out ClusrunOutput tmp))
                             {
                                 break;
+                            }
+                            else
+                            {
+                                i = tmp;
                             }
                         }
 

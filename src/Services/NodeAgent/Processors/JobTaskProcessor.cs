@@ -3,6 +3,7 @@
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Services.Common;
     using Microsoft.WindowsAzure.Storage.Table;
+    using System;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -15,6 +16,6 @@
             this.Communicator = communicator;
         }
 
-        public abstract Task<bool> ProcessAsync(TaskEventMessage message, CancellationToken token);
+        public abstract Task<bool> ProcessAsync(TaskEventMessage message, DateTimeOffset? insertionTime, CancellationToken token);
     }
 }

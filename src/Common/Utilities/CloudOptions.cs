@@ -7,7 +7,8 @@ namespace Microsoft.HpcAcm.Common.Utilities
         #region Credential
         //public string StorageKeyOrSas { get; set; } = "?sv=2017-07-29&ss=bfqt&srt=sco&sp=rwdlacup&se=2019-04-02T18:35:39Z&st=2018-03-05T10:35:39Z&spr=https&sig=MO2wFOAcvGCQr7h1sasw8SWQAWME%2BfM58XKdJgKkOuY%3D";
         //public string AccountName { get; set; } = "evanc";
-
+        //public string StorageKeyOrSas { get; set; } = "?sv=2017-11-09&ss=bfqt&srt=sco&sp=rwdlacup&se=2019-07-18T05:11:07Z&st=2018-07-17T21:11:07Z&spr=https,http&sig=ptJpQOi0A24XYe6UOsnswTG%2FcE6o2BOx%2BwdwG4%2FG9BM%3D";
+        //public string AccountName { get; set; } = "evancslurmst";
         public string StorageKeyOrSas { get; set; } = "?sv=2017-07-29&ss=bfqt&srt=sco&sp=rwdlacup&se=2019-04-24T18:19:28Z&st=2018-04-25T10:19:28Z&spr=https&sig=pYCVmT40eW54msV7P9F%2BMhBwPUbHr0HYGHvogafCs1I%3D";
         public string AccountName { get; set; } = "evanchpcacm";
         public string ConnectionString { get; set; }
@@ -76,6 +77,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
         #region Blobs
 
         public string JobResultContainerPattern { get; set; } = "jobresults-{0}";
+        public string TaskChildrenContainerName { get; set; } = "taskchildren";
 
         #endregion
 

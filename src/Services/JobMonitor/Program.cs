@@ -33,15 +33,16 @@
         static ServerBuilder BuildServer(string[] args) => new ServerBuilder(args)
             .ConfigServiceCollection((svc, config, token) =>
             {
-                svc.Configure<JobEventWorkerOptions>(config.GetSection(nameof(JobEventWorkerOptions)));
+                svc.Configure<JobEventWorkerGroupOptions>(config.GetSection(nameof(JobEventWorkerGroupOptions)));
+                svc.Configure<TaskItemSourceOptions>(config.GetSection(nameof(TaskItemSourceOptions)));
                 svc.AddTransient<JobCanceler>();
                 svc.AddTransient<JobDispatcher>();
                 svc.AddTransient<JobFinisher>();
-                svc.AddTransient<JobProgressHandler>();
                 svc.AddTransient<ClusrunJobHandler>();
                 svc.AddTransient<DiagnosticsJobHandler>();
+                svc.AddTransient<JobEventWorker>();
 
-                svc.AddSingleton<IWorker, JobEventWorker>();
+                svc.AddSingleton<IWorker, JobEventWorkerGroup>();
             });
     }
 }
