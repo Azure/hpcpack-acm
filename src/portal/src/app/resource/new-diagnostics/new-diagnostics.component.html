@@ -52,20 +52,32 @@
           <div class="name">
             <span>{{selectedTest.name | titlecase}}</span>
           </div>
-          <div *ngFor="let parameter of selectedTest.parameters">
-            <mat-form-field class="parameters">
-              <div *ngIf="parameter.options; else noOptions">
-                <mat-select [placeholder]="parameter.name" [(ngModel)]="parameter.defaultValue" (ngModelChange)="whenChange($event, parameter, selectedTest)">
-                  <mat-option *ngFor="let option of parameter.options" [value]="option">
-                    {{option}}
-                  </mat-option>
-                </mat-select>
-              </div>
-              <ng-template #noOptions>
-                <input matInput [placeholder]="parameter.name" [(ngModel)]="parameter.defaultValue">
-              </ng-template>
-              <mat-hint *ngIf="parameter">{{parameter.description}}</mat-hint>
-            </mat-form-field>
+          <div [formGroup]="paraForm">
+            <div *ngFor="let parameter of selectedTest.parameters">
+              <mat-form-field class="parameters">
+                <div *ngIf="parameter.options; else noOptions">
+                  <mat-select [placeholder]="parameter.name" [formControlName]="parameter.name" required>
+                    <mat-option *ngFor="let option of parameter.options" [value]="option">
+                      {{option}}
+                    </mat-option>
+                  </mat-select>
+                </div>
+                <ng-template #noOptions>
+                  <input matInput [placeholder]="parameter.name" type="number" [min]="parameter.min" [max]="parameter.max" required *ngIf="parameter.type == 'number';else textInput"
+                    [formControlName]='parameter.name'>
+                  <ng-template #textInput>
+                    <input matInput [placeholder]="parameter.name" [formControlName]='parameter.name' required type="text">
+                  </ng-template>
+                </ng-template>
+                <mat-hint>{{parameter.description}}</mat-hint>
+                <mat-error *ngIf="paraForm.controls[parameter.name].hasError('required')">
+                  {{parameter.name}} field is required.
+                </mat-error>
+                <mat-error *ngIf="paraForm.controls[parameter.name].hasError('min') || paraForm.controls[parameter.name].hasError('max')">
+                  {{parameter.name}} should be {{parameter.min}} - {{parameter.max}}
+                </mat-error>
+              </mat-form-field>
+            </div>
           </div>
         </ng-template>
       </ng-template>

@@ -282,7 +282,7 @@ export class DiagApi extends Resource<any> {
         });
       }
     }
-    return data;
+    return { treeData: data, rawData: result };
   }
   getDiagTests() {
     let url = `${this.url}/tests`;

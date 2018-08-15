@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, Inject, HostListener, ChangeDetectorRef }
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { NodeFilterBuilderComponent } from '../../widgets/node-filter-builder/node-filter-builder.component';
 import { ApiService } from '../../services/api.service';
+import { FormGroup, FormBuilder, Validators, FormControl } from '@angular/forms';
 
 @Component({
   selector: 'diagnostics-tests',
@@ -19,17 +20,35 @@ export class NewDiagnosticsComponent implements OnInit {
   private diagTestName: string;
   private selectedTest: any;
   private selectedTestWithParameters: any;
+  private paraForm: FormGroup;
+  private ctlConfig = {};
 
   constructor(
     private api: ApiService,
     public dialogRef: MatDialogRef<NewDiagnosticsComponent>,
     private cdRef: ChangeDetectorRef,
+    private fb: FormBuilder,
     @Inject(MAT_DIALOG_DATA) public data: any
-  ) { }
+  ) {
+  }
+
 
   ngOnInit() {
     this.api.diag.getDiagTests().subscribe(tests => {
-      this.tests = tests;
+      this.tests = tests.treeData;
+      tests['rawData'].forEach(t => {
+        if (t.parameters) {
+          this.ctlConfig[t.name] = {};
+          t.parameters.forEach(p => {
+            if (p.type == 'number') {
+              this.ctlConfig[t.name][p.name] = [p.defaultValue, [Validators.required, Validators.min(p.min), Validators.max(p.max)]];
+            }
+            else {
+              this.ctlConfig[t.name][p.name] = [p.defaultValue, [Validators.required]];
+            }
+          });
+        }
+      });
     });
   }
 
@@ -67,6 +86,18 @@ export class NewDiagnosticsComponent implements OnInit {
     node.data.checked = checked;
     if (checked) {
       this.selectedTest = node.data;
+      this.paraForm = this.fb.group(this.ctlConfig[this.selectedTest.name]);
+      let paras = this.selectedTest.parameters;
+      for (let i = 0; i < paras.length; i++) {
+        this.paraForm.controls[paras[i].name].valueChanges.subscribe(data => {
+          if (paras[i].whenChanged != undefined) {
+            let selected = paras[i].whenChanged[data];
+            for (let key in selected) {
+              this.paraForm.controls[key].setValue(selected[key]);
+            }
+          }
+        });
+      }
       this.diagTestName = `${this.selectedTest.name} created by`;
     }
     else {
@@ -87,22 +118,6 @@ export class NewDiagnosticsComponent implements OnInit {
     }
   }
 
-  // function to handle default value when one linked property's value changes
-  private whenChange(e, p, t) {
-    //e is element of parameters, p is parameters. t is the selected test
-    if (p.whenChanged != undefined) {
-      let selected = p.whenChanged[e];
-      for (let key in selected) {
-        let index = t.parameters.findIndex((item) => {
-          return item.name == key;
-        });
-        if (index != -1) {
-          t.parameters[index].defaultValue = selected[key];
-        }
-      }
-    }
-  }
-
   getTest() {
     if (this.selectedTest == undefined) {
       this.errorMessage = 'Please select one test to run in step 1 !';
@@ -112,12 +127,17 @@ export class NewDiagnosticsComponent implements OnInit {
     }
     else {
       if (this.selectedTest.parameters != undefined) {
-        let args = this.selectedTest.parameters.map((item) => {
-          return { name: item.name, value: item.defaultValue };
-        });
+        let paras = this.selectedTest.parameters;
+        let args = [];
+        for (let i = 0; i < paras.length; i++) {
+          if (this.paraForm.controls[paras[i].name].invalid) {
+            this.errorMessage = 'Please enter valid parameters in step 2 !';
+            return;
+          }
+          args.push({ name: paras[i].name, value: this.paraForm.controls[paras[i].name].value });
+        }
         this.selectedTest.arguments = args;
       }
-
       let diagInfo = { selectedTest: this.selectedTest, diagTestName: this.diagTestName };
       this.dialogRef.close(diagInfo);
     }
