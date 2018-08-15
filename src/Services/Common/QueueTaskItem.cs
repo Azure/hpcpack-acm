@@ -50,6 +50,7 @@
                 {
                     await Task.Delay(loopInterval, t);
 
+                    this.logger.Information("Ensure Invisible for message {0}", this.QueueMessage.Id);
                     await this.Queue.UpdateMessageAsync(this.QueueMessage, this.invisibleTimeout, MessageUpdateFields.Visibility, null, null, t);
                 }
             }
