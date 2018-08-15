@@ -18,7 +18,7 @@
       The task is {{taskState}}.
     </div>
   </div>
-  <div class="detail-item" *ngIf="hasResult && message.Detail">
+  <div class="detail-item" *ngIf="hasResult && message">
     <div class="area-title">
       <i class="material-icons title-icon">equalizer</i>
       <div class="detail-title">OVERVIEW</div>
@@ -34,15 +34,17 @@
       </div>
       <div class="overview-info">
         <div class="overview-title"> Latency </div>
-        <div class="overview-value">{{message.Latency | number: '1.2-2'}} us</div>
+        <div class="overview-value" *ngIf="message.Latency >= 0">{{message.Latency | number: '1.2-2'}} us</div>
+        <div class="overview-value" *ngIf="message.Latency < 0">--</div>
       </div>
       <div class="overview-info">
         <div class="overview-title"> Throughput </div>
-        <div class="overview-value">{{message.Throughput | number: '1.2-2'}} MB/s</div>
+        <div class="overview-value" *ngIf="message.Throughput >= 0">{{message.Throughput | number: '1.2-2'}} MB/s</div>
+        <div class="overview-value" *ngIf="message.Throughput < 0">--</div>
       </div>
     </div>
   </div>
-  <div class="detail-item" *ngIf="hasResult">
+  <div class="detail-item" *ngIf="hasResult && message">
     <div class="area-title">
       <i class="material-icons title-icon">timer</i>
       <div class="detail-title">OUTPUT</div>

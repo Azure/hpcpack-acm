@@ -10,7 +10,7 @@ import { ApiService } from '../../../../services/api.service';
 export class TaskDetailComponent implements OnInit {
 
   private msg = [];
-  private message = {};
+  private message: any;
   private result = {};
   private hasResult = true;
   private taskState = "";
@@ -25,7 +25,7 @@ export class TaskDetailComponent implements OnInit {
 
   ngOnInit() {
     this.taskState = this.data.taskState;
-    if (this.data.taskState !== "Finished" && this.data.taskState !== "Failed") {
+    if (this.data.taskState !== "Finished" && this.data.taskState !== "Failed" && this.data.taskState !== "Canceled") {
       this.hasResult = false;
     }
     else {
