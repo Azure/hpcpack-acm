@@ -1,5 +1,6 @@
 ﻿namespace Microsoft.HpcAcm.Services.Common
 {
+    using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
     using Serilog;
@@ -51,7 +52,22 @@
                     await Task.Delay(loopInterval, t);
 
                     this.logger.Information("Ensure Invisible for message {0}", this.QueueMessage.Id);
-                    await this.Queue.UpdateMessageAsync(this.QueueMessage, this.invisibleTimeout, MessageUpdateFields.Visibility, null, null, t);
+
+                    try
+                    {
+                        await this.Queue.UpdateMessageAsync(this.QueueMessage, this.invisibleTimeout, MessageUpdateFields.Visibility, null, null, t);
+                    }
+                    catch (StorageException ex)
+                    {
+                        if (ex.InnerException is OperationCanceledException)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
                 }
             }
             catch (OperationCanceledException)
