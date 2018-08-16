@@ -74,6 +74,14 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return jsonString == null ? (IActionResult)new NotFoundResult() : new OkObjectResult(JsonConvert.DeserializeObject(jsonString));
         }
 
+        // GET v1/nodes/longquery
+        [HttpGet("longquery")]
+        public async T.Task<IActionResult> GetScheduledEventsAsync(CancellationToken token)
+        {
+            await T.Task.Delay(100000, token);
+            return new OkObjectResult("long query result. good");
+        }
+
         // GET v1/nodes/node1/scheduledevents
         [HttpGet("{id}/scheduledevents")]
         public async T.Task<IActionResult> GetScheduledEventsAsync(string id, CancellationToken token)
