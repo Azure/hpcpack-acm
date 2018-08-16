@@ -1,11 +1,14 @@
-import subprocess, io, json
+import subprocess, json
 
 def main():
     script = 'python benchmark-cpu-reduce.py'
     stdout = subprocess.check_output(script, shell=True, stdin=open('unittest-reduce-stdin', 'r'), stderr=subprocess.STDOUT)
         
     resultItems = [
+        'Title',
+        'Description',
         'Results',
+        'Html'
         ]
         
     result = json.loads(stdout)
