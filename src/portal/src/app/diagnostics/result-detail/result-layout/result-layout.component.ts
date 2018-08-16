@@ -85,7 +85,7 @@ export class ResultLayoutComponent implements OnInit {
         let diagnosticTest = this.result.diagnosticTest;
         let name = this.result.name == undefined ? '' : `${this.result.name}`;
         this.api.diag.create(name, targetNodes, diagnosticTest).subscribe(obj => {
-          let returnData = obj.headers.get('location').split('/');
+          let returnData = obj['headers'].get('location').split('/');
           let jobId = returnData[returnData.length - 1];
           this.router.navigate([`/diagnostics/results/` + jobId]);
         });

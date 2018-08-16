@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
-import { ErrorObservable } from 'rxjs/observable/ErrorObservable';
+import { Observable, throwError } from 'rxjs';
 import { of } from 'rxjs/observable/of';
 import { catchError, map } from 'rxjs/operators';
 import 'rxjs/add/operator/first';
@@ -27,7 +26,7 @@ export abstract class Resource<T> {
     return catchError(error => {
       console.error(error);
       //ErrorObservable is effectively an exception, like throw(...)
-      return new ErrorObservable(error);
+      return throwError(error);
     })
   }
 

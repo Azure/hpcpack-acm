@@ -33,7 +33,7 @@ nav {
 .mat-column-coreCount,
 .mat-column-memory,
 .mat-column-eventCount {
-    text-align: right;
+    justify-content: flex-end;
 }
 
 .online {

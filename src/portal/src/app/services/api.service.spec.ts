@@ -2,7 +2,7 @@ import { fakeAsync, flush } from '@angular/core/testing';
 import { Resource, CommandApi, ApiService, Loop } from './api.service';
 import { of } from 'rxjs/observable/of';
 import { map } from 'rxjs/operators';
-import { _throw } from 'rxjs/observable/throw';
+import { throwError } from 'rxjs';
 
 fdescribe('Resource', () => {
   class TestResource extends Resource<any> {
@@ -33,9 +33,10 @@ fdescribe('Resource', () => {
     let error = 'Error in pipe!';
     let mapper = map(e => { throw (error) });
     httpSpy.get.and.returnValue(of(value));
-    expect(() => {
-      resource.httpGet(null, null, [mapper]).subscribe(() => { })
-    }).toThrow(error);
+    // expect(() => {
+    //  resource.httpGet(null, null, [mapper]).subscribe(() => { });
+    // }).toThrow(error);
+    resource.httpGet(null, null, [mapper]).subscribe(() => { }, (e) => { expect(e).toEqual(error) })
   });
 
   it('should get all', () => {
@@ -201,7 +202,7 @@ fdescribe('Loop', () => {
     spy.next.and.returnValues(true, undefined);
 
     let error = '!ERROR!';
-    let looper = Loop.start(_throw(error), spy, 0);
+    let looper = Loop.start(throwError(error), spy, 0);
     expect(spy.next.calls.count()).toBe(0);
     expect(spy.error.calls.count()).toBe(1);
     expect(spy.error).toHaveBeenCalledWith(error);

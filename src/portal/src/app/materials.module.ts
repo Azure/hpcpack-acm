@@ -25,7 +25,6 @@ import {
 } from '@angular/material';
 
 import { DragulaModule } from 'ng2-dragula';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 const modules = [
   MatToolbarModule,
@@ -49,8 +48,7 @@ const modules = [
   MatProgressBarModule,
   MatPaginatorModule,
   MatProgressSpinnerModule,
-  DragulaModule,
-  InfiniteScrollModule,
+  DragulaModule
 ];
 
 @NgModule({

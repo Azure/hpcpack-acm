@@ -59,7 +59,7 @@ export class NodeListComponent {
 
   ngOnInit() {
     this.loadSettings();
-    this.getDisplayedColumns(); 
+    this.getDisplayedColumns();
     // this.api.node.getAll().subscribe(nodes => {
     //   this.dataSource.data = nodes;
     // });
@@ -160,7 +160,7 @@ export class NodeListComponent {
         let diagnosticTest = { name: result['selectedTest']['name'], category: result['selectedTest']['category'], arguments: result['selectedTest']['arguments'] };
         let name = result['diagTestName'];
         this.api.diag.create(name, targetNodes, diagnosticTest).subscribe(obj => {
-          let returnData = obj.headers.get('location').split('/');
+          let returnData = obj['headers'].get('location').split('/');
           let jobId = returnData[returnData.length - 1];
           this.router.navigate([`/diagnostics/results/` + jobId]);
         });
