@@ -72,11 +72,22 @@ export class ResultDetailComponent implements OnInit {
       this.subcription.unsubscribe();
   }
 
+  getComponent(name) {
+    let comp;
+    switch (name) {
+      case 'pingpong': comp = PingPongReportComponent; break;
+      case 'ring': comp = RingReportComponent; break;
+      case 'cpu': comp = CpuReportComponent; break;
+      default: comp = CpuReportComponent;
+    }
+    return comp;
+
+  }
+
   loadComponent() {
     //Revmoe previously created component.
     this.resultViewRef.remove();
-
-    let comp = map[this.result.diagnosticTest.name];
+    let comp = this.getComponent(this.result.diagnosticTest.name);
     let compFactory = this.componentFactoryResolver.resolveComponentFactory(comp);
     let compRef = this.resultViewRef.createComponent(compFactory);
     (compRef.instance as any).result = this.result;
