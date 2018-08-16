@@ -1,0 +1,32 @@
+﻿{
+    "DispatchScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"benchmark-cifs-map.py"
+    },
+    "AggregationScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"benchmark-cifs-reduce.py"
+    },
+    "description":"Get the speed of copying file between local disk and CIFS server",
+    "parameters":[
+        {
+            "name":"CIFS server mount point",
+            "description":"Specify the mount point of target CIFS server on each node if it's already mounted, or leave this value empty.",
+            "type":"string",
+            "defaultValue":""
+        },
+        {
+            "name":"CIFS server connection string",
+            "description":"Copy the connection string of target CIFS server from Azure portal if the above parameter 'CIFS server mount point' is not specified.",
+            "type":"string",
+            "defaultValue":"sudo mount -t cifs //<storage-account-name>.file.core.windows.net/<share-name> [mount point] -o vers=<smb-version>,username=<storage-account-name>,password=<storage-account-key>,dir_mode=0777,file_mode=0777,serverino"
+        },
+        {
+            "name":"Mode",
+            "description":"Select the way each node accessing target CIFS server.",
+            "type":"string",
+            "options":["Parallel", "Serial"],
+            "defaultValue":"Parallel"
+        }
+    ]
+}
