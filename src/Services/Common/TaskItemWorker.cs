@@ -48,6 +48,8 @@
                     await Task.Delay(TimeSpan.FromSeconds(this.TaskItemSourceOptions.FailureRetryIntervalSeconds), token);
                 }
             }
+
+            this.Logger.Information($"Exiting {nameof(DoWorkAsync)}, canceled {0}", token.IsCancellationRequested);
         }
 
         public abstract Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token);

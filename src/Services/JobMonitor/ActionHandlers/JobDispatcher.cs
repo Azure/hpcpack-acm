@@ -8,8 +8,6 @@
     using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.IO;
     using System.Linq;
     using System.Text;
     using System.Threading;
@@ -74,6 +72,7 @@
             endTask.Id = int.MaxValue;
             endTask.CustomizedData = InternalTask.EndTaskMark;
             endTask.ParentIds = endingIds;
+            this.Logger.Information("Job {0} task {1} has {2} parent ids, {3}", job.Id, endTask.Id, endTask.ParentIds.Count, string.Join(",", endTask.ParentIds));
 
             tasks.Add(startTask);
             tasks.Add(endTask);
@@ -104,6 +103,7 @@
 
                 var childIds = it.ChildIds;
                 childIds = childIds ?? new List<int>();
+                this.Logger.Information("Job {0} Task {1} has {2} child ids", job.Id, it.Id, childIds.Count);
                 childIds = childIds.Count > MaxChildIds ? null : childIds;
 
                 return new Task()
@@ -143,7 +143,7 @@
                 PrivateKey = it.PrivateKey,
                 PublicKey = it.PublicKey,
                 UserName = it.UserName,
-                StartInfo = new HpcAcm.Common.Dto.ProcessStartInfo(it.CommandLine, it.WorkingDirectory, null, null, null, it.EnvironmentVariables, null, it.RequeueCount),
+                StartInfo = new ProcessStartInfo(it.CommandLine, it.WorkingDirectory, null, null, null, it.EnvironmentVariables, null, it.RequeueCount),
             }).ToList();
 
             var jobPartitionKey = this.Utilities.GetJobPartitionKey(job.Type, job.Id);
@@ -152,7 +152,7 @@
                 this.Utilities.GetTaskKey(job.Id, t.Id, job.RequeueCount),
                 t)).ToArray());
 
-            if (childIdsContent.Select(cid => cid.Id).Distinct().Count() != childIdsContent.Count())
+            if (childIdsContent.Select(cid => cid.Id).Distinct().Count() != childIdsContent.Count)
             {
                 await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                 {
@@ -186,7 +186,7 @@
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
                 state = j.State = (j.State == JobState.Queued ? JobState.Running : j.State);
-                j.TaskCount = taskInstances.Count() - 2;
+                j.TaskCount = taskInstances.Count - 2;
             }, token);
 
             if (state == JobState.Running)
