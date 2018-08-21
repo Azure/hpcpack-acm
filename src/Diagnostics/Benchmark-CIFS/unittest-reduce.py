@@ -1,4 +1,4 @@
-import subprocess, io, json
+import subprocess, json
 
 def main():
     script = 'python benchmark-cifs-reduce.py'

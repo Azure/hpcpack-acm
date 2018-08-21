@@ -1,4 +1,4 @@
-import subprocess, io, json
+import subprocess, json
 
 def main():
     script = 'python benchmark-cpu-map.py'
