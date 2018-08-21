@@ -1,0 +1,15 @@
+<div class="dialog-title" mat-dialog-title>
+  <div class="job-info title">
+    <i class="material-icons diag-title-icon">event_note</i>
+    <div>Error Information</div>
+  </div>
+  <div class="close-icon" (click)="close()">
+    <i class="material-icons">close</i>
+  </div>
+</div>
+<mat-divider></mat-divider>
+<mat-dialog-content>
+  <p class="error-message">
+    {{data.message}}
+  </p>
+</mat-dialog-content>

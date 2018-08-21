@@ -154,11 +154,7 @@ export class CommandApi extends Resource<CommandResult> {
     return this.httpGet(url);
   }
 
-  //You can't tell if the output reaches EOF by one simple GET API. You have
-  //to call another API to get to know if the command generating the output is
-  //over. When opt.fulfill is set to true, DO provide callback opt.over, otherwise
-  //the method may never ends since it doesn't know EOF without opt.over!
-  getOutput(key, offset, size = 1024, opt = { fulfill: false, over: undefined, timeout: undefined }) {
+  getOutput(key, offset, size = 1024, opt = { fulfill: false, timeout: undefined }) {
     return Observable.create(observer => {
       let res = { content: '', size: 0 };
       let url = `${this.baseUrl}/output/clusRun/${key}/page?offset=${offset}&pageSize=${size}`;
@@ -174,7 +170,7 @@ export class CommandApi extends Resource<CommandResult> {
             if (typeof ((res as any).offset) === 'undefined') {
               (res as any).offset = result.offset;
             }
-            let eof = result.size === 0 && opt.over && opt.over();
+            let eof = result.eof;
             let elapse = new Date().getTime() - ts;
             if (!opt.fulfill || res.size == size || eof || (opt.timeout && elapse >= opt.timeout)) {
               (res as any).end = eof;
@@ -477,9 +473,18 @@ export class Loop {
           setTimeout(_loop, _interval);
         },
         err => {
-          looper.ended = true;
           if (observer.error) {
-            observer.error(err);
+            //404 not found error should continue to query in command task result request
+            looper.ended = observer.error(err);
+            if (!looper.ended) {
+              let elapse = new Date().getTime() - ts;
+              let delta = interval - elapse;
+              let _interval = delta > 0 ? delta : 0;
+              setTimeout(_loop, _interval);
+            }
+          }
+          else {
+            looper.ended = true;
           }
         }
       );

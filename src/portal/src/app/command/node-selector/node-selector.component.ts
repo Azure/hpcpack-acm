@@ -1,6 +1,8 @@
 import { Component, OnChanges, SimpleChanges, Input, Output, EventEmitter } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
 import { JobStateService } from '../../services/job-state/job-state.service';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { TaskErrorComponent } from './task-error/task-error.component';
 
 @Component({
   selector: 'node-selector',
@@ -11,6 +13,9 @@ export class NodeSelectorComponent implements OnChanges {
   @Input()
   nodes: any[];
 
+  @Input()
+  nodeOutputs: any;
+
   @Output()
   select = new EventEmitter();
 
@@ -20,6 +25,10 @@ export class NodeSelectorComponent implements OnChanges {
 
   selectedNode: any;
 
+  hasError(node) {
+    return this.nodeOutputs && this.nodeOutputs[node.name] && this.nodeOutputs[node.name]['error'] !== '';
+  }
+
   private states = ['all', 'queued', 'running', 'finished', 'failed', 'canceled'];
 
   private displayedColumns = ['name', 'state'];
@@ -27,7 +36,8 @@ export class NodeSelectorComponent implements OnChanges {
   private dataSource = new MatTableDataSource();
 
   constructor(
-    private jobStateService: JobStateService
+    private jobStateService: JobStateService,
+    private dialog: MatDialog
   ) { }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -70,5 +80,12 @@ export class NodeSelectorComponent implements OnChanges {
     let prevNode = this.selectedNode;
     this.selectedNode = node;
     this.select.emit({ node, prevNode });
+  }
+
+  showError(node) {
+    let dialog = this.dialog.open(TaskErrorComponent, {
+      width: '70%',
+      data: this.nodeOutputs[node.name].error
+    });
   }
 }

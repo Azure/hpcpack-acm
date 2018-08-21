@@ -83,13 +83,14 @@ fdescribe('CommandApi', () => {
     let content = 'TEST CONTENT';
     let size = content.length;
     let offset = 0;
-    let value = { content, offset, size };
+    let eof = false;
+    let value = { content, offset, size, eof };
     httpSpy.get.and.returnValue(of(value));
     resource.getOutput('key', 0, size * 2).subscribe(res => {
       expect(res.content).toEqual(value.content);
       expect(res.size).toEqual(value.size);
       expect(res.offset).toEqual(value.offset);
-      expect(res.end).toBe(false);
+      expect(res.end).toBe(value.eof);
     })
 
     flush();
@@ -99,14 +100,14 @@ fdescribe('CommandApi', () => {
     let content = 'TEST CONTENT';
     let size = content.length;
     let offset = 0;
-    let value = { content, offset, size };
+    let eof = false;
+    let value = { content, offset, size, eof };
     let content2 = ' MORE';
     let size2 = content2.length;
-    let value2 = { content: content2, offset: size, size: size2 };
-    let value3 = { offset: size + size2, size: 0 };
-    httpSpy.get.and.returnValues(of(value), of(value2), of(value3));
-    let opt = { fulfill: true, over: () => true }
-    resource.getOutput('key', 0, (size + size2) * 2, opt).subscribe(res => {
+    let value2 = { content: content2, offset: size, size: size2, eof: true };
+    httpSpy.get.and.returnValues(of(value), of(value2));
+    let opt = { fulfill: true };
+    resource.getOutput('key', 0, (size + size2) * 2, opt as any).subscribe(res => {
       expect(res.content).toEqual(content + content2);
       expect(res.offset).toEqual(offset);
       expect(res.size).toEqual(size + size2);
@@ -200,6 +201,7 @@ fdescribe('Loop', () => {
   it('should call error and stop', fakeAsync(() => {
     let spy = jasmine.createSpyObj('observer', ['next', 'error']);
     spy.next.and.returnValues(true, undefined);
+    spy.error.and.returnValues(true, true);
 
     let error = '!ERROR!';
     let looper = Loop.start(throwError(error), spy, 0);

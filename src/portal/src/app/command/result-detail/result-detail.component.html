@@ -26,15 +26,14 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-3 selection">
-        <node-selector [nodes]="result.nodes" (select)="selectNode($event)">
+        <node-selector [nodes]="result.nodes" (select)="selectNode($event)" [nodeOutputs]="nodeOutputs">
         </node-selector>
       </div>
 
       <div class="col-md-9 output">
-        <command-output (loadPrev)="loadPrevAndScroll(selectedNode, $event)" (loadNext)="loadNext(selectedNode)"
-          (gotoTop)="loadFromBeginAndScroll(selectedNode, $event)"
-          [content]="(currentOutput?.content) || (currentOutput?.error)" [disabled]="isOutputDisabled" [loading]="loading"
-          [bof]="currentOutput?.start === 0" [eof]="currentOutput?.end">
+        <command-output (loadPrev)="loadPrevAndScroll(selectedNode, $event)" (loadNext)="loadNext(selectedNode)" (gotoTop)="loadFromBeginAndScroll(selectedNode, $event)"
+          [content]="currentOutput?.content" [disabled]="isOutputDisabled" [loading]="loading" [bof]="currentOutput?.start === 0"
+          [eof]="currentOutput?.end" #output>
         </command-output>
 
         <div class="control bottom">

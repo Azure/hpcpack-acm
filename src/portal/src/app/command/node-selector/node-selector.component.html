@@ -14,7 +14,10 @@
   <ng-container matColumnDef="name">
     <mat-header-cell *matHeaderCellDef> Node </mat-header-cell>
     <mat-cell *matCellDef="let node" class="icon-cell">
-      <div class="cell-text">{{node.name}}</div>
+      <div class="cell-text" *ngIf="!hasError(node)">{{node.name}}</div>
+      <div class="cell-text" *ngIf="hasError(node)">
+        <a class="error" (click)="showError(node)">{{node.name}}</a>
+      </div>
     </mat-cell>
   </ng-container>
 
