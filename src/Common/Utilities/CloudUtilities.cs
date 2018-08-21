@@ -11,38 +11,91 @@
     using System.Net;
     using System.Text;
     using System.Threading;
+    using Serilog;
     using T = System.Threading.Tasks;
 
     public class CloudUtilities
     {
-        public CloudUtilities(IOptions<CloudOptions> cloudOption)
+        private readonly ILogger logger;
+
+        public CloudUtilities(IOptions<CloudOptions> cloudOption, ILogger logger)
         {
             this.Option = cloudOption.Value;
             ServicePointManager.DefaultConnectionLimit = Environment.ProcessorCount * 12;
             ServicePointManager.Expect100Continue = false;
             ServicePointManager.UseNagleAlgorithm = false;
+            this.logger = logger;
+        }
 
-            account = string.IsNullOrEmpty(this.Option.ConnectionString) ?
-                new CloudStorageAccount(
-                    new WindowsAzure.Storage.Auth.StorageCredentials(this.Option.StorageKeyOrSas),
-                    this.Option.AccountName,
-                    null,
-                    true)
-                : CloudStorageAccount.Parse(this.Option.ConnectionString);
+        private CloudStorageAccount account;
+
+        public bool IsSharedKeyAccount { get => this.account.Credentials.IsSharedKey; }
+
+        public async T.Task SetupStorageAccountAsync(CancellationToken token)
+        {
+            while (true)
+            {
+                try
+                {
+                    if (!string.IsNullOrEmpty(this.Option.Storage?.ConnectionString))
+                    {
+                        this.logger.Information("Setup storage account, using connection string");
+                        // Connection String
+                        this.account = CloudStorageAccount.Parse(this.Option.Storage.ConnectionString);
+                    }
+                    else if (!string.IsNullOrEmpty(this.Option.Storage?.SasToken) && !string.IsNullOrEmpty(this.Option.Storage?.AccountName))
+                    {
+                        // SAS Token
+                        this.logger.Information("Setup storage account, using SasToken");
+                        this.account = new CloudStorageAccount(
+                            new WindowsAzure.Storage.Auth.StorageCredentials(this.Option.Storage.SasToken),
+                            this.Option.Storage.AccountName,
+                            null,
+                            true);
+                    }
+                    else if (!string.IsNullOrEmpty(this.Option.Storage?.KeyValue) && !string.IsNullOrEmpty(this.Option.Storage?.AccountName))
+                    {
+                        // account key
+                        this.logger.Information("Setup storage account, using Storage key");
+                        this.account = new CloudStorageAccount(
+                            new WindowsAzure.Storage.Auth.StorageCredentials(this.Option.Storage.KeyValue, this.Option.Storage.AccountName),
+                            true);
+                    }
+                    else
+                    {
+                        // MSI
+                        this.logger.Information("Setup storage account, using MSI");
+                        var msiClient = new ManagedServiceIdentityClient(this.Option, this.logger);
+                        var config = await msiClient.GetStorageConfigAsync(token);
+
+                        if (config != null)
+                        {
+                            this.account = new CloudStorageAccount(
+                                new WindowsAzure.Storage.Auth.StorageCredentials(config.AccountName, config.KeyValue),
+                                true);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    this.logger.Error(ex, "Getting error when creating the cloud storage account");
+                }
+
+                if (this.account != null) break;
+                await T.Task.Delay(5000, token);
+            }
 
             this.blobClient = new CloudBlobClient(account.BlobEndpoint, account.Credentials);
             this.queueClient = new CloudQueueClient(account.QueueEndpoint, account.Credentials);
             this.tableClient = new CloudTableClient(account.TableEndpoint, account.Credentials);
             queueClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(this.Option.QueueServerTimeoutSeconds);
             tableClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(this.Option.TableServerTimeoutSeconds);
+
         }
-
-        private readonly CloudStorageAccount account;
-
-        public bool IsSharedKeyAccount { get => this.account.Credentials.IsSharedKey; }
 
         public async T.Task InitializeAsync(CancellationToken token)
         {
+            await this.SetupStorageAccountAsync(token);
             await this.GetOrCreateJobEventQueueAsync(token);
             await this.GetOrCreateJobsTableAsync(token);
             await this.GetOrCreateNodesTableAsync(token);
@@ -54,9 +107,9 @@
         public readonly string MaxString = new string(Char.MaxValue, 1);
         public readonly string MinString = new string(Char.MinValue, 1);
 
-        private readonly CloudBlobClient blobClient;
-        private readonly CloudQueueClient queueClient;
-        private readonly CloudTableClient tableClient;
+        private CloudBlobClient blobClient;
+        private CloudQueueClient queueClient;
+        private CloudTableClient tableClient;
 
         public const string PartitionKeyName = "PartitionKey";
         public const string RowKeyName = "RowKey";
