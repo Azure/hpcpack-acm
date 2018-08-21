@@ -92,7 +92,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   private onScrollEvent(data) {
-    this.lastId = data.dataIndex == -1 ? 0 : this.dataSource.data[data.dataIndex]['id'];
+    this.lastId = data.dataIndex < 0 ? 0 : this.dataSource.data[data.dataIndex]['id'];
     this.loadFinished = data.loadFinished;
     this.scrolled = data.scrolled;
     this.reverse = data.scrollDirection == 'down' ? true : false;

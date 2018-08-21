@@ -1,5 +1,6 @@
 .content {
     position: relative;
+    border: 1px solid #eee;
 }
 
 .content .up-to-top {
@@ -37,7 +38,8 @@ pre {
 button.control {
     width: 100%;
     background-color: #ffffff;
-    border: 1px solid rgba(109, 122, 196, 0.7);
+    border: 1px solid #eee;
+    color: #3f51b5;
 }
 
 .control+.control {
@@ -48,5 +50,9 @@ button.control {
     text-align: center;
     background-color: #ffffff;
     padding: 8px;
-    border: 1px solid rgba(109, 122, 196, 0.7);
+    border: 1px solid #eee;
+}
+
+.button-text {
+    color: #3f51b5;
 }

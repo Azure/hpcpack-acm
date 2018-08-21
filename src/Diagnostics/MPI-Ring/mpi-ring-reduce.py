@@ -1,6 +1,6 @@
 #v0.1
 
-import sys, json, copy
+import sys, json
 
 def main():
     result = json.load(sys.stdin)

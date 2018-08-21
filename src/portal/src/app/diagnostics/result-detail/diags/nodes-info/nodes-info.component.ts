@@ -24,9 +24,14 @@ export class NodesInfoComponent implements OnInit {
     }
     if (isObject(data)) {
       let keys = Object.keys(data);
-      return keys.every(item => {
-        return data[item] !== undefined && data[item] !== null;
-      })
+      if (keys.length == 0) {
+        return false;
+      }
+      else {
+        return keys.every(item => {
+          return data[item] !== undefined && data[item] !== null;
+        })
+      }
     }
     return data !== undefined && data !== null;
   }

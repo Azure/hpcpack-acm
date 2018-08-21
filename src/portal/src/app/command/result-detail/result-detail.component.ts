@@ -19,7 +19,7 @@ export class ResultDetailComponent implements OnInit {
   @ViewChild(NodeSelectorComponent)
   private selector: NodeSelectorComponent;
 
-  @ViewChild(CommandOutputComponent)
+  @ViewChild('output')
   private output: CommandOutputComponent;
 
   private id: string;
@@ -203,8 +203,14 @@ export class ResultDetailComponent implements OnInit {
           return true;
         },
         error: (err) => {
-          onGot(err);
-          return false;
+          if (err.status = 404 && !this.isOver) {
+            //return value is assigned to looper.ended in observer.err
+            return false;
+          }
+          else {
+            onGot(err);
+            return true;
+          }
         }
       },
       //interval(in ms):
@@ -236,7 +242,7 @@ export class ResultDetailComponent implements OnInit {
                 callback(true);
               }
               else if (key && keyType == 'object') {
-                output.error = key.message;
+                output.error = key;
                 callback(false);
               }
               else {
@@ -319,10 +325,9 @@ export class ResultDetailComponent implements OnInit {
         return;
       }
       output.loading = 'auto';
-      let opt = { over: () => this.isOutputOver(node) };
       this.nodeLoop = Loop.start(
         //observable:
-        this.api.command.getOutput(output.key, output.next, this.outputPageSize, opt as any),
+        this.api.command.getOutput(output.key, output.next, this.outputPageSize),
         //observer:
         {
           next: (result) => {
@@ -334,7 +339,12 @@ export class ResultDetailComponent implements OnInit {
               output.loading = false;
             }
             return over ? false :
-              this.api.command.getOutput(output.key, output.next, this.outputPageSize, opt as any);
+              this.api.command.getOutput(output.key, output.next, this.outputPageSize);
+          },
+          error: (err) => {
+            output.loading = false;
+            output.error = err;
+            return true;
           }
         },
         //interval(in ms):
@@ -353,11 +363,15 @@ export class ResultDetailComponent implements OnInit {
         return;
       }
       output.loading = 'once';
-      let opt = { fulfill: true, over: () => this.isOutputOver(node), timeout: 2000 };
+      let opt = { fulfill: true, timeout: 2000 };
       this.api.command.getOutput(output.key, output.next, this.outputPageSize, opt as any).subscribe(
         result => {
           output.loading = false;
           this.updateNodeOutput(output, result);
+        },
+        error => {
+          output.loading = false;
+          output.error = error;
         }
       );
     });
@@ -399,13 +413,6 @@ export class ResultDetailComponent implements OnInit {
   isNodeOver(node): boolean {
     let state = node.state;
     return this.isJobOver(state);
-  }
-
-  isOutputOver(node): boolean {
-    //NOTE: this.isNodeOver depends on the node info, which may be outdated because
-    //the node parameter may be a captured value in a closure, which captured an "old"
-    //value. So this.isOver is required and this.isNodeOver is just an optimization.
-    return this.isNodeOver(this.selectedNode) || this.isOver;
   }
 
   toggleAutoload(enabled) {
@@ -451,15 +458,20 @@ export class ResultDetailComponent implements OnInit {
         return;
       }
       output.loading = 'prev';
-      let opt = { fulfill: true, over: () => this.isOutputOver(node) };
+      let opt = { fulfill: true };
       this.api.command.getOutput(output.key, prev, pageSize, opt as any)
-        .subscribe(result => {
-          output.loading = false;
-          if (this.updateNodeOutputBackward(output, result) && onload
-            && this.selectedNode && this.selectedNode.name == node.name) {
-            setTimeout(onload, 0);
-          }
-        });
+        .subscribe(
+          result => {
+            output.loading = false;
+            if (this.updateNodeOutputBackward(output, result) && onload
+              && this.selectedNode && this.selectedNode.name == node.name) {
+              setTimeout(onload, 0);
+            }
+          },
+          error => {
+            output.loading = false;
+            output.error = error;
+          });
     });
   }
 
@@ -473,12 +485,17 @@ export class ResultDetailComponent implements OnInit {
         return;
       }
       output.loading = 'next';
-      let opt = { fulfill: true, over: () => this.isOutputOver(node), timeout: 2000 };
-      this.api.command.getOutput(output.key, output.next, this.outputPageSize, opt)
-        .subscribe(result => {
-          output.loading = false;
-          this.updateNodeOutput(output, result);
-        });
+      let opt = { fulfill: true, timeout: 2000 };
+      this.api.command.getOutput(output.key, output.next, this.outputPageSize, opt as any)
+        .subscribe(
+          result => {
+            output.loading = false;
+            this.updateNodeOutput(output, result);
+          },
+          error => {
+            output.loading = false;
+            output.error = error;
+          });
     });
   }
 
@@ -500,19 +517,23 @@ export class ResultDetailComponent implements OnInit {
     output.start = undefined;
     output.end = undefined;
     output.next = 0;
+    output.error = '';
     output.onKeyReady((hasKey) => {
       if (!hasKey) {
         return;
       }
       output.loading = 'top';
-      let opt = { fulfill: true, over: () => this.isOutputOver(node), timeout: 2000 };
+      let opt = { fulfill: true, timeout: 2000 };
       this.api.command.getOutput(output.key, output.next, this.outputPageSize, opt as any).subscribe(
         result => {
           output.loading = false;
           this.updateNodeOutput(output, result);
           setTimeout(onload, 0);
-        }
-      );
+        },
+        error => {
+          output.loading = false;
+          output.error = error;
+        });
     });
   }
 

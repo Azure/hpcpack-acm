@@ -1,15 +1,8 @@
-import subprocess, io, json, os
+import subprocess, json
 
 def main():
-    runOnWindows = ''
-    runOnLinux = 'python '
-    if os.name == 'nt':
-        prefix = runOnWindows
-    else:
-        prefix = runOnLinux
-
-    script = 'mpi-ring-map.py'
-    stdout = subprocess.check_output(prefix + script, shell=True, stdin=open('unittest-map-stdin', 'r'), stderr=subprocess.STDOUT)
+    script = 'python mpi-ring-map.py'
+    stdout = subprocess.check_output(script, shell=True, stdin=open('unittest-map-stdin', 'r'), stderr=subprocess.STDOUT)
         
     taskTemplateItems = [
         "Id",
@@ -22,15 +15,15 @@ def main():
         
     tasks = json.loads(stdout)
     if not tasks:
-        print 'Fail: no task.'
+        print('Fail: no task.')
         return
     for task in tasks:
         for item in taskTemplateItems:
             if item not in task:
-                print 'Fail: no {0} in task.'.format(item)
+                print('Fail: no {0} in task.'.format(item))
                 return
 
-    print 'Pass'
+    print('Pass')
     return
 
 if __name__ == '__main__':

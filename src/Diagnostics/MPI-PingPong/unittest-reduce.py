@@ -1,19 +1,17 @@
-import subprocess, io, json
+import subprocess, json
 
 def main():
     script = 'python mpi-pingpong-reduce.py'
     stdout = subprocess.check_output(script, shell=True, stdin=open('unittest-reduce-stdin', 'r'), stderr=subprocess.STDOUT)
         
     resultItems = [
-        'GoodPairs',
         'GoodNodesGroups',
-        'GoodNodesGroupsWithMasters',
-        'LargestGoodNodesGroups',
-        'LargestGoodNodesGroupsWithMasters',
         'GoodNodes',
-        'BadPairs',
         'FailedNodes',
-        'BadNodes'
+        'BadNodes',
+        'RdmaNodes',
+        'FailedReasons',
+        'CanceledNodePairs'
         ]
         
     result = json.loads(stdout)

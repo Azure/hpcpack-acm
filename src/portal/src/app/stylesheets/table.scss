@@ -20,7 +20,7 @@ mat-header-cell {
 
 .mat-cell,
 .mat-header-cell {
-    padding: 0 2px; // text-align: center;
+    padding: 0 2px; // text-align: center;  
 }
 
 .mat-row,
@@ -61,6 +61,7 @@ mat-header-cell {
 
 .table-progress {
     @include display-flex(center, center);
+    width: 100%;
     .progress-bar {
         width: 75%;
     }
@@ -72,7 +73,7 @@ mat-header-cell {
 
 .icon-cell {
     @include display-flex(center);
-    min-width: 8em;
+    min-width: 2em;
 }
 
 .cell-icon {

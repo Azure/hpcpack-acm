@@ -1,12 +1,13 @@
-<div class="control static up" *ngIf="bof; else prevButton">
+<div class="control static up button-text" *ngIf="bof; else prevButton">
   Begin of Output
 </div>
 <ng-template #prevButton>
-  <button mat-button class="control up" [ngClass]="{ attention: !loading && !disabled }"
-    (click)="loadPrev.emit(output)" [disabled]="loading || disabled"
+  <button mat-button class="control up" [ngClass]="{ attention: !loading && !disabled }" (click)="loadPrev.emit(output)" [disabled]="loading || disabled"
     matTooltip="Load more content before">
-    <span *ngIf="loading == 'prev'; else upArrow">Loading...</span>
-    <ng-template #upArrow><i class="material-icons">keyboard_arrow_up</i></ng-template>
+    <span *ngIf="loading == 'prev'; else upArrow" class="button-text">Loading...</span>
+    <ng-template #upArrow>
+      <i class="material-icons">keyboard_arrow_up</i>
+    </ng-template>
   </button>
 </ng-template>
 
@@ -19,18 +20,19 @@
   </div>
 </div>
 
-<div class="control static down" *ngIf="eof; else nextButton">
+<div class="control static down button-text" *ngIf="eof; else nextButton">
   End of Output
 </div>
 <ng-template #nextButton>
-  <button mat-button class="control down" [ngClass]="{ attention: !loading && !disabled }"
-    (click)="loadNext.emit(output)" [disabled]="loading || disabled"
-    matTooltip="Load more content after">
-    <span *ngIf="loading == 'next'; else downArrow">Loading...</span>
-    <ng-template #downArrow><i class="material-icons">keyboard_arrow_down</i></ng-template>
+  <button mat-button class="control down" [ngClass]="{ attention: !loading && !disabled }" (click)="loadNext.emit(output)"
+    [disabled]="loading || disabled" matTooltip="Load more content after">
+    <span *ngIf="loading == 'next'; else downArrow" class="button-text">Loading...</span>
+    <ng-template #downArrow>
+      <i class="material-icons">keyboard_arrow_down</i>
+    </ng-template>
   </button>
 </ng-template>
 
 <div class="control" *ngIf="loading">
-  <mat-progress-bar mode="buffer"></mat-progress-bar>
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
 </div>

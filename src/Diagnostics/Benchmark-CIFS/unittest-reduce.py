@@ -1,14 +1,14 @@
 import subprocess, json
 
 def main():
-    script = 'python mpi-ring-reduce.py'
+    script = 'python benchmark-cifs-reduce.py'
     stdout = subprocess.check_output(script, shell=True, stdin=open('unittest-reduce-stdin', 'r'), stderr=subprocess.STDOUT)
         
     resultItems = [
-        "Nodes",
-        "Passed",
-        "Latency",
-        "Throughput"
+        'Title',
+        'Description',
+        'Results',
+        'Html'
         ]
         
     result = json.loads(stdout)

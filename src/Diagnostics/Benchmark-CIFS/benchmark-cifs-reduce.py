@@ -1,4 +1,4 @@
-#v0.3
+#v0.1
 
 import sys, json
 
@@ -41,20 +41,21 @@ def main():
     for task in taskDetail.values():
         if task['State'] == TASK_STATE_FINISHED:
             try:
-                totalNumber, totalTime, coreNumber, clock = parseTaskOutput(task['Output'])
+                location, local, toCifs, fromCifs = parseTaskOutput(task['Output'])
             except Exception as e:
                 printErrorAsJson('Failed to parse task output. ' + str(e))
                 return -1
-            task['Result'] = '{:.2f}'.format(totalNumber/totalTime) if totalNumber and totalTime else None
-            task['CoreNumber'] = coreNumber
-            task['Clock'] = clock
+            task['Location'] = location
+            task['Local'] = local
+            task['ToCifs'] = toCifs
+            task['FromCifs'] = fromCifs
             del task['State']
             del task['Output']
             del task['ExitCode']
             htmlRows.append(
                 '\n'.join([
                     '  <tr>',
-                    '\n'.join(['    <td>{}</td>'.format(task[column]) for column in ['Node', 'Size', 'CoreNumber', 'Clock', 'Result']]),
+                    '\n'.join(['    <td>{}</td>'.format(task[column]) for column in ['Node', 'Size', 'Location', 'Local', 'ToCifs', 'FromCifs']]),
                     '  </tr>'
                     ]))
 
@@ -76,25 +77,26 @@ td, th {
 </style>
 </head>
 <body>
-<h2>Benchmark CPU</h2>
+<h2>Benchmark CIFS</h2>
 <table>
   <tr>
     <th>Node</th>
     <th>Size</th>
-    <th>Cores</th>
-    <th>Freq(Mhz)</th>
-    <th>Result</th>
+    <th>Location</th>
+    <th>Local Disk</th>
+    <th>To CIFS</th>
+    <th>From CIFS</th>
   </tr>
 ''' + '\n'.join(htmlRows) + '''
 </table>
-<p>The result for each node is the number of times per second that calculating the prime number less than 10000.</p>
+<p>The benchmark shows the speed of copying file between local disk and CIFS server.</p>
 </body>
 </html>
 '''
     
     result = {
-        'Title': 'Benchmark-CPU',
-        'Description': 'The result for each node is the number of times per second that calculating the prime number less than 10000.',
+        'Title': 'Benchmark-CIFS',
+        'Description': 'The benchmark shows the speed of copying file between local disk and CIFS server.',
         'Results': list(taskDetail.values()),
         'Html': html
         }
@@ -103,18 +105,23 @@ td, th {
     return 0
 
 def parseTaskOutput(raw):
-    totalTime = totalNumber = coreNumber = clock = None
+    location = local = toCifs = fromCifs = None
     lines = raw.split('\n')
     for line in lines:
-        if 'total time:' in line:
-            totalTime = float(line.split(' ')[-1][:-1])
-        if 'total number of events:' in line:
-            totalNumber = int(line.split(' ')[-1])
-        if 'Number of threads:' in line:
-            coreNumber = int(line.split(' ')[-1])
-        if 'CPU MHz:' in line:
-            clock = float(line.split(' ')[-1])
-    return (totalNumber, totalTime, coreNumber, clock)
+        if 'location' in line:
+            location = line.split(':')[-1][1:-1]
+        if 'copied' in line:
+            speed = line.split(',')[-1]
+            if not local:
+                local = speed
+                continue
+            if not toCifs:
+                toCifs = speed
+                continue
+            if not fromCifs:
+                fromCifs = speed
+                continue
+    return (location, local, toCifs, fromCifs)
 
 def printErrorAsJson(errormessage):
     print(json.dumps({"Error":errormessage}))

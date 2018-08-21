@@ -1,5 +1,5 @@
 import { async, fakeAsync, flush, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, SimpleChanges, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { _throw } from 'rxjs/observable/throw';
 
@@ -19,6 +19,9 @@ class CommandOutputStubComponent {
   @Output()
   loadNext = new EventEmitter<any>();
 
+  @Output()
+  gotoTop = new EventEmitter<any>();
+
   @Input()
   content: string = '';
 
@@ -35,6 +38,8 @@ class CommandOutputStubComponent {
   //Got End of File
   @Input()
   eof: boolean = false;
+
+  scrollToBottom() { }
 }
 
 @Component({ selector: 'node-selector', template: '' })
@@ -85,7 +90,7 @@ const activatedRouteStub = {
 }
 
 const routerStub = {
-  navigate: () => {},
+  navigate: () => { },
 }
 
 class JobStateServiceStub {
@@ -118,9 +123,10 @@ fdescribe('ResultDetailComponent', () => {
         { provide: JobStateService, useClass: JobStateServiceStub },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
         { provide: Router, useValue: routerStub },
-      ]
+      ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {

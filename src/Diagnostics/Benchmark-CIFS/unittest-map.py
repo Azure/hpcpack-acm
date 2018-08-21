@@ -1,7 +1,7 @@
 import subprocess, json
 
 def main():
-    script = 'python benchmark-cpu-map.py'
+    script = 'python benchmark-cifs-map.py'
     stdout = subprocess.check_output(script, shell=True, stdin=open('unittest-map-stdin', 'r'), stderr=subprocess.STDOUT)
         
     taskTemplateItems = [

@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <title>Hpc</title>
@@ -8,18 +9,25 @@
   <!-- "shrink-to-fit=no" is added for Bootstrap -->
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"></head>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
 
-  <!--
+<!--
     Bootstrap CSS.
     Note: the npm version has a problem in building under Angular Cli. See
     https://github.com/angular/angular-cli/issues/9020
     Also note that only the "grid" file is included here.
   -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap-grid.min.css" crossorigin="anonymous">
-
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap-grid.min.css" crossorigin="anonymous">
+<script>
+  if (global === undefined) {
+    var global = window;
+  }
+</script>
 </head>
+
 <body>
   <app-root></app-root>
 </body>
+
 </html>
