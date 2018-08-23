@@ -7,7 +7,10 @@ import 'rxjs/add/operator/delay';
 @Injectable()
 export class AuthService {
   //For now, default to true for development convenience
-  isLoggedIn = true;
+  private loggedIn: boolean;
+  get isLoggedIn() {
+    return this.loggedIn || sessionStorage.getItem('isLoggedIn') == 'true';
+  };
 
   user = {
     name: 'Lei.Zhang@microsoft.com',
@@ -17,10 +20,14 @@ export class AuthService {
   redirectUrl: string;
 
   login(): Observable<boolean> {
-    return Observable.of(true).delay(1000).do(val => this.isLoggedIn = true);
+    return Observable.of(true).delay(1000).do(val => {
+      sessionStorage.setItem('isLoggedIn', 'true');
+      this.loggedIn = true
+    });
   }
 
   logout(): void {
-    this.isLoggedIn = false;
+    this.loggedIn = false;
+    sessionStorage.removeItem('isLoggedIn');
   }
 }

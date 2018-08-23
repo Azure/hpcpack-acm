@@ -16,19 +16,17 @@ import { LocalStorageService } from './services/local-storage.service';
 import { InMemoryDataService } from './services/in-memory-data.service';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
-import { NotificationComponent } from './notification/notification.component';
-import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { WidgetsModule } from './widgets/widgets.module';
 import { JobStateService } from './services/job-state/job-state.service';
 import { TableDataService } from './services/table-data/table-data.service';
 import { DateFormatterService } from './services/date-formatter/date-formatter.service';
+import { MainComponent } from './main/main.component';
+import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    LoginComponent,
-    NotificationComponent,
-    BreadcrumbComponent
+    LoginComponent
   ],
   imports: [
     BrowserModule,

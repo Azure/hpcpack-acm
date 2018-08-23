@@ -21,7 +21,7 @@ export class LoginComponent {
   }
 
   get logged() {
-    return this.authService.isLoggedIn || localStorage.getItem('isLoggedIn') == 'true';
+    return this.authService.isLoggedIn;
   }
 
   login() {
