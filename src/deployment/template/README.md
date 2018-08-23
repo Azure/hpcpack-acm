@@ -4,4 +4,4 @@
   <img src="http://azuredeploy.net/deploybutton.png"/>
   </a>
 
-  This template provides a easy way to deploy HPC ACM services to Azure Container Instance Group.
+  This template provides an easy way to deploy HPC ACM services to Azure Container Instance Group.

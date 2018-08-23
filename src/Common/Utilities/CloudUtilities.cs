@@ -25,6 +25,7 @@
             ServicePointManager.Expect100Continue = false;
             ServicePointManager.UseNagleAlgorithm = false;
             this.logger = logger;
+            this.logger.Information("Constructed cloud utilities");
         }
 
         private CloudStorageAccount account;
@@ -46,7 +47,7 @@
                     else if (!string.IsNullOrEmpty(this.Option.Storage?.SasToken) && !string.IsNullOrEmpty(this.Option.Storage?.AccountName))
                     {
                         // SAS Token
-                        this.logger.Information("Setup storage account, using SasToken");
+                        this.logger.Information("Setup storage account, using SasToken, {0}", this.Option.Storage.AccountName);
                         this.account = new CloudStorageAccount(
                             new WindowsAzure.Storage.Auth.StorageCredentials(this.Option.Storage.SasToken),
                             this.Option.Storage.AccountName,
@@ -56,9 +57,9 @@
                     else if (!string.IsNullOrEmpty(this.Option.Storage?.KeyValue) && !string.IsNullOrEmpty(this.Option.Storage?.AccountName))
                     {
                         // account key
-                        this.logger.Information("Setup storage account, using Storage key");
+                        this.logger.Information("Setup storage account, using Storage key, {0}", this.Option.Storage.AccountName);
                         this.account = new CloudStorageAccount(
-                            new WindowsAzure.Storage.Auth.StorageCredentials(this.Option.Storage.KeyValue, this.Option.Storage.AccountName),
+                            new WindowsAzure.Storage.Auth.StorageCredentials(this.Option.Storage.AccountName, this.Option.Storage.KeyValue),
                             true);
                     }
                     else
@@ -90,7 +91,6 @@
             this.tableClient = new CloudTableClient(account.TableEndpoint, account.Credentials);
             queueClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(this.Option.QueueServerTimeoutSeconds);
             tableClient.DefaultRequestOptions.ServerTimeout = TimeSpan.FromSeconds(this.Option.TableServerTimeoutSeconds);
-
         }
 
         public async T.Task InitializeAsync(CancellationToken token)
