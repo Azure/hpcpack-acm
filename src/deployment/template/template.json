@@ -164,7 +164,7 @@
         {
             "name": "[parameters('containergroupname')]",
             "type": "Microsoft.ContainerInstance/containerGroups",
-            "apiVersion": "2018-04-01",
+            "apiVersion": "2018-06-01",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
