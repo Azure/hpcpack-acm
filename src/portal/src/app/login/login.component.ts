@@ -1,22 +1,27 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
 
   message: string;
+  hide = true;
 
   constructor(public authService: AuthService, public router: Router) {
     this.setMessage();
   }
 
   setMessage() {
-    this.message = 'Logged ' + (this.authService.isLoggedIn ? 'in' : 'out');
+    this.message = 'Logged ' + (this.logged ? 'in' : 'out');
+  }
+
+  get logged() {
+    return this.authService.isLoggedIn || localStorage.getItem('isLoggedIn') == 'true';
   }
 
   login() {
@@ -24,7 +29,7 @@ export class LoginComponent {
 
     this.authService.login().subscribe(() => {
       this.setMessage();
-      if (this.authService.isLoggedIn) {
+      if (this.logged) {
         // Get the redirect URL from our auth service
         // If no redirect has been set, use the default
         let redirect = this.authService.redirectUrl ? this.authService.redirectUrl : '/';
