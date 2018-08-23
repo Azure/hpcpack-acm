@@ -189,12 +189,12 @@
                             },
                             "environmentVariables":[
                                 {
-                                    "name": "CloudOptions:Storage:AccountName",
+                                    "name": "CloudOptions__Storage__AccountName",
                                     "value": "[parameters('storageAccountName')]"
                                 },
                                 {
-                                    "name": "CloudOptions:Storage:KeyValue",
-                                    "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                    "name": "CloudOptions__Storage__KeyValue",
+                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
                                 }
                             ]
                         }
