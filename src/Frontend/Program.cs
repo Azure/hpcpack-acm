@@ -9,6 +9,7 @@
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Options;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
@@ -41,9 +42,14 @@
                     ILogger logger = loggerConfig.CreateLogger();
 
                     services.AddSingleton(logger);
-                    services.Configure<CloudOptions>(context.Configuration.GetSection("CloudOptions"));
+                    var section = context.Configuration.GetSection("CloudOptions");
+                    var options = section.Get<CloudOptions>();
+                    var cloudUtilities = new CloudUtilities(Options.Create(options), logger);
+                    cloudUtilities.InitializeAsync(CancellationToken.None).Wait();
+
+                    services.Configure<CloudOptions>(section);
                     services.Configure<ServerOptions>(context.Configuration.GetSection("ServerOptions"));
-                    services.AddSingleton<CloudUtilities>();
+                    services.AddSingleton(cloudUtilities);
                     services.AddSingleton<ServerObject>();
                     services.AddSingleton<DataProvider>();
                 })
