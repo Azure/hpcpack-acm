@@ -56,17 +56,17 @@
             <div *ngFor="let parameter of selectedTest.parameters">
               <mat-form-field class="parameters">
                 <div *ngIf="parameter.options; else noOptions">
-                  <mat-select [placeholder]="parameter.name" [formControlName]="parameter.name" required>
+                  <mat-select [placeholder]="parameter.name" [formControlName]="parameter.name">
                     <mat-option *ngFor="let option of parameter.options" [value]="option">
                       {{option}}
                     </mat-option>
                   </mat-select>
                 </div>
                 <ng-template #noOptions>
-                  <input matInput [placeholder]="parameter.name" type="number" [min]="parameter.min" [max]="parameter.max" required *ngIf="parameter.type == 'number';else textInput"
+                  <input matInput [placeholder]="parameter.name" type="number" [min]="parameter.min" [max]="parameter.max" *ngIf="parameter.type == 'number';else textInput"
                     [formControlName]='parameter.name'>
                   <ng-template #textInput>
-                    <input matInput [placeholder]="parameter.name" [formControlName]='parameter.name' required type="text">
+                    <input matInput [placeholder]="parameter.name" [formControlName]='parameter.name' type="text">
                   </ng-template>
                 </ng-template>
                 <mat-hint>{{parameter.description}}</mat-hint>

@@ -40,12 +40,15 @@ export class NewDiagnosticsComponent implements OnInit {
         if (t.parameters) {
           this.ctlConfig[t.name] = {};
           t.parameters.forEach(p => {
+            let validators = [];
+            if (p.required) {
+              validators.push(Validators.required);
+            }
             if (p.type == 'number') {
-              this.ctlConfig[t.name][p.name] = [p.defaultValue, [Validators.required, Validators.min(p.min), Validators.max(p.max)]];
+              validators.push(Validators.min(p.min));
+              validators.push(Validators.max(p.max));
             }
-            else {
-              this.ctlConfig[t.name][p.name] = [p.defaultValue, [Validators.required]];
-            }
+            this.ctlConfig[t.name][p.name] = [p.defaultValue, validators];
           });
         }
       });
