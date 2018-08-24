@@ -1,0 +1,17 @@
+<div *ngIf="activeMode == 'By Node'">
+  <div class="tile" *ngFor="let node of nodes" [ngClass]="nodeClass(node)" [matTooltip]="nodeTip(node)" (click)="clickNode(node)">
+  </div>
+</div>
+
+<div class="heatmap-core" *ngIf="activeMode == 'By Core'">
+  <div *ngFor="let node of nodes">
+    <div *ngIf="node.cores.length > 0; else noData" class="core-tile">
+      <div class="core" *ngFor="let core of node.cores" [ngClass]="nodeClass(core)" [matTooltip]="nodeTip(core)" (click)="clickNode(node)">
+      </div>
+    </div>
+    <ng-template #noData>
+      <div class="core-tile no-data" [matTooltip]="nodeTip(node)" (click)="clickNode(node)">
+      </div>
+    </ng-template>
+  </div>
+</div>

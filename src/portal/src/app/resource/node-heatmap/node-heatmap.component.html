@@ -5,12 +5,14 @@
 
 <div class="selectedCategory">
   <mat-form-field>
-    <mat-select placeholder="Select Category" [(ngModel)] = "selectedCategory" (selectionChange) = "categoryCtrl()">
+    <mat-select placeholder="Select Category" [(ngModel)]="selectedCategory" (selectionChange)="categoryCtrl()">
       <mat-option *ngFor="let category of categories" [value]="category">
         {{ category }}
       </mat-option>
     </mat-select>
   </mat-form-field>
+  <div class="mode-type">
+    <div class="mode-btn" *ngFor="let way of ways" [class.active]="activeMode == way" (click)="setActiveMode(way)">{{way}}</div>
+  </div>
 </div>
-
-<div class="tile" *ngFor="let node of nodes" [ngClass]="nodeClass(node)" [matTooltip]="nodeTip(node)" (click)="clickNode(node)"></div>
+<heatmap-cpu [activeMode]="activeMode" [nodes]="nodes"></heatmap-cpu>

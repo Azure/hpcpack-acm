@@ -14,14 +14,17 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
   private interval: number;
   private selectedCategory: string;
   private heatmapLoop: Object;
+  private categoryWays = { cpu: ['By Node', 'By Core'] };
+  private ways = [];
+  private activeMode;
 
   constructor(
-    private router: Router,
-    private route: ActivatedRoute,
     private api: ApiService
   ) {
     this.interval = 3000;
     this.selectedCategory = "cpu";
+    this.ways = this.categoryWays[this.selectedCategory];
+    this.activeMode = this.ways[0];
   }
 
   ngOnInit() {
@@ -30,6 +33,10 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
     })
 
     this.heatmapLoop = this.getHeatmapInfo();
+  }
+
+  setActiveMode(way) {
+    this.activeMode = way;
   }
 
   categoryCtrl(): void {
@@ -57,56 +64,6 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
       //interval in ms
       this.interval
     );
-  }
-
-  private colorMap = [{
-    value: 0, color: 'ten'
-  }, {
-    value: 1, color: 'twenty'
-  }, {
-    value: 2, color: 'thirty'
-  }, {
-    value: 3, color: 'forty'
-  }, {
-    value: 4, color: 'fifty'
-  }, {
-    value: 5, color: 'sixty'
-  }, {
-    value: 6, color: 'seventy'
-  }, {
-    value: 7, color: 'eighty'
-  }, {
-    value: 8, color: 'ninety'
-  }, {
-    value: 9, color: 'full'
-  }];
-
-  nodeClass(node): string {
-    let res;
-    if (isNaN(node.value)) {
-      return;
-    }
-
-    if (node.value == 0) {
-      return res = 'empty';
-    }
-    if (node.value == 100) {
-      return res = 'full';
-    }
-    let val = Math.floor(node.value / 10);
-    let item = this.colorMap.find(item => {
-      return item.value == val;
-    })
-    res = item.color;
-    return res;
-  }
-
-  nodeTip(node): string {
-    return `${node.id} : `.concat(isNaN(node.value) ? `realtime data is not available` : `${node.value} %`);
-  }
-
-  clickNode(node): void {
-    this.router.navigate(['..', node.id], { relativeTo: this.route })
   }
 
   ngOnDestroy() {

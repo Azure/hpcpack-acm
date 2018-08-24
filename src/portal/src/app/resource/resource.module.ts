@@ -14,6 +14,7 @@ import { NewDiagnosticsComponent } from './new-diagnostics/new-diagnostics.compo
 import { NewCommandComponent } from './new-command/new-command.component';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { SharedModule } from '../shared.module';
+import { CpuComponent } from './node-heatmap/cpu/cpu.component';
 
 @NgModule({
   imports: [
@@ -27,7 +28,7 @@ import { SharedModule } from '../shared.module';
     ChartModule,
     SharedModule
   ],
-  declarations: [ResourceComponent, NodeListComponent, NodeDetailComponent, NodeHeatmapComponent, NewDiagnosticsComponent, NewCommandComponent],
+  declarations: [ResourceComponent, NodeListComponent, NodeDetailComponent, NodeHeatmapComponent, NewDiagnosticsComponent, NewCommandComponent, CpuComponent],
   entryComponents: [NewDiagnosticsComponent, NewCommandComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

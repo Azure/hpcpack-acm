@@ -205,7 +205,15 @@ export class HeatmapApi extends Resource<any> {
   }
 
   protected normalize(result: any): void {
-    result.results = result.values.map(e => ({ id: e.node, value: e.data._Total >= 0 ? e.data._Total : NaN }));
+    result.results = result.values.map(e => {
+      let cores = [];
+      for (let core in e.data) {
+        if (core !== '_Total') {
+          cores.push({ id: `${core}(${e.node})`, value: e.data[core] >= 0 ? e.data[core] : NaN });
+        }
+      }
+      return { id: e.node, value: e.data._Total >= 0 ? e.data._Total : NaN, cores: cores }
+    });
     return result;
   }
 
@@ -219,6 +227,7 @@ export class HeatmapApi extends Resource<any> {
     return this.httpGet(url, null, [
       map(e => this.normalize(e)),
     ]);
+    // return this.httpGet(url);
   }
 
   getMockData(category: string): Observable<any> {

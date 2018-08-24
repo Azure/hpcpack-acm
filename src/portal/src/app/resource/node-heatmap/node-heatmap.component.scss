@@ -1,53 +1,32 @@
+@import "../../stylesheets/mixin.scss";
 nav {
     margin-bottom: 1em;
 }
 
-.tile {
-    display: inline-block;
-    width: 32px;
-    height: 32px;
-    margin: 2px;
-    border-radius: 4px;
-    background-color: gray;
+.selectedCategory {
+    @include display-flex;
+}
+
+.mode-type {
+    @include display-flex($align-items: center);
+    margin-left: 2.5em;
+}
+
+.mode-btn {
+    height: 2em;
+    font-size: .8em;
+    line-height: 2em;
+    padding: 0 1em;
+    color: #FFF;
+    background-color: rgba(63, 81, 181, .2);
+    text-align: center;
+}
+
+.mode-btn:hover {
     cursor: pointer;
 }
 
-.tile {
-    &.empty {
-        background-color: #FFF;
-    }
-    &.ten {
-        background-color: #E8EAF6;
-    }
-    &.twenty {
-        background-color: #C5CAE9;
-    }
-    &.thirty {
-        background-color: #9FA8DA;
-    }
-    &.forty {
-        background-color: #7986CB;
-    }
-    &.fifty {
-        background-color: #5C6BC0;
-    }
-    &.sixty {
-        background-color: #3F51B5;
-    }
-    &.seventy {
-        background-color: #3949ab;
-    }
-    &.eighty {
-        background-color: #303f9f;
-    }
-    &.ninety {
-        background-color: #283593;
-    }
-    &.full {
-        background-color: #1A237E;
-    }
-}
-
-.selectedCategory {
-    display: flex;
+.mode-btn.active {
+    color: #FFF;
+    background-color: rgba(63, 81, 181, .9);
 }
