@@ -53,7 +53,7 @@ export class CpuReportComponent implements OnInit {
   }
 
   get hasError() {
-    return this.aggregationResult !== undefined && this.aggregationResult['Error'] !== undefined;
+    return this.aggregationResult !== undefined && this.aggregationResult !== null && this.aggregationResult['Error'] !== undefined;
   }
 
   getTasksRequest() {
