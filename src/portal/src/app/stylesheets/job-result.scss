@@ -10,6 +10,7 @@
         margin: 0 0.3em;
         @include font-basic(1.2em, rgba($color: #000000, $alpha: 0.8));
         padding: 1em 0;
+        word-break: break-word;
     }
 }
 

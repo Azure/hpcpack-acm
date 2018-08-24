@@ -30,10 +30,10 @@
     @include display-flex(center, center);
     color: #ffffff;
     &.OK {
-        background-color: rgba(45, 168, 117, .9);
+        background-color: rgb(41, 168, 120);
     }
     &.Warning {
-        background-color: rgba(232, 199, 37, 0.9);
+        background-color: rgb(250, 102, 36);
     }
     &.Error {
         background-color: rgba(206, 80, 57, .9);
@@ -61,13 +61,13 @@
 .info-content,
 .info-title {
     .OK {
-        color: rgba(47, 196, 134, .8);
+        color: rgb(59, 130, 100);
     }
     .Warning {
-        color: rgba(209, 147, 23, .9);
+        color: rgb(148, 113, 0);
     }
     .Error {
-        color: rgba(206, 80, 57, .9);
+        color: rgb(214, 66, 5);
     }
 }
 
