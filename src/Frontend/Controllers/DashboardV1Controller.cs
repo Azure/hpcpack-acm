@@ -11,7 +11,9 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.WindowsAzure.Storage.Table;
     using Newtonsoft.Json;
+    using Microsoft.AspNetCore.Authorization;
 
+    [Authorize]
     [Route("v1/dashboard")]
     public class DashboardV1Controller : Controller
     {

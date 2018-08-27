@@ -14,7 +14,9 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using Microsoft.WindowsAzure.Storage.Queue;
     using Microsoft.WindowsAzure.Storage.Table;
     using Newtonsoft.Json;
+    using Microsoft.AspNetCore.Authorization;
 
+    [Authorize]
     [Route("v1/diagnostics")]
     public class DiagnosticsV1Controller : Controller
     {

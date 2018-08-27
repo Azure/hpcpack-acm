@@ -26,6 +26,13 @@ namespace Microsoft.HpcAcm.Frontend
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
+            services.AddAuthentication("Basic")
+                .AddBasicAuthentication(credentials =>
+                    Task.FromResult(
+                        credentials.username == "root"
+                        && credentials.password == "P@sswor1d"
+                    )
+                );
             services.AddMvc().AddJsonOptions(options => {
                 options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
                 options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
@@ -49,6 +56,7 @@ namespace Microsoft.HpcAcm.Frontend
             );
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();
+            app.UseAuthentication();
             app.UseMvc();
         }
     }

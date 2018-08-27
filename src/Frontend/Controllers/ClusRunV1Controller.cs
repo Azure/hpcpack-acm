@@ -14,7 +14,9 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using Microsoft.WindowsAzure.Storage.Queue;
     using Microsoft.WindowsAzure.Storage.Table;
     using Newtonsoft.Json;
+    using Microsoft.AspNetCore.Authorization;
 
+    [Authorize]
     [Route("v1/clusrun")]
     public class ClusRunV1Controller : Controller
     {

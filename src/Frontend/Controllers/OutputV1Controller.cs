@@ -8,7 +8,9 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
     using Microsoft.AspNetCore.Mvc;
     using Serilog;
     using Microsoft.HpcAcm.Common.Dto;
+    using Microsoft.AspNetCore.Authorization;
 
+    [Authorize]
     [Route("v1/output")]
     public class OutputV1Controller : Controller
     {
