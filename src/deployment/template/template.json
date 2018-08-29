@@ -248,6 +248,9 @@
                             "ports": [
                                 {
                                     "port": "[parameters('portalport')]"
+                                },
+                                {
+                                    "port": "80"
                                 }
                             ],
                             "resources": {
