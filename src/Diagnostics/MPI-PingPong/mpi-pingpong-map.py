@@ -1,4 +1,4 @@
-#v0.7
+#v0.8
 
 import sys, json, copy, random
 
@@ -99,7 +99,7 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
         rdmaOption = " -env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0 -env I_MPI_DYNAMIC_CONNECTION=0 -env I_MPI_FALLBACK_DEVICE=0"
 
     headingStartId = startId
-    headingIdGroup = list(range(headingStartId, headingStartId + len(nodelist)))
+    headingNode2Id = {}
     taskStartId = headingStartId + len(nodelist)
 
     # Create task for every node to run Intel MPI Benchmark - PingPong between processors within each node.
@@ -124,10 +124,11 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
     for node in nodelist:
         task = copy.deepcopy(taskTemplate)
         task["Id"] = id
-        id += 1
         task["Node"] = node
         task["CustomizedData"] = "[RDMA] {}".format(node) if isRdma else node
         tasks.append(task)
+        headingNode2Id[node] = id
+        id += 1
 
     if len(nodelist) < 2:
         return tasks
@@ -153,7 +154,6 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
 
     if mode == "Jumble".lower():
         timeout *= 3
-        mpicommand = "sleep [delay] && " + mpicommand
 
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[sshcommand]", sshcommand)
@@ -173,7 +173,7 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
                 nodes = ','.join(nodepair)
                 task["Id"] = id
                 task["Node"] = nodepair[0]
-                task["ParentIds"] = headingIdGroup if firstGroup else [nodeToId[nodepair[i]] for i in [0,1] if nodepair[i] in nodeToId]
+                task["ParentIds"] = [headingNode2Id[node] for node in nodepair] if firstGroup else [nodeToId[node] for node in nodepair if node in nodeToId]
                 task["CommandLine"] = task["CommandLine"].replace("[dummynodes]", nodes)
                 task["CommandLine"] = task["CommandLine"].replace("[pairednode]", nodepair[1])
                 task["CommandLine"] = task["CommandLine"].replace("[timeout]", str(timeout))
@@ -187,7 +187,6 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
             nodeToId = nodeToIdNext
     else:
         id = taskStartId
-        delay = 0
         nodepairs = []
         for i in range(0, len(nodelist)):
             for j in range(i+1, len(nodelist)):
@@ -195,17 +194,15 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
         for nodepair in nodepairs:
             task = copy.deepcopy(taskTemplate)
             task["Id"] = id
-            if id == 1 or mode == 'Jumble'.lower():
-                task["ParentIds"] = headingIdGroup
-                delay = random.random()*len(nodelist)
+            if mode == 'Jumble'.lower():
+                task["ParentIds"] = [headingNode2Id[node] for node in nodepair]
             else:
                 task["ParentIds"] = [id-1]
             id += 1
             nodes = ','.join(nodepair)
             task["CommandLine"] = task["CommandLine"].replace("[dummynodes]", nodes)
             task["CommandLine"] = task["CommandLine"].replace("[pairednode]", nodepair[1])
-            task["CommandLine"] = task["CommandLine"].replace("[timeout]", str(timeout+delay))
-            task["CommandLine"] = task["CommandLine"].replace("[delay]", str(delay))
+            task["CommandLine"] = task["CommandLine"].replace("[timeout]", str(timeout))
             task["Node"] = nodepair[0]
             #task["EnvironmentVariables"] = {"CCP_NODES":"2 "+" 1 ".join(nodepair)+" 1"}
             task["CustomizedData"] = "[RDMA] {}".format(nodes) if isRdma else nodes
