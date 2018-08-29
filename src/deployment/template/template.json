@@ -28,7 +28,7 @@
             "metadata": {
                 "description": "Port to open on the frontend container and the public IP address."
             },
-            "defaultValue": "80"
+            "defaultValue": "5000"
         },
         "portalname": {
             "type": "string",
@@ -259,7 +259,7 @@
                             "environmentVariables":[
                                 {
                                     "name": "apibase",
-                                    "value": "http://localhost/v1"
+                                    "value": "http://localhost:5000/v1"
                                 }
                             ]
                         }
@@ -299,6 +299,10 @@
                     "type": "Public",
                     "dnsNameLabel": "[parameters('dnsnamelabel')]",
                     "ports": [
+                        {
+                            "protocol": "TCP",
+                            "port": "80"
+                        },
                         {
                             "protocol": "TCP",
                             "port": "[parameters('portalport')]"
