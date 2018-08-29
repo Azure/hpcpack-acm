@@ -195,10 +195,10 @@
                         }
                     },
                     {
-                        "name": "[parameters('taskmonitorname')]",
+                        "name": "[parameters('taskdispatchername')]",
                         "properties": {
                             "command": [],
-                            "image": "[parameters('taskmonitorimagename')]",
+                            "image": "[parameters('taskdispatcherimagename')]",
                             "resources": {
                                 "requests": {
                                     "cpu": "[parameters('cpuCores')]",
