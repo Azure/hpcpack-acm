@@ -23,13 +23,6 @@
             },
             "defaultValue": "evancui/hpcacm:frontend"
         },
-        "frontenddnsnamelabel": {
-            "type": "string",
-            "metadata": {
-                "description": "The frontend DSN name label"
-            },
-            "defaultValue": "frontend"
-        },
         "frontendport": {
             "type": "string",
             "metadata": {
@@ -107,6 +100,13 @@
             },
             "defaultValue": "evancui/hpcacm:dashboard"
         },
+        "dnsnamelabel": {
+            "type": "string",
+            "metadata": {
+                "description": "The DSN name label"
+            },
+            "defaultValue": "hpcacm"
+        },
         "cpuCores": {
             "type": "string",
             "metadata": {
@@ -172,6 +172,99 @@
             "properties": {
                 "containers": [
                     {
+                        "name": "[parameters('dashboardname')]",
+                        "properties": {
+                            "command": [],
+                            "image": "[parameters('dashboardimagename')]",
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[parameters('cpuCores')]",
+                                    "memoryInGB": "[parameters('memoryInGb')]"
+                                }
+                            },
+                            "environmentVariables":[
+                                {
+                                    "name": "CloudOptions__Storage__AccountName",
+                                    "value": "[parameters('storageAccountName')]"
+                                },
+                                {
+                                    "name": "CloudOptions__Storage__KeyValue",
+                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "[parameters('taskmonitorname')]",
+                        "properties": {
+                            "command": [],
+                            "image": "[parameters('taskmonitorimagename')]",
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[parameters('cpuCores')]",
+                                    "memoryInGB": "[parameters('memoryInGb')]"
+                                }
+                            },
+                            "environmentVariables":[
+                                {
+                                    "name": "CloudOptions__Storage__AccountName",
+                                    "value": "[parameters('storageAccountName')]"
+                                },
+                                {
+                                    "name": "CloudOptions__Storage__KeyValue",
+                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "[parameters('jobmonitorname')]",
+                        "properties": {
+                            "command": [],
+                            "image": "[parameters('jobmonitorimagename')]",
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[parameters('cpuCores')]",
+                                    "memoryInGB": "[parameters('memoryInGb')]"
+                                }
+                            },
+                            "environmentVariables":[
+                                {
+                                    "name": "CloudOptions__Storage__AccountName",
+                                    "value": "[parameters('storageAccountName')]"
+                                },
+                                {
+                                    "name": "CloudOptions__Storage__KeyValue",
+                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "[parameters('portalname')]",
+                        "properties": {
+                            "command": [],
+                            "image": "[parameters('portalimagename')]",
+                            "ports": [
+                                {
+                                    "port": "[parameters('portalport')]"
+                                }
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[parameters('cpuCores')]",
+                                    "memoryInGB": "[parameters('memoryInGb')]"
+                                }
+                            },
+                            "environmentVariables":[
+                                {
+                                    "name": "apibase",
+                                    "value": "http://localhost/v1"
+                                }
+                            ]
+                        }
+                    },
+                    {
                         "name": "[parameters('frontendname')]",
                         "properties": {
                             "command": [],
@@ -204,8 +297,12 @@
                 "restartPolicy": "OnFailure",
                 "ipAddress": {
                     "type": "Public",
-                    "dnsNameLabel": "[parameters('frontenddnsnamelabel')]",
+                    "dnsNameLabel": "[parameters('dnsnamelabel')]",
                     "ports": [
+                        {
+                            "protocol": "TCP",
+                            "port": "[parameters('portalport')]"
+                        },
                         {
                             "protocol": "TCP",
                             "port": "[parameters('frontendport')]"
