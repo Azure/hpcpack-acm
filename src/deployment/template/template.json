@@ -178,7 +178,7 @@
                             "image": "[parameters('dashboardimagename')]",
                             "resources": {
                                 "requests": {
-                                    "cpu": "[parameters('cpuCores')]",
+                                    "cpu": "0.5",
                                     "memoryInGB": "[parameters('memoryInGb')]"
                                 }
                             },
@@ -224,7 +224,7 @@
                             "image": "[parameters('jobmonitorimagename')]",
                             "resources": {
                                 "requests": {
-                                    "cpu": "[parameters('cpuCores')]",
+                                    "cpu": "0.5",
                                     "memoryInGB": "[parameters('memoryInGb')]"
                                 }
                             },
