@@ -1,4 +1,4 @@
-#v0.7
+#v0.8
 
 import sys, json, copy, numpy
 
@@ -15,24 +15,16 @@ def main():
         printErrorAsJson('Task count {} is not equal to task result count {}.'.format(len(tasks), len(taskResults)))
         return -1
 
-    latencyThreshold = 1000
-    throughputThreshold = 100
-    packetSize = 2**22
+    defaultPacketSize = 2**22
+    packetSize = defaultPacketSize
     mode = 'Tournament'.lower()
     try:
         if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
             arguments = job['DiagnosticTest']['Arguments']
             if arguments:
                 for argument in arguments:
-                    if argument['name'].lower() == 'Latency threshold'.lower():
-                        latencyThreshold = int(argument['value'])
-                        continue
-                    if argument['name'].lower() == 'Throughput threshold'.lower():
-                        throughputThreshold = int(argument['value'])
-                        continue
                     if argument['name'].lower() == 'Packet size'.lower():
                         packetSize = 2**int(argument['value'])
-                        # if packetSize > somevalue, the Latency is invalid
                         continue
                     if argument['name'].lower() == 'Mode'.lower():
                         mode = argument['value'].lower()
@@ -40,8 +32,6 @@ def main():
     except Exception as e:
         printErrorAsJson('Failed to parse arguments. ' + str(e))
         return -1
-    if mode == 'Jumble'.lower():
-        throughputThreshold = 0
 
     taskStateFinished = 3
     taskStateFailed = 4
@@ -94,6 +84,14 @@ def main():
         printErrorAsJson('Failed to parse task result. Task id: {}. {}'.format(taskId, e))
         return -1
 
+    latencyThreshold = packetSize//100 if packetSize > 2**20 else 10000
+    throughputThreshold = packetSize//1000 if 2**0 < packetSize < 2**20 else 100
+    if len(rdmaNodes) == len(allNodes):
+        latencyThreshold = 2**3 if packetSize < 2**13 else packetSize/2**10
+        throughputThreshold = packetSize/2**3 if 2**0 < packetSize < 2**13 else 2**10
+    if mode == 'Jumble'.lower():
+        throughputThreshold = 0
+
     goodPairs = [pair for pair in messages if messages[pair]["Throughput"] > throughputThreshold]
     goodNodesGroups = getGroupsOfFullConnectedNodes(goodPairs)
     goodNodes = set([node for group in goodNodesGroups for node in group])
@@ -144,7 +142,7 @@ def main():
                 bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMax], "Value":golbalMax}
                 worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMin], "Value":golbalMin}
                 if packetSize == 2**0:
-                    packetSize = 2**22
+                    packetSize = defaultPacketSize
 
             result[item]["Unit"] = unit
             result[item]["Threshold"] = threshold
