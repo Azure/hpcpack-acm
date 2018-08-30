@@ -40,7 +40,17 @@
     width: 100%;
 }
 
+.error-msg {
+    padding: 10px 50px;
+    font-size: 14px;
+    color: red;
+}
+
 .login-btn {
     @include display-flex($justify-content: flex-end);
     padding: 0 50px;
+}
+
+.login-input {
+    margin-bottom: 15px;
 }

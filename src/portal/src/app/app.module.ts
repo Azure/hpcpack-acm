@@ -1,10 +1,9 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
 import { MaterialsModule } from './materials.module';
-import { environment as env } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AuthGuardService } from './services/auth-guard.service';
 import { AuthService } from './services/auth.service';
@@ -20,8 +19,9 @@ import { WidgetsModule } from './widgets/widgets.module';
 import { JobStateService } from './services/job-state/job-state.service';
 import { TableDataService } from './services/table-data/table-data.service';
 import { DateFormatterService } from './services/date-formatter/date-formatter.service';
-import { MainComponent } from './main/main.component';
-import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { BasicInterceptor } from './helpers/basic.interceptor';
+import { ErrorInterceptor } from './helpers/error.interceptor';
 
 @NgModule({
   declarations: [
@@ -32,6 +32,8 @@ import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
     BrowserModule,
     BrowserAnimationsModule,
     HttpClientModule,
+    FormsModule,
+    ReactiveFormsModule,
     //HttpClientInMemoryWebApiModule.forRoot(
     //  InMemoryDataService,
     //  {
@@ -41,10 +43,13 @@ import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
     //),
     MaterialsModule,
     WidgetsModule,
-    AppRoutingModule
+    AppRoutingModule,
   ],
   providers: [AuthGuardService, AuthService, LoginGuardService, ApiService, JobStateService, DateFormatterService, TableDataService,
-    TableSettingsService, UserSettingsService, LocalStorageService],
+    TableSettingsService, UserSettingsService, LocalStorageService,
+    { provide: HTTP_INTERCEPTORS, useClass: BasicInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

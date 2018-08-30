@@ -362,6 +362,19 @@ export class DashboradApi extends Resource<any>{
   }
 }
 
+export class UserApi extends Resource<any>{
+  protected get url(): string {
+    return `${this.baseUrl}`;
+  }
+
+  login() {
+    let url = `${this.url}/validation`;
+    return this.http.get(url, {
+      observe: 'response'
+    });
+  }
+}
+
 @Injectable()
 export class ApiService {
   private nodeApi: NodeApi;
@@ -375,6 +388,8 @@ export class ApiService {
   private diagApi: DiagApi;
 
   private dashboardApi: DashboradApi;
+
+  private userApi: UserApi;
 
   constructor(private http: HttpClient) { }
 
@@ -418,6 +433,13 @@ export class ApiService {
       this.dashboardApi = new DashboradApi(this.http);
     }
     return this.dashboardApi;
+  }
+
+  get user(): UserApi {
+    if (!this.userApi) {
+      this.userApi = new UserApi(this.http);
+    }
+    return this.userApi;
   }
 
   static isJSON(item) {

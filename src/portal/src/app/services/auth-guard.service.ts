@@ -12,7 +12,6 @@ export class AuthGuardService {
   }
 
   canLoad(route: Route): boolean {
-    console.log(route);
     return this.checkLogin(`/${route.path}`);
   }
 
