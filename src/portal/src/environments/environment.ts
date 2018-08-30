@@ -5,5 +5,6 @@
 
 export const environment = {
   production: false,
-  apiBase: 'http://frontend.westus.azurecontainer.io/v1'
+  // apiBase: 'http://frontend.westus.azurecontainer.io/v1'
+  apiBase: 'http://hpcacm1.westus.azurecontainer.io:5000/v1'
 };
