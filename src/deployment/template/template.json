@@ -262,7 +262,7 @@
                             "environmentVariables":[
                                 {
                                     "name": "apibase",
-                                    "value": "[concat('http://', reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containergroupname'))).ipAddress.fqdn, ':5000/v1')]"
+                                    "value": "[concat('http://', parameters('dnsnamelabel'), '.westus.azurecontainer.io:5000/v1')]"
                                 }
                             ]
                         }
