@@ -2,11 +2,11 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "containergroupname": {
+        "frontendGroupName": {
             "type": "string",
-            "defaultValue": "hpcacmgroup",
+            "defaultValue": "hpcacmfrontendgroup",
             "metadata": {
-                "description": "Name for the container group"
+                "description": "Name for the frontend container group"
             }
         },
         "frontendname": {
@@ -57,6 +57,13 @@
                 "description": "Port to open on the portal container and the public IP address."
             },
             "defaultValue": "8080"
+        },
+        "backendGroupName": {
+            "type": "string",
+            "defaultValue": "hpcacmbackendgroup",
+            "metadata": {
+                "description": "Name for the backend container group"
+            }
         },
         "jobmonitorname": {
             "type": "string",
@@ -128,6 +135,16 @@
                 "description": "Location for all resources."
             }
         },
+        "newOrExisting": {
+            "type":"string",
+            "defaultValue": "new",
+            "allowedValues": [
+                "new", "existing"
+            ],
+            "metadata": {
+                "description": "Whether to create the storage account."
+            }
+        },
         "storageAccountType": {
             "type": "string",
             "defaultValue": "Standard_LRS",
@@ -151,6 +168,7 @@
     "variables": {},
     "resources": [
         {
+            "condition": "[equals(parameters('newOrExisting'), 'new')]",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[parameters('storageAccountName')]",
             "apiVersion": "2017-10-01",
@@ -162,7 +180,7 @@
             "properties": {}
         },
         {
-            "name": "[parameters('containergroupname')]",
+            "name": "[parameters('frontendGroupName')]",
             "type": "Microsoft.ContainerInstance/containerGroups",
             "apiVersion": "2018-06-01",
             "location": "[parameters('location')]",
@@ -171,75 +189,6 @@
             ],
             "properties": {
                 "containers": [
-                    {
-                        "name": "[parameters('dashboardname')]",
-                        "properties": {
-                            "command": [],
-                            "image": "[parameters('dashboardimagename')]",
-                            "resources": {
-                                "requests": {
-                                    "cpu": "0.5",
-                                    "memoryInGB": "[parameters('memoryInGb')]"
-                                }
-                            },
-                            "environmentVariables":[
-                                {
-                                    "name": "CloudOptions__Storage__AccountName",
-                                    "value": "[parameters('storageAccountName')]"
-                                },
-                                {
-                                    "name": "CloudOptions__Storage__KeyValue",
-                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "name": "[parameters('taskdispatchername')]",
-                        "properties": {
-                            "command": [],
-                            "image": "[parameters('taskdispatcherimagename')]",
-                            "resources": {
-                                "requests": {
-                                    "cpu": "[parameters('cpuCores')]",
-                                    "memoryInGB": "[parameters('memoryInGb')]"
-                                }
-                            },
-                            "environmentVariables":[
-                                {
-                                    "name": "CloudOptions__Storage__AccountName",
-                                    "value": "[parameters('storageAccountName')]"
-                                },
-                                {
-                                    "name": "CloudOptions__Storage__KeyValue",
-                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "name": "[parameters('jobmonitorname')]",
-                        "properties": {
-                            "command": [],
-                            "image": "[parameters('jobmonitorimagename')]",
-                            "resources": {
-                                "requests": {
-                                    "cpu": "0.5",
-                                    "memoryInGB": "[parameters('memoryInGb')]"
-                                }
-                            },
-                            "environmentVariables":[
-                                {
-                                    "name": "CloudOptions__Storage__AccountName",
-                                    "value": "[parameters('storageAccountName')]"
-                                },
-                                {
-                                    "name": "CloudOptions__Storage__KeyValue",
-                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
-                                }
-                            ]
-                        }
-                    },
                     {
                         "name": "[parameters('portalname')]",
                         "properties": {
@@ -317,12 +266,99 @@
                     ]
                 }
             }
+        },
+        {
+            "name": "[parameters('backendGroupName')]",
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "apiVersion": "2018-06-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "containers": [
+                    {
+                        "name": "[parameters('dashboardname')]",
+                        "properties": {
+                            "command": [],
+                            "image": "[parameters('dashboardimagename')]",
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[parameters('cpuCores')]",
+                                    "memoryInGB": "[parameters('memoryInGb')]"
+                                }
+                            },
+                            "environmentVariables":[
+                                {
+                                    "name": "CloudOptions__Storage__AccountName",
+                                    "value": "[parameters('storageAccountName')]"
+                                },
+                                {
+                                    "name": "CloudOptions__Storage__KeyValue",
+                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "[parameters('taskdispatchername')]",
+                        "properties": {
+                            "command": [],
+                            "image": "[parameters('taskdispatcherimagename')]",
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[parameters('cpuCores')]",
+                                    "memoryInGB": "[parameters('memoryInGb')]"
+                                }
+                            },
+                            "environmentVariables":[
+                                {
+                                    "name": "CloudOptions__Storage__AccountName",
+                                    "value": "[parameters('storageAccountName')]"
+                                },
+                                {
+                                    "name": "CloudOptions__Storage__KeyValue",
+                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "[parameters('jobmonitorname')]",
+                        "properties": {
+                            "command": [],
+                            "image": "[parameters('jobmonitorimagename')]",
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[parameters('cpuCores')]",
+                                    "memoryInGB": "[parameters('memoryInGb')]"
+                                }
+                            },
+                            "environmentVariables":[
+                                {
+                                    "name": "CloudOptions__Storage__AccountName",
+                                    "value": "[parameters('storageAccountName')]"
+                                },
+                                {
+                                    "name": "CloudOptions__Storage__KeyValue",
+                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "osType": "Linux",
+                "restartPolicy": "OnFailure",
+                "ipAddress": {
+                    "type": "Public"
+                }
+            }
         }
     ],
     "outputs": {
         "containerIPAddressFqdn": {
             "type": "string",
-            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containergroupname'))).ipAddress.fqdn]"
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('frontendGroupName'))).ipAddress.fqdn]"
         }
     }
 }
