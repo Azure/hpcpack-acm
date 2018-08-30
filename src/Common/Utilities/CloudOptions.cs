@@ -6,7 +6,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
     {
         #region Storage
 
-        public StorageConfiguration Storage { get; set; }
+        public StorageConfiguration Storage { get; set; } = new StorageConfiguration();
         public string ArmMsiUri { get; set; } = "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fmanagement.azure.com%2F";
         public string ArmListStorageKeyUri { get; set; } = "https://management.azure.com/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Storage/storageAccounts/{2}/listKeys?api-version=2016-12-01";
         public string ArmComputeMetadataUri { get; set; } = "http://169.254.169.254/metadata/instance/compute?api-version=2017-08-01";

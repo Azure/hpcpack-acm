@@ -53,7 +53,7 @@
                     services.AddSingleton<ServerObject>();
                     services.AddSingleton<DataProvider>();
                 })
-                .UseUrls("http://*:80", "http://*:5000")
+                .UseUrls("http://*:5000")
                 .UseStartup<Startup>()
                 .Build();
     }
