@@ -355,10 +355,7 @@
                     }
                 ],
                 "osType": "Linux",
-                "restartPolicy": "OnFailure",
-                "ipAddress": {
-                    "type": "Public"
-                }
+                "restartPolicy": "OnFailure"
             }
         }
     ],
