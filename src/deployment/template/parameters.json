@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "frontendGroupName": {
+      "value": "hpcacmfrontendgroup"
+    },
+    "frontendname": {
+      "value": "frontend"
+    },
+    "frontendimagename": {
+      "value": "evancui/hpcacm:frontend"
+    },
+    "frontendport": {
+      "value": "5000"
+    },
+    "portalname": {
+      "value": "portal"
+    },
+    "portalimagename": {
+      "value": "evancui/hpcacm:portal"
+    },
+    "portaldnsnamelabel": {
+      "value": "portal"
+    },
+    "portalport": {
+      "value": "8080"
+    },
+    "backendGroupName": {
+      "value": "hpcacmbackendgroup"
+    },
+    "jobmonitorname": {
+      "value": "jobmonitor"
+    },
+    "jobmonitorimagename": {
+      "value": "evancui/hpcacm:jobmonitor"
+    },
+    "taskdispatchername": {
+      "value": "taskdispatcher"
+    },
+    "taskdispatcherimagename": {
+      "value": "evancui/hpcacm:taskdispatcher"
+    },
+    "dashboardname": {
+      "value": "dashboard"
+    },
+    "dashboardimagename": {
+      "value": "evancui/hpcacm:dashboard"
+    },
+    "dnsnamelabel": {
+      "value": "hpcacm"
+    },
+    "cpuCores": {
+      "value": "1.0"
+    },
+    "memoryInGb": {
+      "value": "1.5"
+    },
+    "location": {
+      "value": "eastus"
+    },
+    "newOrExisting": {
+      "value": "existing"
+    },
+    "storageAccountType": {
+      "value": "Standard_LRS"
+    },
+    "storageAccountResourceGroup": {
+      "value": "evanchpcacmeastus"
+    },
+    "storageAccountName": {
+      "value": "evanchpcacmeastus"
+    }
+  }
+}
