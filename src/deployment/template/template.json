@@ -157,6 +157,13 @@
                 "description": "Storage Account type"
             }
         },
+        "storageAccountResourceGroup": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Storage Account Resource Group Name"
+            }
+        },
         "storageAccountName": {
             "type": "string",
             "defaultValue": "[uniquestring(resourceGroup().id)]",
@@ -239,7 +246,7 @@
                                 },
                                 {
                                     "name": "CloudOptions__Storage__KeyValue",
-                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                    "secureValue": "[listKeys(resourceId(parameters('storageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
                                 }
                             ]
                         }
@@ -295,7 +302,7 @@
                                 },
                                 {
                                     "name": "CloudOptions__Storage__KeyValue",
-                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                    "secureValue": "[listKeys(resourceId(parameters('storageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
                                 }
                             ]
                         }
@@ -318,7 +325,7 @@
                                 },
                                 {
                                     "name": "CloudOptions__Storage__KeyValue",
-                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                    "secureValue": "[listKeys(resourceId(parameters('storageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
                                 }
                             ]
                         }
@@ -341,7 +348,7 @@
                                 },
                                 {
                                     "name": "CloudOptions__Storage__KeyValue",
-                                    "secureValue": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                    "secureValue": "[listKeys(resourceId(parameters('storageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
                                 }
                             ]
                         }
