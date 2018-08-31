@@ -218,7 +218,7 @@
                             "environmentVariables":[
                                 {
                                     "name": "apibase",
-                                    "value": "[concat('http://', parameters('dnsnamelabel'), '.westus.azurecontainer.io:5000/v1')]"
+                                    "value": "[concat('http://', parameters('dnsnamelabel'), '.', parameters('location'), '.azurecontainer.io:5000/v1')]"
                                 }
                             ]
                         }

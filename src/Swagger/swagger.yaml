@@ -1027,3 +1027,10 @@ host: localhost
 basePath: /v1
 schemes:
  - http
+
+securityDefinitions:
+  basic_auth:
+    type: basic
+
+security:
+  - basic_auth: []
