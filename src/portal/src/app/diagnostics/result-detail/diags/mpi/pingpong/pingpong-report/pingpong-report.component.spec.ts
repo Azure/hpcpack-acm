@@ -7,6 +7,7 @@ import { ApiService } from '../../../../../../services/api.service';
 import { TableSettingsService } from '../../../../../../services/table-settings.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TableDataService } from '../../../../../../services/table-data/table-data.service';
+import { DiagReportService } from '../../../../../../services/diag-report/diag-report.service';
 
 @Component({ selector: 'app-result-layout', template: '' })
 class ResultLayoutComponent {
@@ -104,6 +105,21 @@ class TableDataServiceStub {
   }
 }
 
+
+class DiagReportServiceStub {
+  hasError(result) {
+    return true;
+  }
+
+  jobFinished(state) {
+    return true;
+  }
+
+  getErrorMsg(err) {
+    return { Error: err };
+  }
+}
+
 fdescribe('PingPongReportComponent', () => {
   let component: PingPongReportComponent;
   let fixture: ComponentFixture<PingPongReportComponent>;
@@ -126,7 +142,8 @@ fdescribe('PingPongReportComponent', () => {
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
         { provide: TableSettingsService, useValue: tableSettingsStub },
-        { provide: TableDataService, useClass: TableDataServiceStub }
+        { provide: TableDataService, useClass: TableDataServiceStub },
+        { provide: DiagReportService, useClass: DiagReportServiceStub }
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })

@@ -3,6 +3,7 @@ import { MatTableDataSource } from '@angular/material';
 import { ApiService, Loop } from '../../../../../../services/api.service';
 import { TableSettingsService } from '../../../../../../services/table-settings.service';
 import { TableDataService } from '../../../../../../services/table-data/table-data.service';
+import { DiagReportService } from '../../../../../../services/diag-report/diag-report.service';
 
 @Component({
   selector: 'app-ring-report',
@@ -37,7 +38,8 @@ export class RingReportComponent implements OnInit {
   constructor(
     private api: ApiService,
     private settings: TableSettingsService,
-    private tableDataService: TableDataService
+    private tableDataService: TableDataService,
+    private diagReportService: DiagReportService
   ) {
     this.interval = 5000;
   }
@@ -51,7 +53,11 @@ export class RingReportComponent implements OnInit {
   }
 
   get hasError() {
-    return this.aggregationResult !== undefined && this.aggregationResult['Error'] !== undefined;
+    return this.diagReportService.hasError(this.aggregationResult);
+  }
+
+  get jobFinished() {
+    return this.diagReportService.jobFinished(this.jobState);
   }
 
   getTasksRequest() {
@@ -68,7 +74,7 @@ export class RingReportComponent implements OnInit {
           if (result.length < this.pageSize && this.scrollDirection == 'down') {
             this.loadFinished = true;
           }
-          if (this.jobState == 'Finished' || this.jobState == 'Failed' || this.jobState == 'Canceled') {
+          if (this.jobFinished) {
             this.getAggregationResult();
           }
           this.getJobInfo();
@@ -107,16 +113,7 @@ export class RingReportComponent implements OnInit {
         this.aggregationResult = res;
       },
       err => {
-        let errInfo = err;
-        if (ApiService.isJSON(err)) {
-          if (err.error) {
-            errInfo = err.error;
-          }
-          else {
-            errInfo = JSON.stringify(err);
-          }
-        }
-        this.aggregationResult = { Error: errInfo };
+        this.aggregationResult = this.diagReportService.getErrorMsg(err);
       });
   }
 
