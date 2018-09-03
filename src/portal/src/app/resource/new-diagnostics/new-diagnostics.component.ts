@@ -91,17 +91,19 @@ export class NewDiagnosticsComponent implements OnInit {
     node.data.checked = checked;
     if (checked) {
       this.selectedTest = node.data;
-      this.paraForm = this.fb.group(this.ctlConfig[this.selectedTest.name]);
       let paras = this.selectedTest.parameters;
-      for (let i = 0; i < paras.length; i++) {
-        this.paraForm.controls[paras[i].name].valueChanges.subscribe(data => {
-          if (paras[i].whenChanged != undefined) {
-            let selected = paras[i].whenChanged[data];
-            for (let key in selected) {
-              this.paraForm.controls[key].setValue(selected[key]);
+      if (paras) {
+        this.paraForm = this.fb.group(this.ctlConfig[this.selectedTest.name]);
+        for (let i = 0; i < paras.length; i++) {
+          this.paraForm.controls[paras[i].name].valueChanges.subscribe(data => {
+            if (paras[i].whenChanged != undefined) {
+              let selected = paras[i].whenChanged[data];
+              for (let key in selected) {
+                this.paraForm.controls[key].setValue(selected[key]);
+              }
             }
-          }
-        });
+          });
+        }
       }
       this.diagTestName = `${this.selectedTest.name} created by ${this.authService.username}`;
     }
