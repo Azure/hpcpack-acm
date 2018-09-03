@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { FormControl, Validators, FormGroup } from '@angular/forms';
@@ -16,6 +16,8 @@ export class LoginComponent {
   get logged() {
     return this.authService.isLoggedIn;
   }
+
+  private hide = true;
 
   login(username, pwd) {
     if (username == undefined || pwd == undefined) {
@@ -42,5 +44,4 @@ export class LoginComponent {
   logout() {
     this.authService.logout();
   }
-
 }
