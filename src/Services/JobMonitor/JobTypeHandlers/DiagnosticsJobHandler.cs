@@ -18,6 +18,7 @@
             // TODO: github integration
             var jobTable = this.Utilities.GetJobsTable();
 
+            this.Logger.Information("Generating tasks for job {0}", job.Id);
             var diagTest = await jobTable.RetrieveAsync<InternalDiagnosticsTest>(this.Utilities.GetDiagPartitionKey(job.DiagnosticTest.Category), job.DiagnosticTest.Name, token);
 
             if (diagTest != null)
@@ -27,7 +28,9 @@
                 var nodesTable = this.Utilities.GetNodesTable();
                 var metadataKey = this.Utilities.GetMetadataKey();
 
-                var metadata = await T.Task.WhenAll(job.TargetNodes.Select(async n => new {
+                this.Logger.Information("GenerateTasks, Querying node info for job {0}", job.Id);
+                var metadata = await T.Task.WhenAll(job.TargetNodes.Select(async n => new
+                {
                     Node = n,
                     Metadata = await nodesTable.RetrieveAsync<object>(this.Utilities.GetNodePartitionKey(n), metadataKey, token),
                     NodeRegistrationInfo = await nodesTable.RetrieveAsync<ComputeClusterRegistrationInformation>(this.Utilities.NodesPartitionKey, this.Utilities.GetRegistrationKey(n), token),
@@ -77,6 +80,7 @@
         public async T.Task<string> AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeClusterTaskInformation> taskResults, CancellationToken token)
         {
             var jobTable = this.Utilities.GetJobsTable();
+            this.Logger.Information("AggregateTasks, job {0}", job.Id);
 
             var diagTest = await jobTable.RetrieveAsync<InternalDiagnosticsTest>(
                 this.Utilities.GetDiagPartitionKey(job.DiagnosticTest.Category),
@@ -93,6 +97,7 @@
                 result = aggregationResult.Item2;
                 if (0 != aggregationResult.Item1)
                 {
+                    this.Logger.Error("AggregateTasks, job {0}, error code {1} {2}", job.Id, aggregationResult.Item1, aggregationResult.Item3);
                     (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
                     {
                         Content = $"Diag reduce script exit code {aggregationResult.Item1}, message {aggregationResult.Item3}",
