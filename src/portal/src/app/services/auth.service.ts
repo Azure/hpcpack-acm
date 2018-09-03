@@ -16,9 +16,24 @@ export class AuthService {
     return this.loggedIn || sessionStorage.getItem('access_token') !== null;
   };
 
-  user = {
+
+  private user = {
     name: '',
     pwd: ''
+  };
+  get username() {
+    return this.user.name || sessionStorage.getItem('username');
+  }
+  get pwd() {
+    return this.user.pwd;
+  }
+
+  set username(name) {
+    this.user.name = name;
+  }
+
+  set pwd(pwd) {
+    this.user.pwd = pwd;
   }
 
   //Store the URL so we can redirect after logging in
@@ -28,14 +43,15 @@ export class AuthService {
     return this.api.user.login().do((val) => {
       if (val.status == 204) {
         sessionStorage.setItem('access_token', btoa(`${this.user.name}:${this.user.pwd}`));
+        sessionStorage.setItem('username', this.user.name);
         this.loggedIn = true;
       }
-
     });
   }
 
   logout(): void {
     this.loggedIn = false;
     sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('username');
   }
 }

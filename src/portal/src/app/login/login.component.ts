@@ -22,8 +22,8 @@ export class LoginComponent {
       this.errorMsg = 'Username and password is required !'
       return;
     }
-    this.authService.user.name = username;
-    this.authService.user.pwd = pwd;
+    this.authService.username = username;
+    this.authService.pwd = pwd;
     this.authService.login().subscribe(
       (val) => {
         if (this.logged) {

@@ -3,6 +3,7 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { NodeFilterBuilderComponent } from '../../widgets/node-filter-builder/node-filter-builder.component';
 import { ApiService } from '../../services/api.service';
 import { FormGroup, FormBuilder, Validators, FormControl } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'diagnostics-tests',
@@ -28,6 +29,7 @@ export class NewDiagnosticsComponent implements OnInit {
     public dialogRef: MatDialogRef<NewDiagnosticsComponent>,
     private cdRef: ChangeDetectorRef,
     private fb: FormBuilder,
+    private authService: AuthService,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {
   }
@@ -101,11 +103,11 @@ export class NewDiagnosticsComponent implements OnInit {
           }
         });
       }
-      this.diagTestName = `${this.selectedTest.name} created by`;
+      this.diagTestName = `${this.selectedTest.name} created by ${this.authService.username}`;
     }
     else {
       this.selectedTest = undefined;
-      this.diagTestName = `created by`;
+      this.diagTestName = `created by ${this.authService.username}`;
     }
   }
 
@@ -113,10 +115,10 @@ export class NewDiagnosticsComponent implements OnInit {
   selectionChange(e) {
     if (e.selectedIndex == 2) {
       if (this.selectedTest != undefined) {
-        this.diagTestName = `${this.selectedTest.name} created by`;
+        this.diagTestName = `${this.selectedTest.name} created by ${this.authService.username}`;
       }
       else {
-        this.diagTestName = `created by`;
+        this.diagTestName = `created by ${this.authService.username}`;
       }
     }
   }
