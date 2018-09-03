@@ -20,7 +20,7 @@
         private readonly TimeSpan invisibleTimeout;
         private readonly TimeSpan returnInvisible;
 
-        private readonly Task ensureInvisibilityTask;
+        private readonly Thread ensureInvisibilityThread;
 
         private readonly ILogger logger;
 
@@ -32,7 +32,11 @@
             this.invisibleTimeout = invisibleTimeout;
             this.returnInvisible = returnInvisible;
 
-            this.ensureInvisibilityTask = this.EnsureInvisible(token);
+            this.ensureInvisibilityThread = new Thread(() => this.EnsureInvisible(token));
+            this.ensureInvisibilityThread.Priority = ThreadPriority.AboveNormal;
+            this.ensureInvisibilityThread.Name = $"EnsureInvisible {message.Id}";
+            this.ensureInvisibilityThread.Start();
+            this.logger.Information("Constructed task item {0}", this.QueueMessage.Id);
         }
 
         private async Task MakeVisible(CancellationToken token)
@@ -40,7 +44,7 @@
             await this.Queue.UpdateMessageAsync(this.QueueMessage, this.returnInvisible, MessageUpdateFields.Visibility, null, null, token);
         }
 
-        private async Task EnsureInvisible(CancellationToken token)
+        private void EnsureInvisible(CancellationToken token)
         {
             try
             {
@@ -49,13 +53,13 @@
 
                 while (!t.IsCancellationRequested)
                 {
-                    await Task.Delay(loopInterval, t);
+                    Task.Delay(loopInterval, t).GetAwaiter().GetResult();
 
                     this.logger.Information("Ensure Invisible for message {0}", this.QueueMessage.Id);
 
                     try
                     {
-                        await this.Queue.UpdateMessageAsync(this.QueueMessage, this.invisibleTimeout, MessageUpdateFields.Visibility, null, null, t);
+                        this.Queue.UpdateMessageAsync(this.QueueMessage, this.invisibleTimeout, MessageUpdateFields.Visibility, null, null, t).GetAwaiter().GetResult();
                     }
                     catch (StorageException ex)
                     {
@@ -82,7 +86,8 @@
             {
                 if (!this.cts.IsCancellationRequested)
                 {
-                    this.StopEnsureInvisible().Wait();
+                    this.logger.Information("Dispose: Stop ensure invisible for message {0}", this.QueueMessage.Id);
+                    this.StopEnsureInvisible();
                 }
 
                 this.cts.Dispose();
@@ -95,22 +100,25 @@
         public override T GetMessage<T>() => JsonConvert.DeserializeObject<T>(this.QueueMessage.AsString);
         public override DateTimeOffset? GetInsertionTime() => this.QueueMessage.InsertionTime;
 
-        public async Task StopEnsureInvisible()
+        public void StopEnsureInvisible()
         {
             this.cts.Cancel();
-            await this.ensureInvisibilityTask;
+            this.ensureInvisibilityThread.Join();
         }
 
         public override async Task ReturnAsync(CancellationToken token)
         {
-            await this.StopEnsureInvisible();
+            this.StopEnsureInvisible();
             await this.MakeVisible(token);
+            this.logger.Information("ReturnAsync: Make visible for message {0}", this.QueueMessage.Id);
         }
 
         public override async Task FinishAsync(CancellationToken token)
         {
-            await this.StopEnsureInvisible();
+            this.StopEnsureInvisible();
+            this.logger.Information("FinishAsync: Deleting message {0}", this.QueueMessage.Id);
             await this.Queue.DeleteMessageAsync(this.QueueMessage.Id, this.QueueMessage.PopReceipt, null, null, token);
+            this.logger.Information("FinishAsync: Deleted message {0}", this.QueueMessage.Id);
         }
     }
 }
