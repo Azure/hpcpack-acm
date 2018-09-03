@@ -57,7 +57,7 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
         {
             var result = await this.provider.GetJobAggregationResultAsync(jobId, JobType.Diagnostics, token);
 
-            if (result == null) return new NotFoundObjectResult("The job hasn't produced any aggregation result.");
+            if (string.IsNullOrEmpty(result)) return new NotFoundObjectResult("The job hasn't produced any aggregation result.");
             else return new OkObjectResult(result);
         }
 

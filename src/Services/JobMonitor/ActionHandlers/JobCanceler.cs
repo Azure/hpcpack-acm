@@ -31,7 +31,9 @@
             var jobPartitionQuery = this.Utilities.GetPartitionQueryString(jobPartitionKey);
             var taskRangeQuery = this.Utilities.GetRowKeyRangeString(
                 this.Utilities.GetTaskKey(job.Id, 0, job.RequeueCount),
-                this.Utilities.GetTaskKey(job.Id, int.MaxValue, job.RequeueCount));
+                this.Utilities.GetTaskKey(job.Id, int.MaxValue, job.RequeueCount),
+                false,
+                false);
 
             var allTasks = (await jobTable.QueryAsync<Task>(
                 TableQuery.CombineFilters(jobPartitionQuery, TableOperators.And, taskRangeQuery),
@@ -39,7 +41,6 @@
                 token))
                 .Select(t => t.Item3)
                 .Select(t => new { t.Id, t.Node })
-                .Where(t => t.Id > 0 && t.Id < int.MaxValue)
                 .ToList();
 
             await T.Task.WhenAll(allTasks.Select(async task =>

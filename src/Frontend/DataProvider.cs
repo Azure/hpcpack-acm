@@ -250,7 +250,7 @@
             return job;
         }
 
-        public async T.Task<object> GetJobAggregationResultAsync(
+        public async T.Task<string> GetJobAggregationResultAsync(
             int jobId,
             JobType type = JobType.ClusRun,
             CancellationToken token = default(CancellationToken))

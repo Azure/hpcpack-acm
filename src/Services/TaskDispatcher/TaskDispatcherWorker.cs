@@ -49,20 +49,26 @@
         {
             var jobPartitionKey = this.Utilities.GetJobPartitionKey(job.Type, job.Id);
             var taskResultKey = this.Utilities.GetTaskResultKey(job.Id, taskId, job.RequeueCount);
-            var taskResult = await this.jobsTable.RetrieveAsync<ComputeNodeTaskCompletionEventArgs>(jobPartitionKey, taskResultKey, token);
-
-            var filteredResult = await PythonExecutor.ExecuteAsync(path, new { Job = job, Task = taskResult }, token);
-            taskResult.TaskInfo.FilteredResult = filteredResult.Item1 == 0 ? filteredResult.Item2 : $"Task result filter script exit code {filteredResult.Item1}, message {filteredResult.Item3}";
-
-            await this.jobsTable.InsertOrReplaceAsync(jobPartitionKey, taskResultKey, taskResult, token);
-
-            if (!string.IsNullOrEmpty(filteredResult.Item2))
+            var taskInfo = await this.jobsTable.RetrieveAsync<ComputeClusterTaskInformation>(jobPartitionKey, taskResultKey, token);
+            if (taskInfo == null)
             {
+                this.Logger.Information("There is no task info recorded for job {0}, task {1}, requeue {2}, skip the filter.", job.Id, taskId, job.RequeueCount);
+                return true;
+            }
+
+            var filteredResult = await PythonExecutor.ExecuteAsync(path, new { Job = job, Task = taskInfo }, token);
+            taskInfo.FilteredResult = filteredResult.Item1 == 0 ? filteredResult.Item2 : $"Task result filter script exit code {filteredResult.Item1}, message {filteredResult.Item3}";
+
+            await this.jobsTable.InsertOrReplaceAsync(jobPartitionKey, taskResultKey, taskInfo, token);
+
+            if (!string.IsNullOrEmpty(filteredResult.Item3))
+            {
+                this.Logger.Error("There is an error in task filter script. {0}", filteredResult.Item3);
                 await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                 {
                     (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
                     {
-                        Content = filteredResult.Item2,
+                        Content = filteredResult.Item3,
                         Source = EventSource.Job,
                         Type = EventType.Alert,
                     });
@@ -70,7 +76,7 @@
                     j.State = JobState.Failed;
                 }, token);
 
-                return false;
+                return true;
             }
 
             return true;
@@ -86,11 +92,11 @@
             var results = await T.Task.WhenAll(jobGroups.Select(async jg =>
             {
                 var jobPartitionKey = jg.Key;
-                this.Logger.Information("Do work for job {0}", jobPartitionKey);
+                this.Logger.Information("Do work for job {0}, tasks finished: {1}", jobPartitionKey, string.Join(",", jg.Select(t => t.Id)));
                 var job = await this.jobsTable.RetrieveAsync<Job>(jobPartitionKey, this.Utilities.JobEntryKey, token);
-                if (job == null)
+                if (job == null || job.State != JobState.Running)
                 {
-                    this.Logger.Warning("Skip processing the task completion of {0}. Job is null.", jobPartitionKey);
+                    this.Logger.Warning("Skip processing the task completion of {0}. Job state {1}.", jobPartitionKey, job?.State);
                     return true;
                 }
 
@@ -146,96 +152,104 @@
                     return true;
                 }
 
-                if (job.State == JobState.Running)
+                var childIds = await T.Task.WhenAll(tasks.Select(async t => new { t.Id, ChildIds = t.ChildIds ?? await this.Utilities.LoadTaskChildIdsAsync(t.Id, job.Id, job.RequeueCount, token) }));
+
+                foreach (var cids in childIds)
                 {
-                    var childIds = await T.Task.WhenAll(tasks.Select(async t => new { t.Id, ChildIds = t.ChildIds ?? await this.Utilities.LoadTaskChildIdsAsync(t.Id, job.Id, job.RequeueCount, token) }));
-
-                    foreach (var cids in childIds)
-                    {
-                        this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} completed, child ids {4}", job.Type, job.Id, job.RequeueCount, cids.Id, string.Join(",", cids.ChildIds));
-                    }
-
-                    var childIdGroups = childIds
-                        .SelectMany(ids => ids.ChildIds.Select(cid => new { ParentId = ids.Id, ChildId = cid }))
-                        .GroupBy(idPair => idPair.ChildId)
-                        .Select(g => new { ChildId = g.Key, Count = g.Count(), ParentIds = g.Select(idPair => idPair.ParentId).ToList() }).ToList();
-
-                    var childResults = await T.Task.WhenAll(childIdGroups.Select(async cid =>
-                    {
-                        this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} has {4} ancestor tasks completed {5}", job.Type, job.Id, job.RequeueCount, cid.ChildId, cid.Count, string.Join(",", cid.ParentIds));
-                        var childTaskKey = this.Utilities.GetTaskKey(job.Id, cid.ChildId, job.RequeueCount);
-
-                        bool unlocked = false;
-                        bool isEndTask = false;
-                        Task childTask = null;
-                        if (!await this.Utilities.UpdateTaskAsync(jobPartitionKey, childTaskKey, t =>
-                        {
-                            var parentIds = new HashSet<int>(Compress.UnZip(t.ZippedParentIds).Split(',').Select(_ => int.Parse(_)));
-                            var oldParentIdsCount = parentIds.Count;
-                            this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} has {4} parent tasks {5}", job.Type, job.Id, job.RequeueCount, cid.ChildId, oldParentIdsCount, string.Join(",", parentIds));
-                            cid.ParentIds.ForEach(_ => parentIds.Remove(_));
-                            var newParentIdsStr = string.Join(",", parentIds);
-                            this.Logger.Information("{0} Job {1} requeuecount {2}, after remove, task {3} has {4} parent tasks {5}", job.Type, job.Id, job.RequeueCount, cid.ChildId, parentIds.Count, newParentIdsStr);
-                            if (parentIds.Count + cid.Count != oldParentIdsCount)
-                            {
-                                this.Logger.Warning("{0} Job {1} requeuecount {2}, task {3}, ids mismatch!", job.Type, job.Id, job.RequeueCount, cid.ChildId);
-                            }
-
-                            t.RemainingParentCount = parentIds.Count;
-                            t.ZippedParentIds = Compress.GZip(newParentIdsStr);
-                            unlocked = t.RemainingParentCount == 0;
-                            isEndTask = t.Id == int.MaxValue;
-                            if (unlocked)
-                            {
-                                t.State = isEndTask ? TaskState.Finished : TaskState.Dispatching;
-                            }
-
-                            childTask = t;
-                        }, token))
-                        {
-                            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                            {
-                                j.State = JobState.Failed;
-                                // TODO: make event separate.
-                                (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                                {
-                                    Content = $"Unable to update task record {cid.ChildId}",
-                                    Source = EventSource.Job,
-                                    Type = EventType.Alert
-                                });
-                            }, token);
-                            return false;
-                        }
-
-                        if (unlocked)
-                        {
-                            if (isEndTask)
-                            {
-                                await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.State = j.State == JobState.Running ? JobState.Finishing : j.State, token);
-                                var jobEventQueue = this.Utilities.GetJobEventQueue();
-                                await jobEventQueue.AddMessageAsync(
-                                    // todo: event message generation.
-                                    new CloudQueueMessage(JsonConvert.SerializeObject(new JobEventMessage() { Id = job.Id, EventVerb = "finish", Type = job.Type })),
-                                    null, null, null, null,
-                                    token);
-                            }
-                            else
-                            {
-                                var queue = this.Utilities.GetNodeDispatchQueue(childTask.Node);
-                                await queue.AddMessageAsync(
-                                    new CloudQueueMessage(JsonConvert.SerializeObject(new TaskEventMessage() { EventVerb = "start", Id = childTask.Id, JobId = childTask.JobId, JobType = childTask.JobType, RequeueCount = job.RequeueCount }, Formatting.Indented)),
-                                    null, null, null, null, token);
-                                this.Logger.Information("Dispatched job {0} task {1} to node {2}", childTask.JobId, childTask.Id, childTask.Node);
-                            }
-                        }
-
-                        return true;
-                    }));
-
-                    return childResults.All(r => r);
+                    this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} completed, child ids {4}", job.Type, job.Id, job.RequeueCount, cids.Id, string.Join(",", cids.ChildIds));
                 }
 
-                return true;
+                var childIdGroups = childIds
+                    .SelectMany(ids => ids.ChildIds.Select(cid => new { ParentId = ids.Id, ChildId = cid }))
+                    .GroupBy(idPair => idPair.ChildId)
+                    .Select(g => new { ChildId = g.Key, Count = g.Count(), ParentIds = g.Select(idPair => idPair.ParentId).ToList() }).ToList();
+
+                var childResults = await T.Task.WhenAll(childIdGroups.Select(async cid =>
+                {
+                    this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} has {4} ancestor tasks completed {5}", job.Type, job.Id, job.RequeueCount, cid.ChildId, cid.Count, string.Join(",", cid.ParentIds));
+                    var childTaskKey = this.Utilities.GetTaskKey(job.Id, cid.ChildId, job.RequeueCount);
+
+                    bool unlocked = false;
+                    bool isEndTask = false;
+                    Task childTask = null;
+                    if (!await this.Utilities.UpdateTaskAsync(jobPartitionKey, childTaskKey, t =>
+                    {
+                        var unzippedParentIds = Compress.UnZip(t.ZippedParentIds);
+                        this.Logger.Information("{0} Job {1} task {2}, ZippedParentIds {3}, unzipped {4}", job.Type, job.Id, cid.ChildId, t.ZippedParentIds, unzippedParentIds);
+                        HashSet<int> parentIds;
+                        try
+                        {
+                            parentIds = new HashSet<int>(unzippedParentIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(_ => int.Parse(_)));
+                        }
+                        catch (FormatException ex)
+                        {
+                            this.Logger.Error("Error happened {0}, input string {1}, len {2}", ex, unzippedParentIds, unzippedParentIds.Length);
+                            throw;
+                        }
+
+                        var oldParentIdsCount = parentIds.Count;
+                        this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} has {4} parent tasks {5}", job.Type, job.Id, job.RequeueCount, cid.ChildId, oldParentIdsCount, string.Join(",", parentIds));
+                        cid.ParentIds.ForEach(_ => parentIds.Remove(_));
+                        var newParentIdsStr = string.Join(",", parentIds);
+                        this.Logger.Information("{0} Job {1} requeuecount {2}, after remove, task {3} has {4} parent tasks {5}", job.Type, job.Id, job.RequeueCount, cid.ChildId, parentIds.Count, newParentIdsStr);
+                        if (parentIds.Count + cid.Count != oldParentIdsCount)
+                        {
+                            this.Logger.Warning("{0} Job {1} requeuecount {2}, task {3}, ids mismatch!", job.Type, job.Id, job.RequeueCount, cid.ChildId);
+                        }
+
+                        t.RemainingParentCount = parentIds.Count;
+                        t.ZippedParentIds = Compress.GZip(newParentIdsStr);
+                        unlocked = t.RemainingParentCount == 0;
+                        isEndTask = t.Id == int.MaxValue;
+                        if (unlocked)
+                        {
+                            t.State = isEndTask ? TaskState.Finished : TaskState.Dispatching;
+                        }
+
+                        childTask = t;
+                    }, token))
+                    {
+                        await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
+                        {
+                            j.State = JobState.Failed;
+                            // TODO: make event separate.
+                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                            {
+                                Content = $"Unable to update task record {cid.ChildId}",
+                                Source = EventSource.Job,
+                                Type = EventType.Alert
+                            });
+                        }, token);
+
+                        return true;
+                    }
+
+                    if (unlocked)
+                    {
+                        if (isEndTask)
+                        {
+                            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.State = j.State == JobState.Running ? JobState.Finishing : j.State, token);
+                            var jobEventQueue = this.Utilities.GetJobEventQueue();
+                            await jobEventQueue.AddMessageAsync(
+                                // todo: event message generation.
+                                new CloudQueueMessage(JsonConvert.SerializeObject(new JobEventMessage() { Id = job.Id, EventVerb = "finish", Type = job.Type })),
+                                null, null, null, null,
+                                token);
+                        }
+                        else
+                        {
+                            var queue = this.Utilities.GetNodeDispatchQueue(childTask.Node);
+                            await queue.AddMessageAsync(
+                                new CloudQueueMessage(JsonConvert.SerializeObject(new TaskEventMessage() { EventVerb = "start", Id = childTask.Id, JobId = childTask.JobId, JobType = childTask.JobType, RequeueCount = job.RequeueCount }, Formatting.Indented)),
+                                null, null, null, null, token);
+                            this.Logger.Information("Dispatched job {0} task {1} to node {2}", childTask.JobId, childTask.Id, childTask.Node);
+                        }
+                    }
+
+                    return true;
+                }));
+
+                return childResults.All(r => r);
             }));
 
             return results.All(r => r);

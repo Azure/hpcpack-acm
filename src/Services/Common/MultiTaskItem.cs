@@ -15,6 +15,19 @@
             this.taskItems = items;
         }
 
+        protected override void Dispose(bool isDisposing)
+        {
+            if (isDisposing)
+            {
+                foreach (var t in this.taskItems)
+                {
+                    t.Dispose();
+                }
+            }
+
+            base.Dispose(isDisposing);
+        }
+
         public TaskItem[] GetTaskItems() => this.taskItems;
         public override T GetMessage<T>() => typeof(T) == typeof(TaskItem[]) ? this.GetTaskItems() as T : default(T);
         public override Task FinishAsync(CancellationToken token) => Task.WhenAll(this.taskItems.Select(t => t.FinishAsync(token)));
