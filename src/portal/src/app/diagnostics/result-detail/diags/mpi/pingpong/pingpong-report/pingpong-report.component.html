@@ -1,11 +1,6 @@
 <app-result-layout [result]="result" [aggregationResult]="aggregationResult">
   <ng-template #overview>
     <mat-tab-group>
-      <mat-tab label="Error" *ngIf="hasError">
-        <div class="error-message">
-          {{aggregationResult.Error}}
-        </div>
-      </mat-tab>
       <mat-tab label="Nodes">
         <app-nodes-info [nodes]="nodes" [aggregationInfo]="nodesInfo"></app-nodes-info>
       </mat-tab>
@@ -36,6 +31,11 @@
               class="overview-data"></pingpong-overview-result>
           </mat-expansion-panel>
         </mat-accordion>
+      </mat-tab>
+      <mat-tab label="Error" *ngIf="hasError">
+        <div class="error-message">
+          {{aggregationResult.Error}}
+        </div>
       </mat-tab>
     </mat-tab-group>
   </ng-template>

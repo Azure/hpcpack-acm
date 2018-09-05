@@ -22,6 +22,7 @@ import { DateFormatterService } from './services/date-formatter/date-formatter.s
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BasicInterceptor } from './helpers/basic.interceptor';
 import { ErrorInterceptor } from './helpers/error.interceptor';
+import { DiagReportService } from './services/diag-report/diag-report.service';
 
 @NgModule({
   declarations: [
@@ -46,7 +47,7 @@ import { ErrorInterceptor } from './helpers/error.interceptor';
     AppRoutingModule,
   ],
   providers: [AuthGuardService, AuthService, LoginGuardService, ApiService, JobStateService, DateFormatterService, TableDataService,
-    TableSettingsService, UserSettingsService, LocalStorageService,
+    TableSettingsService, UserSettingsService, LocalStorageService, DiagReportService,
     { provide: HTTP_INTERCEPTORS, useClass: BasicInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
   ],

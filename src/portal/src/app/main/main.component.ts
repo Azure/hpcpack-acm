@@ -92,7 +92,7 @@ export class MainComponent {
     }
 
     private get userName(): string {
-        return this.authService.user.name;
+        return this.authService.username;
     }
 
     private logout(): void {

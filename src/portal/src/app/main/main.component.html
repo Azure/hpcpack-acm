@@ -16,13 +16,9 @@
             </a> -->
         <button mat-icon-button [matMenuTriggerFor]="menu" class="account">
             <mat-icon>person</mat-icon>
-            <!-- {{userName}} -->
+            {{userName}}
         </button>
         <mat-menu #menu="matMenu">
-            <div mat-menu-item class="menu-item" disabled>
-                <mat-icon>account_circle</mat-icon>
-                <span>{{userName}}</span>
-            </div>
             <button mat-menu-item class="menu-item" (click)="logout()">
                 <span class="sign-out">Log out</span>
             </button>

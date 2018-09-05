@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { FormControl, Validators, FormGroup } from '@angular/forms';
@@ -17,13 +17,15 @@ export class LoginComponent {
     return this.authService.isLoggedIn;
   }
 
+  private hide = true;
+
   login(username, pwd) {
     if (username == undefined || pwd == undefined) {
       this.errorMsg = 'Username and password is required !'
       return;
     }
-    this.authService.user.name = username;
-    this.authService.user.pwd = pwd;
+    this.authService.username = username;
+    this.authService.pwd = pwd;
     this.authService.login().subscribe(
       (val) => {
         if (this.logged) {
@@ -42,5 +44,4 @@ export class LoginComponent {
   logout() {
     this.authService.logout();
   }
-
 }
