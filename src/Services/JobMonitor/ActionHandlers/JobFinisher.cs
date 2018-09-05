@@ -68,6 +68,12 @@
                 if (job.FailJobOnTaskFailure && allTasks.Any(t => t.State == TaskState.Failed))
                 {
                     finalState = JobState.Failed;
+                    (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
+                    {
+                        Content = $"Fail the job because some tasks failed.",
+                        Source = EventSource.Job,
+                        Type = EventType.Alert
+                    });
                 }
 
                 job.State = finalState;

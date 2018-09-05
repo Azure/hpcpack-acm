@@ -24,7 +24,7 @@
 
                 if (job == null || job.State == JobState.Canceled || job.State == JobState.Failed || job.State == JobState.Finished)
                 {
-                    this.Logger.Information("Node {0}, {1} job {2} is reported running, but actually {3} in store.", nodeInfo.Name, job?.Type, j.JobId, job == null ? "null" : job.State.ToString());
+                    this.Logger.Warning("Node {0}, {1} job {2} is reported running, but actually {3} in store.", nodeInfo.Name, job?.Type, j.JobId, job == null ? "null" : job.State.ToString());
                     var q = this.Utilities.GetNodeCancelQueue(this.ServerOptions.HostName);
 
                     // For non-exist job, we don't care about the type, the cancel logic should handle it.

@@ -15,6 +15,11 @@
             this.taskItems = items;
         }
 
+        public override CancellationToken Token
+        {
+            get => CancellationTokenSource.CreateLinkedTokenSource(this.taskItems.Select(t => t.Token).ToArray()).Token;
+        }
+
         protected override void Dispose(bool isDisposing)
         {
             if (isDisposing)

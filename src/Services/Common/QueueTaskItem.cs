@@ -32,12 +32,20 @@
             this.invisibleTimeout = invisibleTimeout;
             this.returnInvisible = returnInvisible;
 
-            this.ensureInvisibilityThread = new Thread(() => this.EnsureInvisible(token));
-            this.ensureInvisibilityThread.Priority = ThreadPriority.AboveNormal;
-            this.ensureInvisibilityThread.Name = $"EnsureInvisible {message.Id}";
+            this.Token = CancellationTokenSource.CreateLinkedTokenSource(token, this.cts.Token).Token;
+
+            this.ensureInvisibilityThread = new Thread(() => this.EnsureInvisible(this.Token))
+            {
+                Priority = ThreadPriority.AboveNormal,
+                Name = $"EnsureInvisible {message.Id}"
+            };
+
             this.ensureInvisibilityThread.Start();
             this.logger.Information("Constructed task item {0}", this.QueueMessage.Id);
         }
+
+        public override CancellationToken Token { get; }
+        public override string Id { get => this.QueueMessage.Id; }
 
         private async Task MakeVisible(CancellationToken token)
         {
@@ -48,24 +56,23 @@
         {
             try
             {
-                var t = CancellationTokenSource.CreateLinkedTokenSource(token, this.cts.Token).Token;
                 var loopInterval = this.invisibleTimeout - TimeSpan.FromSeconds(this.invisibleTimeout.TotalSeconds / 2);
 
-                while (!t.IsCancellationRequested)
+                while (!this.Token.IsCancellationRequested)
                 {
-                    Task.Delay(loopInterval, t).GetAwaiter().GetResult();
+                    Task.Delay(loopInterval, this.Token).GetAwaiter().GetResult();
 
                     this.logger.Information("Ensure Invisible for message {0}", this.QueueMessage.Id);
 
                     try
                     {
-                        this.Queue.UpdateMessageAsync(this.QueueMessage, this.invisibleTimeout, MessageUpdateFields.Visibility, null, null, t).GetAwaiter().GetResult();
+                        this.Queue.UpdateMessageAsync(this.QueueMessage, this.invisibleTimeout, MessageUpdateFields.Visibility, null, null, this.Token).GetAwaiter().GetResult();
                     }
                     catch (StorageException ex)
                     {
                         if (ex.InnerException is OperationCanceledException)
                         {
-                            break;
+                            continue;
                         }
                         else
                         {
@@ -77,6 +84,11 @@
             catch (OperationCanceledException)
             {
                 this.logger.Information("Ensure Invisible stopped for message {0}", this.QueueMessage.Id);
+            }
+            catch (Exception ex)
+            {
+                this.logger.Error(ex, "Error when ensure invisible of a task message {0}", this.QueueMessage.Id);
+                this.cts.Cancel();
             }
         }
 
@@ -90,7 +102,7 @@
                     this.StopEnsureInvisible();
                 }
 
-                this.cts.Dispose();
+                this.cts?.Dispose();
                 this.cts = null;
             }
 
@@ -117,8 +129,29 @@
         {
             this.StopEnsureInvisible();
             this.logger.Information("FinishAsync: Deleting message {0}", this.QueueMessage.Id);
-            await this.Queue.DeleteMessageAsync(this.QueueMessage.Id, this.QueueMessage.PopReceipt, null, null, token);
-            this.logger.Information("FinishAsync: Deleted message {0}", this.QueueMessage.Id);
+
+            try
+            {
+                await this.Queue.DeleteMessageAsync(this.QueueMessage.Id, this.QueueMessage.PopReceipt, null, null, token);
+                this.logger.Information("FinishAsync: Deleted message {0}", this.QueueMessage.Id);
+            }
+            catch(StorageException ex)
+            {
+                this.logger.Error(ex, "Deleting message {0}", this.QueueMessage.Id);
+                if (string.Equals(ex.RequestInformation.ErrorCode,"MessageNotFound", StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch(Exception ex)
+            {
+                this.logger.Error(ex, "Deleting message {0}", this.QueueMessage.Id);
+                throw;
+            }
         }
     }
 }

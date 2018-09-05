@@ -51,11 +51,21 @@
                 RedirectStandardInput = true,
             };
 
+            // TODO: async wait process exit.
             using (var process = new Process() { StartInfo = psi, EnableRaisingEvents = true })
             {
                 try
                 {
+                    StringBuilder output = new StringBuilder();
+                    StringBuilder error = new StringBuilder();
+
+                    process.OutputDataReceived += (s, e) => output.Append(e.Data);
+                    process.ErrorDataReceived += (s, e) => error.Append(e.Data);
+
                     process.Start();
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+
                     if (stdin != null)
                     {
                         var jsonIn = JsonConvert.SerializeObject(stdin, Formatting.Indented);
@@ -64,18 +74,10 @@
                         process.StandardInput.Close();
                     }
 
-                    StringBuilder output = new StringBuilder();
-                    StringBuilder error = new StringBuilder();
-
-                    process.OutputDataReceived += (s, e) => output.Append(e.Data);
-                    process.ErrorDataReceived += (s, e) => error.Append(e.Data);
-
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-
                     int waitTimeMS = 30000;
                     if (process.WaitForExit(waitTimeMS))
                     {
+                        process.WaitForExit();
                         var exitCode = process.ExitCode;
                         return (exitCode, output.ToString(), error.ToString());
                     }
@@ -90,6 +92,8 @@
                     {
                         process.Kill();
                     }
+
+                    process.Close();
                 }
             }
         }

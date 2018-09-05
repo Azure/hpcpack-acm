@@ -40,7 +40,7 @@
         {
             var message = taskItem.GetMessage<TaskEventMessage>();
 
-            this.Logger.Information("Do work for TaskEvent {0}, {1}, {2}", message.Id, message.JobType, message.EventVerb);
+            this.Logger.Information("Do work for TaskEvent {0}, {1}, {2}, message {3}", message.Id, message.JobType, message.EventVerb, taskItem.Id);
 
             try
             {

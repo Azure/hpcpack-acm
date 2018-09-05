@@ -52,10 +52,32 @@
         {
             var jobTable = this.Utilities.GetJobsTable();
 
-            if (job.State != JobState.Queued) return;
+            if (job.State != JobState.Queued)
+            {
+                this.Logger.Error("The job {0} state {1} is not queued.", job.Id, job.State);
+                return;
+            }
 
             var tasks = await this.JobTypeHandler.GenerateTasksAsync(job, token);
-            if (tasks == null) { return; }
+            if (tasks == null)
+            {
+                this.Logger.Error("The job {0} script doesn't generate any tasks", job.Id);
+                await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
+                {
+                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                    {
+                        Content = $"The job {job.Id} script doesn't generate any tasks.",
+                        Source = EventSource.Job,
+                        Type = EventType.Alert,
+                    });
+
+                    j.State = JobState.Failed;
+                    j.TaskCount = 0;
+                }, token);
+
+                return;
+            }
+
             var allParentIds = new HashSet<int>(tasks.SelectMany(t => t.ParentIds ?? new List<int>()));
             var endingIds = tasks.Where(t => !allParentIds.Contains(t.Id)).Select(t => t.Id).ToList();
 

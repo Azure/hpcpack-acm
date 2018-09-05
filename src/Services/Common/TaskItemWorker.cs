@@ -34,13 +34,13 @@
                 {
                     using (var taskItem = await this.Source.FetchTaskItemAsync(token))
                     {
-                        var success = await this.ProcessTaskItemAsync(taskItem, token);
+                        var success = await this.ProcessTaskItemAsync(taskItem, taskItem.Token);
                         await (success ? taskItem.FinishAsync(token) : taskItem.ReturnAsync(token));
                     }
                 }
                 catch (OperationCanceledException)
                 {
-                    return;
+                    continue;
                 }
                 catch (Exception ex)
                 {
