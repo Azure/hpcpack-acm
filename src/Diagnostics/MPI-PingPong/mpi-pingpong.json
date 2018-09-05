@@ -7,15 +7,19 @@
         "ContainerName":"diagtestscripts",
         "Name":"mpi-pingpong-reduce.py"
     },
+    "TaskResultFilterScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"mpi-pingpong-filter.py"
+    },
     "description":"Run Intel MPI Benchmark - PingPong between all node pairs in selected nodes. The latency and throughput will be reported. More refer to https://software.intel.com/en-us/imb-user-guide-pingpong-pingpongspecificsource-pingponganysource",
     "parameters":[
         {
             "name":"Packet size",
-            "description":"Specify the size(0-29, as exponent of 2) of transfer messages used in testing. Sizes from 2^0 to 2^22 bytes will be included in testing if the value is 0.",
+            "description":"Specify the size(0-22, as exponent of 2) of transfer messages used in testing. Sizes from 2^0 to 2^22 bytes will be included in testing if the value is 0.",
             "type":"number",
             "min":0,
-            "max":29,
-            "defaultValue":0
+            "max":22,
+            "defaultValue":22
         },
         {
             "name":"Mode",

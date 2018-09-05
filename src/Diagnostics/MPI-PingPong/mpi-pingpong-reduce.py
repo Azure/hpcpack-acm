@@ -1,4 +1,4 @@
-#v0.8
+#v0.9
 
 import sys, json, copy, numpy
 
@@ -67,12 +67,13 @@ def main():
             nodeName = taskResult['NodeName']
             nodePair = taskId2nodePair[taskId]
             exitCode = taskResult['ExitCode']
-            if 'Message' in taskResult and taskResult['Message']:
-                message = json.loads(taskResult['Message'])
+            if 'FilteredResult' in taskResult and taskResult['FilteredResult']:
+                message = json.loads(taskResult['FilteredResult'])
+                hasResult = message['Latency'] > 0 and message['Throughput'] > 0
                 detail = message['Detail']
-                if taskId in tasksForStatistics:
+                if taskId in tasksForStatistics and hasResult:
                     messages[taskId2nodePair[taskId]] = message
-                if exitCode != 0:
+                if exitCode != 0 or not hasResult:
                     failedPair = {
                         'NodeName':nodeName,
                         'NodePair':nodePair,
@@ -80,6 +81,8 @@ def main():
                         'Detail':detail
                         }
                     failedPairs.append(failedPair)
+            else:
+                raise Exception("No FilteredResult")
     except Exception as e:
         printErrorAsJson('Failed to parse task result. Task id: {}. {}'.format(taskId, e))
         return -1
@@ -90,6 +93,7 @@ def main():
         latencyThreshold = 2**3 if packetSize < 2**13 else packetSize/2**10
         throughputThreshold = packetSize/2**3 if 2**0 < packetSize < 2**13 else 2**10
     if mode == 'Jumble'.lower():
+        latencyThreshold = 1000000
         throughputThreshold = 0
 
     goodPairs = [pair for pair in messages if messages[pair]["Throughput"] > throughputThreshold]
@@ -119,28 +123,26 @@ def main():
         nodesInMessages = [node for nodepair in messages.keys() for node in nodepair.split(',')]
         nodesInMessages = list(set(nodesInMessages))
         histogramSize = min(nodesNumber, 10)
-        statisticsItems = ["Throughput", "Latency"]
-#        if packetSize < 65536:
-#            statisticsItems.append("Latency")
+        statisticsItems = ["Latency", "Throughput"]
         for item in statisticsItems:
             data = [messages[pair][item] for pair in messages]
-            golbalMin = numpy.amin(data)
-            golbalMax = numpy.amax(data)
-            histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(golbalMin, golbalMax))]
+            globalMin = numpy.amin(data)
+            globalMax = numpy.amax(data)
+            histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(globalMin, globalMax))]
 
             result[item] = {}
             if item == "Latency":
                 unit = "us"
                 threshold = latencyThreshold
                 badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold]
-                bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMin], "Value":golbalMin}
-                worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMax], "Value":golbalMax}
+                bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == globalMin], "Value":globalMin}
+                worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == globalMax], "Value":globalMax}
             else:
                 unit = "MB/s"
                 threshold = throughputThreshold
                 badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] < throughputThreshold]
-                bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMax], "Value":golbalMax}
-                worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == golbalMin], "Value":golbalMin}
+                bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == globalMax], "Value":globalMax}
+                worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == globalMin], "Value":globalMin}
                 if packetSize == 2**0:
                     packetSize = defaultPacketSize
 
@@ -161,7 +163,7 @@ def main():
             result[item]["ResultByNode"] = {}
             for node in nodesInMessages:
                 data = [messages[pair][item] for pair in messages if node in pair.split(',')]
-                histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(golbalMin, golbalMax))]
+                histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(globalMin, globalMax))]
                 if item == "Latency":
                     badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold and node in pair.split(',')]
                     bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
@@ -195,6 +197,10 @@ def getFailedReasons(failedPairs):
     solutionFireWall = 'Check and configure the firewall properly.'
     reasonNodeSingleCore = 'MPI PingPong can not run inside a node with only 1 core.'
     solutionNodeSingleCore = 'Ignore this failure.'
+    reasonTaskTimeout = 'Task timeout.'
+    reasonSampleTimeout = 'Pingpong test sample timeout.'
+    reasonNoResult = 'No result.'
+    
     failedReasons = {}
     for failedPair in failedPairs:
         reason = "Unknown"
@@ -213,6 +219,15 @@ def getFailedReasons(failedPairs):
         elif "Benchmark PingPong invalid for 1 processes" in failedPair['Detail']:
             reason = reasonNodeSingleCore
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionNodeSingleCore, 'Nodes':[]})['Nodes'].append(failedPair['NodeName'])
+        elif "Time limit (secs_per_sample * msg_sizes_list_len) is over;" in failedPair['Detail']:
+            reason = reasonSampleTimeout
+            failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])            
+        elif failedPair['ExitCode'] == 124:
+            reason = reasonTaskTimeout
+            failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
+        elif failedPair['Detail'].split('\n', 1)[0] == '[Message before filter]:':
+            reason = reasonNoResult
+            failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
         failedPair['Reason'] = reason
         del failedPair['Detail']
     if reasonMpiNotInstalled in failedReasons:
