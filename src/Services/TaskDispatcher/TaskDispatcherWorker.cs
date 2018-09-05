@@ -232,9 +232,8 @@
                             this.Logger.Warning("{0} Job {1} requeuecount {2}, task {3}, ids mismatch!", job.Type, job.Id, job.RequeueCount, cid.ChildId);
                         }
 
-                        t.RemainingParentCount = parentIds.Count;
                         t.ZippedParentIds = Compress.GZip(newParentIdsStr);
-                        unlocked = t.RemainingParentCount == 0;
+                        unlocked = parentIds.Count == 0;
                         isEndTask = t.Id == int.MaxValue;
                         if (unlocked)
                         {

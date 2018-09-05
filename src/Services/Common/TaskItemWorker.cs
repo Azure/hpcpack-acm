@@ -16,6 +16,8 @@
         protected ITaskItemSource Source { get; set; }
         private TaskItemSourceOptions TaskItemSourceOptions { get; }
 
+        protected bool shouldExit = false;
+
         public virtual Task InitializeAsync(CancellationToken token)
         {
             if (this.Source is ServerObject so)
@@ -28,7 +30,7 @@
 
         public async Task DoWorkAsync(CancellationToken token)
         {
-            while (!token.IsCancellationRequested)
+            while (!token.IsCancellationRequested && !this.shouldExit)
             {
                 try
                 {

@@ -138,7 +138,6 @@
                     JobId = it.JobId,
                     JobType = it.JobType,
                     Node = it.Node,
-                    RemainingParentCount = it.RemainingParentIds?.Count ?? 0,
                     RequeueCount = it.RequeueCount,
                     State = string.Equals(it.CustomizedData, Task.StartTaskMark, StringComparison.OrdinalIgnoreCase) ? TaskState.Finished : TaskState.Queued,
                 };
@@ -213,10 +212,23 @@
 
             if (state == JobState.Running)
             {
-                var taskCompletionQueue = await this.Utilities.GetOrCreateTaskCompletionQueueAsync(token);
-                await taskCompletionQueue.AddMessageAsync(new CloudQueueMessage(
-                    JsonConvert.SerializeObject(new TaskCompletionMessage() { JobId = job.Id, Id = 0, JobType = job.Type, RequeueCount = job.RequeueCount, ChildIds = startTask.ChildIds })),
-                    null, null, null, null, token);
+                async T.Task addFirstTask()
+                {
+                    var taskCompletionQueue = await this.Utilities.GetOrCreateJobTaskCompletionQueueAsync(job.Id, token);
+                    await taskCompletionQueue.AddMessageAsync(new CloudQueueMessage(
+                        JsonConvert.SerializeObject(new TaskCompletionMessage() { JobId = job.Id, Id = 0, JobType = job.Type, RequeueCount = job.RequeueCount, ChildIds = startTask.ChildIds })),
+                        null, null, null, null, token);
+                };
+
+                async T.Task addRunningJob()
+                {
+                    var runningJobQueue = this.Utilities.GetRunningJobQueue();
+                    await runningJobQueue.AddMessageAsync(new CloudQueueMessage(
+                        JsonConvert.SerializeObject(new RunningJobMessage() { JobId = job.Id, JobType = job.Type, RequeueCount = job.RequeueCount })),
+                        null, null, null, null, token);
+                };
+
+                await T.Task.WhenAll(addFirstTask(), addRunningJob());
             }
         }
     }

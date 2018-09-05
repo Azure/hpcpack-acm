@@ -99,11 +99,24 @@
 
         public static CloudQueue GetJobEventQueue(this CloudUtilities u) => u.GetQueue(u.Option.JobEventQueueName);
 
+        public static CloudQueue GetRunningJobQueue(this CloudUtilities u) => u.GetQueue(u.Option.RunningJobQueue);
+
         public static CloudQueue GetTaskCompletionQueue(this CloudUtilities u) => u.GetQueue(u.Option.TaskCompletionQueueName);
+        public static CloudQueue GetJobTaskCompletionQueue(this CloudUtilities u, int jobId) => u.GetQueue(string.Format(u.Option.JobTaskCompletionQueuePattern, jobId));
+
+        public static async T.Task<CloudQueue> GetOrCreateRunningJobQueueAsync(this CloudUtilities u, CancellationToken token)
+        {
+            return await u.GetOrCreateQueueAsync(u.Option.RunningJobQueue, token);
+        }
 
         public static async T.Task<CloudQueue> GetOrCreateTaskCompletionQueueAsync(this CloudUtilities u, CancellationToken token)
         {
             return await u.GetOrCreateQueueAsync(u.Option.TaskCompletionQueueName, token);
+        }
+
+        public static async T.Task<CloudQueue> GetOrCreateJobTaskCompletionQueueAsync(this CloudUtilities u, int jobId, CancellationToken token)
+        {
+            return await u.GetOrCreateQueueAsync(string.Format(u.Option.JobTaskCompletionQueuePattern, jobId), token);
         }
 
         public static async T.Task<CloudQueue> GetOrCreateJobEventQueueAsync(this CloudUtilities u, CancellationToken token)

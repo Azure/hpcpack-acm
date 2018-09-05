@@ -43,6 +43,13 @@
                 .Select(t => new { t.Id, t.Node })
                 .ToList();
 
+            var taskQueue = await this.Utilities.GetOrCreateJobTaskCompletionQueueAsync(job.Id, token);
+            var msg1 = new CloudQueueMessage(
+                JsonConvert.SerializeObject(new TaskCompletionMessage() { JobId = job.Id, Id = int.MaxValue, ExitCode = 0 }));
+
+            await taskQueue.AddMessageAsync(msg1, null, null, null, null, token);
+            this.Logger.Information("Added task cancel to queue {0}, {1}", taskQueue.Name, msg1.Id);
+
             await T.Task.WhenAll(allTasks.Select(async task =>
             {
                 var q = this.Utilities.GetNodeCancelQueue(task.Node);
