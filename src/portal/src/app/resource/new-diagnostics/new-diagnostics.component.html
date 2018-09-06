@@ -22,7 +22,8 @@
       <div class="select-tests">
         <tree-root #tree [nodes]="tests" (updateData)="onTreeLoad($event)" class="test-tree">
           <ng-template #treeNodeTemplate let-node let-index="index">
-            <mat-checkbox *ngIf="node.children == undefined" (change)="check(node, $event.checked)" [checked]="node.data.checked" color="primary">
+            <mat-checkbox *ngIf="node.children == undefined" (change)="check(node, $event.checked)" [checked]="node.data.checked"
+              color="primary">
               <span>{{node.data.name}}</span>
             </mat-checkbox>
             <span *ngIf="node.children != undefined && node.children.length > 0">{{node.data.name}}</span>
@@ -45,7 +46,8 @@
         Please select one test in step 1!
       </div>
       <ng-template #testsWithParameters>
-        <div *ngIf="selectedTest.parameters == undefined || selectedTest.parameters.length == 0; else showParameters" class="no-params">
+        <div *ngIf="selectedTest.parameters == undefined || selectedTest.parameters.length == 0; else showParameters"
+          class="no-params">
           No parameters for the selected tests.
         </div>
         <ng-template #showParameters>
@@ -63,8 +65,8 @@
                   </mat-select>
                 </div>
                 <ng-template #noOptions>
-                  <input matInput [placeholder]="parameter.name" type="number" [min]="parameter.min" [max]="parameter.max" *ngIf="parameter.type == 'number';else textInput"
-                    [formControlName]='parameter.name'>
+                  <input matInput [placeholder]="parameter.name" type="number" [min]="parameter.min" [max]="parameter.max"
+                    *ngIf="parameter.type == 'number';else textInput" [formControlName]='parameter.name'>
                   <ng-template #textInput>
                     <input matInput [placeholder]="parameter.name" [formControlName]='parameter.name' type="text">
                   </ng-template>
@@ -99,6 +101,6 @@
   </mat-vertical-stepper>
   <div class="diag-btns diag-action">
     <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
-    <button mat-raised-button color="primary" (click)="getTest()" (keyup.enter)="pressEnter()" class="diag-run-btn">Run</button>
+    <button mat-raised-button color="primary" (click)="getTest()" (keyup.enter)="getTest()" class="diag-run-btn">Run</button>
   </div>
 </mat-dialog-content>

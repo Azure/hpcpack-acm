@@ -1,16 +1,17 @@
-import { Component, OnInit, ViewChild, Inject, HostListener, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, Inject, HostListener, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { NodeFilterBuilderComponent } from '../../widgets/node-filter-builder/node-filter-builder.component';
 import { ApiService } from '../../services/api.service';
 import { FormGroup, FormBuilder, Validators, FormControl } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'diagnostics-tests',
   templateUrl: './new-diagnostics.component.html',
   styleUrls: ['./new-diagnostics.component.scss']
 })
-export class NewDiagnosticsComponent implements OnInit {
+export class NewDiagnosticsComponent implements OnInit, OnDestroy {
   @ViewChild('tree') tree;
 
   private tests = [];
@@ -81,6 +82,7 @@ export class NewDiagnosticsComponent implements OnInit {
     this.updateCheckedNode(node, checked);
   }
 
+  private _sub: Subscription[];
   private updateCheckedNode(node: any, checked: any) {
     let allNodes = node.treeModel.nodes;
     for (let i = 0; i < allNodes.length; i++) {
@@ -95,7 +97,7 @@ export class NewDiagnosticsComponent implements OnInit {
       if (paras) {
         this.paraForm = this.fb.group(this.ctlConfig[this.selectedTest.name]);
         for (let i = 0; i < paras.length; i++) {
-          this.paraForm.controls[paras[i].name].valueChanges.subscribe(data => {
+          let sub = this.paraForm.controls[paras[i].name].valueChanges.subscribe(data => {
             if (paras[i].whenChanged != undefined) {
               let selected = paras[i].whenChanged[data];
               for (let key in selected) {
@@ -103,6 +105,7 @@ export class NewDiagnosticsComponent implements OnInit {
               }
             }
           });
+          this._sub.push(sub);
         }
       }
       this.diagTestName = `${this.selectedTest.name} created by ${this.authService.username}`;
@@ -113,6 +116,13 @@ export class NewDiagnosticsComponent implements OnInit {
     }
   }
 
+  ngOnDestroy() {
+    if (this._sub) {
+      this._sub.forEach(sub => {
+        sub.unsubscribe();
+      })
+    }
+  }
 
   selectionChange(e) {
     if (e.selectedIndex == 2) {
@@ -153,14 +163,7 @@ export class NewDiagnosticsComponent implements OnInit {
   clearErrorMsg() {
     this.errorMessage = "";
   }
-
-  @HostListener('window:keyup', ['$event'])
-  keyEvent(event: KeyboardEvent) {
-    if (event.key == 'Enter') {
-      this.getTest();
-    }
-  }
-
+  
   close() {
     this.dialogRef.close();
   }
