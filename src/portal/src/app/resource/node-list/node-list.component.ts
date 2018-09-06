@@ -87,6 +87,7 @@ export class NodeListComponent {
     if (this.nodeLoop) {
       Loop.stop(this.nodeLoop);
     }
+    this.subcription.unsubscribe();
   }
 
   private onScrollEvent(data) {
