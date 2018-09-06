@@ -118,6 +118,10 @@ mat-header-cell {
     padding-right: .3em;
 }
 
+.actions {
+    margin-bottom: 1em;
+}
+
 .action-btn {
     @include display-flex(center);
 }
