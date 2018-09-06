@@ -6,6 +6,7 @@ import { ApiService } from '../../services/api.service';
 import { PingPongReportComponent } from './diags/mpi/pingpong/pingpong-report/pingpong-report.component';
 import { RingReportComponent } from './diags/mpi/ring/ring-report/ring-report.component';
 import { CpuReportComponent } from './diags/benchmark/cpu/cpu-report/cpu-report.component';
+import { switchMap } from 'rxjs/operators';
 
 const map = {
   'test': PingPongReportComponent,
@@ -33,9 +34,11 @@ export class ResultDetailComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.subcription = this.route.paramMap.subscribe(map => {
-      let id = map.get('id');
-      this.api.diag.getDiagJob(id).subscribe(result => {
+    this.subcription = this.route.paramMap
+      .pipe(
+        switchMap(map => this.api.diag.getDiagJob(map.get('id')))
+      )
+      .subscribe(result => {
         this.result = result;
         if (result.state == 'Finished' || result.state == 'Failed' || result.state == 'Canceled') {
           this.getAggregationResult();
@@ -44,7 +47,6 @@ export class ResultDetailComponent implements OnInit {
           this.loadComponent();
         }
       });
-    });
   }
 
   getAggregationResult() {
@@ -67,9 +69,11 @@ export class ResultDetailComponent implements OnInit {
         this.loadComponent();
       });
   }
+
   ngOnDestroy() {
-    if (this.subcription)
+    if (this.subcription) {
       this.subcription.unsubscribe();
+    }
   }
 
   getComponent(name) {
