@@ -151,6 +151,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
   private nodeRegistrationInfo = {};
 
   private compute = {};
+  private nodeId: string;
 
   constructor(
     private api: ApiService,
@@ -161,58 +162,56 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     this.historyInterval = 10000;
     this.jobInterval = 3000;
     this.labels = [];
+    this.subcription = this.route.paramMap.subscribe(map => {
+      this.nodeId = map.get('id');
+    });
   }
 
   ngOnInit() {
-    this.subcription = this.route.paramMap.subscribe(map => {
-      let id = map.get('id');
-
-      //get node Info
-      this.api.node.get(id).subscribe(result => {
-        this.nodeInfo = result;
-        this.nodeRegistrationInfo = result["nodeRegistrationInfo"];
-      });
-
-      //get node metadata
-      this.api.node.getMetadata(id).subscribe(result => {
-        if (result.compute !== undefined) {
-          this.compute = result.compute;
-        }
-      });
-
-      this.historyLoop = Loop.start(
-        this.api.node.getHistoryData(id),
-        {
-          next: (res) => {
-            this.labels = this.makeLabels(res.history);
-            let cpuTotal = this.makeCpuTotalData(res.history);
-            this.cpuData = { labels: this.labels, datasets: [{ label: 'CPU usage', data: cpuTotal, borderColor: '#215ebb' }] };
-            return true;
-          }
-        },
-        this.historyInterval
-      );
-
-      this.api.node.getNodeEvents(id).subscribe(result => {
-        this.events = result;
-      });
-
-      this.api.node.getNodeSheduledEvents(id).subscribe(result => {
-        this.scheduledEvents = result.Events;
-      });
-
-      this.jobLoop = Loop.start(
-        this.api.node.getNodeJobs(id),
-        {
-          next: (res) => {
-            this.dataSource.data = res;
-            return true;
-          }
-        },
-        this.jobInterval
-      );
-
+    //get node Info
+    this.api.node.get(this.nodeId).subscribe(result => {
+      this.nodeInfo = result;
+      this.nodeRegistrationInfo = result["nodeRegistrationInfo"];
     });
+
+    //get node metadata
+    this.api.node.getMetadata(this.nodeId).subscribe(result => {
+      if (result.compute !== undefined) {
+        this.compute = result.compute;
+      }
+    });
+
+    this.historyLoop = Loop.start(
+      this.api.node.getHistoryData(this.nodeId),
+      {
+        next: (res) => {
+          this.labels = this.makeLabels(res.history);
+          let cpuTotal = this.makeCpuTotalData(res.history);
+          this.cpuData = { labels: this.labels, datasets: [{ label: 'CPU usage', data: cpuTotal, borderColor: '#215ebb' }] };
+          return true;
+        }
+      },
+      this.historyInterval
+    );
+
+    this.api.node.getNodeEvents(this.nodeId).subscribe(result => {
+      this.events = result;
+    });
+
+    this.api.node.getNodeSheduledEvents(this.nodeId).subscribe(result => {
+      this.scheduledEvents = result.Events;
+    });
+
+    this.jobLoop = Loop.start(
+      this.api.node.getNodeJobs(this.nodeId),
+      {
+        next: (res) => {
+          this.dataSource.data = res;
+          return true;
+        }
+      },
+      this.jobInterval
+    );
   }
 
   ngOnDestroy() {
