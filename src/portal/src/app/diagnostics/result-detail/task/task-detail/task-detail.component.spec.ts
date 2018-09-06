@@ -45,12 +45,4 @@ fdescribe('TaskDetailComponent', () => {
     let text = fixture.nativeElement.querySelector(".msg-item").textContent;
     expect(text).toEqual("test \n test \n");
   });
-
-  it('should show task detail', () => {
-    let details = fixture.nativeElement.querySelectorAll(".overview-value");
-    let text = details[0].textContent;
-    expect(text).toEqual("testNode");
-    text = details[1].textContent;
-    expect(text).toEqual("3.7 sec");
-  });
 });
