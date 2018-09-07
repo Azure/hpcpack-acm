@@ -1,5 +1,6 @@
 ﻿namespace Microsoft.HpcAcm.Services.Common
 {
+    using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
     using System;
@@ -21,15 +22,14 @@
 
         public async Task<TaskItem> FetchTaskItemAsync(CancellationToken token)
         {
-            do
+            try
             {
                 this.Logger.Debug("Fetching task item from queue {0}", this.queue.Name);
 
                 var message = await this.queue.GetMessageAsync(TimeSpan.FromSeconds(this.options.VisibleTimeoutSeconds), null, null, token);
                 if (message == null)
                 {
-                    this.Logger.Debug("No tasks fetched. Sleep for {0} seconds", this.options.RetryIntervalSeconds);
-                    await Task.Delay(TimeSpan.FromSeconds(this.options.RetryIntervalSeconds), token);
+                    return null;
                 }
                 else
                 {
@@ -42,7 +42,15 @@
                         token);
                 }
             }
-            while (true);
+            catch (StorageException ex)
+            {
+                if (ex.InnerException is OperationCanceledException)
+                {
+                    throw ex.InnerException;
+                }
+
+                throw;
+            }
         }
     }
 }

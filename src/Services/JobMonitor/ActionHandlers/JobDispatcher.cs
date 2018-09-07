@@ -119,13 +119,13 @@
 
             const int MaxChildIds = 1000;
 
+            this.Logger.Information("Job {0} Converting {1} Tasks to Instances.", job.Id, tasks.Count);
             var taskInstances = tasks.Select(it =>
             {
                 string zipppedParentIds = Compress.GZip(string.Join(",", it.ParentIds ?? new List<int>()));
 
                 var childIds = it.ChildIds;
                 childIds = childIds ?? new List<int>();
-                this.Logger.Information("Job {0} Task {1} has {2} child ids", job.Id, it.Id, childIds.Count);
                 childIds = childIds.Count > MaxChildIds ? null : childIds;
 
                 return new Task()
@@ -154,6 +154,7 @@
                 })
                 .ToList();
 
+            this.Logger.Information("Job {0} Converting {1} Tasks to TaskStartInfo.", job.Id, tasks.Count);
             var taskInfos = tasks.Select(it => new TaskStartInfo()
             {
                 Id = it.Id,
@@ -167,6 +168,7 @@
                 StartInfo = new ProcessStartInfo(it.CommandLine, it.WorkingDirectory, null, null, null, it.EnvironmentVariables, null, it.RequeueCount),
             }).ToList();
 
+            this.Logger.Information("Job {0} Inserting {1} Tasks to Table.", job.Id, tasks.Count);
             var jobPartitionKey = this.Utilities.GetJobPartitionKey(job.Type, job.Id);
             await jobTable.InsertOrReplaceBatchAsync(token, taskInstances.Select(t => new JsonTableEntity(
                 jobPartitionKey,
@@ -189,6 +191,7 @@
                 return;
             }
 
+            this.Logger.Information("Job {0} Uploading {1} Tasks child ids content to blob.", job.Id, childIdsContent.Count);
             await T.Task.WhenAll(childIdsContent.Select(async childIds =>
             {
                 var taskKey = this.Utilities.GetTaskKey(childIds.JobId, childIds.Id, childIds.RequeueCount);
@@ -198,11 +201,13 @@
                 await childIdsBlob.UploadTextAsync(jsonContent, Encoding.UTF8, null, null, null, token);
             }));
 
+            this.Logger.Information("Job {0} Inserting {1} TaskInfo to Table.", job.Id, taskInfos.Count);
             await jobTable.InsertOrReplaceBatchAsync(token, taskInfos.Select(t => new JsonTableEntity(
                 jobPartitionKey,
                 this.Utilities.GetTaskInfoKey(job.Id, t.Id, job.RequeueCount),
                 t)).ToArray());
 
+            this.Logger.Information("Job {0} updating job status.", job.Id);
             JobState state = JobState.Queued;
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
@@ -212,6 +217,7 @@
 
             if (state == JobState.Running)
             {
+                this.Logger.Information("Job {0} Starting the job", job.Id);
                 async T.Task addFirstTask()
                 {
                     var taskCompletionQueue = await this.Utilities.GetOrCreateJobTaskCompletionQueueAsync(job.Id, token);

@@ -38,25 +38,25 @@
 
                 var dispatchTasks = await PythonExecutor.ExecuteAsync(scriptBlob, new { Job = job, Nodes = metadata }, token);
 
-                if (dispatchTasks.Item1 != 0)
+                if (dispatchTasks.IsError)
                 {
+                    this.Logger.Error("Generate tasks, job {0}, {1}", job.Id, dispatchTasks.ErrorMessage);
                     await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                     {
                         j.State = JobState.Failed;
                         (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
                         {
-                            Content = $"Dispatch script exit code {dispatchTasks.Item1}, message {dispatchTasks.Item3}",
+                            Content = $"Dispatch script {dispatchTasks.ErrorMessage}",
                             Source = EventSource.Job,
                             Type = EventType.Alert
                         });
                     }, token);
 
-                    this.Logger.Error("Dispatch failed {0}, {1}", dispatchTasks.Item1, dispatchTasks.Item3);
                     return null;
                 }
                 else
                 {
-                    return JsonConvert.DeserializeObject<List<InternalTask>>(dispatchTasks.Item2);
+                    return JsonConvert.DeserializeObject<List<InternalTask>>(dispatchTasks.Output);
                 }
             }
             else
@@ -94,13 +94,13 @@
                 var scriptBlob = this.Utilities.GetBlob(diagTest.AggregationScript.ContainerName, diagTest.AggregationScript.Name);
 
                 var aggregationResult = await PythonExecutor.ExecuteAsync(scriptBlob, new { Job = job, Tasks = tasks, TaskResults = taskResults }, token);
-                result = aggregationResult.Item2;
-                if (0 != aggregationResult.Item1)
+                result = aggregationResult.Output;
+                if (aggregationResult.IsError)
                 {
-                    this.Logger.Error("AggregateTasks, job {0}, error code {1} {2}", job.Id, aggregationResult.Item1, aggregationResult.Item3);
+                    this.Logger.Error("AggregateTasks, job {0}, {1}", job.Id, aggregationResult.ErrorMessage);
                     (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
                     {
-                        Content = $"Diag reduce script exit code {aggregationResult.Item1}, message {aggregationResult.Item3}",
+                        Content = $"Diag reduce script {aggregationResult.ErrorMessage}",
                         Source = EventSource.Job,
                         Type = EventType.Alert,
                     });

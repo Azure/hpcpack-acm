@@ -58,15 +58,15 @@
             {
                 var loopInterval = this.invisibleTimeout - TimeSpan.FromSeconds(this.invisibleTimeout.TotalSeconds / 2);
 
-                while (!this.Token.IsCancellationRequested)
+                while (!token.IsCancellationRequested)
                 {
-                    Task.Delay(loopInterval, this.Token).GetAwaiter().GetResult();
+                    Task.Delay(loopInterval, token).GetAwaiter().GetResult();
 
                     this.logger.Information("Ensure Invisible for message {0}", this.QueueMessage.Id);
 
                     try
                     {
-                        this.Queue.UpdateMessageAsync(this.QueueMessage, this.invisibleTimeout, MessageUpdateFields.Visibility, null, null, this.Token).GetAwaiter().GetResult();
+                        this.Queue.UpdateMessageAsync(this.QueueMessage, this.invisibleTimeout, MessageUpdateFields.Visibility, null, null, token).GetAwaiter().GetResult();
                     }
                     catch (StorageException ex)
                     {
@@ -83,13 +83,15 @@
             }
             catch (OperationCanceledException)
             {
-                this.logger.Information("Ensure Invisible stopped for message {0}", this.QueueMessage.Id);
+                this.logger.Information("Ensure Invisible canceled for message {0}", this.QueueMessage.Id);
             }
             catch (Exception ex)
             {
                 this.logger.Error(ex, "Error when ensure invisible of a task message {0}", this.QueueMessage.Id);
                 this.cts.Cancel();
             }
+
+            this.logger.Information("Exiting Ensure Invisible for message {0}", this.QueueMessage.Id);
         }
 
         protected override void Dispose(bool isDisposing)
@@ -103,9 +105,9 @@
                 }
 
                 this.cts?.Dispose();
-                this.cts = null;
             }
 
+            this.cts = null;
             base.Dispose(isDisposing);
         }
 
@@ -135,19 +137,23 @@
                 await this.Queue.DeleteMessageAsync(this.QueueMessage.Id, this.QueueMessage.PopReceipt, null, null, token);
                 this.logger.Information("FinishAsync: Deleted message {0}", this.QueueMessage.Id);
             }
-            catch(StorageException ex)
+            catch (StorageException ex)
             {
-                this.logger.Error(ex, "Deleting message {0}", this.QueueMessage.Id);
-                if (string.Equals(ex.RequestInformation.ErrorCode,"MessageNotFound", StringComparison.OrdinalIgnoreCase))
+                if (ex.InnerException is OperationCanceledException)
                 {
                     return;
                 }
-                else
+
+                if (string.Equals(ex.RequestInformation.ErrorCode, "MessageNotFound", StringComparison.OrdinalIgnoreCase))
                 {
-                    throw;
+                    this.logger.Warning("Deleting message {0}, not found", this.QueueMessage.Id);
+                    return;
                 }
+
+                this.logger.Error(ex, "Deleting message {0}", this.QueueMessage.Id);
+                throw;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 this.logger.Error(ex, "Deleting message {0}", this.QueueMessage.Id);
                 throw;

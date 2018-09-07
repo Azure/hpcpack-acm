@@ -60,19 +60,19 @@
             }
 
             var filteredResult = await PythonExecutor.ExecuteAsync(path, new { Job = job, Task = taskInfo }, token);
-            this.Logger.Information("Task filter script execution for job {0}, task {1}, filteredResult exit code {2}, result length {3}", job.Id, taskId, filteredResult.Item1, filteredResult.Item2?.Length);
-            taskInfo.Message = filteredResult.Item1 == 0 ? filteredResult.Item2 : taskInfo.Message;
+            this.Logger.Information("Task filter script execution for job {0}, task {1}, filteredResult exit code {2}, result length {3}", job.Id, taskId, filteredResult.ExitCode, filteredResult.Output?.Length);
+            taskInfo.Message = filteredResult.IsError ? taskInfo.Message : filteredResult.Output;
 
             await this.jobsTable.InsertOrReplaceAsync(jobPartitionKey, taskResultKey, taskInfo, token);
 
-            if (filteredResult.Item1 != 0 || !string.IsNullOrEmpty(filteredResult.Item3))
+            if (filteredResult.IsError)
             {
-                this.Logger.Error("There is an error in task filter script. {0}, {1}", filteredResult.Item1, filteredResult.Item3);
+                this.Logger.Error("There is an error in task filter script. {0}", filteredResult.ErrorMessage);
                 await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                 {
                     (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
                     {
-                        Content = $"{filteredResult.Item1}, {filteredResult.Item3}",
+                        Content = filteredResult.ErrorMessage,
                         Source = EventSource.Job,
                         Type = EventType.Alert,
                     });

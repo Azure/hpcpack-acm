@@ -201,6 +201,11 @@
                     }
                     catch (StorageException ex)
                     {
+                        if (ex.InnerException is OperationCanceledException)
+                        {
+                            throw ex.InnerException;
+                        }
+
                         if (ex.IsConflict())
                         {
                             await T.Task.Delay(new Random().Next(3000), token);
