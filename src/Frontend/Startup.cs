@@ -4,6 +4,7 @@ namespace Microsoft.HpcAcm.Frontend
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using Bazinga.AspNetCore.Authentication.Basic;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
@@ -27,12 +28,7 @@ namespace Microsoft.HpcAcm.Frontend
         {
             services.AddCors();
             services.AddAuthentication("Basic")
-                .AddBasicAuthentication(credentials =>
-                    Task.FromResult(
-                        credentials.username == "root"
-                        && credentials.password == "P@sswor1d"
-                    )
-                );
+                .AddBasicAuthentication<BasicCredentialVerifier>("Basic","Basic", _ => { }, ServiceLifetime.Singleton);
             services.AddMvc().AddJsonOptions(options => {
                 options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
                 options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
