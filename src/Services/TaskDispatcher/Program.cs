@@ -36,8 +36,12 @@
             {
                 svc.Configure<TaskItemSourceOptions>(config.GetSection(nameof(TaskItemSourceOptions)));
                 svc.Configure<TaskDispatcherWorkerGroupOptions>(config.GetSection(nameof(TaskDispatcherWorkerGroupOptions)));
-                svc.AddSingleton<IWorker, TaskDispatcherWorkerGroup>();
+                svc.Configure<RunningJobWorkerGroupOptions>(config.GetSection(nameof(RunningJobWorkerGroupOptions)));
+            //    svc.AddSingleton<IWorker, TaskDispatcherWorkerGroup>();
+                svc.AddSingleton<IWorker, RunningJobWorkerGroup>();
                 svc.AddTransient<TaskDispatcherWorker>();
+                svc.AddTransient<RunningJobWorker>();
+                svc.AddTransient<JobTaskDispatcherWorker>();
             });
     }
 }

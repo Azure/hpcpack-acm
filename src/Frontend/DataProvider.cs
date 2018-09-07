@@ -383,6 +383,10 @@
             await jobEventQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(jobMsg)), null, null, null, null, token);
             this.Logger.Information("Create job dispatch message success.");
 
+            var jobCancel = new JobEventMessage() { Id = job.Id, Type = job.Type, EventVerb = "cancel" };
+            await jobEventQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(jobCancel)), null, TimeSpan.FromSeconds(job.MaximumRuntimeSeconds), null, null, token);
+            this.Logger.Information("Create job cancel message success.");
+
             return job;
         }
     }

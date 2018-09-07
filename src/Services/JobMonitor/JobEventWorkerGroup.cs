@@ -26,6 +26,7 @@
         public override async T.Task InitializeAsync(CancellationToken token)
         {
             await this.Utilities.GetOrCreateJobsTableAsync(token);
+            await this.Utilities.GetOrCreateRunningJobQueueAsync(token);
             await this.Utilities.GetOrCreateJobEventQueueAsync(token);
             await base.InitializeAsync(token);
         }

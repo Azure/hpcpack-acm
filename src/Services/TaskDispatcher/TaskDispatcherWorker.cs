@@ -17,10 +17,13 @@
     using Microsoft.Extensions.Options;
     using System.Diagnostics;
     using System.IO;
+    using System.Collections.Concurrent;
 
     internal class TaskDispatcherWorker : TaskItemWorker, IWorker
     {
         private readonly TaskItemSourceOptions options;
+        private ConcurrentDictionary<string, InternalDiagnosticsTest> diagTests = new ConcurrentDictionary<string, InternalDiagnosticsTest>();
+        private ConcurrentDictionary<string, string> taskFilterScript = new ConcurrentDictionary<string, string>();
 
         public TaskDispatcherWorker(IOptions<TaskItemSourceOptions> options) : base(options.Value)
         {
@@ -57,18 +60,19 @@
             }
 
             var filteredResult = await PythonExecutor.ExecuteAsync(path, new { Job = job, Task = taskInfo }, token);
-            taskInfo.FilteredResult = filteredResult.Item1 == 0 ? filteredResult.Item2 : $"Task result filter script exit code {filteredResult.Item1}, message {filteredResult.Item3}";
+            this.Logger.Information("Task filter script execution for job {0}, task {1}, filteredResult exit code {2}, result length {3}", job.Id, taskId, filteredResult.ExitCode, filteredResult.Output?.Length);
+            taskInfo.Message = filteredResult.IsError ? taskInfo.Message : filteredResult.Output;
 
             await this.jobsTable.InsertOrReplaceAsync(jobPartitionKey, taskResultKey, taskInfo, token);
 
-            if (!string.IsNullOrEmpty(filteredResult.Item3))
+            if (filteredResult.IsError)
             {
-                this.Logger.Error("There is an error in task filter script. {0}", filteredResult.Item3);
+                this.Logger.Error("There is an error in task filter script. {0}", filteredResult.ErrorMessage);
                 await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                 {
                     (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
                     {
-                        Content = filteredResult.Item3,
+                        Content = filteredResult.ErrorMessage,
                         Source = EventSource.Job,
                         Type = EventType.Alert,
                     });
@@ -85,7 +89,12 @@
         public override async T.Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
         {
             var taskItems = taskItem.GetMessage<TaskItem[]>();
-            var messages = taskItems.Select(ti => ti.GetMessage<TaskCompletionMessage>());
+            var messages = taskItems.Select(ti =>
+            {
+                var msg = ti.GetMessage<TaskCompletionMessage>();
+                this.Logger.Information("Do work for job {0}, task {1}, message {2}", msg.JobId, msg.Id, ti.Id);
+                return msg;
+            });
 
             var jobGroups = messages.GroupBy(msg => this.Utilities.GetJobPartitionKey(msg.JobType, msg.JobId));
 
@@ -119,19 +128,38 @@
 
                 if (job.Type == JobType.Diagnostics)
                 {
-                    var diagTest = await this.jobsTable.RetrieveAsync<InternalDiagnosticsTest>(
-                        this.Utilities.GetDiagPartitionKey(job.DiagnosticTest.Category),
-                        job.DiagnosticTest.Name,
-                        token);
+                    string diagKey = job.DiagnosticTest.Category + job.DiagnosticTest.Name;
+                    if (!this.diagTests.TryGetValue(diagKey, out InternalDiagnosticsTest diagTest))
+                    {
+                        diagTest = await this.jobsTable.RetrieveAsync<InternalDiagnosticsTest>(
+                            this.Utilities.GetDiagPartitionKey(job.DiagnosticTest.Category),
+                            job.DiagnosticTest.Name,
+                            token);
+                        this.diagTests.TryAdd(diagKey, diagTest);
+                    }
 
                     if (diagTest?.TaskResultFilterScript?.Name != null)
                     {
-                        var scriptBlob = this.Utilities.GetBlob(diagTest.TaskResultFilterScript.ContainerName, diagTest.TaskResultFilterScript.Name);
+                        if (!this.taskFilterScript.TryGetValue(diagKey, out string script))
+                        {
+                            var scriptBlob = this.Utilities.GetBlob(diagTest.TaskResultFilterScript.ContainerName, diagTest.TaskResultFilterScript.Name);
+                            using (var stream = new MemoryStream())
+                            {
+                                await scriptBlob.DownloadToStreamAsync(stream, null, null, null, token);
+                                stream.Seek(0, SeekOrigin.Begin);
+                                using (StreamReader sr = new StreamReader(stream, true))
+                                {
+                                    script = await sr.ReadToEndAsync();
+                                }
+                            }
+
+                            this.taskFilterScript.TryAdd(diagKey, script);
+                        }
 
                         var path = Path.GetTempFileName();
                         try
                         {
-                            await scriptBlob.DownloadToFileAsync(path, FileMode.Create, null, null, null, token);
+                            await File.WriteAllTextAsync(path, script, token);
                             var hookResults = await T.Task.WhenAll(tasks.Select(tid => this.TaskResultHook(job, tid.Id, path, token)));
                             if (hookResults.Any(r => !r)) return false;
                         }
@@ -144,9 +172,16 @@
 
                 if (job.FailJobOnTaskFailure && tasks.Any(t => t.ExitCode != 0))
                 {
+                    this.Logger.Information("Fail the job because some tasks failed {0}", job.Id);
                     await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                     {
                         j.State = JobState.Failed;
+                        (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                        {
+                            Content = $"Fail the job because some tasks failed",
+                            Source = EventSource.Job,
+                            Type = EventType.Alert
+                        });
                     }, token);
 
                     return true;
@@ -197,9 +232,8 @@
                             this.Logger.Warning("{0} Job {1} requeuecount {2}, task {3}, ids mismatch!", job.Type, job.Id, job.RequeueCount, cid.ChildId);
                         }
 
-                        t.RemainingParentCount = parentIds.Count;
                         t.ZippedParentIds = Compress.GZip(newParentIdsStr);
-                        unlocked = t.RemainingParentCount == 0;
+                        unlocked = parentIds.Count == 0;
                         isEndTask = t.Id == int.MaxValue;
                         if (unlocked)
                         {

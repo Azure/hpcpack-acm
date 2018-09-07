@@ -35,11 +35,11 @@
         public int RequeueCount { get; set; }
         public JobType JobType { get; set; }
         public TaskState State { get; set; }
-        public int RemainingParentCount { get; set; }
         public string CommandLine { get; set; }
         public string Node { get; set; }
         public string CustomizedData { get; set; }
         public List<int> ChildIds { get; set; }
         public string ZippedParentIds { get; set; }
+        public HashSet<int> RemainingParentIds { get; set; }
     }
 }

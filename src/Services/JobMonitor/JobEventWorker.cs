@@ -54,7 +54,7 @@
         public override async T.Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
         {
             var message = taskItem.GetMessage<JobEventMessage>();
-            this.Logger.Information("Do work for JobEvent {0}, {1}, {2}", message.Id, message.Type, message.EventVerb);
+            this.Logger.Information("Do work for JobEvent {0}, {1}, {2}, message {3}", message.Id, message.Type, message.EventVerb, taskItem.Id);
 
             var jobPartitionKey = this.Utilities.GetJobPartitionKey(message.Type, message.Id);
             var jobEntryKey = this.Utilities.JobEntryKey;

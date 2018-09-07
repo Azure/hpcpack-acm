@@ -84,9 +84,6 @@ Secret Disclosure Risks
 From: AzSec@microsoft.com
 ###
 
-# *.pfx
-*.[Pp][Ff][Xx]
-
 # *.key
 *.[Kk][Ee][Yy]
 
@@ -248,7 +245,7 @@ publish/
 # Publish Web Output
 *.[Pp]ublish.xml
 *.azurePubxml
-# TODO: Comment the next line if you want to checkin your web deploy settings 
+# TODO: Comment the next line if you want to checkin your web deploy settings
 # but database connection strings (with potential passwords) will be unencrypted
 *.pubxml
 *.publishproj
@@ -277,7 +274,6 @@ ClientBin/
 *~
 *.dbmdl
 *.dbproj.schemaview
-*.pfx
 *.publishsettings
 node_modules/
 bower_components/

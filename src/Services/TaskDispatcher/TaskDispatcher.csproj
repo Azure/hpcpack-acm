@@ -23,6 +23,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Commandline" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.1.1" />
     <PackageReference Include="WindowsAzure.Storage" Version="9.0.0" />
   </ItemGroup>
 

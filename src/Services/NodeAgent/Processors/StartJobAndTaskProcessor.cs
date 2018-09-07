@@ -195,7 +195,7 @@
                 }
                 finally
                 {
-                    var queue = this.Utilities.GetTaskCompletionQueue();
+                    var queue = this.Utilities.GetJobTaskCompletionQueue(jobId);
                     logger.Information("Adding task completion message");
                     await queue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(new TaskCompletionMessage()
                     {

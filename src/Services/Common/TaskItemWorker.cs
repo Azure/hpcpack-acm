@@ -16,6 +16,8 @@
         protected ITaskItemSource Source { get; set; }
         private TaskItemSourceOptions TaskItemSourceOptions { get; }
 
+        protected bool shouldExit = false;
+
         public virtual Task InitializeAsync(CancellationToken token)
         {
             if (this.Source is ServerObject so)
@@ -28,28 +30,38 @@
 
         public async Task DoWorkAsync(CancellationToken token)
         {
-            while (!token.IsCancellationRequested)
+            using (this.Source as IDisposable)
             {
-                try
+                while (!token.IsCancellationRequested && !this.shouldExit)
                 {
-                    using (var taskItem = await this.Source.FetchTaskItemAsync(token))
+                    try
                     {
-                        var success = await this.ProcessTaskItemAsync(taskItem, token);
-                        await (success ? taskItem.FinishAsync(token) : taskItem.ReturnAsync(token));
+                        using (var taskItem = await this.Source.FetchTaskItemAsync(token))
+                        {
+                            if (taskItem == null)
+                            {
+                                await Task.Delay(TimeSpan.FromSeconds(this.TaskItemSourceOptions.RetryIntervalSeconds), token);
+                                continue;
+                            }
+
+                            var success = await this.ProcessTaskItemAsync(taskItem, taskItem.Token);
+                            if (token.IsCancellationRequested) break;
+                            await (success ? taskItem.FinishAsync(token) : taskItem.ReturnAsync(token));
+                        }
                     }
-                }
-                catch (OperationCanceledException)
-                {
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    this.Logger.Error(ex, $"Exception happened in {nameof(DoWorkAsync)}");
-                    await Task.Delay(TimeSpan.FromSeconds(this.TaskItemSourceOptions.FailureRetryIntervalSeconds), token);
+                    catch (OperationCanceledException)
+                    {
+                        continue;
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Logger.Error(ex, $"Exception happened in {nameof(DoWorkAsync)}");
+                        await Task.Delay(TimeSpan.FromSeconds(this.TaskItemSourceOptions.FailureRetryIntervalSeconds), token);
+                    }
                 }
             }
 
-            this.Logger.Information($"Exiting {nameof(DoWorkAsync)}, canceled {0}", token.IsCancellationRequested);
+            this.Logger.Information($"Exiting {this.GetType().Name}.{nameof(DoWorkAsync)}, canceled {0}", token.IsCancellationRequested);
         }
 
         public abstract Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token);
