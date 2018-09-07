@@ -1,9 +1,11 @@
 <div class="title main">
   <div class="job-state">
-    <div class="name">{{result.id}} - {{result.name}}
+    <mat-spinner *ngIf="!done" [diameter]="20"></mat-spinner>
+    <div class="name">
       <div class="state-text" [ngClass]="stateClass(result.state)">{{result.state}}</div>
+      {{result.id}} - {{result.name}}
     </div>
-    <mat-spinner *ngIf="!done" [diameter]="25"></mat-spinner>
+
   </div>
   <div class="operations">
     <div class="cancel-job">

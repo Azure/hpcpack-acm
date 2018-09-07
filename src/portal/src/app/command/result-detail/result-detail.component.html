@@ -1,9 +1,11 @@
 <div class="title main">
   <div class="job-state">
-    <div class="name">{{id}} - {{result.command}}
+    <mat-spinner *ngIf="!isOver" [diameter]="20"></mat-spinner>
+    <div class="name">
       <div class="state-text" [ngClass]="result.state">{{result.state | titlecase}}</div>
+      {{id}} - {{result.command}}
     </div>
-    <mat-spinner *ngIf="!isOver" [diameter]="25"></mat-spinner>
+
   </div>
   <div class="operations">
     <div class="cancel-job">
@@ -31,9 +33,9 @@
       </div>
 
       <div class="col-md-9 output">
-        <command-output (loadPrev)="loadPrevAndScroll(selectedNode, $event)" (loadNext)="loadNext(selectedNode)" (gotoTop)="loadFromBeginAndScroll(selectedNode, $event)"
-          [content]="currentOutput?.content" [disabled]="isOutputDisabled" [loading]="loading" [bof]="currentOutput?.start === 0"
-          [eof]="currentOutput?.end" #output>
+        <command-output (loadPrev)="loadPrevAndScroll(selectedNode, $event)" (loadNext)="loadNext(selectedNode)"
+          (gotoTop)="loadFromBeginAndScroll(selectedNode, $event)" [content]="currentOutput?.content" [disabled]="isOutputDisabled"
+          [loading]="loading" [bof]="currentOutput?.start === 0" [eof]="currentOutput?.end" #output>
         </command-output>
 
         <div class="control bottom">

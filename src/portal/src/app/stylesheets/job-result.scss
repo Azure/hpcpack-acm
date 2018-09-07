@@ -1,98 +1,107 @@
 @import "./mixin.scss";
 @import "./info.scss";
+
 .title {
-    @include display-flex(center);
-    padding: 0 1em;
-    background-color: #fff;
-    border-left: 4px solid #3f51b5;
-    @include font-basic;
-    .name {
-        margin: 0 0.3em;
-        @include font-basic(1.2em, rgba($color: #000000, $alpha: 0.8));
-        padding: 1em 0;
-        word-break: break-word;
-    }
+  @include display-flex(center);
+  padding: 0 1em;
+  background-color: #fff;
+  border-left: 4px solid #3f51b5;
+  @include font-basic;
+
+  .name {
+    margin: 0 0.3em;
+    @include font-basic(1.2em, rgba($color: #000000, $alpha: 0.8));
+    padding: 1em 0;
+    word-break: break-word;
+  }
 }
 
 .title-icon {
-    font-size: 1em;
-    padding-right: 0.2em;
+  font-size: 1em;
+  padding-right: 0.2em;
 }
 
 .main {
-    clear: both;
+  clear: both;
 }
 
 .time {
-    margin-top: 8px;
-    font-size: small;
+  margin-top: 8px;
+  font-size: small;
 }
 
 .tasks {
-    margin-top: 1em;
+  margin-top: 1em;
 }
 
 .overview {
-    margin: 1em 0;
-    chart {
-        height: 200px;
-        max-width: 400px;
-    }
+  margin: 1em 0;
+
+  chart {
+    height: 200px;
+    max-width: 400px;
+  }
 }
 
 .mat-form-field-hide-placeholder .mat-select-placeholder {
-    font-size: .9em !important;
+  font-size: .9em !important;
 }
 
 md-select,
 .mat-select-placeholder,
 .mat-select-trigger {
-    font-size: .9em !important;
-    color: #3f51b5 !important;
+  font-size: .9em !important;
+  color: #3f51b5 !important;
 }
 
 .overview-info {
-    margin-bottom: .5em;
+  margin-bottom: .5em;
 }
 
 .job-state,
 .operation {
-    @include display-flex(center);
+  @include display-flex(center);
 }
 
 .operation {
-    padding: .3em .5em;
+  padding: .3em .5em;
 }
 
 .operation:hover {
-    cursor: pointer;
-    background-color: rgba(182, 186, 193, .2);
+  cursor: pointer;
+  background-color: rgba(182, 186, 193, .2);
 }
 
 .operation-name {
-    @include font-basic(.9em, rgba(0, 0, 0, .7));
+  @include font-basic(.9em, rgba(0, 0, 0, .7));
 }
 
 .cancel {
-    color: rgba(206, 80, 57, .9);
+  color: rgba(206, 80, 57, .9);
 }
 
 .rerun {
-    color: rgba(63, 81, 181, .9)
+  color: rgba(63, 81, 181, .9)
 }
 
 .state-text {
-    display: inline-block;
+  display: inline-block;
+  padding-right: .5em;
+  width: 5em;
 }
 
 .cancel-job {
-    @include display-flex(center);
+  @include display-flex(center);
 }
 
 .operation-text {
-    padding-left: 1em;
+  padding-left: 1em;
 }
 
 .operations {
-    margin-left: 1em;
+  margin-left: 1em;
+}
+
+.operations {
+  margin-left: 1em;
 }

@@ -1,111 +1,142 @@
 .area-title {
-    @include font-basic($font-size: .85em);
-    @include pd(1em, 0, 1em, 0);
-    @include display-flex($align-items: center);
+  @include font-basic($font-size: .85em);
+  @include pd(1em, 0, 1em, 0);
+  @include display-flex($align-items: center);
 }
 
 .overview-title {
-    @include font-basic($font-size: .9em, $font-color: #3f51b5);
-    .title-icon {
-        font-size: 1.2em;
-    }
+  @include font-basic($font-size: .9em, $font-color: #3f51b5);
+
+  .title-icon {
+    font-size: 1.2em;
+  }
 }
 
 .overview-value {
-    @include font-basic($font-size: .8em, $font-color: $info-color);
+  @include font-basic($font-size: 13px, $font-color: $info-color);
 }
 
 .info-item,
 .overview-info {
-    margin-bottom: 1em;
+  margin-bottom: 1em;
 }
 
 .finished {
-    color: #49a067;
+  color: #49a067;
 }
 
 .queued {
-    color: #FF8F00;
+  color: #FF8F00;
 }
 
 .failed {
-    color: #D84315;
+  color: #D84315;
 }
 
 .running {
-    color: #283593;
+  color: #283593;
 }
 
 .canceled {
-    color: #6c727c;
+  color: #6c727c;
 }
 
 .main {
-    clear: both;
+  clear: both;
 }
 
 .time {
-    margin-top: 8px;
-    font-size: small;
+  margin-top: 8px;
+  font-size: small;
 }
 
 .nodes {
-    margin-top: 1em;
+  margin-top: 1em;
 }
 
 .overview {
-    margin: 1em 0;
-    chart {
-        height: 200px;
-        max-width: 400px;
-    }
+  margin: 1em 0;
+
+  chart {
+    height: 200px;
+    max-width: 400px;
+  }
 }
 
 .aggregationResult {
-    white-space: pre-line;
-    line-height: 2em;
+  white-space: pre-line;
+  line-height: 2em;
 }
 
 .task-result-info {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
 }
 
 .pair-list {
-    font-size: .9em;
-    display: flex;
-    justify-content: space-between;
-    padding-bottom: .5em;
+  @include font-basic($font-size: 13px, $font-color: $info-color);
+  @include display-flex($justify-content: space-between, $align-items: center);
+  height: 30px;
+  padding: 0 10px;
+
+  &:hover {
+    cursor: pointer;
+    background: #eeeeee;
+  }
 }
 
 .passed {
-    color: green;
+  color: green;
 }
 
 .not-passed {
-    color: red;
+  color: red;
 }
 
 .error-message {
-    padding: 1em;
-    @include font-basic($font-size: .8em, $font-color: rgba(206, 80, 57, .9));
+  padding: 1em;
+  @include font-basic($font-size: .8em, $font-color: rgba(206, 80, 57, .9));
 }
 
 a {
+  color: $info-color;
+
+  &.link {
     color: $info-color;
-    &.link {
-        color: $info-color;
-    }
-    &:visited {
-        color: $info-color;
-    }
-    &:hover {
-        cursor: pointer;
-        color: $color;
-    }
+  }
+
+  &:visited {
+    color: $info-color;
+  }
+
+  &:hover {
+    cursor: pointer;
+    color: $color;
+  }
 }
 
 .overview-progress {
-    margin-top: 1em;
+  margin-top: 1em;
+}
+
+.overview-result,
+.nodes-info {
+  .node-info {
+    @include display-flex(center);
+    padding: 0 5px;
+    height: 2.5em;
+  }
+
+  .node-name {
+    text-decoration: underline;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .node-icon {
+    font-size: 16px;
+    padding-right: 5px;
+  }
 }

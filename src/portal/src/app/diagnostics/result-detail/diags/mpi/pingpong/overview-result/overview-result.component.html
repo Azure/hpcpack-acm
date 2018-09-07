@@ -1,6 +1,6 @@
 <div class="overview-header">
   <div class="chart-type">
-    <div class="chart-btn" [class.active]="activeMode == 'total'" (click)="setActiveMode('total')">Total</div>
+    <div class="chart-btn" [class.active]="activeMode == 'total'" (click)="setActiveMode('total')">Overview</div>
     <div class="chart-btn" [class.active]="activeMode == 'node'" (click)="setActiveMode('node')">By Node</div>
   </div>
   <div class="select-node" *ngIf="activeMode == 'node'">
@@ -93,43 +93,6 @@
           </div>
           <div class="overview-value" *ngIf="!hasData(badPairs)">No bad pairs.</div>
         </div>
-      </mat-expansion-panel>
-    </mat-accordion>
-
-    <mat-accordion multi=true class="result-pair" *ngIf="activeMode == 'node'">
-      <mat-expansion-panel *ngFor="let f of failure">
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            <div class="failed"> {{f}} </div>
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-        <div class="pair-area">
-          <div class="pair-list" *ngFor="let c of failedNodes[selectedNode][f]">
-            {{c}}
-          </div>
-        </div>
-      </mat-expansion-panel>
-    </mat-accordion>
-
-    <mat-accordion multi=true class="result-pair" *ngIf="activeMode == 'total'">
-      <mat-expansion-panel *ngFor="let r of reasons">
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            <div class="failed"> {{r.Reason}} </div>
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-        <div class="solution">{{r.Solution}}</div>
-        <div *ngIf="r.NodePairs" class="pair-area">
-          <div class="pair-list" *ngFor="let pr of r.NodePairs">
-            {{pr}}
-          </div>
-        </div>
-        <div *ngIf="r.Nodes" class="pair-area">
-          <div class="pair-list" *ngFor="let n of r.Nodes">
-            {{n}}
-          </div>
-        </div>
-
       </mat-expansion-panel>
     </mat-accordion>
   </div>

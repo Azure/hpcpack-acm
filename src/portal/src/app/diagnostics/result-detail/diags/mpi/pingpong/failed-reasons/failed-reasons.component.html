@@ -1,0 +1,59 @@
+<div class="overview-header">
+  <div class="chart-type">
+    <div class="chart-btn" [class.active]="activeMode == 'total'" (click)="setActiveMode('total')">Overviwe</div>
+    <div class="chart-btn" [class.active]="activeMode == 'node'" (click)="setActiveMode('node')">By Node</div>
+  </div>
+  <div class="select-node" *ngIf="activeMode == 'node'">
+    <mat-form-field>
+      <mat-select placeholder="Select Node" [(ngModel)]="selectedNode" (selectionChange)="changeNode()">
+        <mat-option *ngFor="let node of nodes" [value]="node" style="font-size: .9em;">
+          {{ node }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+</div>
+<div class="overview-result">
+  <mat-accordion multi=true class="result-pair" *ngIf="activeMode == 'node'">
+    <mat-expansion-panel *ngFor="let f of failure">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <div> {{f}} </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="pair-area">
+        <div class="failed-pair" *ngFor="let pr of failedNodes[selectedNode][f]">
+          <i class="material-icons node-icon">swap_horiz</i>
+          <div class="node-name" *ngFor="let node of pr">
+            <a [routerLink]="getLink(node)"> {{node}} </a>
+          </div>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+
+  <mat-accordion multi=true class="result-pair" *ngIf="activeMode == 'total'">
+    <mat-expansion-panel *ngFor="let r of reasons">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <div> {{r.Reason}} </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="node-info solution" *ngIf="r.Solution">
+        <i class="material-icons node-icon">lightbulb_outline</i>
+        <div class="node-name">{{r.Solution}}</div>
+      </div>
+      <div *ngIf="r.NodePairs" class="pair-area">
+        <div *ngFor="let pr of r.NodePairs" class="failed-pair">
+          <i class="material-icons node-icon">swap_horiz</i>
+          <div class="node-name" *ngFor="let node of pr">
+            <a [routerLink]="getLink(node)"> {{node}} </a>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="r.Nodes" class="pair-area">
+        <app-nodes-info [nodes]="r.Nodes"></app-nodes-info>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+</div>

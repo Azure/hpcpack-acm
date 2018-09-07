@@ -19,6 +19,8 @@ import { NodesInfoComponent } from './result-detail/diags/nodes-info/nodes-info.
 import { SharedModule } from '../shared.module';
 import { OverviewResultComponent } from './result-detail/diags/benchmark/cpu/overview-result/overview-result.component';
 import { CpuReportComponent } from './result-detail/diags/benchmark/cpu/cpu-report/cpu-report.component';
+import { FailedReasonsComponent } from './result-detail/diags/mpi/pingpong/failed-reasons/failed-reasons.component';
+import { GoodNodesComponent } from './result-detail/diags/mpi/pingpong/good-nodes/good-nodes.component';
 
 @NgModule({
   imports: [
@@ -43,7 +45,9 @@ import { CpuReportComponent } from './result-detail/diags/benchmark/cpu/cpu-repo
     RingOverviewResultComponent,
     NodesInfoComponent,
     OverviewResultComponent,
-    CpuReportComponent
+    CpuReportComponent,
+    FailedReasonsComponent,
+    GoodNodesComponent
   ],
   entryComponents: [RingReportComponent, PingPongReportComponent, TaskDetailComponent, CpuReportComponent]
 })

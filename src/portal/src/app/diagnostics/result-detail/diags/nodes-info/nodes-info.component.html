@@ -1,27 +1,8 @@
 <div class="nodes-info">
-  <div class="overview-info">
-    <div class="overview-title">
-      <i class="material-icons title-icon">device_hub</i>
-      <div class="title-text">Nodes</div>
+  <a [routerLink]="getLink(node)" class="node" *ngFor="let node of nodes" [title]="node">
+    <div class="node-info">
+      <i class="material-icons node-icon">desktop_windows</i>
+      <div class="node-name">{{node}}</div>
     </div>
-    <div class="hint-area" *ngIf='hasData(aggregationInfo)'>
-      <div class="hint">
-        <i class="material-icons good-node">hdr_strong</i>
-        <div class="hint-text">Good Nodes</div>
-      </div>
-      <div class="hint">
-        <i class="material-icons bad-node">hdr_weak</i>
-        <div class="hint-text">Bad Nodes</div>
-      </div>
-    </div>
-    <div class="overview-value">
-      <a [routerLink]="getLink(node)" class="node" *ngFor="let node of nodes">
-        <div class="node-info">
-          <i class="material-icons good-node" *ngIf="isGood(node)">hdr_strong</i>
-          <i class="material-icons bad-node" *ngIf="isBad(node)">hdr_weak</i>
-          <div class="node-name">{{node}}</div>
-        </div>
-      </a>
-    </div>
-  </div>
+  </a>
 </div>

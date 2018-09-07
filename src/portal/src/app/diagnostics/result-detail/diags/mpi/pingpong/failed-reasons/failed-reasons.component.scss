@@ -3,10 +3,7 @@
 
 .overview-result {
   @include display-flex($justify-content: space-between);
-}
-
-.latency {
-  @include display-flex(center, center);
+  margin-top: 10px;
 }
 
 .chart-type {
@@ -33,11 +30,6 @@
   background-color: rgba(63, 81, 181, .9);
 }
 
-.overview-content {
-  @include display-flex($justify-content: flex-start);
-  width: 53%;
-}
-
 .overview-header {
   @include display-flex($align-items: flex-start);
 }
@@ -51,20 +43,12 @@
   font-size: .9em;
 }
 
-.chart-container {
-  position: relative;
-  width: 45%;
-  float: left;
-  padding-right: 1.2em;
-}
-
 .pair-name {
   padding-right: .5em;
 }
 
 .result-pair {
   flex: 2;
-  margin-left: 1.5em;
 }
 
 .mat-expansion-panel-header {
@@ -73,8 +57,7 @@
 }
 
 .mat-expansion-panel-header-title {
-  color: $color !important;
-  font-size: .9em;
+  font-size: 14px;
 }
 
 .result-pair {
@@ -83,11 +66,13 @@
 
 ::ng-deep .result-pair .mat-expansion-panel-body {
   padding: 0 0.8em 0.8em;
-  font-size: 16px; 
+  font-size: 16px; // overflow: hidden !important;
+
   .pair-area {
     max-height: 400px;
     overflow: auto;
     padding-right: 10px;
+    font-size: 13px;
   }
 }
 
@@ -98,5 +83,23 @@ mat-accordion {
 .solution {
   font-size: 0.85em;
   color: $color;
-  padding-bottom: 1em;
+}
+
+.overview-result .node-name {
+  text-decoration: none;
+}
+
+.failed-pair {
+  @include display-flex($align-items: center);
+  height: 2.5em;
+  padding: 0 1em;
+
+  &:hover {
+    background-color: #eeeeee;
+  }
+
+  .node-name {
+    margin-right: 5px;
+    text-decoration: underline;
+  }
 }

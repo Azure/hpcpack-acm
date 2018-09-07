@@ -32,7 +32,8 @@ export class PingPongReportComponent implements OnInit {
   private aggregationResult: object;
   private latencyData: any;
   private throughputData: any;
-  private nodesInfo = {};
+  public goodGroup = [];
+  public badGroup = [];
 
   private componentName = "PingPongReport";
 
@@ -64,9 +65,10 @@ export class PingPongReportComponent implements OnInit {
     if (this.aggregationResult !== undefined && this.aggregationResult !== null) {
       this.latencyData = this.aggregationResult['Latency'];
       this.throughputData = this.aggregationResult['Throughput'];
-      this.nodesInfo = { GoodNodes: this.aggregationResult['GoodNodes'], BadNodes: this.aggregationResult['BadNodes'] };
       this.failedNodes = this.aggregationResult['FailedNodes'];
       this.failedReasons = this.aggregationResult['FailedReasons'];
+      this.goodGroup = this.aggregationResult['GoodNodesGroups'];
+      this.badGroup = this.aggregationResult['BadNodes'];
     }
   }
 

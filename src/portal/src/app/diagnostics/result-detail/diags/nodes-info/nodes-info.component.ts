@@ -10,45 +10,9 @@ export class NodesInfoComponent implements OnInit {
   @Input()
   nodes: Array<any>;
 
-  @Input()
-  aggregationInfo: object;
-
   constructor() { }
 
   ngOnInit() {
-  }
-
-  hasData(data) {
-    if (isArray(data)) {
-      return data.length > 0;
-    }
-    if (isObject(data)) {
-      let keys = Object.keys(data);
-      if (keys.length == 0) {
-        return false;
-      }
-      else {
-        return keys.every(item => {
-          return data[item] !== undefined && data[item] !== null;
-        })
-      }
-    }
-    return data !== undefined && data !== null;
-  }
-
-  inGroup(node, obj, propertyName) {
-    if (this.hasData(obj) && this.hasData(obj[propertyName])) {
-      let index = obj[propertyName].findIndex(item => item == node);
-      return index == -1 ? false : true;
-    }
-  }
-
-  isGood(node) {
-    return this.inGroup(node, this.aggregationInfo, 'GoodNodes');
-  }
-
-  isBad(node) {
-    return this.inGroup(node, this.aggregationInfo, 'BadNodes');
   }
 
   getLink(node) {

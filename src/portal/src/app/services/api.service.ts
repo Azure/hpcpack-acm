@@ -303,8 +303,38 @@ export class DiagApi extends Resource<any> {
     return this.httpGet(`${this.url}?lastid=${lastId}&count=${count}&reverse=${reverse}`);
   }
 
+  normalizeAggregationRes(res) {
+    if (res.FailedNodes) {
+      let nodes = res.FailedNodes;
+      let keys = Object.keys(nodes);
+      keys.forEach(k => {
+        let reasons = Object.keys(nodes[k]);
+        reasons.forEach(r => {
+          nodes[k][r].forEach((nodePair, index) => {
+            res.FailedNodes[k][r][index] = nodePair.split(',');
+          })
+        });
+      });
+    }
+
+    if (res.FailedReasons) {
+      let reasons = res.FailedReasons;
+      reasons.forEach((r, i) => {
+        if (r.NodePairs) {
+          r.NodePairs.forEach((nodePair, index) => {
+            res.FailedReasons[i].NodePairs[index] = nodePair.split(',');
+          });
+        }
+      });
+    }
+    return res;
+  }
+
   getJobAggregationResult(id: string) {
-    return this.httpGet(`${this.url}/${id}/aggregationResult`);
+    return this.httpGet(`${this.url}/${id}/aggregationResult`, null,
+      [
+        map(e => this.normalizeAggregationRes(e))
+      ]);
   }
 
   getDiagTasksByPage(id: string, lastId, count) {

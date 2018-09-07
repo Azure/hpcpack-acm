@@ -1,50 +1,14 @@
 @import "../../../../stylesheets/mixin.scss";
 @import "../../../../stylesheets/info.scss";
-.nodes-info {
-    padding-top: 1em;
-    padding-left: 1em;
-}
 
-.overview-title {
-    @include display-flex(center);
-    .title-text {
-        padding-left: .5em;
-    }
+.nodes-info {
+  padding: 1em;
+  font-size: 13px;
+  @include display-flex($align-items: center);
+  flex-wrap: wrap;
 }
 
 .node {
-    display: inline-block;
-    padding-right: 1em;
-    padding-top: 1em;
-    width: 20%;
-    text-decoration: none;
-}
-
-.node-info {
-    @include display-flex(center);
-}
-
-.node-name {
-    text-decoration: underline;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.good-node {
-    color: #3f51b5;
-}
-
-.bad-node {
-    color: #6c727c;
-}
-
-.hint-area {
-    font-size: .8em;
-    @include display-flex(center);
-}
-
-.hint {
-    @include display-flex(center);
-    margin-right: 2em;
+  width: 20%;
+  text-decoration: none;
 }

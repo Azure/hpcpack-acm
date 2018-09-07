@@ -2,7 +2,7 @@
   <ng-template #overview>
     <mat-tab-group>
       <mat-tab label="Nodes">
-        <app-nodes-info [nodes]="nodes" [aggregationInfo]="nodesInfo"></app-nodes-info>
+        <app-nodes-info [nodes]="nodes"></app-nodes-info>
       </mat-tab>
       <mat-tab label="Events">
         <app-event-list [events]="events"></app-event-list>
@@ -12,23 +12,49 @@
           <mat-progress-bar mode="indeterminate" *ngIf="!aggregationResult"></mat-progress-bar>
         </div>
         <mat-accordion multi=true>
-          <mat-expansion-panel *ngIf="latencyData" expanded=true>
+          <mat-expansion-panel *ngIf="goodGroup" expanded=false>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Good Nodes Groups
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <pingpong-good-nodes [nodeGroups]="goodGroup" class="overview-data">
+            </pingpong-good-nodes>
+          </mat-expansion-panel>
+          <mat-expansion-panel *ngIf="badGroup" expanded=false>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Bad Nodes
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <app-nodes-info [nodes]="badGroup">
+            </app-nodes-info>
+          </mat-expansion-panel>
+          <mat-expansion-panel *ngIf="failedReasons" expanded=false>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                Failed Reasons
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <pingpong-failed-reasons [nodes]="nodes" [failedNodes]="failedNodes" [failedReasons]="failedReasons" class="overview-data"></pingpong-failed-reasons>
+          </mat-expansion-panel>
+          <mat-expansion-panel *ngIf="latencyData" expanded=false>
             <mat-expansion-panel-header>
               <mat-panel-title>
                 Latency
               </mat-panel-title>
             </mat-expansion-panel-header>
-            <pingpong-overview-result [result]="latencyData" [nodes]="nodes" [failedNodes]="failedNodes" [failedReasons]="failedReasons"
-              class="overview-data"></pingpong-overview-result>
+            <pingpong-overview-result [result]="latencyData" [nodes]="nodes" [failedNodes]="failedNodes"
+              [failedReasons]="failedReasons" class="overview-data"></pingpong-overview-result>
           </mat-expansion-panel>
-          <mat-expansion-panel *ngIf="throughputData" expanded=true>
+          <mat-expansion-panel *ngIf="throughputData" expanded=false>
             <mat-expansion-panel-header>
               <mat-panel-title>
                 Throughput
               </mat-panel-title>
             </mat-expansion-panel-header>
-            <pingpong-overview-result [result]="throughputData" [nodes]="nodes" [failedNodes]="failedNodes" [failedReasons]="failedReasons"
-              class="overview-data"></pingpong-overview-result>
+            <pingpong-overview-result [result]="throughputData" [nodes]="nodes" [failedNodes]="failedNodes"
+              [failedReasons]="failedReasons" class="overview-data"></pingpong-overview-result>
           </mat-expansion-panel>
         </mat-accordion>
       </mat-tab>
@@ -41,7 +67,8 @@
   </ng-template>
 
   <ng-template #task>
-    <diag-task-table [dataSource]="dataSource" [loadFinished]='loadFinished' [currentData]="currentData" [customizableColumns]="customizableColumns"
-      [maxPageSize]="pageSize" [tableName]="componentName" (updateLastIdEvent)="onUpdateLastIdEvent($event)"></diag-task-table>
+    <diag-task-table [dataSource]="dataSource" [loadFinished]='loadFinished' [currentData]="currentData"
+      [customizableColumns]="customizableColumns" [maxPageSize]="pageSize" [tableName]="componentName"
+      (updateLastIdEvent)="onUpdateLastIdEvent($event)"></diag-task-table>
   </ng-template>
 </app-result-layout>
