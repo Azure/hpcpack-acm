@@ -60,6 +60,11 @@
                  {
                      await this.RunAsync(token);
                  }
+                 catch (OperationCanceledException)
+                 {
+                     if (token.IsCancellationRequested) return;
+                     else throw;
+                 }
                  catch (Exception ex)
                  {
                      Console.Error.WriteLine(ex);

@@ -79,9 +79,13 @@
                 job.State = finalState;
             }
 
-            this.Logger.Information("JobFinisher, job {0}, saving result", job.Id);
-            var jobOutputBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(job.Type, this.Utilities.GetJobAggregationResultKey(job.Id), token);
-            await jobOutputBlob.AppendTextAsync(aggregationResult, Encoding.UTF8, null, null, null, token);
+            this.Logger.Information("JobFinisher, job {0}, saving result, length {1}", job.Id, aggregationResult?.Length);
+
+            if (aggregationResult != null)
+            {
+                var jobOutputBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(job.Type, this.Utilities.GetJobAggregationResultKey(job.Id), token);
+                await jobOutputBlob.AppendTextAsync(aggregationResult, Encoding.UTF8, null, null, null, token);
+            }
 
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
