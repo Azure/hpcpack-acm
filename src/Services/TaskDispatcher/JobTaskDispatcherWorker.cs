@@ -43,7 +43,7 @@
             {
                 this.job = await this.jobsTable.RetrieveAsync<Job>(this.jobPartitionKey, this.Utilities.JobEntryKey, token);
             }
-            catch(StorageException ex)
+            catch (StorageException ex)
             {
                 if (ex.InnerException is OperationCanceledException)
                 {
@@ -198,9 +198,20 @@
             foreach (var t in tasks)
             {
                 var tt = this.tasksDict[t.Id];
-                this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} on {4} completed, child ids {5}", job.Type, job.Id, job.RequeueCount, t.Id, tt.Node, string.Join(",", this.tasksDict[t.Id].ChildIds));
+                this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} on {4} completed, timeout {5}, child ids {6}", job.Type, job.Id, job.RequeueCount, t.Id, tt.Node, t.Timeouted, string.Join(",", this.tasksDict[t.Id].ChildIds));
                 tt.State = t.ExitCode == 0 ? TaskState.Finished : TaskState.Failed;
             }
+
+            await T.Task.WhenAll(tasks.Where(t => t.Timeouted).Select(async t =>
+            {
+                var key = this.Utilities.GetTaskKey(job.Id, t.Id, job.RequeueCount);
+
+                await this.Utilities.UpdateTaskAsync(this.jobPartitionKey, key, task =>
+                {
+                    task.State = task.State != TaskState.Canceled && task.State != TaskState.Failed && task.State != TaskState.Finished ? TaskState.Canceled : task.State;
+                },
+                token);
+            }));
 
             var completedCount = this.tasksDict.Count(t => t.Value.State == TaskState.Canceled || t.Value.State == TaskState.Finished || t.Value.State == TaskState.Failed);
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
@@ -345,10 +356,32 @@
                     }
                     else
                     {
-                        var queue = this.Utilities.GetNodeDispatchQueue(childTask.Node);
-                        await queue.AddMessageAsync(
-                            new CloudQueueMessage(JsonConvert.SerializeObject(new TaskEventMessage() { EventVerb = "start", Id = childTask.Id, JobId = childTask.JobId, JobType = childTask.JobType, RequeueCount = job.RequeueCount }, Formatting.Indented)),
-                            null, null, null, null, token);
+                        async T.Task dispatch()
+                        {
+                            var dispatchQueue = this.Utilities.GetNodeDispatchQueue(childTask.Node);
+                            await dispatchQueue.AddMessageAsync(
+                                new CloudQueueMessage(JsonConvert.SerializeObject(new TaskEventMessage() { EventVerb = "start", Id = childTask.Id, JobId = childTask.JobId, JobType = childTask.JobType, RequeueCount = job.RequeueCount }, Formatting.Indented)),
+                                TimeSpan.FromSeconds(childTask.MaximumRuntimeSeconds), null, null, null, token);
+                        };
+
+                        async T.Task cancel()
+                        {
+                            var cancelQueue = this.Utilities.GetNodeCancelQueue(childTask.Node);
+                            //cancelQueue.AddMessageAsync();
+                            await cancelQueue.AddMessageAsync(
+                                new CloudQueueMessage(JsonConvert.SerializeObject(new TaskEventMessage() { EventVerb = "cancel", Id = childTask.Id, JobId = childTask.JobId, JobType = childTask.JobType, RequeueCount = job.RequeueCount }, Formatting.Indented)),
+                                null, TimeSpan.FromSeconds(childTask.MaximumRuntimeSeconds), null, null, token);
+                        };
+
+                        async T.Task complete()
+                        {
+                            var jobTaskCompletionQueue = this.Utilities.GetJobTaskCompletionQueue(job.Id);
+                            await jobTaskCompletionQueue.AddMessageAsync(
+                                new CloudQueueMessage(JsonConvert.SerializeObject(new TaskCompletionMessage() { ChildIds = childTask.ChildIds, ExitCode = -1, Id = childTask.Id, JobId = childTask.JobId, JobType = childTask.JobType, RequeueCount = childTask.RequeueCount, Timeouted = true }, Formatting.Indented)),
+                                null, TimeSpan.FromSeconds(childTask.MaximumRuntimeSeconds), null, null, token);
+                        };
+
+                        await T.Task.WhenAll(dispatch(), cancel(), complete());
                         this.Logger.Information("Dispatched job {0} task {1} to node {2}", childTask.JobId, childTask.Id, childTask.Node);
                     }
                 }
