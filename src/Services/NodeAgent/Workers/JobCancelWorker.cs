@@ -70,7 +70,7 @@
             }
             catch (Exception ex)
             {
-                this.Logger.Error("Exception occurred when process {0}, {1}, {2}, {3}", message.EventVerb, message.JobId, message.Id, ex);
+                this.Logger.Error("Exception occurred when process {0}, {1}, {2}, on node {3} {4}", message.EventVerb, message.JobId, message.Id, this.ServerOptions.HostName, ex);
                 await this.Utilities.UpdateJobAsync(message.JobType, message.JobId, j =>
                 {
                     j.State = JobState.Failed;

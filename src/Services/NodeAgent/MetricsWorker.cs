@@ -45,10 +45,9 @@
             long currentMinute = 0;
             while (!token.IsCancellationRequested)
             {
-                await T.Task.Delay(TimeSpan.FromSeconds(this.workerOptions.MetricsIntervalSeconds), token);
-
                 try
                 {
+                    await T.Task.Delay(TimeSpan.FromSeconds(this.workerOptions.MetricsIntervalSeconds), token);
                     var nodeName = this.ServerOptions.HostName;
 
                     // TODO: different frequency
@@ -125,6 +124,10 @@
                             continue;
                         }
                     }
+                }
+                catch (OperationCanceledException)
+                {
+                    continue;
                 }
                 catch (Exception ex)
                 {
