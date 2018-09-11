@@ -5,11 +5,17 @@ import { of } from 'rxjs/observable/of';
 import { catchError, map } from 'rxjs/operators';
 import 'rxjs/add/operator/first';
 import { environment as env } from '../../environments/environment';
-import { Node } from '../models/node';
-import { CommandResult } from '../models/command-result';
+import { Node } from '../models/resource/node';
+import { CommandResult } from '../models/command/command-result';
 import { TestResult } from '../models/test-result';
-import { HeatmapNode } from '../models/heatmap-node';
+import { HeatmapNode } from '../models/resource/heatmap-node';
 import 'rxjs/add/operator/concatMap';
+import { ListNode } from '../models/resource/node-list';
+import { ListJob } from '../models/diagnostics/list-job';
+import { ClusrunJob } from '../models/command/clusrun-job';
+import { DiagJobDetail } from '../models/diagnostics/job-detail';
+import { AggregationResult } from '../models/diagnostics/aggregation-result';
+import { DiagListTask } from '../models/diagnostics/list-task';
 
 export abstract class Resource<T> {
   protected get baseUrl() {
@@ -56,8 +62,22 @@ export class NodeApi extends Resource<Node> {
     return `${this.baseUrl}/nodes`;
   }
 
-  getNodesByPage(lastId, count): Observable<any> {
-    return this.httpGet(`${this.url}?lastid=${lastId}&count=${count}`);
+  private normalizeListNodes(e): ListNode[] {
+    let res = e.map(item => {
+      let nodeRegistrationInfo = {
+        distroInfo: item.nodeRegistrationInfo.distroInfo,
+        memoryMegabytes: item.nodeRegistrationInfo.memoryMegabytes
+      };
+      item.nodeRegistrationInfo = nodeRegistrationInfo;
+      return item;
+    });
+    return res;
+  }
+
+  getNodesByPage(lastId, count): Observable<ListNode[]> {
+    return this.httpGet(`${this.url}?lastid=${lastId}&count=${count}`, null, [
+      map(e => this.normalizeListNodes(e))
+    ]);
   }
 
   getHistoryData(id: string): Observable<any> {
@@ -110,19 +130,32 @@ export class CommandApi extends Resource<CommandResult> {
   }
 
   protected normalize(result: any): CommandResult {
-    result.state = result.state.toLowerCase();
-    result.command = result['commandLine'];
-    if (result['results']) {
-      result.nodes = result['results'].map(e => {
-        let odd = e.results[0];
-        return {
-          name: e.nodeName,
-          state: odd.taskInfo ? (odd.taskInfo.exitCode == 0 ? 'finished' : 'failed') : 'running',
-          key: odd.resultKey,
-        };
-      }).sort((a, b) => (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)));
-    }
-    return result;
+    return {
+      id: result.id,
+      commandLine: result.commandLine,
+      state: result.state.toLowerCase(),
+      targetNodes: result.targetNodes
+    } as CommandResult;
+  }
+
+  normalizeJobs(data) {
+    let jobs = data.map(item => {
+      return {
+        id: item.id,
+        command: item.commandLine,
+        state: item.state.toLowerCase(),
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        progress: item.progress
+      } as ClusrunJob
+    });
+    return jobs;
+  }
+
+  getJobsByPage(params?: any): Observable<ClusrunJob[]> {
+    return this.httpGet(this.url, params, [
+      map(data => this.normalizeJobs(data)),
+    ]);
   }
 
   create(commandLine: string, targetNodes: string[]): any {
@@ -252,15 +285,15 @@ export class DiagApi extends Resource<any> {
   getCreatedTime() {
     let date = new Date();
     let year = date.getFullYear();
-    let month = this.fomateDateNumber(date.getMonth() + 1);
-    let day = this.fomateDateNumber(date.getDate());
-    let hour = this.fomateDateNumber(date.getHours());
-    let minutes = this.fomateDateNumber(date.getMinutes());
-    let seconds = this.fomateDateNumber(date.getSeconds());
+    let month = this.formatDateNumber(date.getMonth() + 1);
+    let day = this.formatDateNumber(date.getDate());
+    let hour = this.formatDateNumber(date.getHours());
+    let minutes = this.formatDateNumber(date.getMinutes());
+    let seconds = this.formatDateNumber(date.getSeconds());
     return `${year}-${month}-${day} ${hour}:${minutes}:${seconds}`;
   }
 
-  fomateDateNumber(num) {
+  formatDateNumber(num) {
     if (num > 9) {
       return num;
     }
@@ -288,6 +321,7 @@ export class DiagApi extends Resource<any> {
     }
     return { treeData: data, rawData: result };
   }
+
   getDiagTests() {
     let url = `${this.url}/tests`;
     return this.httpGet(url, null, [
@@ -296,14 +330,50 @@ export class DiagApi extends Resource<any> {
   }
 
   getDiagJob(id: string) {
-    return this.httpGet(`${this.url}/${id}`);
+    return this.httpGet(`${this.url}/${id}`, null, [
+      map(e => this.normalizeJob(e))
+    ]);
   }
 
-  getDiagsByPage(lastId, count, reverse) {
-    return this.httpGet(`${this.url}?lastid=${lastId}&count=${count}&reverse=${reverse}`);
+  normalizeJob(e): DiagJobDetail {
+    return {
+      id: e.id,
+      name: e.name,
+      progress: e.progress,
+      state: e.state,
+      targetNodes: e.targetNodes,
+      diagnosticTest: {
+        name: e.diagnosticTest.name,
+        category: e.diagnosticTest.category
+      }
+    } as DiagJobDetail
   }
 
-  normalizeAggregationRes(res) {
+  getDiagsByPage(lastId, count, reverse): Observable<ListJob[]> {
+    return this.httpGet(`${this.url}?lastid=${lastId}&count=${count}&reverse=${reverse}`, null, [
+      map(e => this.normalizeJobs(e))
+    ]);
+  }
+
+  normalizeJobs(e): ListJob[] {
+    let jobs = e.map(item => {
+      return {
+        id: item.id,
+        name: item.name,
+        state: item.state,
+        progress: item.progress,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        diagnosticTest: {
+          name: item.diagnosticTest.name,
+          category: item.diagnosticTest.category
+        }
+      } as ListJob
+    });
+    return jobs;
+  }
+
+  normalizeAggregationRes(res): any {
     if (res.FailedNodes) {
       let nodes = res.FailedNodes;
       let keys = Object.keys(nodes);
@@ -327,6 +397,32 @@ export class DiagApi extends Resource<any> {
         }
       });
     }
+
+    if (res.GoodNodesGroups) {
+      return {
+        BadNodes: res.BadNodes,
+        FailedNodes: res.FailedNodes,
+        FailedReasons: res.FailedReasons,
+        GoodNodesGroups: res.GoodNodesGroups,
+        Latency: res.Latency,
+        Throughput: res.Throughput
+      } as AggregationResult;
+    }
+
+    if (res.Html) {
+      return {
+        Html: res.Html
+      };
+    }
+
+    if (res.passed) {
+      return {
+        passed: res.passed,
+        Latency: res.Latency,
+        Throughput: res.Throughput
+      };
+    }
+
     return res;
   }
 
@@ -338,7 +434,21 @@ export class DiagApi extends Resource<any> {
   }
 
   getDiagTasksByPage(id: string, lastId, count) {
-    return this.httpGet(`${this.url}/${id}/tasks?lastid=${lastId}&count=${count}`);
+    return this.httpGet(`${this.url}/${id}/tasks?lastid=${lastId}&count=${count}`, null, [
+      map(e => this.normalizeListTask(e))
+    ]);
+  }
+
+  normalizeListTask(data): DiagListTask[] {
+    let tasks = data.map(item => {
+      return {
+        id: item.id,
+        customizedData: item.customizedData,
+        state: item.state,
+        jobId: item.jobId
+      } as DiagListTask;
+    });
+    return tasks;
   }
 
 
@@ -348,7 +458,7 @@ export class DiagApi extends Resource<any> {
         if (ApiService.isJSON(item.message)) {
           item.message = JSON.parse(item.message);
         }
-        return item;
+        return { message: item.message };
       }),
     ]);
   }

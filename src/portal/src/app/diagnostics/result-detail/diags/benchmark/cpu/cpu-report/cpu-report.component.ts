@@ -28,7 +28,7 @@ export class CpuReportComponent implements OnInit {
   private tasks = [];
   private events = [];
   private nodes = [];
-  private aggregationResult: any;
+  public aggregationResult: any;
 
   private componentName = "cpuReport";
 

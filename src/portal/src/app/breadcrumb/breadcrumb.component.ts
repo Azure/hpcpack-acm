@@ -9,7 +9,7 @@ import { filter } from "rxjs/operators";
   styleUrls: ['./breadcrumb.component.css']
 })
 export class BreadcrumbComponent implements OnInit {
-  private breadcrumbs = [];
+  public breadcrumbs = [];
 
   private subcription: Subscription;
 

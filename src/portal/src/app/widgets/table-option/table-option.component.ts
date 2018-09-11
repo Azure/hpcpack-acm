@@ -6,9 +6,8 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
   styleUrls: ['./table-option.component.scss']
 })
 export class TableOptionComponent implements OnInit {
-  private options: any[];
-
-  private selected: any[];
+  public options: any[];
+  public selected: any[];
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any) {
     this.options = data.columns.filter(e => !e.displayed);

@@ -26,18 +26,18 @@ export class ResultListComponent implements OnInit, OnDestroy {
 
   private availableColumns;
 
-  private dataSource = new MatTableDataSource();
-  private displayedColumns = ['id', 'test', 'diagnostic', 'category', 'progress', 'state', 'createdAt', 'lastChangedAt'];
+  public dataSource = new MatTableDataSource();
+  public displayedColumns = ['id', 'test', 'diagnostic', 'category', 'progress', 'state', 'createdAt', 'lastChangedAt'];
 
   private selection = new SelectionModel(true, []);
   private interval: number;
   private diagsLoop: Object;
   private lastId = 0;
-  private maxPageSize = 120;
+  public maxPageSize = 120;
   private reverse = true;
-  private currentData = [];
-  private scrolled = false;
-  private loadFinished = false;
+  public currentData = [];
+  public scrolled = false;
+  public loadFinished = false;
 
   constructor(
     private api: ApiService,
@@ -91,7 +91,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
     }
   }
 
-  private onScrollEvent(data) {
+  public onScrollEvent(data) {
     this.lastId = data.dataIndex < 0 ? 0 : this.dataSource.data[data.dataIndex]['id'];
     this.loadFinished = data.loadFinished;
     this.scrolled = data.scrolled;

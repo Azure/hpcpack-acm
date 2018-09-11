@@ -9,7 +9,7 @@ import { FormControl, Validators, FormGroup } from '@angular/forms';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
-  private errorMsg: string;
+  public errorMsg: string;
   constructor(public authService: AuthService, public router: Router) {
   }
 
@@ -17,7 +17,9 @@ export class LoginComponent {
     return this.authService.isLoggedIn;
   }
 
-  private hide = true;
+  public hide = true;
+  public username: string;
+  public pwd: string;
 
   login(username, pwd) {
     if (username == undefined || pwd == undefined) {

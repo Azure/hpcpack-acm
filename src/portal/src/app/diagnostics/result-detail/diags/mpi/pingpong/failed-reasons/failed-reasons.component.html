@@ -41,7 +41,7 @@
       </mat-expansion-panel-header>
       <div class="node-info solution" *ngIf="r.Solution">
         <i class="material-icons node-icon">lightbulb_outline</i>
-        <div class="node-name">{{r.Solution}}</div>
+        <div class="node-name solution-text">{{r.Solution}}</div>
       </div>
       <div *ngIf="r.NodePairs" class="pair-area">
         <div *ngFor="let pr of r.NodePairs" class="failed-pair">

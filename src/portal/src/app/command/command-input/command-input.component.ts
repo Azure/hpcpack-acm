@@ -6,12 +6,12 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
   styleUrls: ['./command-input.component.css']
 })
 export class CommandInputComponent implements OnInit {
-  private command: string = '';
+  public command: string = '';
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any) {
     this.command = data.command;
   }
 
-  ngOnInit() {}
+  ngOnInit() { }
 
 }

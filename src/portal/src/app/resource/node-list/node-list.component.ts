@@ -16,11 +16,11 @@ import { TableDataService } from '../../services/table-data/table-data.service';
   styleUrls: ['./node-list.component.scss']
 })
 export class NodeListComponent {
-  private query = { filter: '' };
+  public query = { filter: '' };
 
   private subcription: Subscription;
 
-  private dataSource: MatTableDataSource<any> = new MatTableDataSource();
+  public dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
   static customizableColumns = [
     { name: 'health', displayName: 'Health', displayed: true, },
@@ -33,16 +33,16 @@ export class NodeListComponent {
 
   private availableColumns;
 
-  private displayedColumns;
+  public displayedColumns;
 
   private selection = new SelectionModel(true, []);
 
   private lastId = 0;
   private nodeLoop: object;
-  private maxPageSize = 120;
-  private currentData = [];
-  private scrolled = false;
-  private loadFinished = false;
+  public maxPageSize = 120;
+  public currentData = [];
+  public scrolled = false;
+  public loadFinished = false;
   private interval = 5000;
   private loading = false;
   private scrollDirection = 'down';
@@ -90,7 +90,7 @@ export class NodeListComponent {
     this.subcription.unsubscribe();
   }
 
-  private onScrollEvent(data) {
+  public onScrollEvent(data) {
     this.lastId = data.dataIndex == -1 ? 0 : this.dataSource.data[data.dataIndex]['id'];
     this.loadFinished = data.loadFinished;
     this.scrolled = data.scrolled;

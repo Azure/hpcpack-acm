@@ -9,14 +9,14 @@ import { Observable } from 'rxjs';
   styleUrls: ['./node-heatmap.component.scss']
 })
 export class NodeHeatmapComponent implements OnInit, OnDestroy {
-  private nodes = [];
-  private categories = [];
+  public nodes = [];
+  public categories = [];
   private interval: number;
-  private selectedCategory: string;
+  public selectedCategory: string;
   private heatmapLoop: Object;
   private categoryWays = { cpu: ['By Node', 'By Core'] };
-  private ways = [];
-  private activeMode;
+  public ways = [];
+  public activeMode;
 
   constructor(
     private api: ApiService

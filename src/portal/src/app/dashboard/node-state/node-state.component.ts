@@ -12,7 +12,7 @@ export class NodeStateComponent implements OnInit, OnChanges {
   @Input() stateIcon: string;
   @Input() total: number;
 
-  private loading = true;
+  public loading = true;
 
   nodesInfo() {
     this.router.navigate(['..', 'resource'], { relativeTo: this.route, queryParams: { filter: this.state } });

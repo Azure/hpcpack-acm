@@ -15,7 +15,7 @@ export class TaskErrorComponent implements OnInit {
   ngOnInit() {
   }
 
-  private close() {
+  public close() {
     this.dialogRef.close();
   }
 }

@@ -26,7 +26,7 @@ export class RingReportComponent implements OnInit {
   private jobState: string;
   private events = [];
   private nodes = [];
-  private aggregationResult: any;
+  public aggregationResult: any;
 
 
   private componentName = "RingReport";

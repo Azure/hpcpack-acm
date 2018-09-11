@@ -83,6 +83,13 @@ mat-accordion {
 .solution {
   font-size: 0.85em;
   color: $color;
+  height: auto !important;
+  align-items: flex-start !important;
+}
+
+.solution-text {
+  overflow: visible !important;
+  white-space: pre-wrap !important;
 }
 
 .overview-result .node-name {

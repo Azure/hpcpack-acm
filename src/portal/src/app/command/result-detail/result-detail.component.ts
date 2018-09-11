@@ -22,9 +22,9 @@ export class ResultDetailComponent implements OnInit {
   @ViewChild('output')
   private output: CommandOutputComponent;
 
-  private id: string;
+  public id: string;
 
-  private result: any;
+  public result: any;
 
   private gotTasks: boolean = false;
 
@@ -46,7 +46,7 @@ export class ResultDetailComponent implements OnInit {
 
   private outputPageSize = 8192;
 
-  private canceling = false;
+  public canceling = false;
 
   constructor(
     private route: ActivatedRoute,

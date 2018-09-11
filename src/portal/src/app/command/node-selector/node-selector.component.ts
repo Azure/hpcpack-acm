@@ -29,11 +29,11 @@ export class NodeSelectorComponent implements OnChanges {
     return this.nodeOutputs && this.nodeOutputs[node.name] && this.nodeOutputs[node.name]['error'] !== '';
   }
 
-  private states = ['all', 'queued', 'running', 'finished', 'failed', 'canceled'];
+  public states = ['all', 'queued', 'running', 'finished', 'failed', 'canceled'];
 
-  private displayedColumns = ['name', 'state'];
+  public displayedColumns = ['name', 'state'];
 
-  private dataSource = new MatTableDataSource();
+  public dataSource = new MatTableDataSource();
 
   constructor(
     private jobStateService: JobStateService,
@@ -58,7 +58,7 @@ export class NodeSelectorComponent implements OnChanges {
     return node && this.selectedNode && node.name === this.selectedNode.name;
   }
 
-  private filter() {
+  public filter() {
     let res = this.nodes.filter(e => {
       if (this.state != 'all' && e.state != this.state)
         return false;

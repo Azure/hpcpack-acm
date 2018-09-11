@@ -8,9 +8,9 @@ import { NodeFilterBuilderComponent } from '../../widgets/node-filter-builder/no
   styleUrls: ['./new-command.component.css']
 })
 export class NewCommandComponent implements OnInit {
-  private command: string = '';
+  public command: string = '';
 
-  constructor(public dialog: MatDialogRef<NewCommandComponent>) {}
+  constructor(public dialog: MatDialogRef<NewCommandComponent>) { }
 
   ngOnInit() {
   }

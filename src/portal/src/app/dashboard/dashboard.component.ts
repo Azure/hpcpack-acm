@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ApiService, Loop } from "../services/api.service";
+import { DashboardNodes } from '../models/dashboard/dashboard-nodes';
+import { DashboardJobs } from '../models/dashboard/dashboard-jobs';
 
 @Component({
   selector: 'app-dashboard',
@@ -12,11 +14,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private api: ApiService
   ) { }
 
-  private nodes = {};
-  private totalNodes = 0;
+  public nodes: DashboardNodes;
+  public totalNodes = 0;
 
-  private diags = {};
-  private clusrun = {};
+  public diags: DashboardJobs;
+  public clusrun: DashboardJobs;
   private nodesLoop: object;
   private diagsLoop: object;
   private clusrunLoop: object;

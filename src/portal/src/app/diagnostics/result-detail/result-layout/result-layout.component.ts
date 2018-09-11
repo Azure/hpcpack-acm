@@ -17,7 +17,7 @@ export class ResultLayoutComponent implements OnInit {
   @Input()
   aggregationResult: any;
 
-  private done = false;
+  public done = false;
   private showOverview = false;
 
   @ContentChild('task')
@@ -26,7 +26,7 @@ export class ResultLayoutComponent implements OnInit {
   @ContentChild('overview')
   overviewTemplate: TemplateRef<any>;
 
-  private stateClass(state) {
+  public stateClass(state) {
     return this.jobStateService.stateClass(state);
   }
 
@@ -53,7 +53,7 @@ export class ResultLayoutComponent implements OnInit {
       }
     }
   }
-  private canceling = false;
+  public canceling = false;
 
   cancelDiag() {
     let dialogRef = this.dialog.open(ConfirmDialogComponent, {

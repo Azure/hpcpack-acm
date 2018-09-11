@@ -14,7 +14,7 @@ import { TableDataService } from '../../services/table-data/table-data.service';
 })
 export class ResultListComponent implements OnInit {
 
-  private dataSource = new MatTableDataSource();
+  public dataSource = new MatTableDataSource();
 
   static customizableColumns = [
     { name: 'createdAt', displayName: 'Created', displayed: true },
@@ -26,18 +26,18 @@ export class ResultListComponent implements OnInit {
 
   private availableColumns;
 
-  private displayedColumns;
+  public displayedColumns;
 
   private selection = new SelectionModel(true, []);
 
   private lastId = 0;
 
   private commandLoop: object;
-  private maxPageSize = 120;
+  public maxPageSize = 120;
   private reverse = true;
-  private currentData = [];
-  private scrolled = false;
-  private loadFinished = false;
+  public currentData = [];
+  public scrolled = false;
+  public loadFinished = false;
   private interval = 2000;
 
   private loading = false;
@@ -79,7 +79,7 @@ export class ResultListComponent implements OnInit {
     }
   }
 
-  private onScrollEvent(data) {
+  public onScrollEvent(data) {
     this.lastId = data.dataIndex == -1 ? 0 : this.dataSource.data[data.dataIndex]['id'];
     this.loadFinished = data.loadFinished;
     this.scrolled = data.scrolled;
@@ -92,7 +92,7 @@ export class ResultListComponent implements OnInit {
 
 
   private getCommandRequest() {
-    return this.api.command.getAll({ lastId: this.lastId, count: this.maxPageSize, reverse: this.reverse });
+    return this.api.command.getJobsByPage({ lastId: this.lastId, count: this.maxPageSize, reverse: this.reverse });
   }
 
   private hasNoSelection(): boolean {

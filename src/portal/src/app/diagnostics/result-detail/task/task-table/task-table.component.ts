@@ -21,7 +21,7 @@ export class TaskTableComponent implements OnInit {
   @Input()
   customizableColumns: any;
 
-  private displayedColumns: any;
+  public displayedColumns: any;
 
   @Input()
   dataSource: any;
@@ -38,7 +38,7 @@ export class TaskTableComponent implements OnInit {
   @Output()
   updateLastIdEvent = new EventEmitter();
 
-  private scrolled = false;
+  public scrolled = false;
   private direction = 'down';
 
   private availableColumns;
@@ -56,7 +56,7 @@ export class TaskTableComponent implements OnInit {
     this.getDisplayedColumns();
   }
 
-  private onScrollEvent(data) {
+  public onScrollEvent(data) {
     this.loadFinished = data.loadFinished;
     this.scrolled = data.scrolled;
     this.direction = data.direction;

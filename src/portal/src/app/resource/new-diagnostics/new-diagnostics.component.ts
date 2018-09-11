@@ -14,13 +14,13 @@ import { Subscription } from 'rxjs';
 export class NewDiagnosticsComponent implements OnInit, OnDestroy {
   @ViewChild('tree') tree;
 
-  private tests = [];
+  public tests = [];
   private nodeFilter: string = '';
-  private selectedDescription: string;
+  public selectedDescription: string;
   private testInfoLink: string;
-  private errorMessage: string;
-  private diagTestName: string;
-  private selectedTest: any;
+  public errorMessage: string;
+  public diagTestName: string;
+  public selectedTest: any;
   private selectedTestWithParameters: any;
   private paraForm: FormGroup;
   private ctlConfig = {};
@@ -163,7 +163,7 @@ export class NewDiagnosticsComponent implements OnInit, OnDestroy {
   clearErrorMsg() {
     this.errorMessage = "";
   }
-  
+
   close() {
     this.dialogRef.close();
   }

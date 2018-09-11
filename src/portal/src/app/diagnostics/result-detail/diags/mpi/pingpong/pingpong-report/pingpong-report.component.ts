@@ -29,7 +29,7 @@ export class PingPongReportComponent implements OnInit {
   private nodes = [];
   private failedNodes: any;
   private failedReasons: any;
-  private aggregationResult: object;
+  public aggregationResult: object;
   private latencyData: any;
   private throughputData: any;
   public goodGroup = [];

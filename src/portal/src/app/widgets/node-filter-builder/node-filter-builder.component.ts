@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 
 @Component({
   selector: 'app-node-filter-builder',
@@ -7,17 +7,17 @@ import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
   styleUrls: ['./node-filter-builder.component.css']
 })
 export class NodeFilterBuilderComponent implements OnInit {
-  private states = ['online', 'offline'];
+  public states = ['online', 'offline'];
 
-  private healths = ['ok', 'error'];
+  public healths = ['ok', 'error'];
 
-  private groups = ['HeadNode', 'WorkerNode'];
+  public groups = ['HeadNode', 'WorkerNode'];
 
   private filter: string = '';
-  private name: string;
-  private state: string;
-  private health: string;
-  private group: string;
+  public name: string;
+  public state: string;
+  public health: string;
+  public group: string;
 
   constructor(
     public dialogRef: MatDialogRef<NodeFilterBuilderComponent>,

@@ -2,11 +2,12 @@ import { Component, AfterViewInit, OnInit, OnDestroy, ViewChild } from '@angular
 import { ActivatedRoute } from '@angular/router';
 import { MatTableDataSource } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
-import { Node } from '../../models/node';
+import { Node } from '../../models/resource/node';
 import { ApiService, Loop } from '../../services/api.service';
 import { ChartComponent } from 'angular2-chartjs';
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { DateFormatterService } from '../../services/date-formatter/date-formatter.service';
+import { MetaDataCompute } from '../../models/resource/metadata-compute';
 
 @Component({
   selector: 'app-node-detail',
@@ -21,7 +22,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
   cpuData: any = {};
 
-  private metricDate: string;
+  public metricDate: string;
 
   cpuOptions = {
     responsive: true,
@@ -146,11 +147,10 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
 
   private cpuCoresName = [];
 
-  private nodeInfo = {};
+  public nodeInfo: Node;
 
-  private nodeRegistrationInfo = {};
+  public compute: MetaDataCompute;
 
-  private compute = {};
   private nodeId: string;
 
   constructor(
@@ -171,7 +171,6 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     //get node Info
     this.api.node.get(this.nodeId).subscribe(result => {
       this.nodeInfo = result;
-      this.nodeRegistrationInfo = result["nodeRegistrationInfo"];
     });
 
     //get node metadata
@@ -235,8 +234,8 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     return this.jobStateService.stateClass(state);
   }
 
-  private dataSource = new MatTableDataSource();
-  private displayedColumns = ['id', 'created', 'content', 'type', 'state', 'progress', 'updated'];
+  public dataSource = new MatTableDataSource();
+  public displayedColumns = ['id', 'created', 'content', 'type', 'state', 'progress', 'updated'];
 
   getJobContent(job) {
     if (job.type == 'ClusRun') {

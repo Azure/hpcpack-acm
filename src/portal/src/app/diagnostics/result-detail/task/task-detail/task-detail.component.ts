@@ -10,9 +10,9 @@ import { ApiService } from '../../../../services/api.service';
 export class TaskDetailComponent implements OnInit {
 
   private msg = [];
-  private message: any;
+  public message: any;
   private result = {};
-  private hasResult = true;
+  public hasResult = true;
   private taskState = "";
 
   constructor(
@@ -36,7 +36,7 @@ export class TaskDetailComponent implements OnInit {
     }
   }
 
-  private close() {
+  public close() {
     this.dialogRef.close();
   }
 

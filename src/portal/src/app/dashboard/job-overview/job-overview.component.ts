@@ -12,9 +12,9 @@ export class JobOverviewComponent implements OnInit, OnChanges {
   @Input() jobCategory: string;
   @Output() autoNew = new EventEmitter();
 
-  private totalJobs = 0;
-  private activeJobs = 0;
-  private loading = true;
+  public totalJobs = 0;
+  public activeJobs = 0;
+  public loading = true;
 
   private labels = [
     'Queued',

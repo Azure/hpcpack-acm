@@ -34,7 +34,7 @@ export class MainComponent {
         },
     ];
 
-    private get items(): any[] {
+    public get items(): any[] {
         return MainComponent.items;
     }
 
@@ -91,11 +91,11 @@ export class MainComponent {
         return (this.authService.isLoggedIn || localStorage.getItem('isLoggedIn') == 'true') && this.router.url !== '/login';
     }
 
-    private get userName(): string {
+    public get userName(): string {
         return this.authService.username;
     }
 
-    private logout(): void {
+    public logout(): void {
         this.authService.logout();
         this.router.navigate(['/login']);
     }
