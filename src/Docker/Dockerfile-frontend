@@ -1,4 +1,5 @@
 FROM evancui/hpcacm:latest as final
+EXPOSE 443
 WORKDIR /app/Frontend
-ENTRYPOINT ["dotnet", "Frontend.dll"]
+ENTRYPOINT ["/bin/bash", "/app/scripts/start-frontend.sh"]
 

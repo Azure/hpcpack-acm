@@ -1,7 +1,5 @@
 FROM evancui/hpcacm:latest as final
-RUN echo "\ndaemon off;" >> /etc/nginx/nginx.conf
-COPY startportal.sh /app/portal/startportal.sh
-RUN chmod +x /app/portal/startportal.sh
+EXPOSE 443
 WORKDIR /app/portal
-ENTRYPOINT ["./startportal.sh"]
+ENTRYPOINT ["/bin/bash", "/app/scripts/start-portal.sh"]
 
