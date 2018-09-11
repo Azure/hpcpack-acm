@@ -5,7 +5,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --disable-host-check --poll 2000",
-    "build": "ng build",
+    "build": "ng build --prod",
     "test": "ng test --sourcemap --poll 2000",
     "lint": "ng lint",
     "e2e": "ng e2e"
