@@ -74,18 +74,19 @@ export class JobOverviewComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     this.totalJobs = 0;
     this.activeJobs = 0;
-    let states = Object.keys(this.jobs);
-    if (states.length > 0) {
-      this.loading = false;
-      for (let i = 0; i < states.length; i++) {
-        this.totalJobs += this.jobs[states[i]];
-        if (states[i] !== 'Finished' && states[i] !== 'Failed' && states[i] !== 'Canceled') {
-          this.activeJobs += this.jobs[states[i]];
+    if (this.jobs) {
+      let states = Object.keys(this.jobs);
+      if (states.length > 0) {
+        this.loading = false;
+        for (let i = 0; i < states.length; i++) {
+          this.totalJobs += this.jobs[states[i]];
+          if (states[i] !== 'Finished' && states[i] !== 'Failed' && states[i] !== 'Canceled') {
+            this.activeJobs += this.jobs[states[i]];
+          }
         }
+        this.generateChartData(this.jobs);
       }
-      this.generateChartData(this.jobs);
     }
-
   }
 
   generateChartData(jobs) {
