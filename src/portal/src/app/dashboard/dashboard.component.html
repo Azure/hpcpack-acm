@@ -1,13 +1,13 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-lg-4">
-      <dashboard-node-state state="OK" [total]="totalNodes" stateIcon="lightbulb_outline" [stateNum]="nodes.OK"></dashboard-node-state>
+      <dashboard-node-state state="OK" [total]="totalNodes" stateIcon="lightbulb_outline" [stateNum]="nodes?.OK"></dashboard-node-state>
     </div>
     <div class="col-lg-4">
-      <dashboard-node-state state="Warning" [total]="totalNodes" stateIcon="alarm" [stateNum]="nodes.Warning"></dashboard-node-state>
+      <dashboard-node-state state="Warning" [total]="totalNodes" stateIcon="alarm" [stateNum]="nodes?.Warning"></dashboard-node-state>
     </div>
     <div class="col-lg-4">
-      <dashboard-node-state state="Error" [total]="totalNodes" stateIcon="do_not_disturb" [stateNum]="nodes.Error"></dashboard-node-state>
+      <dashboard-node-state state="Error" [total]="totalNodes" stateIcon="do_not_disturb" [stateNum]="nodes?.Error"></dashboard-node-state>
     </div>
   </div>
   <div class="row">
