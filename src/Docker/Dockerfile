@@ -30,7 +30,7 @@ WORKDIR /src
 COPY portal/ portal/
 WORKDIR /src/portal
 RUN npm install
-RUN ng build
+RUN ng build --prod
 
 FROM evancui/hpcacm:runtime AS final
 WORKDIR /app/scripts
