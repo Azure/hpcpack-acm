@@ -91,6 +91,7 @@ export class NewDiagnosticsComponent implements OnInit, OnDestroy {
       }
     }
     node.data.checked = checked;
+    this._sub = new Array<Subscription>();
     if (checked) {
       this.selectedTest = node.data;
       let paras = this.selectedTest.parameters;

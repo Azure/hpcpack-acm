@@ -37,7 +37,7 @@ class ApiServiceStub {
   static results = [{ command: 'a command', state: 'finished' }]
 
   command = {
-    getAll: () => of(ApiServiceStub.results),
+    getJobsByPage: () => of(ApiServiceStub.results),
   }
 }
 

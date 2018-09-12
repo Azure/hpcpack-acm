@@ -32,8 +32,8 @@ export class PingPongReportComponent implements OnInit {
   public aggregationResult: object;
   private latencyData: any;
   private throughputData: any;
-  public goodGroup = [];
-  public badGroup = [];
+  public goodGroups: Array<any>;
+  public badNodes: Array<any>;
 
   private componentName = "PingPongReport";
 
@@ -54,10 +54,6 @@ export class PingPongReportComponent implements OnInit {
 
   ngOnInit() {
     this.jobId = this.result.id;
-    if (this.result.aggregationResult !== undefined) {
-      this.aggregationResult = this.result.aggregationResult;
-      this.updateOverviewData();
-    }
     this.tasksLoop = this.getTasksInfo();
   }
 
@@ -67,8 +63,8 @@ export class PingPongReportComponent implements OnInit {
       this.throughputData = this.aggregationResult['Throughput'];
       this.failedNodes = this.aggregationResult['FailedNodes'];
       this.failedReasons = this.aggregationResult['FailedReasons'];
-      this.goodGroup = this.aggregationResult['GoodNodesGroups'];
-      this.badGroup = this.aggregationResult['BadNodes'];
+      this.goodGroups = this.aggregationResult['GoodNodesGroups'];
+      this.badNodes = this.aggregationResult['BadNodes'];
     }
   }
 

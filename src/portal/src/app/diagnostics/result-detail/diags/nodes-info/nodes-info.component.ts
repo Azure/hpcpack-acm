@@ -10,6 +10,9 @@ export class NodesInfoComponent implements OnInit {
   @Input()
   nodes: Array<any>;
 
+  @Input()
+  badNodes: Array<any>;
+
   constructor() { }
 
   ngOnInit() {
@@ -20,5 +23,12 @@ export class NodesInfoComponent implements OnInit {
     path.push('/resource');
     path.push(node);
     return path;
+  }
+
+  isBad(node) {
+    if (this.badNodes) {
+      return this.badNodes.indexOf(node) !== -1;
+    }
+    return false;
   }
 }

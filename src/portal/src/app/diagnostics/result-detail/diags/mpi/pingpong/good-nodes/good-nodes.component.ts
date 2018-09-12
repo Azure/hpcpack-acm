@@ -5,15 +5,10 @@ import { Component, OnInit, Input } from '@angular/core';
   templateUrl: './good-nodes.component.html',
   styleUrls: ['./good-nodes.component.scss']
 })
-export class GoodNodesComponent implements OnInit {
+export class GoodNodesComponent {
   @Input()
   nodeGroups: any;
 
-  public groups = [];
   constructor() { }
-
-  ngOnInit() {
-    this.groups = this.nodeGroups;
-  }
 
 }

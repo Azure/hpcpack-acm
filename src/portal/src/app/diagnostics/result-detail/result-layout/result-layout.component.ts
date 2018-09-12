@@ -14,11 +14,7 @@ export class ResultLayoutComponent implements OnInit {
   @Input()
   result: any;
 
-  @Input()
-  aggregationResult: any;
-
   public done = false;
-  private showOverview = false;
 
   @ContentChild('task')
   taskTemplate: TemplateRef<any>;
@@ -48,9 +44,6 @@ export class ResultLayoutComponent implements OnInit {
   isDone() {
     if (this.result.state == "Failed" || this.result.state == "Finished" || this.result.state == "Canceled") {
       this.done = true;
-      if (this.aggregationResult !== undefined && this.aggregationResult !== null) {
-        this.showOverview = true;
-      }
     }
   }
   public canceling = false;

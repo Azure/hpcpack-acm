@@ -16,12 +16,6 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
   @Input()
   nodes: any;
 
-  @Input()
-  failedNodes: any;
-
-  @Input()
-  failedReasons: any;
-
   activeMode = "total";
   overviewData: any = {};
   bestPairs = [];
@@ -46,8 +40,6 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
   selectedNode: string;
 
   normal = true;
-  failure = [];
-  reasons = [];
 
   constructor(private cd: ChangeDetectorRef) { }
 
@@ -70,8 +62,6 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
       if (this.activeMode == 'total') {
         this.overviewResult = this.result.Result;
         this.normal = true;
-        this.failure = [];
-        this.reasons = this.failedReasons;
       }
       else {
         if (this.selectedNode in this.result.ResultByNode) {
@@ -80,12 +70,6 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
         }
         else {
           this.normal = false;
-        }
-        if (this.failedNodes[this.selectedNode]) {
-          this.failure = Object.keys(this.failedNodes[this.selectedNode]);
-        }
-        else {
-          this.failure = [];
         }
       }
       this.packetSize = this.result['Packet_size'];

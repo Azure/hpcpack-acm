@@ -1,7 +1,8 @@
 <div class="nodes-info">
   <a [routerLink]="getLink(node)" class="node" *ngFor="let node of nodes" [title]="node">
-    <div class="node-info">
-      <i class="material-icons node-icon">desktop_windows</i>
+    <div class="node-info" [ngClass]="{failed:isBad(node)}">
+      <i class="material-icons node-icon" *ngIf="!isBad(node)">desktop_windows</i>
+      <i class="material-icons node-icon" *ngIf="isBad(node)">block</i>
       <div class="node-name">{{node}}</div>
     </div>
   </a>
