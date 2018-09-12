@@ -24,6 +24,24 @@ class PingPongOverviewResultComponent {
   result: any;
 }
 
+@Component({ selector: 'pingpong-good-nodes', template: '' })
+class GoodNodesComponent {
+  @Input()
+  nodeGroups;
+}
+
+@Component({ selector: 'pingpong-failed-reasons', template: '' })
+class FailedReasonsComponent {
+  @Input()
+  failedNodes: any;
+
+  @Input()
+  failedReasons: any;
+
+  @Input()
+  nodes: any;
+}
+
 @Component({ selector: 'app-event-list', template: '' })
 class EventListComponent {
   @Input()
@@ -136,7 +154,9 @@ fdescribe('PingPongReportComponent', () => {
         DiagTaskTableComponent,
         EventListComponent,
         NodesInfoComponent,
-        WrapperComponent
+        WrapperComponent,
+        GoodNodesComponent,
+        FailedReasonsComponent
       ],
       imports: [MaterialsModule, NoopAnimationsModule],
       providers: [
