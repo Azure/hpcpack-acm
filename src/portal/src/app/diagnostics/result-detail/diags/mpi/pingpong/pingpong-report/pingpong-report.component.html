@@ -1,67 +1,41 @@
-<app-result-layout [result]="result" [aggregationResult]="aggregationResult">
+<app-result-layout [result]="result">
   <ng-template #overview>
     <mat-tab-group>
-      <mat-tab label="Nodes">
-        <app-nodes-info [nodes]="nodes"></app-nodes-info>
-      </mat-tab>
-      <mat-tab label="Events">
-        <app-event-list [events]="events"></app-event-list>
-      </mat-tab>
-      <mat-tab label="Statistics" *ngIf="!hasError">
-        <div class="overview-progress">
-          <mat-progress-bar mode="indeterminate" *ngIf="!aggregationResult"></mat-progress-bar>
-        </div>
-        <mat-accordion multi=true>
-          <mat-expansion-panel *ngIf="goodGroup" expanded=false>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Good Nodes Groups
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <pingpong-good-nodes [nodeGroups]="goodGroup" class="overview-data">
-            </pingpong-good-nodes>
-          </mat-expansion-panel>
-          <mat-expansion-panel *ngIf="badGroup" expanded=false>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Bad Nodes
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <app-nodes-info [nodes]="badGroup">
-            </app-nodes-info>
-          </mat-expansion-panel>
-          <mat-expansion-panel *ngIf="failedReasons" expanded=false>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Failed Reasons
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <pingpong-failed-reasons [nodes]="nodes" [failedNodes]="failedNodes" [failedReasons]="failedReasons" class="overview-data"></pingpong-failed-reasons>
-          </mat-expansion-panel>
-          <mat-expansion-panel *ngIf="latencyData" expanded=false>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Latency
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <pingpong-overview-result [result]="latencyData" [nodes]="nodes" [failedNodes]="failedNodes"
-              [failedReasons]="failedReasons" class="overview-data"></pingpong-overview-result>
-          </mat-expansion-panel>
-          <mat-expansion-panel *ngIf="throughputData" expanded=false>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Throughput
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <pingpong-overview-result [result]="throughputData" [nodes]="nodes" [failedNodes]="failedNodes"
-              [failedReasons]="failedReasons" class="overview-data"></pingpong-overview-result>
-          </mat-expansion-panel>
-        </mat-accordion>
-      </mat-tab>
       <mat-tab label="Error" *ngIf="hasError">
         <div class="error-message">
           {{aggregationResult.Error}}
         </div>
+      </mat-tab>
+      <mat-tab label="Latency" *ngIf="!hasError">
+        <div class="overview-progress">
+          <mat-progress-bar mode="indeterminate" *ngIf="!latencyData"></mat-progress-bar>
+        </div>
+        <pingpong-overview-result [result]="latencyData" [nodes]="nodes" class="overview-data" *ngIf="latencyData"></pingpong-overview-result>
+      </mat-tab>
+      <mat-tab label="Throughput" *ngIf="!hasError">
+        <div class="overview-progress">
+          <mat-progress-bar mode="indeterminate" *ngIf="!throughputData"></mat-progress-bar>
+        </div>
+        <pingpong-overview-result [result]="throughputData" [nodes]="nodes" class="overview-data" *ngIf="throughputData"></pingpong-overview-result>
+      </mat-tab>
+      <mat-tab label="Nodes Diagnostic" *ngIf="!hasError">
+        <div class="overview-progress">
+          <mat-progress-bar mode="indeterminate" *ngIf="!failedReasons"></mat-progress-bar>
+        </div>
+        <pingpong-failed-reasons [nodes]="nodes" [failedNodes]="failedNodes" [failedReasons]="failedReasons" class="overview-data"
+          *ngIf="failedReasons"></pingpong-failed-reasons>
+      </mat-tab>
+      <mat-tab label="Nodes Groups" *ngIf="!hasError">
+        <div class="overview-progress">
+          <mat-progress-bar mode="indeterminate" *ngIf="!goodGroups"></mat-progress-bar>
+        </div>
+        <pingpong-good-nodes [nodeGroups]="goodGroups" class="overview-data" *ngIf="goodGroups"></pingpong-good-nodes>
+      </mat-tab>
+      <mat-tab label="Nodes">
+        <app-nodes-info [nodes]="nodes" [badNodes]="badNodes"></app-nodes-info>
+      </mat-tab>
+      <mat-tab label="Events">
+        <app-event-list [events]="events"></app-event-list>
       </mat-tab>
     </mat-tab-group>
   </ng-template>

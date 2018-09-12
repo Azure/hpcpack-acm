@@ -37,7 +37,7 @@ class NodesInfoComponent {
   nodes: Array<any>;
 
   @Input()
-  aggregationInfo: object;
+  badNodes: Array<any>;
 }
 
 @Component({ selector: 'ring-overview-result', template: '' })

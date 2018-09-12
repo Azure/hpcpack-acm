@@ -1,5 +1,5 @@
 <mat-accordion multi=true class="groups">
-  <mat-expansion-panel *ngFor="let g of groups; index as i">
+  <mat-expansion-panel *ngFor="let g of nodeGroups; index as i" expanded=true>
     <mat-expansion-panel-header>
       <mat-panel-title>
         <div>Group {{i}} ----<span class="nodes-number"> {{g.length}} </span>nodes </div>

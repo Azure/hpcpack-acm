@@ -1,12 +1,6 @@
-<app-result-layout [result]="result" [aggregationResult]="aggregationResult">
+<app-result-layout [result]="result">
   <ng-template #overview>
     <mat-tab-group>
-      <mat-tab label="Nodes">
-        <app-nodes-info [nodes]="nodes"></app-nodes-info>
-      </mat-tab>
-      <mat-tab label="Events">
-        <app-event-list [events]="events"></app-event-list>
-      </mat-tab>
       <mat-tab label="Result" *ngIf="!hasError">
         <cpu-overview-result [result]="aggregationResult" *ngIf="aggregationResult"></cpu-overview-result>
         <div class="overview-progress">
@@ -17,6 +11,12 @@
         <div class="error-message">
           {{aggregationResult.Error}}
         </div>
+      </mat-tab>
+      <mat-tab label="Nodes">
+        <app-nodes-info [nodes]="nodes" [badNodes]="undefined"></app-nodes-info>
+      </mat-tab>
+      <mat-tab label="Events">
+        <app-event-list [events]="events"></app-event-list>
       </mat-tab>
     </mat-tab-group>
   </ng-template>

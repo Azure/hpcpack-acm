@@ -40,35 +40,10 @@ export class ResultDetailComponent implements OnInit {
       )
       .subscribe(result => {
         this.result = result;
-        if (result.state == 'Finished' || result.state == 'Failed' || result.state == 'Canceled') {
-          this.getAggregationResult();
-        }
-        else {
-          this.loadComponent();
-        }
+        this.loadComponent();
       });
   }
 
-  getAggregationResult() {
-    this.api.diag.getJobAggregationResult(this.result.id).subscribe(
-      res => {
-        this.result.aggregationResult = res;
-        this.loadComponent();
-      },
-      err => {
-        let errInfo = err;
-        if (ApiService.isJSON(err)) {
-          if (err.error) {
-            errInfo = err.error;
-          }
-          else {
-            errInfo = JSON.stringify(err);
-          }
-        }
-        this.result.aggregationResult = { Error: errInfo };
-        this.loadComponent();
-      });
-  }
 
   ngOnDestroy() {
     if (this.subcription) {
