@@ -35,6 +35,7 @@
             {
                 svc.Configure<JobEventWorkerGroupOptions>(config.GetSection(nameof(JobEventWorkerGroupOptions)));
                 svc.Configure<TaskItemSourceOptions>(config.GetSection(nameof(TaskItemSourceOptions)));
+                svc.Configure<ScriptSynchronizerOptions>(config.GetSection(nameof(ScriptSynchronizerOptions)));
                 svc.AddTransient<JobCanceler>();
                 svc.AddTransient<JobDispatcher>();
                 svc.AddTransient<JobFinisher>();
@@ -43,6 +44,7 @@
                 svc.AddTransient<JobEventWorker>();
 
                 svc.AddSingleton<IWorker, JobEventWorkerGroup>();
+                svc.AddSingleton<IWorker, ScriptSynchronizer>();
             });
     }
 }
