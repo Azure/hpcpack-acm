@@ -12,6 +12,7 @@
         public int Id { get; set; }
         public int RequeueCount { get; set; }
         public int? ExitCode { get; set; }
+        public bool Timeouted { get; set; } = false;
         public List<int> ChildIds { get; set; }
     }
 }

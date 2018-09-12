@@ -34,7 +34,7 @@
             this.Monitor = monitor;
         }
 
-        private async T.Task<bool> PersistTaskResult(string resultKey, object result,  CancellationToken token)
+        private async T.Task<bool> PersistTaskResult(string resultKey, object result, CancellationToken token)
         {
             var results = await T.Task.WhenAll(
                 this.jobsTable.InsertOrReplaceAsync(this.jobPartitionKey, resultKey, result, token),
@@ -77,53 +77,60 @@
             }
 
             var task = await this.jobsTable.RetrieveAsync<Task>(this.jobPartitionKey, taskKey, token);
-            var taskInfo = await this.jobsTable.RetrieveAsync<TaskStartInfo>(this.jobPartitionKey, taskInfoKey, token);
 
-            var cmd = task.CommandLine;
-            Logger.Information("Executing command {0}", cmd);
+            int? exitCode = null;
 
-            CloudAppendBlob taskResultBlob = null;
-            var rawResult = new StringBuilder();
-            using (var monitor = string.IsNullOrEmpty(cmd) ? null : this.Monitor.StartMonitorTask(taskKey, async (output, eof, cancellationToken) =>
+            try
             {
-                try
+                var cmd = task.CommandLine;
+                if (task.State != TaskState.Dispatching && task.State != TaskState.Running)
                 {
-                    if (rawResult.Length < MaxRawResultLength)
-                    {
-                        rawResult.Append(output);
-                    }
-
-                    if (taskResultBlob == null) taskResultBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(jobType, taskResultKey, cancellationToken);
-                    await taskResultBlob.AppendTextAsync(output, Encoding.UTF8, null, null, null, cancellationToken);
-
-                    if (eof)
-                    {
-                        taskResultBlob.Metadata[TaskOutputPage.EofMark] = eof.ToString();
-                        await taskResultBlob.SetMetadataAsync(null, null, null, cancellationToken);
-                    }
+                    Logger.Information("Job {0} task {1} state {2}, skip Executing command {3}", jobId, taskId, task.State, cmd);
+                    return true;
                 }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, "Error happened when append to blob {0}", taskResultBlob.Name);
-                }
-            }))
-            {
-                DateTimeOffset startTime = DateTimeOffset.UtcNow;
-                var taskResult = new ComputeClusterTaskInformation()
-                {
-                    CommandLine = cmd,
-                    JobId = jobId,
-                    TaskId = taskId,
-                    NodeName = nodeName,
-                    ResultKey = taskResultKey,
-                    StartTime = startTime,
-                };
 
-                if (!await this.PersistTaskResult(taskResultKey, taskResult, token)) { return false; }
-                int? exitCode = null;
+                var taskInfo = await this.jobsTable.RetrieveAsync<TaskStartInfo>(this.jobPartitionKey, taskInfoKey, token);
+                Logger.Information("Executing command {0}", cmd);
 
-                try
+                CloudAppendBlob taskResultBlob = null;
+                var rawResult = new StringBuilder();
+                using (var monitor = string.IsNullOrEmpty(cmd) ? null : this.Monitor.StartMonitorTask(taskKey, async (output, eof, cancellationToken) =>
                 {
+                    try
+                    {
+                        if (rawResult.Length < MaxRawResultLength)
+                        {
+                            rawResult.Append(output);
+                        }
+
+                        if (taskResultBlob == null) taskResultBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(jobType, taskResultKey, cancellationToken);
+                        await taskResultBlob.AppendTextAsync(output, Encoding.UTF8, null, null, null, cancellationToken);
+
+                        if (eof)
+                        {
+                            taskResultBlob.Metadata[TaskOutputPage.EofMark] = eof.ToString();
+                            await taskResultBlob.SetMetadataAsync(null, null, null, cancellationToken);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, "Error happened when append to blob {0}", taskResultBlob.Name);
+                    }
+                }))
+                {
+                    DateTimeOffset startTime = DateTimeOffset.UtcNow;
+                    var taskResult = new ComputeClusterTaskInformation()
+                    {
+                        CommandLine = cmd,
+                        JobId = jobId,
+                        TaskId = taskId,
+                        NodeName = nodeName,
+                        ResultKey = taskResultKey,
+                        StartTime = startTime,
+                    };
+
+                    if (!await this.PersistTaskResult(taskResultKey, taskResult, token)) { return false; }
+
                     logger.Information("Call startjobandtask for task {0}", taskKey);
                     taskInfo.StartInfo.stdout = $"{this.Communicator.Options.AgentUriBase}/output/{taskKey}";
 
@@ -193,22 +200,22 @@
                         if (!await this.PersistTaskResult(taskResultKey, taskResult, token)) { return false; }
                     }
                 }
-                finally
+            }
+            finally
+            {
+                var queue = this.Utilities.GetJobTaskCompletionQueue(jobId);
+                logger.Information("Adding task completion message");
+                await queue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(new TaskCompletionMessage()
                 {
-                    var queue = this.Utilities.GetJobTaskCompletionQueue(jobId);
-                    logger.Information("Adding task completion message");
-                    await queue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(new TaskCompletionMessage()
-                    {
-                        JobId = jobId,
-                        Id = taskId,
-                        ExitCode = exitCode,
-                        JobType = jobType,
-                        RequeueCount = requeueCount,
-                        ChildIds = task.ChildIds,
-                    }, Formatting.Indented)), null, null, null, null, token);
+                    JobId = jobId,
+                    Id = taskId,
+                    ExitCode = exitCode,
+                    JobType = jobType,
+                    RequeueCount = requeueCount,
+                    ChildIds = task.ChildIds,
+                }, Formatting.Indented)), null, null, null, null, token);
 
-                    logger.Information("Finished");
-                }
+                logger.Information("Finished");
             }
 
             return true;

@@ -41,5 +41,7 @@
         public List<int> ChildIds { get; set; }
         public string ZippedParentIds { get; set; }
         public HashSet<int> RemainingParentIds { get; set; }
+
+        public int MaximumRuntimeSeconds { get; set; } = 300;
     }
 }
