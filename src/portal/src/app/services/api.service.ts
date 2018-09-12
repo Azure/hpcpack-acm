@@ -114,7 +114,43 @@ export class NodeApi extends Resource<Node> {
   }
 
   getNodeJobs(id: string): Observable<any> {
-    return this.httpGet(`${this.url}/${id}/jobs`);
+    return this.httpGet(`${this.url}/${id}/jobs`, null, [
+      map(e => this.normalizeJobs(e))
+    ]);
+  }
+
+
+  normalizeJobs(e) {
+    let jobs = e.map(item => {
+      if (item.type == 'Diagnostics') {
+        return {
+          id: item.id,
+          name: item.name,
+          state: item.state,
+          progress: item.progress,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          type: item.type,
+          diagnosticTest: {
+            name: item.diagnosticTest.name,
+            category: item.diagnosticTest.category
+          }
+        }
+      }
+      else {
+        return {
+          id: item.id,
+          name: item.name,
+          state: item.state,
+          commandLine: item.commandLine,
+          progress: item.progress,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          type: item.type
+        }
+      }
+    });
+    return jobs;
   }
 }
 
