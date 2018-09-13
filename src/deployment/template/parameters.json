@@ -50,7 +50,7 @@
     "location": {
       "value": "eastus"
     },
-    "newOrExisting": {
+    "newOrExistingStorage": {
       "value": "existing"
     },
     "storageAccountType": {
