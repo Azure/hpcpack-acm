@@ -192,6 +192,10 @@
                             },
                             "environmentVariables":[
                                 {
+                                    "name": "ServerOptions__Password",
+                                    "secureValue": "[parameters('rootPassword')]"
+                                },
+                                {
                                     "name": "CloudOptions__Storage__AccountName",
                                     "value": "[parameters('storageAccountName')]"
                                 },
