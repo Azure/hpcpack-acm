@@ -79,13 +79,13 @@
 
             if (!diagTestTree.tree.Exists(n => n.path == script.Name))
             {
-                this.Logger.Warning("Cannot find script file {0} under diag test folder {1}", script.Name, path);
+                this.Logger.Warning("    Cannot find script file {0} under diag test folder {1}", script.Name, path);
                 return false;
             }
 
+            this.Logger.Information("    Uploading script {0}", script.Name);
             var scriptContent = await this.GetAsync<string>($"{this.syncOptions.GitHubContentBase}/src/Diagnostics/{path}/{script.Name}", token);
-            var blob = await this.Utilities.GetOrCreateAppendBlobAsync(script.ContainerName, script.Name, token);
-            await blob.UploadTextAsync(scriptContent, Encoding.UTF8, null, null, null, token);
+            await this.Utilities.UploadToBlockBlobAsync(script.ContainerName, script.Name, scriptContent, token);
             return true;
         }
 
@@ -105,6 +105,13 @@
                     continue;
                 }
 
+                var tokens = jsonFileNode.path.Split('-', '.');
+                if (tokens.Length < 3)
+                {
+                    this.Logger.Warning("Cannot infer the category and test name from the json file name {0}, skip the test {1}", jsonFileNode.path, diagTestNode.path);
+                    continue;
+                }
+
                 var jsonContent = await this.GetAsync<InternalDiagnosticsTest>($"{this.syncOptions.GitHubContentBase}/src/Diagnostics/{diagTestNode.path}/{jsonFileNode.path}", token);
 
                 var scriptsResults = await T.Task.WhenAll(
@@ -117,13 +124,6 @@
                 if (!uploaded)
                 {
                     this.Logger.Warning("At least one of the script uploading error, skip the test {0}", diagTestNode.path);
-                    continue;
-                }
-
-                var tokens = jsonFileNode.path.Split('-', '.');
-                if (tokens.Length < 3)
-                {
-                    this.Logger.Warning("Cannot infer the category and test name from the json file name {0}, skip the test {1}", jsonFileNode.path, diagTestNode.path);
                     continue;
                 }
 

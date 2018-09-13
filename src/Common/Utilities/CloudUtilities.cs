@@ -179,6 +179,15 @@
             return jobContainer.GetAppendBlobReference(blobName);
         }
 
+        public async T.Task<CloudBlockBlob> UploadToBlockBlobAsync(string containerName, string blobName, string content, CancellationToken token)
+        {
+            var jobContainer = this.blobClient.GetContainerReference(containerName);
+            await jobContainer.CreateIfNotExistsAsync(BlobContainerPublicAccessType.Blob, null, null, token);
+            var blob = jobContainer.GetBlockBlobReference(blobName);
+            await blob.UploadTextAsync(content, Encoding.UTF8, null, null, null, token);
+            return blob;
+        }
+
         public async T.Task<CloudAppendBlob> GetOrCreateAppendBlobAsync(string containerName, string blobName, CancellationToken token)
         {
             var jobContainer = this.blobClient.GetContainerReference(containerName);

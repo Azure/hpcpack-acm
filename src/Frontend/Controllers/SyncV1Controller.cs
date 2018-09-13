@@ -13,7 +13,7 @@
 
         public SyncScriptV1Controller(DataProvider provider) { this.provider = provider; }
 
-        [HttpPost("sync")]
+        [HttpPost()]
         public Task<IActionResult> Sync(CancellationToken token) => this.provider.RequestScriptSyncAsync(token);
     }
 }
