@@ -2,10 +2,53 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "dnsNameLabel": {
+            "type": "string",
+            "metadata": {
+                "description": "The DSN name label"
+            },
+            "defaultValue": "hpcacm"
+        },
         "rootPassword": {
             "type": "securestring",
             "metadata": {
                 "description": "Password for the root account"
+            }
+        },
+        "newOrExistingStorage": {
+            "type":"string",
+            "defaultValue": "new",
+            "allowedValues": [
+                "new", "existing"
+            ],
+            "metadata": {
+                "description": "Whether to create the storage account."
+            }
+        },
+        "storageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_ZRS"
+            ],
+            "metadata": {
+                "description": "Storage Account type"
+            }
+        },
+        "storageAccountResourceGroup": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Storage Account Resource Group Name"
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "[uniquestring(resourceGroup().id)]",
+            "metadata": {
+                "description": "Storage Account Name"
             }
         },
         "frontendGroupName": {
@@ -85,13 +128,6 @@
             },
             "defaultValue": "evancui/hpcacm:dashboard"
         },
-        "dnsNameLabel": {
-            "type": "string",
-            "metadata": {
-                "description": "The DSN name label"
-            },
-            "defaultValue": "hpcacm"
-        },
         "cpuCores": {
             "type": "string",
             "metadata": {
@@ -112,48 +148,12 @@
             "metadata": {
                 "description": "Location for all resources."
             }
-        },
-        "newOrExisting": {
-            "type":"string",
-            "defaultValue": "new",
-            "allowedValues": [
-                "new", "existing"
-            ],
-            "metadata": {
-                "description": "Whether to create the storage account."
-            }
-        },
-        "storageAccountType": {
-            "type": "string",
-            "defaultValue": "Standard_LRS",
-            "allowedValues": [
-                "Standard_LRS",
-                "Standard_GRS",
-                "Standard_ZRS"
-            ],
-            "metadata": {
-                "description": "Storage Account type"
-            }
-        },
-        "storageAccountResourceGroup": {
-            "type": "string",
-            "defaultValue": "[resourceGroup().name]",
-            "metadata": {
-                "description": "Storage Account Resource Group Name"
-            }
-        },
-        "storageAccountName": {
-            "type": "string",
-            "defaultValue": "[uniquestring(resourceGroup().id)]",
-            "metadata": {
-                "description": "Storage Account Name"
-            }
         }
     },
     "variables": {},
     "resources": [
         {
-            "condition": "[equals(parameters('newOrExisting'), 'new')]",
+            "condition": "[equals(parameters('newOrExistingStorage'), 'new')]",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[parameters('storageAccountName')]",
             "apiVersion": "2017-10-01",
