@@ -313,7 +313,7 @@
     "outputs": {
         "portalUri": {
             "type": "string",
-            "value": "[concat('https://', reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('frontendGroupName'))).ipAddress.fqdn, '/']"
+            "value": "[concat('https://', reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('frontendGroupName'))).ipAddress.fqdn, '/')]"
         }
     }
 }
