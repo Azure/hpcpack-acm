@@ -2,6 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "rootPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the root account"
+            }
+        },
         "frontendGroupName": {
             "type": "string",
             "defaultValue": "hpcacmfrontendgroup",
@@ -9,54 +15,26 @@
                 "description": "Name for the frontend container group"
             }
         },
-        "frontendname": {
+        "frontendName": {
             "type": "string",
             "metadata": {
                 "description": "Name for the frontend container"
             },
             "defaultValue": "frontend"
         },
-        "frontendimagename": {
+        "frontendImageName": {
             "type": "string",
             "metadata": {
                 "description": "Name for the frontend image"
             },
             "defaultValue": "evancui/hpcacm:frontend"
         },
-        "frontendport": {
+        "frontendPort": {
             "type": "string",
             "metadata": {
                 "description": "Port to open on the frontend container and the public IP address."
             },
-            "defaultValue": "5000"
-        },
-        "portalname": {
-            "type": "string",
-            "metadata": {
-                "description": "Name for the portal container"
-            },
-            "defaultValue": "portal"
-        },
-        "portalimagename": {
-            "type": "string",
-            "metadata": {
-                "description": "Name for the portal image"
-            },
-            "defaultValue": "evancui/hpcacm:portal"
-        },
-        "portaldnsnamelabel": {
-            "type": "string",
-            "metadata": {
-                "description": "The portal DNS name label"
-            },
-            "defaultValue": "portal"
-        },
-        "portalport": {
-            "type": "string",
-            "metadata": {
-                "description": "Port to open on the portal container and the public IP address."
-            },
-            "defaultValue": "8080"
+            "defaultValue": "443"
         },
         "backendGroupName": {
             "type": "string",
@@ -65,49 +43,49 @@
                 "description": "Name for the backend container group"
             }
         },
-        "jobmonitorname": {
+        "jobMonitorName": {
             "type": "string",
             "metadata": {
                 "description": "Name for the jobmonitor container"
             },
             "defaultValue": "jobmonitor"
         },
-        "jobmonitorimagename": {
+        "jobMonitorImageName": {
             "type": "string",
             "metadata": {
                 "description": "Name for the jobmonitor image"
             },
             "defaultValue": "evancui/hpcacm:jobmonitor"
         },
-        "taskdispatchername": {
+        "taskDispatcherName": {
             "type": "string",
             "metadata": {
                 "description": "Name for the taskdispatcher container"
             },
             "defaultValue": "taskdispatcher"
         },
-        "taskdispatcherimagename": {
+        "taskDispatcherImageName": {
             "type": "string",
             "metadata": {
                 "description": "Name for the taskdispatcher image"
             },
             "defaultValue": "evancui/hpcacm:taskdispatcher"
         },
-        "dashboardname": {
+        "dashboardName": {
             "type": "string",
             "metadata": {
                 "description": "Name for the dashboard container"
             },
             "defaultValue": "dashboard"
         },
-        "dashboardimagename": {
+        "dashboardImageName": {
             "type": "string",
             "metadata": {
                 "description": "Name for the dashboard image"
             },
             "defaultValue": "evancui/hpcacm:dashboard"
         },
-        "dnsnamelabel": {
+        "dnsNameLabel": {
             "type": "string",
             "metadata": {
                 "description": "The DSN name label"
@@ -197,40 +175,13 @@
             "properties": {
                 "containers": [
                     {
-                        "name": "[parameters('portalname')]",
+                        "name": "[parameters('frontendName')]",
                         "properties": {
                             "command": [],
-                            "image": "[parameters('portalimagename')]",
+                            "image": "[parameters('frontendImageName')]",
                             "ports": [
                                 {
-                                    "port": "[parameters('portalport')]"
-                                },
-                                {
-                                    "port": "80"
-                                }
-                            ],
-                            "resources": {
-                                "requests": {
-                                    "cpu": "[parameters('cpuCores')]",
-                                    "memoryInGB": "[parameters('memoryInGb')]"
-                                }
-                            },
-                            "environmentVariables":[
-                                {
-                                    "name": "apibase",
-                                    "value": "[concat('http://', parameters('dnsnamelabel'), '.', parameters('location'), '.azurecontainer.io:5000/v1')]"
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "name": "[parameters('frontendname')]",
-                        "properties": {
-                            "command": [],
-                            "image": "[parameters('frontendimagename')]",
-                            "ports": [
-                                {
-                                    "port": "[parameters('frontendport')]"
+                                    "port": "[parameters('frontendPort')]"
                                 }
                             ],
                             "resources": {
@@ -247,6 +198,14 @@
                                 {
                                     "name": "CloudOptions__Storage__KeyValue",
                                     "secureValue": "[listKeys(resourceId(parameters('storageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                },
+                                {
+                                    "name": "fqdn",
+                                    "value": "[concat(parameters('dnsNameLabel'), '.', parameters('location'), '.azurecontainer.io')]"
+                                },
+                                {
+                                    "name": "apibase",
+                                    "value": "[concat('https://', parameters('dnsNameLabel'), '.', parameters('location'), '.azurecontainer.io/v1')]"
                                 }
                             ]
                         }
@@ -256,19 +215,11 @@
                 "restartPolicy": "OnFailure",
                 "ipAddress": {
                     "type": "Public",
-                    "dnsNameLabel": "[parameters('dnsnamelabel')]",
+                    "dnsNameLabel": "[parameters('dnsNameLabel')]",
                     "ports": [
                         {
                             "protocol": "TCP",
-                            "port": "80"
-                        },
-                        {
-                            "protocol": "TCP",
-                            "port": "[parameters('portalport')]"
-                        },
-                        {
-                            "protocol": "TCP",
-                            "port": "[parameters('frontendport')]"
+                            "port": "[parameters('frontendPort')]"
                         }
                     ]
                 }
@@ -285,10 +236,10 @@
             "properties": {
                 "containers": [
                     {
-                        "name": "[parameters('dashboardname')]",
+                        "name": "[parameters('dashboardName')]",
                         "properties": {
                             "command": [],
-                            "image": "[parameters('dashboardimagename')]",
+                            "image": "[parameters('dashboardImageName')]",
                             "resources": {
                                 "requests": {
                                     "cpu": "[parameters('cpuCores')]",
@@ -308,10 +259,10 @@
                         }
                     },
                     {
-                        "name": "[parameters('taskdispatchername')]",
+                        "name": "[parameters('taskDispatcherName')]",
                         "properties": {
                             "command": [],
-                            "image": "[parameters('taskdispatcherimagename')]",
+                            "image": "[parameters('taskDispatcherImageName')]",
                             "resources": {
                                 "requests": {
                                     "cpu": "[parameters('cpuCores')]",
@@ -331,10 +282,10 @@
                         }
                     },
                     {
-                        "name": "[parameters('jobmonitorname')]",
+                        "name": "[parameters('jobMonitorName')]",
                         "properties": {
                             "command": [],
-                            "image": "[parameters('jobmonitorimagename')]",
+                            "image": "[parameters('jobMonitorImageName')]",
                             "resources": {
                                 "requests": {
                                     "cpu": "[parameters('cpuCores')]",
@@ -360,9 +311,9 @@
         }
     ],
     "outputs": {
-        "containerIPAddressFqdn": {
+        "portalUri": {
             "type": "string",
-            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('frontendGroupName'))).ipAddress.fqdn]"
+            "value": "[concat('https://', reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('frontendGroupName'))).ipAddress.fqdn, '/']"
         }
     }
 }
