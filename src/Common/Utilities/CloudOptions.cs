@@ -87,6 +87,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
         public string JobTaskCompletionQueuePattern { get; set; } = "taskcompletionqueue-{0}";
         public string TaskCompletionQueueName { get; set; } = "taskcompletionqueue";
         public string JobEventQueueName { get; set; } = "jobeventqueue";
+        public string ScriptSyncQueueName { get; set; } = "scriptsyncqueue";
         public string NodeDispatchQueuePattern { get; set; } = "nodedispatchqueue-{0}";
         public string NodeCancelQueuePattern { get; set; } = "nodecancelqueue-{0}";
 

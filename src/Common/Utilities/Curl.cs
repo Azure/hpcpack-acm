@@ -10,6 +10,11 @@
 
     public static class Curl
     {
+        public static Task<T> PostAsync<T, TBody>(string requestUri, TBody body, CancellationToken token)
+        {
+            return PostAsync<T, TBody>(requestUri, null, body, token);
+        }
+
         public static Task<T> PostAsync<T, TBody>(string requestUri, Dictionary<string, string> headers, TBody body, CancellationToken token)
         {
             StringContent content;
@@ -25,6 +30,11 @@
             return RequestAsync<T>(requestUri, headers, (c, uri, t) => c.PostAsync(uri, content, t), token); 
         }
 
+        public static Task<T> GetAsync<T>(string requestUri, CancellationToken token)
+        {
+            return GetAsync<T>(requestUri, null, token);
+        }
+
         public static Task<T> GetAsync<T>(string requestUri, Dictionary<string, string> headers, CancellationToken token)
         {
             return RequestAsync<T>(requestUri, headers, (c, uri, t) => c.GetAsync(uri, t), token); 
@@ -34,14 +44,18 @@
         {
             using (HttpClient client = new HttpClient())
             {
-                foreach (var h in headers)
+                if (headers != null)
                 {
-                    client.DefaultRequestHeaders.Add(h.Key, h.Value);
+                    foreach (var h in headers)
+                    {
+                        client.DefaultRequestHeaders.Add(h.Key, h.Value);
+                    }
                 }
 
                 var res = await requester(client, requestUri, token);
                 res.EnsureSuccessStatusCode();
                 var result = await res.Content.ReadAsStringAsync();
+                if (typeof(T) == typeof(string)) return (dynamic)result;
                 return JsonConvert.DeserializeObject<T>(result);
             }
         }

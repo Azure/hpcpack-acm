@@ -2,140 +2,20 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "frontendGroupName": {
-            "type": "string",
-            "defaultValue": "hpcacmfrontendgroup",
-            "metadata": {
-                "description": "Name for the frontend container group"
-            }
-        },
-        "frontendname": {
-            "type": "string",
-            "metadata": {
-                "description": "Name for the frontend container"
-            },
-            "defaultValue": "frontend"
-        },
-        "frontendimagename": {
-            "type": "string",
-            "metadata": {
-                "description": "Name for the frontend image"
-            },
-            "defaultValue": "evancui/hpcacm:frontend"
-        },
-        "frontendport": {
-            "type": "string",
-            "metadata": {
-                "description": "Port to open on the frontend container and the public IP address."
-            },
-            "defaultValue": "5000"
-        },
-        "portalname": {
-            "type": "string",
-            "metadata": {
-                "description": "Name for the portal container"
-            },
-            "defaultValue": "portal"
-        },
-        "portalimagename": {
-            "type": "string",
-            "metadata": {
-                "description": "Name for the portal image"
-            },
-            "defaultValue": "evancui/hpcacm:portal"
-        },
-        "portaldnsnamelabel": {
-            "type": "string",
-            "metadata": {
-                "description": "The portal DNS name label"
-            },
-            "defaultValue": "portal"
-        },
-        "portalport": {
-            "type": "string",
-            "metadata": {
-                "description": "Port to open on the portal container and the public IP address."
-            },
-            "defaultValue": "8080"
-        },
-        "backendGroupName": {
-            "type": "string",
-            "defaultValue": "hpcacmbackendgroup",
-            "metadata": {
-                "description": "Name for the backend container group"
-            }
-        },
-        "jobmonitorname": {
-            "type": "string",
-            "metadata": {
-                "description": "Name for the jobmonitor container"
-            },
-            "defaultValue": "jobmonitor"
-        },
-        "jobmonitorimagename": {
-            "type": "string",
-            "metadata": {
-                "description": "Name for the jobmonitor image"
-            },
-            "defaultValue": "evancui/hpcacm:jobmonitor"
-        },
-        "taskdispatchername": {
-            "type": "string",
-            "metadata": {
-                "description": "Name for the taskdispatcher container"
-            },
-            "defaultValue": "taskdispatcher"
-        },
-        "taskdispatcherimagename": {
-            "type": "string",
-            "metadata": {
-                "description": "Name for the taskdispatcher image"
-            },
-            "defaultValue": "evancui/hpcacm:taskdispatcher"
-        },
-        "dashboardname": {
-            "type": "string",
-            "metadata": {
-                "description": "Name for the dashboard container"
-            },
-            "defaultValue": "dashboard"
-        },
-        "dashboardimagename": {
-            "type": "string",
-            "metadata": {
-                "description": "Name for the dashboard image"
-            },
-            "defaultValue": "evancui/hpcacm:dashboard"
-        },
-        "dnsnamelabel": {
+        "dnsNameLabel": {
             "type": "string",
             "metadata": {
                 "description": "The DSN name label"
             },
             "defaultValue": "hpcacm"
         },
-        "cpuCores": {
-            "type": "string",
+        "rootPassword": {
+            "type": "securestring",
             "metadata": {
-                "description": "The number of CPU cores to allocate to the container."
-            },
-            "defaultValue": "1.0"
-        },
-        "memoryInGb": {
-            "type": "string",
-            "metadata": {
-                "description": "The amount of memory to allocate to the container in gigabytes."
-            },
-            "defaultValue": "1.5"
-        },
-        "location": {
-            "type": "string",
-            "defaultValue": "[resourceGroup().location]",
-            "metadata": {
-                "description": "Location for all resources."
+                "description": "Password for the root account"
             }
         },
-        "newOrExisting": {
+        "newOrExistingStorage": {
             "type":"string",
             "defaultValue": "new",
             "allowedValues": [
@@ -170,12 +50,110 @@
             "metadata": {
                 "description": "Storage Account Name"
             }
+        },
+        "frontendGroupName": {
+            "type": "string",
+            "defaultValue": "hpcacmfrontendgroup",
+            "metadata": {
+                "description": "Name for the frontend container group"
+            }
+        },
+        "frontendName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the frontend container"
+            },
+            "defaultValue": "frontend"
+        },
+        "frontendImageName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the frontend image"
+            },
+            "defaultValue": "evancui/hpcacm:frontend"
+        },
+        "frontendPort": {
+            "type": "string",
+            "metadata": {
+                "description": "Port to open on the frontend container and the public IP address."
+            },
+            "defaultValue": "443"
+        },
+        "backendGroupName": {
+            "type": "string",
+            "defaultValue": "hpcacmbackendgroup",
+            "metadata": {
+                "description": "Name for the backend container group"
+            }
+        },
+        "jobMonitorName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the jobmonitor container"
+            },
+            "defaultValue": "jobmonitor"
+        },
+        "jobMonitorImageName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the jobmonitor image"
+            },
+            "defaultValue": "evancui/hpcacm:jobmonitor"
+        },
+        "taskDispatcherName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the taskdispatcher container"
+            },
+            "defaultValue": "taskdispatcher"
+        },
+        "taskDispatcherImageName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the taskdispatcher image"
+            },
+            "defaultValue": "evancui/hpcacm:taskdispatcher"
+        },
+        "dashboardName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the dashboard container"
+            },
+            "defaultValue": "dashboard"
+        },
+        "dashboardImageName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name for the dashboard image"
+            },
+            "defaultValue": "evancui/hpcacm:dashboard"
+        },
+        "cpuCores": {
+            "type": "string",
+            "metadata": {
+                "description": "The number of CPU cores to allocate to the container."
+            },
+            "defaultValue": "1.0"
+        },
+        "memoryInGb": {
+            "type": "string",
+            "metadata": {
+                "description": "The amount of memory to allocate to the container in gigabytes."
+            },
+            "defaultValue": "1.5"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
         }
     },
     "variables": {},
     "resources": [
         {
-            "condition": "[equals(parameters('newOrExisting'), 'new')]",
+            "condition": "[equals(parameters('newOrExistingStorage'), 'new')]",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[parameters('storageAccountName')]",
             "apiVersion": "2017-10-01",
@@ -197,49 +175,26 @@
             "properties": {
                 "containers": [
                     {
-                        "name": "[parameters('portalname')]",
+                        "name": "[parameters('frontendName')]",
                         "properties": {
                             "command": [],
-                            "image": "[parameters('portalimagename')]",
+                            "image": "[parameters('frontendImageName')]",
                             "ports": [
                                 {
-                                    "port": "[parameters('portalport')]"
+                                    "port": "[parameters('frontendPort')]"
+                                }
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[parameters('cpuCores')]",
+                                    "memoryInGB": "[parameters('memoryInGb')]"
+                                }
+                            },
+                            "environmentVariables":[
+                                {
+                                    "name": "ServerOptions__Password",
+                                    "secureValue": "[parameters('rootPassword')]"
                                 },
-                                {
-                                    "port": "80"
-                                }
-                            ],
-                            "resources": {
-                                "requests": {
-                                    "cpu": "[parameters('cpuCores')]",
-                                    "memoryInGB": "[parameters('memoryInGb')]"
-                                }
-                            },
-                            "environmentVariables":[
-                                {
-                                    "name": "apibase",
-                                    "value": "[concat('http://', parameters('dnsnamelabel'), '.', parameters('location'), '.azurecontainer.io:5000/v1')]"
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "name": "[parameters('frontendname')]",
-                        "properties": {
-                            "command": [],
-                            "image": "[parameters('frontendimagename')]",
-                            "ports": [
-                                {
-                                    "port": "[parameters('frontendport')]"
-                                }
-                            ],
-                            "resources": {
-                                "requests": {
-                                    "cpu": "[parameters('cpuCores')]",
-                                    "memoryInGB": "[parameters('memoryInGb')]"
-                                }
-                            },
-                            "environmentVariables":[
                                 {
                                     "name": "CloudOptions__Storage__AccountName",
                                     "value": "[parameters('storageAccountName')]"
@@ -247,6 +202,14 @@
                                 {
                                     "name": "CloudOptions__Storage__KeyValue",
                                     "secureValue": "[listKeys(resourceId(parameters('storageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                                },
+                                {
+                                    "name": "fqdn",
+                                    "value": "[concat(parameters('dnsNameLabel'), '.', parameters('location'), '.azurecontainer.io')]"
+                                },
+                                {
+                                    "name": "apibase",
+                                    "value": "[concat('https://', parameters('dnsNameLabel'), '.', parameters('location'), '.azurecontainer.io/v1')]"
                                 }
                             ]
                         }
@@ -256,19 +219,11 @@
                 "restartPolicy": "OnFailure",
                 "ipAddress": {
                     "type": "Public",
-                    "dnsNameLabel": "[parameters('dnsnamelabel')]",
+                    "dnsNameLabel": "[parameters('dnsNameLabel')]",
                     "ports": [
                         {
                             "protocol": "TCP",
-                            "port": "80"
-                        },
-                        {
-                            "protocol": "TCP",
-                            "port": "[parameters('portalport')]"
-                        },
-                        {
-                            "protocol": "TCP",
-                            "port": "[parameters('frontendport')]"
+                            "port": "[parameters('frontendPort')]"
                         }
                     ]
                 }
@@ -285,10 +240,10 @@
             "properties": {
                 "containers": [
                     {
-                        "name": "[parameters('dashboardname')]",
+                        "name": "[parameters('dashboardName')]",
                         "properties": {
                             "command": [],
-                            "image": "[parameters('dashboardimagename')]",
+                            "image": "[parameters('dashboardImageName')]",
                             "resources": {
                                 "requests": {
                                     "cpu": "[parameters('cpuCores')]",
@@ -308,10 +263,10 @@
                         }
                     },
                     {
-                        "name": "[parameters('taskdispatchername')]",
+                        "name": "[parameters('taskDispatcherName')]",
                         "properties": {
                             "command": [],
-                            "image": "[parameters('taskdispatcherimagename')]",
+                            "image": "[parameters('taskDispatcherImageName')]",
                             "resources": {
                                 "requests": {
                                     "cpu": "[parameters('cpuCores')]",
@@ -331,10 +286,10 @@
                         }
                     },
                     {
-                        "name": "[parameters('jobmonitorname')]",
+                        "name": "[parameters('jobMonitorName')]",
                         "properties": {
                             "command": [],
-                            "image": "[parameters('jobmonitorimagename')]",
+                            "image": "[parameters('jobMonitorImageName')]",
                             "resources": {
                                 "requests": {
                                     "cpu": "[parameters('cpuCores')]",
@@ -360,9 +315,9 @@
         }
     ],
     "outputs": {
-        "containerIPAddressFqdn": {
+        "portalUri": {
             "type": "string",
-            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('frontendGroupName'))).ipAddress.fqdn]"
+            "value": "[concat('https://', reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('frontendGroupName'))).ipAddress.fqdn, '/')]"
         }
     }
 }

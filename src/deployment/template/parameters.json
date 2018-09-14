@@ -2,52 +2,43 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "rootPassword": {
+      "value": "Pass1word"
+    },
     "frontendGroupName": {
       "value": "hpcacmfrontendgroup"
     },
-    "frontendname": {
+    "frontendName": {
       "value": "frontend"
     },
-    "frontendimagename": {
+    "frontendImageName": {
       "value": "evancui/hpcacm:frontend"
     },
-    "frontendport": {
-      "value": "5000"
-    },
-    "portalname": {
-      "value": "portal"
-    },
-    "portalimagename": {
-      "value": "evancui/hpcacm:portal"
-    },
-    "portaldnsnamelabel": {
-      "value": "portal"
-    },
-    "portalport": {
-      "value": "8080"
+    "frontendPort": {
+      "value": "443"
     },
     "backendGroupName": {
       "value": "hpcacmbackendgroup"
     },
-    "jobmonitorname": {
+    "jobMonitorName": {
       "value": "jobmonitor"
     },
-    "jobmonitorimagename": {
+    "jobMonitorImageName": {
       "value": "evancui/hpcacm:jobmonitor"
     },
-    "taskdispatchername": {
+    "taskDispatcherName": {
       "value": "taskdispatcher"
     },
-    "taskdispatcherimagename": {
+    "taskDispatcherImageName": {
       "value": "evancui/hpcacm:taskdispatcher"
     },
-    "dashboardname": {
+    "dashboardName": {
       "value": "dashboard"
     },
-    "dashboardimagename": {
+    "dashboardImageName": {
       "value": "evancui/hpcacm:dashboard"
     },
-    "dnsnamelabel": {
+    "dnsNameLabel": {
       "value": "hpcacm"
     },
     "cpuCores": {
@@ -59,7 +50,7 @@
     "location": {
       "value": "eastus"
     },
-    "newOrExisting": {
+    "newOrExistingStorage": {
       "value": "existing"
     },
     "storageAccountType": {
