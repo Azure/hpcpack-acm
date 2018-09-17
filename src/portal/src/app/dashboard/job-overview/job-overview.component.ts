@@ -10,7 +10,6 @@ export class JobOverviewComponent implements OnInit, OnChanges {
   @Input() icon: string;
   @Input() jobs: any;
   @Input() jobCategory: string;
-  @Output() autoNew = new EventEmitter();
 
   public totalJobs = 0;
   public activeJobs = 0;

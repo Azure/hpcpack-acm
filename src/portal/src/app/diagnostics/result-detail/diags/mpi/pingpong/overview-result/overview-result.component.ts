@@ -77,7 +77,7 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
       this.threshold = this.result['Threshold'];
       if (this.normal) {
         this.updateView(this.overviewResult);
-        this.chart.canvas.parentNode.style.height = `${this.overviewResult.Histogram[1].length * 40}px`;
+        this.chart.canvas.parentNode.style.height = `${this.overviewResult.Histogram[1].length * 40 + 20}px`;
       }
       this.overviewOption.scales.yAxes = [{
         display: true,

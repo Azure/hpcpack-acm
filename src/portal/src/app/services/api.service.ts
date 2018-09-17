@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { of } from 'rxjs/observable/of';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, first } from 'rxjs/operators';
 import 'rxjs/add/operator/first';
 import { environment as env } from '../../environments/environment';
 import { Node } from '../models/resource/node';
@@ -28,7 +28,7 @@ export abstract class Resource<T> {
 
   protected normalize(e: any): T { return e as T; }
 
-  get errorHandler() {
+  get errorHandler(): any {
     return catchError(error => {
       console.error(error);
       //ErrorObservable is effectively an exception, like throw(...)
@@ -657,7 +657,7 @@ export class Loop {
         return;
       }
       let ts = new Date().getTime();
-      looper.observable.first().subscribe(
+      looper.observable.pipe(first()).subscribe(
         res => {
           if (looper.ended) {
             return;
