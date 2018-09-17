@@ -8,10 +8,10 @@
 
     public static class StorageExceptionExtensions
     {
-        public static bool IsConflict(this StorageException ex)
-        {
-            return ex.RequestInformation.HttpStatusCode == 409 ||
-                ex.RequestInformation.HttpStatusCode == 412;
-        }
+        public static bool IsCancellation(this StorageException ex) => ex.InnerException is OperationCanceledException;
+
+        public static bool IsNotFound(this StorageException ex) => string.Equals(ex.RequestInformation.ErrorCode, "MessageNotFound", StringComparison.OrdinalIgnoreCase);
+
+        public static bool IsConflict(this StorageException ex) => ex.RequestInformation.HttpStatusCode == 409 || ex.RequestInformation.HttpStatusCode == 412;
     }
 }

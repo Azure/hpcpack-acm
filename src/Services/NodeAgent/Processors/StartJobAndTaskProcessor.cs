@@ -15,6 +15,7 @@
     using Newtonsoft.Json;
     using Microsoft.WindowsAzure.Storage.Table;
     using Microsoft.WindowsAzure.Storage.Blob;
+    using Microsoft.WindowsAzure.Storage;
 
     public class StartJobAndTaskProcessor : JobTaskProcessor
     {
@@ -80,9 +81,24 @@
 
             int? exitCode = null;
 
+            CloudAppendBlob taskResultBlob = null;
+
+            var cmd = task.CommandLine;
+            DateTimeOffset startTime = DateTimeOffset.UtcNow;
+            var taskResult = new ComputeClusterTaskInformation()
+            {
+                ExitCode = -1,
+                Message = "Running",
+                CommandLine = cmd,
+                JobId = jobId,
+                TaskId = taskId,
+                NodeName = nodeName,
+                ResultKey = taskResultKey,
+                StartTime = startTime,
+            };
+
             try
             {
-                var cmd = task.CommandLine;
                 if (task.State != TaskState.Dispatching && task.State != TaskState.Running)
                 {
                     Logger.Information("Job {0} task {1} state {2}, skip Executing command {3}", jobId, taskId, task.State, cmd);
@@ -92,7 +108,6 @@
                 var taskInfo = await this.jobsTable.RetrieveAsync<TaskStartInfo>(this.jobPartitionKey, taskInfoKey, token);
                 Logger.Information("Executing command {0}", cmd);
 
-                CloudAppendBlob taskResultBlob = null;
                 var rawResult = new StringBuilder();
                 using (var monitor = string.IsNullOrEmpty(cmd) ? null : this.Monitor.StartMonitorTask(taskKey, async (output, eof, cancellationToken) =>
                 {
@@ -103,7 +118,7 @@
                             rawResult.Append(output);
                         }
 
-                        if (taskResultBlob == null) taskResultBlob = await this.Utilities.CreateOrReplaceJobOutputBlobAsync(jobType, taskResultKey, cancellationToken);
+                        taskResultBlob = taskResultBlob ?? await this.Utilities.CreateOrReplaceJobOutputBlobAsync(jobType, taskResultKey, token);
                         await taskResultBlob.AppendTextAsync(output, Encoding.UTF8, null, null, null, cancellationToken);
 
                         if (eof)
@@ -118,47 +133,18 @@
                     }
                 }))
                 {
-                    DateTimeOffset startTime = DateTimeOffset.UtcNow;
-                    var taskResult = new ComputeClusterTaskInformation()
-                    {
-                        CommandLine = cmd,
-                        JobId = jobId,
-                        TaskId = taskId,
-                        NodeName = nodeName,
-                        ResultKey = taskResultKey,
-                        StartTime = startTime,
-                    };
-
                     if (!await this.PersistTaskResult(taskResultKey, taskResult, token)) { return false; }
 
                     logger.Information("Call startjobandtask for task {0}", taskKey);
+                    (taskInfo.StartInfo.environmentVariables ?? (taskInfo.StartInfo.environmentVariables = new Dictionary<string, string>()))
+                        .Add("blobEndpoint", this.Utilities.Account.BlobEndpoint.AbsoluteUri);
                     taskInfo.StartInfo.stdout = $"{this.Communicator.Options.AgentUriBase}/output/{taskKey}";
 
-                    try
-                    {
-                        await this.Communicator.StartJobAndTaskAsync(
-                            nodeName,
-                            new StartJobAndTaskArg(new int[0], taskInfo.JobId, taskInfo.Id), taskInfo.UserName, taskInfo.Password,
-                            taskInfo.StartInfo, taskInfo.PrivateKey, taskInfo.PublicKey, token);
-                    }
-                    catch (Exception ex)
-                    {
-                        taskResult.Message = ex.ToString();
-                        taskResult.EndTime = DateTimeOffset.UtcNow;
-                        await this.PersistTaskResult(taskResultKey, taskResult, token);
-                        await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Failed, token);
-                        await this.Utilities.UpdateJobAsync(jobType, jobId, j =>
-                        {
-                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                            {
-                                Type = EventType.Warning,
-                                Source = EventSource.Job,
-                                Content = $"Task {taskId} failed to dispatch, exception {ex}",
-                            });
-                        }, token);
+                    await this.Communicator.StartJobAndTaskAsync(
+                        nodeName,
+                        new StartJobAndTaskArg(new int[0], taskInfo.JobId, taskInfo.Id), taskInfo.UserName, taskInfo.Password,
+                        taskInfo.StartInfo, taskInfo.PrivateKey, taskInfo.PublicKey, token);
 
-                        return true;
-                    }
 
                     logger.Information("Update task state to running");
                     await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Running, token);
@@ -178,7 +164,7 @@
                         return true;
                     }
 
-                    taskResult = taskResultArgs.TaskInfo;
+                    taskResult = taskResultArgs.TaskInfo ?? taskResult;
                     logger.Information("Updating task state with exit code {2}", taskResult?.ExitCode);
                     await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey,
                         t => t.State = taskResult?.ExitCode == 0 ? TaskState.Finished : TaskState.Failed,
@@ -201,6 +187,24 @@
                     }
                 }
             }
+            catch (StorageException ex) when (ex.IsCancellation()) { return false; }
+            catch (OperationCanceledException) when (token.IsCancellationRequested) { return false; }
+            catch (Exception ex)
+            {
+                taskResult.Message = ex.ToString();
+                taskResult.EndTime = DateTimeOffset.UtcNow;
+                await this.PersistTaskResult(taskResultKey, taskResult, token);
+                await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = t.State == TaskState.Dispatching || t.State == TaskState.Running ? TaskState.Failed : t.State, token);
+                await this.Utilities.UpdateJobAsync(jobType, jobId, j =>
+                {
+                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
+                    {
+                        Type = EventType.Warning,
+                        Source = EventSource.Job,
+                        Content = $"Task {taskId}, exception {ex}",
+                    });
+                }, token);
+            }
             finally
             {
                 var queue = this.Utilities.GetJobTaskCompletionQueue(jobId);
@@ -214,6 +218,10 @@
                     RequeueCount = requeueCount,
                     ChildIds = task.ChildIds,
                 }, Formatting.Indented)), null, null, null, null, token);
+
+                taskResultBlob = taskResultBlob ?? await this.Utilities.CreateOrReplaceJobOutputBlobAsync(jobType, taskResultKey, token);
+                taskResultBlob.Metadata[TaskOutputPage.EofMark] = true.ToString();
+                await taskResultBlob.SetMetadataAsync(null, null, null, token);
 
                 logger.Information("Finished");
             }

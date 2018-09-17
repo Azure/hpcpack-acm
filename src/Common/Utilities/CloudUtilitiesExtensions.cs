@@ -153,20 +153,14 @@
                             continue;
                         }
                     }
-                    catch (StorageException ex)
+                    catch (StorageException ex) when (ex.IsCancellation())
                     {
-                        if (ex.InnerException is OperationCanceledException)
-                        {
-                            throw ex.InnerException;
-                        }
-
-                        if (ex.IsConflict())
-                        {
-                            await T.Task.Delay(new Random().Next(3000), token);
-                            continue;
-                        }
-
-                        throw;
+                        throw ex.InnerException;
+                    }
+                    catch (StorageException ex) when (ex.IsConflict())
+                    {
+                        await T.Task.Delay(new Random().Next(3000), token);
+                        continue;
                     }
 
                     return true;
@@ -222,8 +216,8 @@
                         node.Health = NodeHealth.OK;
                         node.State = NodeState.Online;
                         node.RunningJobCount = n.Item1.Jobs.Count;
-                        // TODO: adding events
-                        node.EventCount = 2;
+                    // TODO: adding events
+                    node.EventCount = 2;
                     }
                     else
                     {

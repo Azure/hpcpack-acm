@@ -10,6 +10,7 @@
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft.HpcAcm.Common.Utilities;
 
     public class QueueMultiTaskItemSource : ServerObject, ITaskItemSource, IDisposable
     {
@@ -83,15 +84,13 @@
                                 }
                             }
                         }
-                        catch (StorageException ex)
+                        catch (StorageException ex) when (ex.IsCancellation())
                         {
-                            if (ex.InnerException is OperationCanceledException)
-                            {
-                                continue;
-                            }
+                            continue;
                         }
                         catch (OperationCanceledException)
                         {
+                            continue;
                         }
                         catch (Exception ex)
                         {

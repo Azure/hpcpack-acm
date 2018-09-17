@@ -43,14 +43,9 @@
             {
                 this.job = await this.jobsTable.RetrieveAsync<Job>(this.jobPartitionKey, this.Utilities.JobEntryKey, token);
             }
-            catch (StorageException ex)
+            catch (StorageException ex) when (ex.IsCancellation())
             {
-                if (ex.InnerException is OperationCanceledException)
-                {
-                    throw ex.InnerException;
-                }
-
-                throw;
+                throw ex.InnerException;
             }
 
             return this.job.State == JobState.Running;
@@ -367,7 +362,6 @@
                         async T.Task cancel()
                         {
                             var cancelQueue = this.Utilities.GetNodeCancelQueue(childTask.Node);
-                            //cancelQueue.AddMessageAsync();
                             await cancelQueue.AddMessageAsync(
                                 new CloudQueueMessage(JsonConvert.SerializeObject(new TaskEventMessage() { EventVerb = "cancel", Id = childTask.Id, JobId = childTask.JobId, JobType = childTask.JobType, RequeueCount = job.RequeueCount }, Formatting.Indented)),
                                 null, TimeSpan.FromSeconds(childTask.MaximumRuntimeSeconds), null, null, token);
