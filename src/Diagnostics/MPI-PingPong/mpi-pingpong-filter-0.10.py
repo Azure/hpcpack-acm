@@ -6,9 +6,10 @@ def main():
     latency = -2
     throughput = -2
     time = -2
-    data = sys.stdin.readlines()
-    detail = '[Message before filter]:\n' + '\n'.join(data)
-
+    data = sys.stdin.read()
+    detail = '[Message before filter]:\n' + data
+    data = data.split('\n', 3)
+    
     if len(data) == 4:
         try:
             latency = float(data[0])
