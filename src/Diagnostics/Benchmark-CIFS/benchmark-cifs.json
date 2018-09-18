@@ -7,7 +7,7 @@
         "ContainerName":"diagtestscripts",
         "Name":"benchmark-cifs-reduce.py"
     },
-    "description":"Get the speed of copying file between local disk and CIFS server",
+    "description":"Get the speed of copying file between local disk and CIFS server.",
     "parameters":[
         {
             "name":"CIFS server mount point",

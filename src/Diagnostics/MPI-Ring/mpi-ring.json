@@ -7,5 +7,5 @@
         "ContainerName":"diagtestscripts",
         "Name":"mpi-ring-reduce.py"
     },
-    "description":"Run Intel MPI Benchmark - Sendrecv among processors, one processor per node, which forms a periodic communication chain in selected nodes. The latency and bandwidth will be reported. More refer to https://software.intel.com/en-us/imb-user-guide-sendrecv"
+    "description":"Run Intel MPI Benchmark - Sendrecv among processors, one processor per node, which forms a periodic communication chain in selected nodes."
 }

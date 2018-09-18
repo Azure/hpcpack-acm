@@ -1,4 +1,4 @@
-#v0.9
+#v0.10
 
 import sys, json, copy, numpy
 
@@ -11,9 +11,10 @@ def main():
     allNodes = job['TargetNodes']
     nodesNumber = len(allNodes)
 
+    # for debug
+    warnings = []
     if len(tasks) != len(taskResults):
-        printErrorAsJson('Task count {} is not equal to task result count {}.'.format(len(tasks), len(taskResults)))
-        return -1
+        warnings.append('Task count {} is not equal to task result count {}.'.format(len(tasks), len(taskResults)))
 
     defaultPacketSize = 2**22
     packetSize = defaultPacketSize
@@ -61,16 +62,23 @@ def main():
 
     messages = {}
     failedPairs = []
+    failedTasks = {}
     try:
         for taskResult in taskResults:
             taskId = taskResult['TaskId']
             nodeName = taskResult['NodeName']
             nodePair = taskId2nodePair[taskId]
             exitCode = taskResult['ExitCode']
-            if 'FilteredResult' in taskResult and taskResult['FilteredResult']:
-                message = json.loads(taskResult['FilteredResult'])
-                hasResult = message['Latency'] > 0 and message['Throughput'] > 0
-                detail = message['Detail']
+            if exitCode != 0:
+                failedTasks.setdefault(exitCode, []).append(taskId)
+            if 'Message' in taskResult and taskResult['Message']:
+                try:
+                    message = json.loads(taskResult['Message'])
+                    hasResult = message['Latency'] > 0 and message['Throughput'] > 0
+                    detail = message['Detail']
+                except:
+                    hasResult = False
+                    detail = taskResult['Message']
                 if taskId in tasksForStatistics and hasResult:
                     messages[taskId2nodePair[taskId]] = message
                 if exitCode != 0 or not hasResult:
@@ -82,22 +90,22 @@ def main():
                         }
                     failedPairs.append(failedPair)
             else:
-                raise Exception("No FilteredResult")
+                raise Exception("No Message")
     except Exception as e:
         printErrorAsJson('Failed to parse task result. Task id: {}. {}'.format(taskId, e))
         return -1
 
     latencyThreshold = packetSize//100 if packetSize > 2**20 else 10000
-    throughputThreshold = packetSize//1000 if 2**0 < packetSize < 2**20 else 100
+    throughputThreshold = packetSize//1000 if 2**0 < packetSize < 2**20 else 50
     if len(rdmaNodes) == len(allNodes):
         latencyThreshold = 2**3 if packetSize < 2**13 else packetSize/2**10
         throughputThreshold = packetSize/2**3 if 2**0 < packetSize < 2**13 else 2**10
-    if mode == 'Jumble'.lower():
+    if mode == 'Parallel'.lower():
         latencyThreshold = 1000000
         throughputThreshold = 0
 
     goodPairs = [pair for pair in messages if messages[pair]["Throughput"] > throughputThreshold]
-    goodNodesGroups = getGroupsOfFullConnectedNodes(goodPairs)
+    goodNodesGroups = getLargestNonoverlappingGroups(getGroupsOfFullConnectedNodes(goodPairs))
     goodNodes = set([node for group in goodNodesGroups for node in group])
     if goodNodes != set([node for pair in goodPairs for node in pair.split(',')]):
         printErrorAsJson('Should not get here!')
@@ -116,7 +124,11 @@ def main():
         'BadNodes':badNodes,
         'RdmaNodes':rdmaNodes,
         'FailedReasons':failedReasons,
-        'CanceledNodePairs':canceledNodePairs
+        'CanceledNodePairs':canceledNodePairs,
+        'Latency':{},
+        'Throughput':{},
+        'FailedTasks':failedTasks, # for debug
+        'Warnings':warnings # for debug
         }
 
     if messages:
@@ -130,17 +142,18 @@ def main():
             globalMax = numpy.amax(data)
             histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(globalMin, globalMax))]
 
-            result[item] = {}
             if item == "Latency":
                 unit = "us"
                 threshold = latencyThreshold
                 badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold]
+                badPairs.sort(key=lambda x:x["Value"], reverse=True)
                 bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == globalMin], "Value":globalMin}
                 worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == globalMax], "Value":globalMax}
             else:
                 unit = "MB/s"
                 threshold = throughputThreshold
                 badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] < throughputThreshold]
+                badPairs.sort(key=lambda x:x["Value"])
                 bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == globalMax], "Value":globalMax}
                 worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == globalMin], "Value":globalMin}
                 if packetSize == 2**0:
@@ -166,10 +179,12 @@ def main():
                 histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(globalMin, globalMax))]
                 if item == "Latency":
                     badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold and node in pair.split(',')]
+                    badPairs.sort(key=lambda x:x["Value"], reverse=True)
                     bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
                     worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
                 else:
                     badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] < throughputThreshold and node in pair.split(',')]
+                    badPairs.sort(key=lambda x:x["Value"])
                     bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
                     worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
                 result[item]["ResultByNode"][node] = {}
@@ -187,7 +202,7 @@ def main():
     return 0
 
 def getFailedReasons(failedPairs):
-    INTEL_MPI_INSTALL_CLUSRUN_HINT = "wget [intel_mpi_binary_location(eg. https://your_storage_account.blob.core.windows.net/your_container_name/[l_mpi_version].tgz)] && tar -zxvf [l_mpi_version].tgz && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./[l_mpi_version]/silent.cfg && ./[l_mpi_version]/install.sh --silent ./[l_mpi_version]/silent.cfg"
+    INTEL_MPI_INSTALL_CLUSRUN_HINT = "wget http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13063/l_mpi_2018.3.222.tgz && tar -zxvf l_mpi_2018.3.222.tgz && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./l_mpi_2018.3.222/silent.cfg && ./l_mpi_2018.3.222/install.sh --silent ./l_mpi_2018.3.222/silent.cfg"
     reasonMpiNotInstalled = 'Intel MPI is not found in default directory "/opt/intel".'
     solutionMpiNotInstalled = 'If Intel MPI is installed on other location, specify the directory in parameter "Intel MPI location" of diagnostics test MPI-PingPong. Or download from https://software.intel.com/en-us/intel-mpi-library and install with clusrun command: "{}".'.format(INTEL_MPI_INSTALL_CLUSRUN_HINT)
     reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
@@ -200,6 +215,7 @@ def getFailedReasons(failedPairs):
     reasonTaskTimeout = 'Task timeout.'
     reasonSampleTimeout = 'Pingpong test sample timeout.'
     reasonNoResult = 'No result.'
+    reasonWgetFailed = 'Failed to download filter script.'
     
     failedReasons = {}
     for failedPair in failedPairs:
@@ -219,14 +235,15 @@ def getFailedReasons(failedPairs):
         elif "Benchmark PingPong invalid for 1 processes" in failedPair['Detail']:
             reason = reasonNodeSingleCore
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionNodeSingleCore, 'Nodes':[]})['Nodes'].append(failedPair['NodeName'])
-        elif "Time limit (secs_per_sample * msg_sizes_list_len) is over;" in failedPair['Detail']:
-            reason = reasonSampleTimeout
-            failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])            
-        elif failedPair['ExitCode'] == 124:
-            reason = reasonTaskTimeout
-            failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
-        elif failedPair['Detail'].split('\n', 1)[0] == '[Message before filter]:':
-            reason = reasonNoResult
+        else:
+            if "Time limit (secs_per_sample * msg_sizes_list_len) is over;" in failedPair['Detail']:
+                reason = reasonSampleTimeout
+            elif failedPair['ExitCode'] == 124:
+                reason = reasonTaskTimeout
+            elif failedPair['Detail'].split('\n', 1)[0] == '[Message before filter]:':
+                reason = reasonNoResult
+            elif "wget" in failedPair['Detail'] and failedPair['ExitCode'] == 4:
+                reason = reasonWgetFailed
             failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
         failedPair['Reason'] = reason
         del failedPair['Detail']
@@ -265,6 +282,23 @@ def getGroupsWithMasters(pairs):
             "Masters":masters
             })
     return groupsWithMasters
+
+def getLargestNonoverlappingGroups(groups):
+    largestGroups = []
+    visitedNodes = set()
+    while len(groups):
+        maxLen = max([len(group) for group in groups])
+        largestGroup = [group for group in groups if len(group) == maxLen][0]
+        largestGroups.append(largestGroup)
+        visitedNodes.update(largestGroup)
+        groupsToRemove = []
+        for group in groups:
+            for node in group:
+                if node in visitedNodes:
+                    groupsToRemove.append(group)
+                    break
+        groups = [group for group in groups if group not in groupsToRemove]
+    return largestGroups
 
 def getGroupsOfFullConnectedNodes(pairs):
     connectedNodesOfNode = getNodeMap(pairs)

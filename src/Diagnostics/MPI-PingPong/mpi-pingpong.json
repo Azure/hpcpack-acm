@@ -7,11 +7,7 @@
         "ContainerName":"diagtestscripts",
         "Name":"mpi-pingpong-reduce.py"
     },
-    "TaskResultFilterScript":{
-        "ContainerName":"diagtestscripts",
-        "Name":"mpi-pingpong-filter.py"
-    },
-    "description":"Run Intel MPI Benchmark - PingPong between all node pairs in selected nodes. The latency and throughput will be reported. More refer to https://software.intel.com/en-us/imb-user-guide-pingpong-pingpongspecificsource-pingponganysource",
+    "description":"Run Intel MPI Benchmark - PingPong between all node pairs in selected nodes.",
     "parameters":[
         {
             "name":"Packet size",
@@ -25,7 +21,7 @@
             "name":"Mode",
             "description":"Select the way to run tasks.",
             "type":"string",
-            "options":["Tournament", "Serial", "Jumble"],
+            "options":["Tournament", "Serial", "Parallel"],
             "defaultValue":"Tournament"
         },
         {
