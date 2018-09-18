@@ -112,8 +112,10 @@ export class ResultDetailComponent implements OnInit {
           if (id != this.id) {
             return;
           }
-          this.gotTasks = true;
-          this.result.nodes = this.getNodesFromTasks(tasks);
+          if (tasks.length > 0) {
+            this.gotTasks = true;
+            this.result.nodes = this.getNodesFromTasks(tasks);
+          }
           return true;
         },
         error: (err) => {

@@ -2,7 +2,7 @@
   <mat-expansion-panel *ngFor="let g of nodeGroups; index as i" expanded=true>
     <mat-expansion-panel-header>
       <mat-panel-title>
-        <div>Group {{i}} ----<span class="nodes-number"> {{g.length}} </span>nodes </div>
+        <div>Group {{i+1}} ----<span class="nodes-number"> {{g.length}} </span>nodes </div>
       </mat-panel-title>
     </mat-expansion-panel-header>
     <app-nodes-info [nodes]="g">
