@@ -81,7 +81,7 @@
                         Source = EventSource.Job,
                         Type = EventType.Alert,
                     });
-                }, token);
+                }, token, this.Logger);
             }
 
             return true;

@@ -30,7 +30,7 @@
         public override async T.Task InitializeAsync(CancellationToken token)
         {
             this.Source = new QueueTaskItemSource(
-                await this.Utilities.GetOrCreateNodeCancelQueueAsync(this.ServerOptions.HostName, token),
+                this.Utilities.GetNodeCancelQueue(this.ServerOptions.HostName),
                 this.options);
 
             await base.InitializeAsync(token);
@@ -49,6 +49,7 @@
                 switch (message.EventVerb)
                 {
                     case "cancel":
+                    case "timeout":
                         processor = this.Provider.GetService<CancelJobOrTaskProcessor>();
                         break;
 
@@ -80,7 +81,7 @@
                         Source = EventSource.Job,
                         Type = EventType.Alert,
                     });
-                }, token);
+                }, token, this.Logger);
             }
 
             return true;

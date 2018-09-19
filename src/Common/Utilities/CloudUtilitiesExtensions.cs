@@ -7,6 +7,8 @@
     using Microsoft.WindowsAzure.Storage.Table;
     using Microsoft.WindowsAzure.Storage.Table.Protocol;
     using Newtonsoft.Json;
+    using Serilog;
+    using Serilog.Core;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -109,22 +111,22 @@
 
         public static T.Task<CloudTable> GetOrCreateNodesTableAsync(this CloudUtilities u, CancellationToken token) => u.GetOrCreateTableAsync(u.Option.NodesTableName, token);
 
-        public static T.Task<bool> UpdateTaskAsync(this CloudUtilities u, string jobPartitionKey, string taskKey, Action<Task> action, CancellationToken token) =>
-            u.UpdateObjectAsync(u.GetJobsTable(), jobPartitionKey, taskKey, action, token);
+        public static T.Task<bool> UpdateTaskAsync(this CloudUtilities u, string jobPartitionKey, string taskKey, Action<Task> action, CancellationToken token, ILogger logger = null) =>
+            u.UpdateObjectAsync(u.GetJobsTable(), jobPartitionKey, taskKey, action, token, logger);
 
-        public static async T.Task<bool> UpdateJobAsync(this CloudUtilities u, JobType type, int jobId, Action<Job> action, CancellationToken token)
+        public static async T.Task<bool> UpdateJobAsync(this CloudUtilities u, JobType type, int jobId, Action<Job> action, CancellationToken token, ILogger logger = null)
         {
             var pKey = u.GetJobPartitionKey(type, jobId, true);
-            bool result1 = await u.UpdateJobAsync(pKey, action, token);
+            bool result1 = await u.UpdateJobAsync(pKey, action, token, logger);
 
             pKey = u.GetJobPartitionKey(type, jobId, false);
-            bool result2 = await u.UpdateJobAsync(pKey, action, token);
+            bool result2 = await u.UpdateJobAsync(pKey, action, token, logger);
 
             return result1 && result2;
         }
 
-        private static T.Task<bool> UpdateJobAsync(this CloudUtilities u, string jobPartitionKey, Action<Job> action, CancellationToken token) =>
-            u.UpdateObjectAsync(u.GetJobsTable(), jobPartitionKey, u.JobEntryKey, action, token);
+        private static T.Task<bool> UpdateJobAsync(this CloudUtilities u, string jobPartitionKey, Action<Job> action, CancellationToken token, ILogger logger = null) =>
+            u.UpdateObjectAsync(u.GetJobsTable(), jobPartitionKey, u.JobEntryKey, action, token, logger);
 
         public static async T.Task<bool> UpdateObjectAsync<TObject>(
             this CloudUtilities u,
@@ -132,7 +134,8 @@
             string partitionKey,
             string rowKey,
             Action<TObject> action,
-            CancellationToken token)
+            CancellationToken token,
+            ILogger logger = null)
         {
             while (true)
             {
@@ -148,7 +151,7 @@
                         var result = await table.ReplaceAsync(entity, token);
                         if (result.IsConflict())
                         {
-                            Console.WriteLine("----> Conflict replace {0} {1}", entity.PartitionKey, entity.RowKey);
+                            logger.Warning("----> Conflict replace {0} {1}", entity.PartitionKey, entity.RowKey);
                             await T.Task.Delay(new Random().Next(3000), token);
                             continue;
                         }
@@ -216,8 +219,8 @@
                         node.Health = NodeHealth.OK;
                         node.State = NodeState.Online;
                         node.RunningJobCount = n.Item1.Jobs.Count;
-                    // TODO: adding events
-                    node.EventCount = 2;
+                        // TODO: adding events
+                        node.EventCount = 2;
                     }
                     else
                     {

@@ -56,18 +56,18 @@
             if (Interlocked.Exchange(ref this.firstFetch, 0) == 1)
             {
                 // start the fetch process when first fetch, this is to use the token, and avoid unnecessary dequeue of the messages.
-                this.FetchingTasks = Task.WhenAll(Enumerable.Range(0, 16).Select(async d =>
+                this.FetchingTasks = Task.WhenAll(Enumerable.Range(0, 4).Select(async d =>
                 {
                     while (!t.IsCancellationRequested)
                     {
                         try
                         {
-                            this.Logger.Debug("Fetching task items from queue {0}", this.queue.Name);
+                            this.Logger.Debug(" -------> Fetching task items from queue {0}", this.queue.Name);
                             var messages = this.cacheQueue.Count >= this.options.ThrottleMessageCount ? null : await this.queue.GetMessagesAsync(32, TimeSpan.FromSeconds(this.options.VisibleTimeoutSeconds), null, null, t);
 
                             if (messages == null || messages.Count() == 0)
                             {
-                                this.Logger.Debug("No tasks fetched. Sleep for {0} seconds", this.options.RetryIntervalSeconds);
+                                this.Logger.Debug(" -------> No tasks fetched. Sleep for {0} seconds", this.options.RetryIntervalSeconds);
                                 await Task.Delay(TimeSpan.FromSeconds(this.options.RetryIntervalSeconds), t);
                             }
                             else
@@ -94,11 +94,11 @@
                         }
                         catch (Exception ex)
                         {
-                            this.Logger.Error(ex, "Error happened in fetching message loop.");
+                            this.Logger.Error(ex, " -------> Error happened in fetching message loop.");
                         }
                     }
 
-                    this.Logger.Information("Exiting fetching message loop");
+                    this.Logger.Information(" -------> Exiting fetching message loop");
                 }));
             }
 

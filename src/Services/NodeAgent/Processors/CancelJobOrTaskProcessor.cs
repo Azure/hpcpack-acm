@@ -29,7 +29,8 @@
             var jobsTable = this.Utilities.GetJobsTable();
             var nodeName = this.ServerOptions.HostName;
 
-            var taskKey = this.Utilities.GetTaskKey(message.JobId, message.Id, message.RequeueCount);
+            string taskKey = null;
+            if (message.Id > 0) taskKey = this.Utilities.GetTaskKey(message.JobId, message.Id, message.RequeueCount);
 
 
             // TODO: cancel single task
@@ -41,7 +42,7 @@
             //    var nodeTaskResultKey = this.Utilities.GetNodeTaskResultKey(nodeName, task.JobId, task.RequeueCount, task.Id);
             //}
 
-            this.Logger.Information("Do work {0} for job {1} on node {2}", message.EventVerb, message.JobId, nodeName);
+            this.Logger.Information("Do work {0} for job {1} task {2} on node {3}", message.EventVerb, message.JobId, message.Id, nodeName);
 
             var jobPartitionKey = this.Utilities.GetJobPartitionKey(message.JobType, message.JobId);
             var job = await jobsTable.RetrieveAsync<Job>(jobPartitionKey, this.Utilities.JobEntryKey, token);
@@ -53,9 +54,20 @@
 
             try
             {
-                await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = t.State == TaskState.Failed || t.State == TaskState.Finished ? t.State : TaskState.Canceled, token);
-                await this.Communicator.EndJobAsync(nodeName, new EndJobArg(null, message.JobId), token);
-                this.Monitor.CancelTask(taskKey);
+
+                if (taskKey != null)
+                {
+                    await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = t.State == TaskState.Failed || t.State == TaskState.Finished ? t.State : TaskState.Canceled, token, this.Logger);
+                    await this.Communicator.EndTaskAsync(nodeName, new EndTaskArg(null, message.JobId, message.Id), token);
+                    this.Monitor.CancelTask(message.JobId, taskKey);
+                }
+                else
+                {
+                    // end the whole job
+                    await this.Utilities.UpdateJobAsync(message.JobType, message.JobId, j => j.State = j.State == JobState.Failed || j.State == JobState.Finished ? j.State : JobState.Canceled, token, this.Logger);
+                    await this.Communicator.EndJobAsync(nodeName, new EndJobArg(null, message.JobId), token);
+                    this.Monitor.CancelJob(message.JobId);
+                }
             }
             catch (Exception ex)
             {
@@ -69,7 +81,7 @@
                             Source = EventSource.Job,
                             Content = $"Failed to end Job {job.Id}, exception {ex}",
                         });
-                    }, token);
+                    }, token, this.Logger);
                 }
             }
 

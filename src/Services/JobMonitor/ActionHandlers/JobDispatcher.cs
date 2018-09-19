@@ -73,7 +73,7 @@
 
                     j.State = JobState.Failed;
                     j.TaskCount = 0;
-                }, token);
+                }, token, this.Logger);
 
                 return;
             }
@@ -112,7 +112,7 @@
                         Source = EventSource.Job,
                         Type = EventType.Alert
                     });
-                }, token);
+                }, token, this.Logger);
 
                 return;
             }
@@ -186,7 +186,7 @@
                         Source = EventSource.Job,
                         Type = EventType.Alert,
                     });
-                }, token);
+                }, token, this.Logger);
 
                 return;
             }
@@ -213,7 +213,7 @@
             {
                 state = j.State = (j.State == JobState.Queued ? JobState.Running : j.State);
                 j.TaskCount = taskInstances.Count - 2;
-            }, token);
+            }, token, this.Logger);
 
             if (state == JobState.Running)
             {

@@ -78,7 +78,7 @@
                     });
 
                     j.State = JobState.Failed;
-                }, token);
+                }, token, this.Logger);
 
                 return true;
             }
@@ -123,7 +123,7 @@
                     await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                     {
                         j.CompletedTaskCount = Math.Min(j.CompletedTaskCount + completedCount, j.TaskCount);
-                    }, token);
+                    }, token, this.Logger);
                 }
 
                 if (job.Type == JobType.Diagnostics)
@@ -182,7 +182,7 @@
                             Source = EventSource.Job,
                             Type = EventType.Alert
                         });
-                    }, token);
+                    }, token, this.Logger);
 
                     return true;
                 }
@@ -241,7 +241,8 @@
                         }
 
                         childTask = t;
-                    }, token))
+                    }, token,
+                    this.Logger))
                     {
                         await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                         {
@@ -253,7 +254,7 @@
                                 Source = EventSource.Job,
                                 Type = EventType.Alert
                             });
-                        }, token);
+                        }, token, this.Logger);
 
                         return true;
                     }
@@ -262,7 +263,7 @@
                     {
                         if (isEndTask)
                         {
-                            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.State = j.State == JobState.Running ? JobState.Finishing : j.State, token);
+                            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.State = j.State == JobState.Running ? JobState.Finishing : j.State, token, this.Logger);
                             var jobEventQueue = this.Utilities.GetJobEventQueue();
                             await jobEventQueue.AddMessageAsync(
                                 // todo: event message generation.

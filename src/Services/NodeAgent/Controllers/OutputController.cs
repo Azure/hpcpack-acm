@@ -26,13 +26,13 @@
             this.Utilities = utilities;
         }
 
-        [HttpPost("{taskkey}")]
-        public async Task MessageAsync(string taskKey, [FromBody] ClusrunOutput output, CancellationToken token)
+        [HttpPost("{jobId}/{taskkey}")]
+        public async Task MessageAsync(int jobId, string taskKey, [FromBody] ClusrunOutput output, CancellationToken token)
         {
             try
             {
-                this.logger.Information("TaskMessage {0}, order {1}, eof {2}", taskKey, output.Order, output.Eof);
-                await this.monitor.PutOutput(taskKey, output, token);
+                this.logger.Information("TaskMessage {0}, {1}, order {2}, eof {3}", jobId, taskKey, output.Order, output.Eof);
+                await this.monitor.PutOutput(jobId, taskKey, output, token);
             }
             catch (Exception ex)
             {

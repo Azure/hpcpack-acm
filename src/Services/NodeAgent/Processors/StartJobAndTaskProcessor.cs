@@ -99,7 +99,7 @@
 
             try
             {
-                if (task.State != TaskState.Dispatching && task.State != TaskState.Running)
+                if (task.State != TaskState.Dispatching && task.State != TaskState.Running && task.State != TaskState.Queued)
                 {
                     Logger.Information("Job {0} task {1} state {2}, skip Executing command {3}", jobId, taskId, task.State, cmd);
                     return true;
@@ -109,7 +109,7 @@
                 Logger.Information("Executing command {0}", cmd);
 
                 var rawResult = new StringBuilder();
-                using (var monitor = string.IsNullOrEmpty(cmd) ? null : this.Monitor.StartMonitorTask(taskKey, async (output, eof, cancellationToken) =>
+                using (var monitor = string.IsNullOrEmpty(cmd) ? null : this.Monitor.StartMonitorTask(jobId, taskKey, async (output, eof, cancellationToken) =>
                 {
                     try
                     {
@@ -138,8 +138,9 @@
                     logger.Information("Call startjobandtask for task {0}", taskKey);
                     (taskInfo.StartInfo.environmentVariables ?? (taskInfo.StartInfo.environmentVariables = new Dictionary<string, string>()))
                         .Add("blobEndpoint", this.Utilities.Account.BlobEndpoint.AbsoluteUri);
-                    taskInfo.StartInfo.stdout = $"{this.Communicator.Options.AgentUriBase}/output/{taskKey}";
+                    taskInfo.StartInfo.stdout = $"{this.Communicator.Options.AgentUriBase}/output/{jobId}/{taskKey}";
 
+                    await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Dispatching, token, this.logger);
                     await this.Communicator.StartJobAndTaskAsync(
                         nodeName,
                         new StartJobAndTaskArg(new int[0], taskInfo.JobId, taskInfo.Id), taskInfo.UserName, taskInfo.Password,
@@ -147,7 +148,7 @@
 
 
                     logger.Information("Update task state to running");
-                    await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Running, token);
+                    await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Running, token, this.logger);
 
                     logger.Information("Waiting for response");
                     if (monitor == null) return true;
@@ -156,7 +157,7 @@
 
                     try
                     {
-                        taskResultArgs = await monitor.Execution;
+                        taskResultArgs = await monitor.Result.Execution;
                     }
                     catch (T.TaskCanceledException)
                     {
@@ -165,10 +166,11 @@
                     }
 
                     taskResult = taskResultArgs.TaskInfo ?? taskResult;
-                    logger.Information("Updating task state with exit code {2}", taskResult?.ExitCode);
+                    logger.Information("Updating task state with exit code {0}", taskResult?.ExitCode);
                     await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey,
                         t => t.State = taskResult?.ExitCode == 0 ? TaskState.Finished : TaskState.Failed,
-                        token);
+                        token,
+                        this.logger);
 
                     if (taskResult != null)
                     {
@@ -194,7 +196,7 @@
                 taskResult.Message = ex.ToString();
                 taskResult.EndTime = DateTimeOffset.UtcNow;
                 await this.PersistTaskResult(taskResultKey, taskResult, token);
-                await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = t.State == TaskState.Dispatching || t.State == TaskState.Running ? TaskState.Failed : t.State, token);
+                await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = t.State == TaskState.Dispatching || t.State == TaskState.Running ? TaskState.Failed : t.State, token, this.logger);
                 await this.Utilities.UpdateJobAsync(jobType, jobId, j =>
                 {
                     (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
@@ -203,7 +205,7 @@
                         Source = EventSource.Job,
                         Content = $"Task {taskId}, exception {ex}",
                     });
-                }, token);
+                }, token, this.logger);
             }
             finally
             {

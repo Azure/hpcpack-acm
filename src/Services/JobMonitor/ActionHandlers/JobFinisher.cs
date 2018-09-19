@@ -92,17 +92,17 @@
                 j.State = job.State;
                 // TODO: separate the events.
                 j.Events = job.Events;
-            }, token);
+            }, token, this.Logger);
 
             this.Logger.Information("JobFinisher, job {0}, canceling tasks on nodes", job.Id);
 
-            await T.Task.WhenAll(allTasks.Select(async task =>
+            await T.Task.WhenAll(job.TargetNodes.Select(async n =>
             {
-                var q = this.Utilities.GetNodeCancelQueue(task.Node);
+                var q = this.Utilities.GetNodeCancelQueue(n);
                 var msg = new CloudQueueMessage(
-                    JsonConvert.SerializeObject(new TaskEventMessage() { JobId = job.Id, Id = task.Id, JobType = job.Type, RequeueCount = job.RequeueCount, EventVerb = "cancel" }));
+                    JsonConvert.SerializeObject(new TaskEventMessage() { JobId = job.Id, Id = 0, JobType = job.Type, RequeueCount = job.RequeueCount, EventVerb = "cancel" }));
                 await q.AddMessageAsync(msg, null, null, null, null, token);
-                this.Logger.Information("Added task cancel {0} to queue {1}, {2}", task.Id, q.Name, msg.Id);
+                this.Logger.Information("Added job {0} cancel to queue {1}, {2}", job.Id, q.Name, msg.Id);
             }));
 
             this.Logger.Information("JobFinisher, job {0}, canceling tasks on nodes", job.Id);
