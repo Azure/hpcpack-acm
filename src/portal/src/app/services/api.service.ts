@@ -381,7 +381,8 @@ export class DiagApi extends Resource<any> {
       diagnosticTest: {
         name: e.diagnosticTest.name,
         category: e.diagnosticTest.category
-      }
+      },
+      events: e.events
     } as DiagJobDetail
   }
 
@@ -481,7 +482,8 @@ export class DiagApi extends Resource<any> {
         id: item.id,
         customizedData: item.customizedData,
         state: item.state,
-        jobId: item.jobId
+        jobId: item.jobId,
+        node: item.node
       } as DiagListTask;
     });
     return tasks;

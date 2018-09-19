@@ -3,4 +3,5 @@ export class DiagListTask {
     customizedData: string;
     state: string;
     jobId: number;
+    node: string;
 }
