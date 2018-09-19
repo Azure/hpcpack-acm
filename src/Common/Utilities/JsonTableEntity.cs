@@ -24,6 +24,7 @@
 
         public void PutObject(object obj) => this.JsonContent = JsonConvert.SerializeObject(obj, Formatting.Indented);
 
-        public T GetObject<T>() => JsonConvert.DeserializeObject<T>(this.JsonContent);
+        public T GetObject<T>() =>
+            typeof(T) == typeof(string) && !(this.JsonContent.StartsWith(@"""") && this.JsonContent.EndsWith(@"""")) ? (dynamic)this.JsonContent : JsonConvert.DeserializeObject<T>(this.JsonContent);
     }
 }

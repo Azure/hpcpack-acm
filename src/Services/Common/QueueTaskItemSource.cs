@@ -1,5 +1,6 @@
 ﻿namespace Microsoft.HpcAcm.Services.Common
 {
+    using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
     using Newtonsoft.Json;
@@ -42,14 +43,9 @@
                         token);
                 }
             }
-            catch (StorageException ex)
+            catch (StorageException ex) when (ex.IsCancellation())
             {
-                if (ex.InnerException is OperationCanceledException)
-                {
-                    throw ex.InnerException;
-                }
-
-                throw;
+                throw ex.InnerException;
             }
         }
     }

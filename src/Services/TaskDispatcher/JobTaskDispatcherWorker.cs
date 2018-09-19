@@ -22,11 +22,15 @@
 
     internal class JobTaskDispatcherWorker : TaskItemWorker, IWorker
     {
+        private readonly string GZipedEmpty = Compress.GZip(string.Empty);
         private readonly TaskItemSourceOptions options;
         private readonly ConcurrentDictionary<string, InternalDiagnosticsTest> diagTests = new ConcurrentDictionary<string, InternalDiagnosticsTest>();
         private readonly ConcurrentDictionary<string, string> taskFilterScript = new ConcurrentDictionary<string, string>();
         private CloudTable jobsTable;
         private Dictionary<int, Task> tasksDict;
+        private readonly ConcurrentDictionary<int, CloudQueueMessage> taskTimeoutMessages = new ConcurrentDictionary<int, CloudQueueMessage>();
+        private readonly ConcurrentDictionary<int, CloudQueueMessage> taskNodeTimeoutMessages = new ConcurrentDictionary<int, CloudQueueMessage>();
+        private int batchId = 0;
 
         public JobTaskDispatcherWorker(IOptions<TaskItemSourceOptions> options) : base(options.Value)
         {
@@ -43,14 +47,9 @@
             {
                 this.job = await this.jobsTable.RetrieveAsync<Job>(this.jobPartitionKey, this.Utilities.JobEntryKey, token);
             }
-            catch (StorageException ex)
+            catch (StorageException ex) when (ex.IsCancellation())
             {
-                if (ex.InnerException is OperationCanceledException)
-                {
-                    throw ex.InnerException;
-                }
-
-                throw;
+                throw ex.InnerException;
             }
 
             return this.job.State == JobState.Running;
@@ -168,7 +167,7 @@
                     });
 
                     j.State = JobState.Failed;
-                }, token);
+                }, token, this.Logger);
 
                 return true;
             }
@@ -176,13 +175,28 @@
             return true;
         }
 
+        public async T.Task UpdateJobProgress(CancellationToken token)
+        {
+            var completedCount = this.tasksDict.Count(t => t.Value.State == TaskState.Canceled || t.Value.State == TaskState.Finished || t.Value.State == TaskState.Failed);
+            this.Logger.Information("Updating job {0} completed count to {1}", jobPartitionKey, completedCount);
+
+            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
+            {
+                j.CompletedTaskCount = Math.Min(completedCount, j.TaskCount);
+                this.job = j;
+            }, token,
+            this.Logger);
+        }
+
         public override async T.Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
         {
+            this.batchId++;
             var taskItems = taskItem.GetMessage<TaskItem[]>();
+            this.Logger.Information("Entering batch {0}, size {1}", this.batchId, taskItems.Length);
             var messages = taskItems.Select(ti =>
             {
                 var msg = ti.GetMessage<TaskCompletionMessage>();
-                this.Logger.Information("Do work for job {0}, task {1}, message {2}", msg.JobId, msg.Id, ti.Id);
+                this.Logger.Information("    Do work for job {0}, task {1}, message {2}", msg.JobId, msg.Id, ti.Id);
                 return msg;
             }).ToList();
 
@@ -195,30 +209,77 @@
 
             var tasks = messages.Where(msg => msg.RequeueCount == job.RequeueCount).ToList();
 
+            this.Logger.Information("Deleting timeout guard {0}", jobPartitionKey);
+            await T.Task.WhenAll(tasks.Where(t => !t.Timeouted).Select(async t =>
+            {
+                var tt = this.tasksDict[t.Id];
+                if (this.taskNodeTimeoutMessages.TryRemove(t.Id, out var nodeTimeoutMsg))
+                {
+                    var nodeCancelQueue = this.Utilities.GetNodeCancelQueue(tt.Node);
+                    try
+                    {
+                        await nodeCancelQueue.DeleteMessageAsync(nodeTimeoutMsg.Id, nodeTimeoutMsg.PopReceipt, null, null, token);
+                        this.Logger.Information("    Deleted Node timeout message for job {0}, task {1}, message {2}", job.Id, t.Id, nodeTimeoutMsg.Id);
+                    }
+                    catch (StorageException ex)
+                    {
+                        this.Logger.Warning(ex, "    Unable to delete the node timeout message {0}", nodeTimeoutMsg.Id);
+                    }
+                }
+                else
+                {
+                    this.Logger.Information("    Cannot find the node timeout message for job {0}, task {1}", job.Id, t.Id);
+                }
+
+                if (this.taskTimeoutMessages.TryRemove(t.Id, out var taskTimeoutMsg))
+                {
+                    var jobTaskCompletionQueue = this.Utilities.GetJobTaskCompletionQueue(job.Id);
+                    try
+                    {
+                        await jobTaskCompletionQueue.DeleteMessageAsync(taskTimeoutMsg.Id, taskTimeoutMsg.PopReceipt, null, null, token);
+                        this.Logger.Information("    Deleted Task timeout message for job {0}, task {1}, message {2}", job.Id, t.Id, taskTimeoutMsg.Id);
+                    }
+                    catch (StorageException ex)
+                    {
+                        this.Logger.Warning(ex, "    Unable to delete the task timeout message {0}", taskTimeoutMsg.Id);
+                    }
+                }
+                else
+                {
+                    this.Logger.Information("    Cannot find the task timeout message for job {0}, task {1}", job.Id, t.Id);
+                }
+            }));
+
+            this.Logger.Information("Updating tasks state in memory {0}", jobPartitionKey);
             foreach (var t in tasks)
             {
                 var tt = this.tasksDict[t.Id];
-                this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} on {4} completed, timeout {5}, child ids {6}", job.Type, job.Id, job.RequeueCount, t.Id, tt.Node, t.Timeouted, string.Join(",", this.tasksDict[t.Id].ChildIds));
-                tt.State = t.ExitCode == 0 ? TaskState.Finished : TaskState.Failed;
+                this.Logger.Information("    {0} Job {1} requeuecount {2}, task {3} on {4} completed, timeout {5}, currentState {6}, child ids {7}", job.Type, job.Id, job.RequeueCount, t.Id, tt.Node, t.Timeouted, tt.State, string.Join(",", this.tasksDict[t.Id].ChildIds));
+
+                bool alreadyFinished = tt.State == TaskState.Finished || tt.State == TaskState.Canceled || tt.State == TaskState.Failed;
+
+                tt.State = alreadyFinished ? tt.State : (t.Timeouted ? TaskState.Canceled : (t.ExitCode == 0 ? TaskState.Finished : TaskState.Failed));
             }
 
+            this.Logger.Information("Updating tasks state for timeouted tasks in storage {0}", jobPartitionKey);
             await T.Task.WhenAll(tasks.Where(t => t.Timeouted).Select(async t =>
             {
                 var key = this.Utilities.GetTaskKey(job.Id, t.Id, job.RequeueCount);
 
+                TaskState state = TaskState.Canceled;
                 await this.Utilities.UpdateTaskAsync(this.jobPartitionKey, key, task =>
                 {
-                    task.State = task.State != TaskState.Canceled && task.State != TaskState.Failed && task.State != TaskState.Finished ? TaskState.Canceled : task.State;
+                    state = task.State = task.State != TaskState.Canceled && task.State != TaskState.Failed && task.State != TaskState.Finished ? TaskState.Canceled : task.State;
                 },
-                token);
+                token, this.Logger);
+
+                this.Logger.Information("    Updated {0}, task {1} state to {2}", job.Id, t.Id, state);
             }));
 
-            var completedCount = this.tasksDict.Count(t => t.Value.State == TaskState.Canceled || t.Value.State == TaskState.Finished || t.Value.State == TaskState.Failed);
-            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
+            if (this.batchId % 10 == 0)
             {
-                j.CompletedTaskCount = Math.Min(completedCount, j.TaskCount);
-                this.job = j;
-            }, token);
+                await this.UpdateJobProgress(token);
+            }
 
             if (job?.State != JobState.Running)
             {
@@ -229,6 +290,7 @@
 
             if (job.Type == JobType.Diagnostics)
             {
+                this.Logger.Information("Processing task filters for job {0}", jobPartitionKey);
                 string diagKey = job.DiagnosticTest.Category + job.DiagnosticTest.Name;
                 if (!this.diagTests.TryGetValue(diagKey, out InternalDiagnosticsTest diagTest))
                 {
@@ -241,6 +303,7 @@
 
                 if (diagTest?.TaskResultFilterScript?.Name != null)
                 {
+                    this.Logger.Information("Run task filters for job {0}", jobPartitionKey);
                     if (!this.taskFilterScript.TryGetValue(diagKey, out string script))
                     {
                         var scriptBlob = this.Utilities.GetBlob(diagTest.TaskResultFilterScript.ContainerName, diagTest.TaskResultFilterScript.Name);
@@ -270,6 +333,7 @@
                 }
             }
 
+            this.Logger.Information("Check FailOnTaskFailure for job {0}", jobPartitionKey);
             if (job.FailJobOnTaskFailure && tasks.Any(t => t.ExitCode != 0))
             {
                 this.Logger.Information("Fail the job because some tasks failed {0}", job.Id);
@@ -282,69 +346,55 @@
                         Source = EventSource.Job,
                         Type = EventType.Alert
                     });
-                }, token);
 
-                this.job.State = JobState.Failed;
+                    this.job = j;
+                }, token, this.Logger);
 
                 return true;
             }
 
+            this.Logger.Information("Fetching finished tasks for job {0}", jobPartitionKey);
             var finishedTasks = tasks.Select(t => this.tasksDict[t.Id]);
+            this.Logger.Information("Converting to child Ids view for job {0}", jobPartitionKey);
             var childIdGroups = finishedTasks
                 .SelectMany(ids => ids.ChildIds.Select(cid => new { ParentId = ids.Id, ChildId = cid }))
                 .GroupBy(idPair => idPair.ChildId)
                 .Select(g => new { ChildId = g.Key, Count = g.Count(), ParentIds = g.Select(idPair => idPair.ParentId).ToList() }).ToList();
 
+            this.Logger.Information("Converted to child Ids view for job {0}, children count {1}", jobPartitionKey, childIdGroups.Count);
             await T.Task.WhenAll(childIdGroups.Select(async cid =>
             {
-                this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} has {4} ancestor tasks completed {5}", job.Type, job.Id, job.RequeueCount, cid.ChildId, cid.Count, string.Join(",", cid.ParentIds));
+                this.Logger.Information("    {0} Job {1} requeuecount {2}, task {3} has {4} ancestor tasks completed {5}", job.Type, job.Id, job.RequeueCount, cid.ChildId, cid.Count, string.Join(",", cid.ParentIds));
                 var toBeUnlocked = this.tasksDict[cid.ChildId];
                 bool isEndTask = toBeUnlocked.Id == int.MaxValue;
-                if (!isEndTask && (toBeUnlocked.State == TaskState.Canceled || toBeUnlocked.State == TaskState.Failed || toBeUnlocked.State == TaskState.Finished))
+                if (!isEndTask && (toBeUnlocked.State != TaskState.Queued))
                 {
-                    this.Logger.Information("{0} Job {1} requeuecount {2}, task {3} is already completed", job.Type, job.Id, job.RequeueCount, cid.ChildId);
+                    this.Logger.Information("    {0} Job {1} requeuecount {2}, task {3} is in state {4}, skip dispatching.", job.Type, job.Id, job.RequeueCount, cid.ChildId, toBeUnlocked.State);
                     return;
                 }
 
                 var oldParentIdsCount = toBeUnlocked.RemainingParentIds.Count;
                 var oldParents = string.Join(',', toBeUnlocked.RemainingParentIds);
                 cid.ParentIds.ForEach(pid => toBeUnlocked.RemainingParentIds.Remove(pid));
-                this.Logger.Information("Job {0}, requeueCount {1}, task {2} had {3} parents, remaining {4} parents, removed {5}",
+                this.Logger.Information("    Job {0}, requeueCount {1}, task {2} had {3} parents, remaining {4} parents, removed {5}",
                     job.Id, job.Request, cid.ChildId, oldParentIdsCount, toBeUnlocked.RemainingParentIds.Count, cid.ParentIds.Count);
                 if (cid.ParentIds.Count + toBeUnlocked.RemainingParentIds.Count != oldParentIdsCount)
                 {
-                    this.Logger.Warning("Job {0}, requeueCount {1}, task {2} mismatch! old {3}, remaining {4}, removed {5}.",
+                    this.Logger.Warning("    Job {0}, requeueCount {1}, task {2} mismatch! old {3}, remaining {4}, removed {5}.",
                         job.Id, job.Request, cid.ChildId, oldParents, string.Join(',', toBeUnlocked.RemainingParentIds), string.Join(',', cid.ParentIds));
                 }
 
                 if (toBeUnlocked.RemainingParentIds.Count == 0)
                 {
                     // unlocked
+                    var targetState = isEndTask ? TaskState.Finished : TaskState.Dispatching;
                     var childTaskKey = this.Utilities.GetTaskKey(job.Id, cid.ChildId, job.RequeueCount);
-                    Task childTask = null;
-                    if (!await this.Utilities.UpdateTaskAsync(jobPartitionKey, childTaskKey, t =>
-                    {
-                        t.ZippedParentIds = Compress.GZip("");
-                        t.State = isEndTask ? TaskState.Finished : TaskState.Dispatching;
-                        childTask = t;
-                    }, token))
-                    {
-                        await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                        {
-                            j.State = JobState.Failed;
-                            // TODO: make event separate.
-                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                            {
-                                Content = $"Unable to update task record {cid.ChildId}",
-                                Source = EventSource.Job,
-                                Type = EventType.Alert
-                            });
-                        }, token);
-                    }
+                    Task childTask = toBeUnlocked;
 
                     if (isEndTask)
                     {
-                        await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.State = j.State == JobState.Running ? JobState.Finishing : j.State, token);
+                        await this.UpdateJobProgress(token);
+                        await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.State = j.State == JobState.Running ? JobState.Finishing : j.State, token, this.Logger);
                         var jobEventQueue = this.Utilities.GetJobEventQueue();
                         await jobEventQueue.AddMessageAsync(
                             // todo: event message generation.
@@ -366,26 +416,53 @@
 
                         async T.Task cancel()
                         {
-                            var cancelQueue = this.Utilities.GetNodeCancelQueue(childTask.Node);
-                            //cancelQueue.AddMessageAsync();
-                            await cancelQueue.AddMessageAsync(
-                                new CloudQueueMessage(JsonConvert.SerializeObject(new TaskEventMessage() { EventVerb = "cancel", Id = childTask.Id, JobId = childTask.JobId, JobType = childTask.JobType, RequeueCount = job.RequeueCount }, Formatting.Indented)),
-                                null, TimeSpan.FromSeconds(childTask.MaximumRuntimeSeconds), null, null, token);
+                            if (!this.taskNodeTimeoutMessages.ContainsKey(childTask.Id))
+                            {
+                                var taskTimeoutMessage = new CloudQueueMessage(
+                                    JsonConvert.SerializeObject(new TaskEventMessage() { EventVerb = "timeout", Id = childTask.Id, JobId = childTask.JobId, JobType = childTask.JobType, RequeueCount = job.RequeueCount }, Formatting.Indented));
+                                var cancelQueue = this.Utilities.GetNodeCancelQueue(childTask.Node);
+                                await cancelQueue.AddMessageAsync(
+                                    taskTimeoutMessage,
+                                    null, TimeSpan.FromSeconds(childTask.MaximumRuntimeSeconds), null, null, token);
+
+                                this.taskNodeTimeoutMessages.TryAdd(childTask.Id, taskTimeoutMessage);
+                            }
+                            else
+                            {
+                                this.Logger.Warning("    Cannot add taskNodeTimeout for job {0} task {1}", job.Id, childTask.Id);
+                            }
                         };
 
                         async T.Task complete()
                         {
-                            var jobTaskCompletionQueue = this.Utilities.GetJobTaskCompletionQueue(job.Id);
-                            await jobTaskCompletionQueue.AddMessageAsync(
-                                new CloudQueueMessage(JsonConvert.SerializeObject(new TaskCompletionMessage() { ChildIds = childTask.ChildIds, ExitCode = -1, Id = childTask.Id, JobId = childTask.JobId, JobType = childTask.JobType, RequeueCount = childTask.RequeueCount, Timeouted = true }, Formatting.Indented)),
-                                null, TimeSpan.FromSeconds(childTask.MaximumRuntimeSeconds), null, null, token);
+                            if (!this.taskTimeoutMessages.ContainsKey(childTask.Id))
+                            {
+                                var taskTimeoutMessage = new CloudQueueMessage(
+                                    JsonConvert.SerializeObject(new TaskCompletionMessage() { ChildIds = childTask.ChildIds, ExitCode = -1, Id = childTask.Id, JobId = childTask.JobId, JobType = childTask.JobType, RequeueCount = childTask.RequeueCount, Timeouted = true }, Formatting.Indented));
+
+                                var jobTaskCompletionQueue = this.Utilities.GetJobTaskCompletionQueue(job.Id);
+                                await jobTaskCompletionQueue.AddMessageAsync(
+                                    taskTimeoutMessage,
+                                    null, TimeSpan.FromSeconds(childTask.MaximumRuntimeSeconds), null, null, token);
+
+                                this.taskTimeoutMessages.TryAdd(childTask.Id, taskTimeoutMessage);
+                            }
+                            else
+                            {
+                                this.Logger.Warning("    Cannot add taskTimeout for job {0} task {1}", job.Id, childTask.Id);
+                            }
                         };
 
                         await T.Task.WhenAll(dispatch(), cancel(), complete());
-                        this.Logger.Information("Dispatched job {0} task {1} to node {2}", childTask.JobId, childTask.Id, childTask.Node);
+                        this.Logger.Information("    Dispatched job {0} task {1} to node {2}", childTask.JobId, childTask.Id, childTask.Node);
                     }
+
+                    toBeUnlocked.State = targetState;
+                    this.Logger.Information("    Updated job {0} task {1} state to {2} in memory", childTask.JobId, childTask.Id, childTask.State);
                 }
             }));
+
+            this.Logger.Information("Finished to process the batch of tasks of job {0}", jobPartitionKey);
 
             return true;
         }

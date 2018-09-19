@@ -50,7 +50,7 @@
                             Source = EventSource.Job,
                             Type = EventType.Alert
                         });
-                    }, token);
+                    }, token, this.Logger);
 
                     return null;
                 }
@@ -70,7 +70,7 @@
                         Source = EventSource.Job,
                         Type = EventType.Alert
                     });
-                }, token);
+                }, token, this.Logger);
 
                 this.Logger.Error("No diag test found");
                 return null;

@@ -68,6 +68,7 @@
                 this.Logger.Information("Finished process {0} {1} {2}, result {3}", message.EventVerb, message.JobId, message.Id, result);
                 return result;
             }
+            catch (OperationCanceledException) { return false; }
             catch (Exception ex)
             {
                 this.Logger.Error("Exception occurred when process {0}, {1}, {2}, {3}", message.EventVerb, message.JobId, message.Id, ex);
@@ -80,7 +81,7 @@
                         Source = EventSource.Job,
                         Type = EventType.Alert,
                     });
-                }, token);
+                }, token, this.Logger);
             }
 
             return true;

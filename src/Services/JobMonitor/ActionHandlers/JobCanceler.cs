@@ -39,7 +39,7 @@
                 }
 
                 j.State = j.State == JobState.Running ? JobState.Canceling : j.State;
-            }, token);
+            }, token, this.Logger);
 
             var jobPartitionKey = this.Utilities.GetJobPartitionKey(job.Type, job.Id);
 
@@ -50,14 +50,6 @@
                 false,
                 false);
 
-            var allTasks = (await jobTable.QueryAsync<Task>(
-                TableQuery.CombineFilters(jobPartitionQuery, TableOperators.And, taskRangeQuery),
-                null,
-                token))
-                .Select(t => t.Item3)
-                .Select(t => new { t.Id, t.Node, t.State })
-                .ToList();
-
             var taskQueue = await this.Utilities.GetOrCreateJobTaskCompletionQueueAsync(job.Id, token);
             var msg1 = new CloudQueueMessage(
                 JsonConvert.SerializeObject(new TaskCompletionMessage() { JobId = job.Id, Id = int.MaxValue, ExitCode = 0 }));
@@ -65,16 +57,16 @@
             await taskQueue.AddMessageAsync(msg1, null, null, null, null, token);
             this.Logger.Information("Added task cancel to queue {0}, {1}", taskQueue.Name, msg1.Id);
 
-            await T.Task.WhenAll(allTasks.Where(t => t.State != TaskState.Canceled && t.State != TaskState.Finished && t.State != TaskState.Failed).Select(async task =>
+            await T.Task.WhenAll(job.TargetNodes.Select(async n =>
              {
-                 var q = this.Utilities.GetNodeCancelQueue(task.Node);
+                 var q = this.Utilities.GetNodeCancelQueue(n);
                  var msg = new CloudQueueMessage(
-                     JsonConvert.SerializeObject(new TaskEventMessage() { JobId = job.Id, Id = task.Id, JobType = job.Type, RequeueCount = job.RequeueCount, EventVerb = "cancel" }));
+                     JsonConvert.SerializeObject(new TaskEventMessage() { JobId = job.Id, Id = 0, JobType = job.Type, RequeueCount = job.RequeueCount, EventVerb = "cancel" }));
                  await q.AddMessageAsync(msg, null, null, null, null, token);
-                 this.Logger.Information("Added task cancel {0} to queue {1}, {2}", task.Id, q.Name, msg.Id);
+                 this.Logger.Information("Added job {0} cancel to queue {1}, {2}", job.Id, q.Name, msg.Id);
              }));
 
-            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.State = JobState.Canceled, token);
+            await this.Utilities.UpdateJobAsync(job.Type, job.Id, j => j.State = JobState.Canceled, token, this.Logger);
         }
     }
 }

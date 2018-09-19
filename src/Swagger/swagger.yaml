@@ -1026,7 +1026,7 @@ paths:
 host: localhost
 basePath: /v1
 schemes:
- - http
+ - https
 
 securityDefinitions:
   basic_auth:

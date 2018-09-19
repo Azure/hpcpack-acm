@@ -95,7 +95,7 @@
                                 Source = EventSource.Job,
                                 Type = EventType.Alert,
                             });
-                        }, token);
+                        }, token, this.Logger);
                     }
                 }
                 catch (Exception ex)
@@ -110,7 +110,7 @@
                             Source = EventSource.Job,
                             Type = EventType.Alert,
                         });
-                    }, token);
+                    }, token, this.Logger);
                 }
 
                 return true;

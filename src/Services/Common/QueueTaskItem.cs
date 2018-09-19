@@ -9,6 +9,7 @@
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft.HpcAcm.Common.Utilities;
 
     public class QueueTaskItem : TaskItem
     {
@@ -41,7 +42,7 @@
             };
 
             this.ensureInvisibilityThread.Start();
-            this.logger.Information("Constructed task item {0}", this.QueueMessage.Id);
+            this.logger.Information(" -------> Constructed task item {0}", this.QueueMessage.Id);
         }
 
         public override CancellationToken Token { get; }
@@ -62,36 +63,29 @@
                 {
                     Task.Delay(loopInterval, token).GetAwaiter().GetResult();
 
-                    this.logger.Information("Ensure Invisible for message {0}", this.QueueMessage.Id);
+                    this.logger.Information(" -------> Ensure Invisible for message {0}", this.QueueMessage.Id);
 
                     try
                     {
                         this.Queue.UpdateMessageAsync(this.QueueMessage, this.invisibleTimeout, MessageUpdateFields.Visibility, null, null, token).GetAwaiter().GetResult();
                     }
-                    catch (StorageException ex)
+                    catch (StorageException ex) when (ex.IsCancellation())
                     {
-                        if (ex.InnerException is OperationCanceledException)
-                        {
-                            continue;
-                        }
-                        else
-                        {
-                            throw;
-                        }
+                        continue;
                     }
                 }
             }
             catch (OperationCanceledException)
             {
-                this.logger.Information("Ensure Invisible canceled for message {0}", this.QueueMessage.Id);
+                this.logger.Information(" -------> Ensure Invisible canceled for message {0}", this.QueueMessage.Id);
             }
             catch (Exception ex)
             {
-                this.logger.Error(ex, "Error when ensure invisible of a task message {0}", this.QueueMessage.Id);
+                this.logger.Error(ex, " --------> Error when ensure invisible of a task message {0}", this.QueueMessage.Id);
                 this.cts.Cancel();
             }
 
-            this.logger.Information("Exiting Ensure Invisible for message {0}", this.QueueMessage.Id);
+            this.logger.Information(" -------> Exiting Ensure Invisible for message {0}", this.QueueMessage.Id);
         }
 
         protected override void Dispose(bool isDisposing)
@@ -100,7 +94,7 @@
             {
                 if (!this.cts.IsCancellationRequested)
                 {
-                    this.logger.Information("Dispose: Stop ensure invisible for message {0}", this.QueueMessage.Id);
+                    this.logger.Information(" -------> Dispose: Stop ensure invisible for message {0}", this.QueueMessage.Id);
                     this.StopEnsureInvisible();
                 }
 
@@ -124,38 +118,31 @@
         {
             this.StopEnsureInvisible();
             await this.MakeVisible(token);
-            this.logger.Information("ReturnAsync: Make visible for message {0}", this.QueueMessage.Id);
+            this.logger.Information(" -------> ReturnAsync: Make visible for message {0}", this.QueueMessage.Id);
         }
 
         public override async Task FinishAsync(CancellationToken token)
         {
             this.StopEnsureInvisible();
-            this.logger.Information("FinishAsync: Deleting message {0}", this.QueueMessage.Id);
+            this.logger.Information(" -------> FinishAsync: Deleting message {0}", this.QueueMessage.Id);
 
             try
             {
                 await this.Queue.DeleteMessageAsync(this.QueueMessage.Id, this.QueueMessage.PopReceipt, null, null, token);
-                this.logger.Information("FinishAsync: Deleted message {0}", this.QueueMessage.Id);
+                this.logger.Information(" -------> FinishAsync: Deleted message {0}", this.QueueMessage.Id);
             }
-            catch (StorageException ex)
+            catch (StorageException ex) when (ex.IsCancellation())
             {
-                if (ex.InnerException is OperationCanceledException)
-                {
-                    return;
-                }
-
-                if (string.Equals(ex.RequestInformation.ErrorCode, "MessageNotFound", StringComparison.OrdinalIgnoreCase))
-                {
-                    this.logger.Warning("Deleting message {0}, not found", this.QueueMessage.Id);
-                    return;
-                }
-
-                this.logger.Error(ex, "Deleting message {0}", this.QueueMessage.Id);
-                throw;
+                return;
+            }
+            catch (StorageException ex) when (ex.IsNotFound())
+            {
+                this.logger.Warning(" -------> Deleting message {0}, not found", this.QueueMessage.Id);
+                return;
             }
             catch (Exception ex)
             {
-                this.logger.Error(ex, "Deleting message {0}", this.QueueMessage.Id);
+                this.logger.Error(ex, " -------> Deleting message {0}", this.QueueMessage.Id);
                 throw;
             }
         }

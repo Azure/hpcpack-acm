@@ -12,26 +12,31 @@
 
     public class TaskMonitor
     {
-        public class TaskResultMonitor : IDisposable
+        public class TaskEntry : IDisposable
         {
-            private readonly string key;
             private readonly TaskMonitor monitor;
+            private readonly string key;
+            private readonly int jobId;
 
-            public TaskResultMonitor(string key, TaskMonitor monitor)
+            public TaskResultMonitor Result { get; }
+            public OutputSorter Sorter { get; }
+
+            public TaskEntry(int jobId, string key, TaskMonitor monitor, Func<string, bool, CancellationToken, T.Task> outputProcessor)
             {
+                this.jobId = jobId;
                 this.key = key;
                 this.monitor = monitor;
+                this.Result = new TaskResultMonitor();
+                this.Sorter = new OutputSorter(outputProcessor);
             }
-
-            internal T.TaskCompletionSource<ComputeNodeTaskCompletionEventArgs> commandResult = new T.TaskCompletionSource<ComputeNodeTaskCompletionEventArgs>();
-            public T.Task<ComputeNodeTaskCompletionEventArgs> Execution { get => this.commandResult.Task; }
 
             protected virtual void Dispose(bool isDisposing)
             {
                 if (isDisposing)
                 {
-                    this.monitor.taskResults.TryRemove(this.key, out _);
-                    this.monitor.taskOutputs.TryRemove(this.key, out _);
+                    this.monitor.taskEntries.TryGetValue(jobId, out var j);
+                    j?.TryRemove(this.key, out _);
+                    this.Sorter?.Dispose();
                 }
             }
 
@@ -41,24 +46,24 @@
                 GC.SuppressFinalize(this);
             }
         }
+        public class TaskResultMonitor
+        {
+            internal T.TaskCompletionSource<ComputeNodeTaskCompletionEventArgs> CommandResult = new T.TaskCompletionSource<ComputeNodeTaskCompletionEventArgs>();
+            public T.Task<ComputeNodeTaskCompletionEventArgs> Execution { get => this.CommandResult.Task; }
+        }
 
         public class OutputSorter : IDisposable
         {
-            private readonly string key;
-            private readonly TaskMonitor monitor;
-
-            public OutputSorter(string key, TaskMonitor monitor, Func<string, bool, CancellationToken, T.Task> processor)
+            public OutputSorter(Func<string, bool, CancellationToken, T.Task> processor)
             {
                 this.processor = processor;
-                this.key = key;
-                this.monitor = monitor;
             }
 
             protected virtual void Dispose(bool isDisposing)
             {
                 if (isDisposing)
                 {
-                    this.monitor.taskOutputs.TryRemove(this.key, out _);
+                    this.sem?.Dispose();
                 }
             }
 
@@ -103,7 +108,6 @@
                         await this.processor(builder.ToString(), i.Eof, token);
                         if (i != null && i.Eof)
                         {
-                            this.Dispose();
                             return;
                         }
                     }
@@ -123,46 +127,58 @@
             private readonly Func<string, bool, CancellationToken, T.Task> processor;
         }
 
-        private readonly ConcurrentDictionary<string, TaskResultMonitor> taskResults = new ConcurrentDictionary<string, TaskResultMonitor>();
-        private readonly ConcurrentDictionary<string, OutputSorter> taskOutputs = new ConcurrentDictionary<string, OutputSorter>();
+        private readonly ConcurrentDictionary<int, ConcurrentDictionary<string, TaskEntry>> taskEntries = new ConcurrentDictionary<int, ConcurrentDictionary<string, TaskEntry>>();
 
-        public TaskResultMonitor StartMonitorTask(string key, Func<string, bool, CancellationToken, T.Task> outputProcessor)
+        public TaskEntry StartMonitorTask(int jobId, string key, Func<string, bool, CancellationToken, T.Task> outputProcessor)
         {
-            this.taskOutputs.GetOrAdd(key, new OutputSorter(key, this, outputProcessor));
-            return this.taskResults.GetOrAdd(key, new TaskResultMonitor(key, this));
+            var jobDict = this.taskEntries.GetOrAdd(jobId, id => new ConcurrentDictionary<string, TaskEntry>());
+
+            return jobDict.GetOrAdd(key, k => new TaskEntry(jobId, key, this, outputProcessor));
         }
 
-        public TaskResultMonitor GetTaskResultMonitor(string key)
+        public TaskEntry GetTaskEntry(int jobId, string key) => this.taskEntries.TryGetValue(jobId, out var e) && e.TryGetValue(key, out var r) ? r : null;
+
+        public TaskResultMonitor GetTaskResultMonitor(int jobId, string key) => this.GetTaskEntry(jobId, key)?.Result;
+        public OutputSorter GetTaskOutputSorter(int jobId, string key) => this.GetTaskEntry(jobId, key)?.Sorter;
+
+        public async T.Task PutOutput(int jobId, string key, ClusrunOutput output, CancellationToken token)
         {
-            return this.taskResults.TryGetValue(key, out TaskResultMonitor t) ? t : null;
+            var sorter = this.GetTaskOutputSorter(jobId, key);
+            if (sorter != null) await sorter.PutOutput(output, token);
         }
 
-        public T.Task PutOutput(string key, ClusrunOutput output, CancellationToken token)
+        public void CompleteTask(int jobId, string key, ComputeNodeTaskCompletionEventArgs commandResult)
         {
-            return this.taskOutputs.TryGetValue(key, out OutputSorter sorter) ? sorter.PutOutput(output, token) : T.Task.CompletedTask;
-        }
-
-        public void CompleteTask(string key, ComputeNodeTaskCompletionEventArgs commandResult)
-        {
-            using (var m = this.GetTaskResultMonitor(key))
+            using (var m = this.GetTaskEntry(jobId, key))
             {
-                m?.commandResult?.SetResult(commandResult);
+                m?.Result?.CommandResult.SetResult(commandResult);
             }
         }
 
-        public void FailTask(string key, Exception ex)
+        public void FailTask(int jobId, string key, Exception ex)
         {
-            using (var m = this.GetTaskResultMonitor(key))
+            using (var m = this.GetTaskEntry(jobId, key))
             {
-                m?.commandResult?.SetException(ex);
+                m?.Result?.CommandResult?.SetException(ex);
             }
         }
 
-        public void CancelTask(string key)
+        public void CancelJob(int jobId)
         {
-            using (var m = this.GetTaskResultMonitor(key))
+            if (this.taskEntries.TryRemove(jobId, out var entries))
             {
-                m?.commandResult?.SetCanceled();
+                foreach (var m in entries)
+                {
+                    m.Value.Dispose();
+                }
+            }
+        }
+
+        public void CancelTask(int jobId, string key)
+        {
+            using (var m = this.GetTaskEntry(jobId, key))
+            {
+                m?.Result?.CommandResult?.SetCanceled();
             }
         }
     }

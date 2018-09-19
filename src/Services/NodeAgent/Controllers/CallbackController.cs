@@ -81,7 +81,7 @@
                     taskInfo.TaskInfo.ExitCode,
                     taskInfo.TaskInfo.Message);
 
-                this.monitor.CompleteTask(taskKey, taskInfo);
+                this.monitor.CompleteTask(taskInfo.JobId, taskKey, taskInfo);
 
                 return T.Task.FromResult(NextOperation.CancelTask);
             }
@@ -93,7 +93,7 @@
                     taskInfo.TaskInfo.ExitCode,
                     taskInfo.TaskInfo.Message);
 
-                this.monitor.FailTask(taskKey, ex);
+                this.monitor.FailTask(taskInfo.JobId, taskKey, ex);
 
                 return T.Task.FromResult(NextOperation.CancelJob);
             }

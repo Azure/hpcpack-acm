@@ -29,8 +29,17 @@
 
         public NodeCommunicatorOptions Options { get; }
 
-        public async Tasks.Task<string> EndJobAsync(string nodeName, EndJobArg arg,
-            CancellationToken token)
+        public async Tasks.Task<string> EndTaskAsync(string nodeName, EndTaskArg arg, CancellationToken token)
+        {
+            return await this.SendRequestAsync("endtask",
+                this.GetCallbackUri(nodeName, "taskcompleted"),
+                nodeName,
+                arg,
+                0,
+                token);
+        }
+
+        public async Tasks.Task<string> EndJobAsync(string nodeName, EndJobArg arg, CancellationToken token)
         {
             return await this.SendRequestAsync("endjob",
                 this.GetCallbackUri(nodeName, "taskcompleted"),
@@ -40,9 +49,9 @@
                 token);
         }
 
-        public async Tasks.Task<string> StartJobAndTaskAsync(string nodeName, StartJobAndTaskArg arg,
-            string userName, string password, ProcessStartInfo startInfo, string privateKey, string publicKey,
-            CancellationToken token)
+        public async Tasks.Task<string> StartJobAndTaskAsync(
+            string nodeName, StartJobAndTaskArg arg, string userName, string password,
+            ProcessStartInfo startInfo, string privateKey, string publicKey, CancellationToken token)
         {
             return await this.SendRequestAsync("startjobandtask",
                 this.GetCallbackUri(nodeName, "taskcompleted"),
@@ -79,7 +88,7 @@
                 else
                 {
                     throw;
-                }                
+                }
             }
         }
 
