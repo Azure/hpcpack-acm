@@ -7,5 +7,5 @@
         "ContainerName":"diagtestscripts",
         "Name":"benchmark-cpu-reduce.py"
     },
-    "description":"Install and run sysbench on all selected nodes. Get the CPU benchmark of calculating prime number",
+    "description":"Install and run sysbench on all selected nodes. Get the CPU benchmark of calculating prime number.",
 }
