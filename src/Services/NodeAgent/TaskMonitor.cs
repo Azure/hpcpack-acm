@@ -36,7 +36,7 @@
                 {
                     this.monitor.taskEntries.TryGetValue(jobId, out var j);
                     j?.TryRemove(this.key, out _);
-                    this.Sorter?.Dispose();
+                    this.Result.CommandResult.TrySetCanceled();
                 }
             }
 
@@ -52,25 +52,11 @@
             public T.Task<ComputeNodeTaskCompletionEventArgs> Execution { get => this.CommandResult.Task; }
         }
 
-        public class OutputSorter : IDisposable
+        public class OutputSorter
         {
             public OutputSorter(Func<string, bool, CancellationToken, T.Task> processor)
             {
                 this.processor = processor;
-            }
-
-            protected virtual void Dispose(bool isDisposing)
-            {
-                if (isDisposing)
-                {
-                    this.sem?.Dispose();
-                }
-            }
-
-            public void Dispose()
-            {
-                this.Dispose(true);
-                GC.SuppressFinalize(this);
             }
 
             private readonly ConcurrentDictionary<int, ClusrunOutput> cache = new ConcurrentDictionary<int, ClusrunOutput>();
