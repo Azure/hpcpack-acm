@@ -8,6 +8,10 @@
 
   </div>
   <div class="operations">
+    <div class="operation" (click)="newCommand()">
+      <i class="material-icons rerun">content_copy</i>
+      <div class="operation-name">Copy</div>
+    </div>
     <div class="cancel-job">
       <div class="operation" *ngIf="!isOver" (click)="cancelCommand()">
         <i class="material-icons operation-icon cancel">clear</i>
@@ -16,10 +20,6 @@
       <div class="operation-text" *ngIf="!isOver && canceling">
         <div class="operation-name">Waiting for cancel request finish...</div>
       </div>
-    </div>
-    <div class="operation" *ngIf="isOver" (click)="newCommand()">
-      <i class="material-icons rerun">content_copy</i>
-      <div class="operation-name">Copy</div>
     </div>
   </div>
 </div>

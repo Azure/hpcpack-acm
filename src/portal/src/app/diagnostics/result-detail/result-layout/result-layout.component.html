@@ -8,6 +8,10 @@
 
   </div>
   <div class="operations">
+    <div class="operation" (click)="rerunDiag()">
+      <i class="material-icons operation-icon rerun">content_copy</i>
+      <div class="operation-name">Copy</div>
+    </div>
     <div class="cancel-job">
       <div class="operation" *ngIf="!done" (click)="cancelDiag()">
         <i class="material-icons operation-icon cancel">clear</i>
@@ -16,10 +20,6 @@
       <div class="operation-text" *ngIf="!done && canceling">
         <div class="operation-name">Waiting for cancel request finish...</div>
       </div>
-    </div>
-    <div class="operation" *ngIf="done" (click)="rerunDiag()">
-      <i class="material-icons operation-icon rerun">content_copy</i>
-      <div class="operation-name">Copy</div>
     </div>
   </div>
 </div>
