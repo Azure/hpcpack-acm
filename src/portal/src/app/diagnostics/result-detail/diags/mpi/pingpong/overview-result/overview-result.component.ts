@@ -26,7 +26,6 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
   overviewResult: any;
   unit: any;
   threshold: any;
-
   average: number;
   median: number;
   passed: boolean;
@@ -35,10 +34,7 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
   variability: string;
   overviewThroughputData: any;
   nodeData: any;
-
-  resultNodes = [];
   selectedNode: string;
-
   normal = true;
 
   constructor(private cd: ChangeDetectorRef) { }
@@ -55,7 +51,6 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
   showOverview() {
     if (this.result != undefined) {
       this.nodeData = this.result.ResultByNode;
-      this.resultNodes = Object.keys(this.result.ResultByNode);
       if (!this.selectedNode) {
         this.selectedNode = this.nodes[0];
       }
@@ -75,7 +70,7 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
       this.packetSize = this.result['Packet_size'];
       this.unit = this.result['Unit'];
       this.threshold = this.result['Threshold'];
-      if (this.normal) {
+      if (this.normal && this.overviewResult) {
         this.updateView(this.overviewResult);
         this.chart.canvas.parentNode.style.height = `${this.overviewResult.Histogram[1].length * 40 + 20}px`;
       }
@@ -122,7 +117,6 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
   };
 
   updateView(data) {
-    // this.chart.canvas.style.height = `${50 * data.Histogram[0].length}px`;
     this.overviewData = {
       labels: data.Histogram[1],
       datasets: [{
