@@ -1,7 +1,11 @@
 import sys, requests, time, random, argparse, traceback, json, os, math
 from random import sample
 
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 REQUEST_TIMEOUT = 60
+REQUEST_HEADER = {'Authorization':'Basic cm9vdDpQYXNzMXdvcmQ='}
 
 def main(cluster, category, command, result, name, cancel, timeout, timeoutToCleanJob):    
     # format uri string
@@ -12,7 +16,7 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
     # check if the cluster is available for access
     try:
         api = "{0}/v1/nodes".format(cluster)
-        response = requests.get(api, timeout = REQUEST_TIMEOUT)
+        response = restGet(api)
     except Exception as e:
         print "[Fail]: Cluster is not available."
         print e
@@ -41,14 +45,46 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
             "targetNodes":randomNodes
             }
         print '[Command]: {}'.format(command)
-    elif category == 'diagnostics':
+    elif category == 'diag-pingpong-tournament':
         postContent = {
             "name":name,
             "type":"diagnostics",
             "diagnosticTest":{
                 "name": "pingpong",
                 "category": "mpi",
-                "arguments": [{"name":"Mode", "value": "Jumble"}]
+                "arguments": [{"name":"Mode", "value": "Tournament"}]
+            },
+            "targetNodes":randomNodes
+        }
+    elif category == 'diag-pingpong-parallel':
+        postContent = {
+            "name":name,
+            "type":"diagnostics",
+            "diagnosticTest":{
+                "name": "pingpong",
+                "category": "mpi",
+                "arguments": [{"name":"Mode", "value": "Parallel"}]
+            },
+            "targetNodes":randomNodes
+        }
+    elif category == 'diag-pingpong-debug':
+        postContent = {
+            "name":name,
+            "type":"diagnostics",
+            "diagnosticTest":{
+                "name": "pingpong",
+                "category": "mpi",
+                "arguments": [{"name":"Mode", "value": "Parallel"}, {"name":"Debug", "value": command}]
+            },
+            "targetNodes":randomNodes
+        }
+    elif category == 'diag-cpu':
+        postContent = {
+            "name":name,
+            "type":"diagnostics",
+            "diagnosticTest":{
+                "name": "cpu",
+                "category": "benchmark",
             },
             "targetNodes":randomNodes
         }
@@ -59,8 +95,8 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
     jobCanceled = False
     # create the job
     try:
-        api = "{0}/v1/{1}".format(cluster, category)
-        response = requests.post(api, json=postContent, timeout = REQUEST_TIMEOUT)
+        api = "{0}/v1/{1}".format(cluster, 'clusrun' if category == 'clusrun' else 'diagnostics')
+        response = requests.post(api, json=postContent, timeout = REQUEST_TIMEOUT, headers = REQUEST_HEADER, verify = False)
         if response:
             jobUri = cluster + response.headers['Location']
             jobCreated = True
@@ -69,15 +105,15 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
             count = 1
             while True:
                 api = jobUri
-                response = requests.get(api, timeout = REQUEST_TIMEOUT)
+                response = restGet(api)
                 if response:
                     jobState = response.json()['state']
                     if jobState == 'Finished' or jobState == 'Failed' or jobState == 'Canceled':
                         break
                     if count%30 == 0:
                         print "{}: Job state is {}".format(time.ctime(), jobState)
-                        api = '{}/tasks'.format(jobUri)
-                        response = requests.get(api, timeout = REQUEST_TIMEOUT)
+                        api = '{}/tasks?count=100000'.format(jobUri)
+                        response = restGet(api)
                         if response:
                             tasks = response.json()
                             taskStates = [task['state'] for task in tasks]
@@ -87,7 +123,7 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
                     if cancel and not jobCanceled and startTime+cancel < time.time():
                         jobCanceled = cancelJob(jobUri)
                         api = jobUri
-                        response = requests.get(api, timeout = REQUEST_TIMEOUT)
+                        response = restGet(api)
                         if response:
                             jobState = response.json()['state']
                             if jobState != 'Canceled' and jobState != 'Canceling':
@@ -142,7 +178,7 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
         print 'Validating job result...'
         try:
             api = "{0}/tasks".format(jobUri)
-            response = requests.get(api, timeout = REQUEST_TIMEOUT)
+            response = restGet(api)
             if response:
                 tasks = response.json()
                 if category == 'clusrun' and len(tasks) != len(randomNodes):
@@ -165,12 +201,12 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
 
             for taskId in [task["id"] for task in tasks]:
                 api = "{}/tasks/{}".format(jobUri, taskId)
-                response = requests.get(api, timeout = REQUEST_TIMEOUT)
+                response = restGet(api)
                 if response:
                     jobId = int(jobUri.split('/')[-1])
                     if category == 'clusrun':
                         taskValidation = [("jobId", jobId), ("id", taskId), ("jobType", "ClusRun"), ("state", "Finished"), ("commandLine", command)]
-                    elif category == 'diagnostics':
+                    else:
                         taskValidation = [("jobId", jobId), ("id", taskId), ("jobType", "Diagnostics")]
                     task = response.json()
                     for key,value in taskValidation:
@@ -189,13 +225,13 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
                     return 'Fail'
                 
                 api = "{}/tasks/{}/result".format(jobUri, taskId)
-                response = requests.get(api, timeout = REQUEST_TIMEOUT)
+                response = restGet(api)
                 if response:
                     jobId = int(jobUri.split('/')[-1])
                     task = response.json()
                     if category == 'clusrun':
                         taskValidation = [("jobId", jobId), ("taskId", taskId), ("commandLine", command), ("message", result), ("resultKey", None)]
-                    elif category == 'diagnostics':
+                    else:
                         taskValidation = [("jobId", jobId), ("taskId", taskId), ]
                     for key,value in taskValidation:
                         if key not in task:
@@ -210,7 +246,7 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
                     if category == 'clusrun':
                         resultKey = task['resultKey']
                         api = "{}/v1/output/clusrun/{}/raw".format(cluster, resultKey)
-                        response = requests.get(api, timeout = REQUEST_TIMEOUT)
+                        response = restGet(api)
                         if response:
                             if result and response.content != result:
                                 print '[Fail]: clusrun task result "{}" in {} is not correct, expecting "{}"'.format(response.content, api, result)
@@ -220,7 +256,7 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
                             print '[Fail]: failed to get clusrun task result.'
                             return 'Fail'                        
                         api = "{}/v1/output/clusrun/{}/page".format(cluster, resultKey)
-                        response = requests.get(api, timeout = REQUEST_TIMEOUT)
+                        response = restGet(api)
                         if response:
                             if result and response.json()['content'] != result:
                                 print '[Fail]: clusrun task result "{}" in {} is not correct, expecting "{}"'.format(response.content, api, result)
@@ -234,14 +270,14 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
                     print '[Fail]: failed to get task result.'
                     return 'Fail'
                                 
-            if category == 'diagnostics':
+            if category.startswith('diag-pingpong'):
                 api = "{0}".format(jobUri)
-                response = requests.get(api, timeout = REQUEST_TIMEOUT)
+                response = restGet(api)
                 if response and 'aggregationResult' in response.json():
                     results = json.loads(response.json()['aggregationResult'])
                 else:
                     api = "{0}/aggregationresult".format(jobUri)
-                    response = requests.get(api, timeout = REQUEST_TIMEOUT)
+                    response = restGet(api)
                     if response:
                         results = response.json()
                     else:
@@ -273,8 +309,11 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
     print '[Pass]'
     return 'Pass'
 
+def restGet(api):
+    return requests.get(api, timeout = REQUEST_TIMEOUT, headers = REQUEST_HEADER, verify = False)
+
 def cancelJob(jobUri):
-    response = requests.patch(jobUri, json={"Request":"cancel"}, timeout = REQUEST_TIMEOUT)
+    response = requests.patch(jobUri, json={"Request":"cancel"}, timeout = REQUEST_TIMEOUT, headers = REQUEST_HEADER, verify = False)
     if response:
         print '{}: Job canceled.'.format(time.ctime())
         return True
@@ -293,8 +332,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Functional test aganist clusrun, diagnostics or job cancellation')
     parser.add_argument('cluster_uri', help='Specify the cluster to test')
-    parser.add_argument('-g', '--category', choices=['clusrun', 'diagnostics'], required=True, help='Choose the category of job to test')
-    parser.add_argument('-m', '--command', help='Specify the command in clusrun job', default='hostname')
+    parser.add_argument('-g', '--category', choices=['clusrun', 'diag-pingpong-parallel', 'diag-pingpong-tournament', 'diag-pingpong-debug', 'diag-cpu'], required=True, help='Choose the category of job to test')
+    parser.add_argument('-m', '--command', help='Specify the command in clusrun or diag-pingpong-debug job', default='hostname')
     parser.add_argument('-r', '--result', help='Specify the expected result of tasks in clusrun job', default=None)
     parser.add_argument('-n', '--name', help='Specify the job name', default='Functional test by chenling')
     parser.add_argument('-c', '--cancel', type=check_positive, default=0, help='Specify the time(seconds) to cancel the job')
