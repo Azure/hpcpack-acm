@@ -27,8 +27,6 @@ export class OverviewResultComponent implements OnInit {
   updateOverviewData() {
     if (this.result !== undefined) {
       this.res = this.sanitizer.bypassSecurityTrustHtml(this.result.Html);
-      this.title = this.result.Title;
-      this.description = this.result.Description;
     }
   }
 
