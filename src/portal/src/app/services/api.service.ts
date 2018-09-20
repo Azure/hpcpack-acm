@@ -380,7 +380,8 @@ export class DiagApi extends Resource<any> {
       targetNodes: e.targetNodes,
       diagnosticTest: {
         name: e.diagnosticTest.name,
-        category: e.diagnosticTest.category
+        category: e.diagnosticTest.category,
+        arguments: e.diagnosticTest.arguments
       },
       events: e.events
     } as DiagJobDetail

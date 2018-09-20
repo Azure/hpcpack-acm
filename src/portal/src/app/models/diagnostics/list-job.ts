@@ -9,5 +9,4 @@ export class ListJob {
     state: string;
     progress: number;
     createdAt: string;
-    events: Array<any>
 }

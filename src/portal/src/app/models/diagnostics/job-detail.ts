@@ -5,7 +5,9 @@ export class DiagJobDetail {
     state: string;
     diagnosticTest: {
         name: string,
-        category: string
+        category: string,
+        arguments: Array<any>
     };
-    targetNodes: string[]
+    targetNodes: string[];
+    events: Array<any>;
 }
