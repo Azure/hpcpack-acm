@@ -17,29 +17,15 @@ fdescribe('RingOverviewResultComponent', () => {
     fixture = TestBed.createComponent(RingOverviewResultComponent);
     component = fixture.componentInstance;
     component.result = {
-      Passed: true,
-      Latency: {
-        Value: 23.45,
-        Unit: "Mb/s",
-        Threshold: 34.56
-      },
-      Throughput: {
-        Value: 78.56,
-        Threshold: 1000,
-        Unit: "us"
-      }
+      Html: "<h1>Test</h1>"
     };
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
-    let values = fixture.nativeElement.querySelectorAll(".overview-value");
-
-    let text = values[0].textContent;
-    expect(text).toEqual("23.45 Mb/s");
-
-    text = values[3].textContent;
-    expect(text).toEqual("1000 us");
+    let h = fixture.nativeElement.querySelector('h1');
+    let text = h.textContent;
+    expect(text).toEqual("Test");
   });
 });

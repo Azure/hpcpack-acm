@@ -2,10 +2,10 @@
   <ng-template #overview>
     <mat-tab-group>
       <mat-tab label="Result" *ngIf="!hasError">
+        <ring-overview-result [result]="aggregationResult" *ngIf="aggregationResult"></ring-overview-result>
         <div class="overview-progress">
           <mat-progress-bar mode="indeterminate" *ngIf="!aggregationResult"></mat-progress-bar>
         </div>
-        <ring-overview-result [result]="aggregationResult" *ngIf="aggregationResult"></ring-overview-result>
       </mat-tab>
       <mat-tab label="Error" *ngIf="hasError">
         <div class="error-message">
