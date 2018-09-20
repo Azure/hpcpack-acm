@@ -8,10 +8,17 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 export class CommandInputComponent implements OnInit {
   public command: string = '';
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: any) {
+  constructor(
+    public dialogRef: MatDialogRef<CommandInputComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any
+  ) {
     this.command = data.command;
   }
 
   ngOnInit() { }
+
+  runCmd() {
+    this.dialogRef.close(this.command);
+  }
 
 }
