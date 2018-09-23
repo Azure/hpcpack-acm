@@ -15,7 +15,7 @@
             "type":"number",
             "min":0,
             "max":22,
-            "defaultValue":22
+            "defaultValue":0
         },
         {
             "name":"Mode",

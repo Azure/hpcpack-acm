@@ -52,6 +52,7 @@ def main():
     tasksForStatistics = set()
     rdmaNodes = []
     canceledTasks = []
+    canceledNodePairs = set()
     try:
         for task in tasks:
             taskId = task['Id']
@@ -66,6 +67,7 @@ def main():
                 tasksForStatistics.add(taskId)
             if state == taskStateCanceled:
                 canceledTasks.append(taskId)
+                canceledNodePairs.add(nodePair)
     except Exception as e:
         printErrorAsJson('Failed to parse tasks. ' + str(e))
         return -1
@@ -126,7 +128,7 @@ def main():
         goodNodes = [task['Node'] for task in tasks if task['State'] == taskStateFinished]
     badNodes = [node for node in allNodes if node not in goodNodes]
     goodNodes = list(goodNodes)
-    failedReasons = getFailedReasons(failedPairs, intelMpiLocation)
+    failedReasons = getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs)
     failedNodes = getFailedNodes(failedPairs)
 
     result = {
@@ -227,7 +229,7 @@ def main():
     print(json.dumps(result))
     return 0
 
-def getFailedReasons(failedPairs, intelMpiLocation):
+def getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs):
     INTEL_MPI_INSTALL_CLUSRUN_HINT = "wget http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13063/l_mpi_2018.3.222.tgz && tar -zxvf l_mpi_2018.3.222.tgz && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./l_mpi_2018.3.222/silent.cfg && ./l_mpi_2018.3.222/install.sh --silent ./l_mpi_2018.3.222/silent.cfg"
     reasonMpiNotInstalled = 'Intel MPI is not found in directory "{}".'.format(intelMpiLocation)
     solutionMpiNotInstalled = 'If Intel MPI is installed on other location, specify the directory in parameter "Intel MPI location" of diagnostics test MPI-PingPong. Or download from https://software.intel.com/en-us/intel-mpi-library and install with clusrun command: "{}".'.format(INTEL_MPI_INSTALL_CLUSRUN_HINT)
@@ -239,6 +241,7 @@ def getFailedReasons(failedPairs, intelMpiLocation):
     reasonNodeSingleCore = 'MPI PingPong can not run inside a node with only 1 core.'
     solutionNodeSingleCore = 'Ignore this failure.'
     reasonTaskTimeout = 'Task timeout.'
+    reasonPingpongTimeout = 'Pingpong test timeout.'
     reasonSampleTimeout = 'Pingpong test sample timeout.'
     reasonNoResult = 'No result.'
     reasonWgetFailed = 'Failed to download filter script.'
@@ -265,6 +268,8 @@ def getFailedReasons(failedPairs, intelMpiLocation):
             if "Time limit (secs_per_sample * msg_sizes_list_len) is over;" in failedPair['Detail']:
                 reason = reasonSampleTimeout
             elif failedPair['ExitCode'] == 124:
+                reason = reasonPingpongTimeout
+            elif failedPair['NodePair'] in canceledNodePairs:
                 reason = reasonTaskTimeout
             elif failedPair['Detail'].split('\n', 1)[0] == '[Message before filter]:':
                 reason = reasonNoResult
