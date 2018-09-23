@@ -188,6 +188,9 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
                 for task in tasks:
                     taskId = task["id"]
                     taskState = task['state']
+                    if taskState == 'Canceled':
+                        print '[Warn]: task {0} state is {1}.'.format(taskId, taskState)
+                        return 'Warn'                        
                     if taskState != 'Finished' and taskState != 'Failed':
                         print '[Fail]: task {0} state {1} is not correct.'.format(taskId, taskState)
                         return 'Fail'
