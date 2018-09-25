@@ -16,10 +16,10 @@ def main(cluster, runtime, mail):
     # 3 test batches currently
     commands = [
         [
-            'test-functional.py {} --category diag-pingpong-tournament --continuous {}'.format(cluster, runtime),
+            'test-functional.py {} --category diag-pingpong-tournament --timeout 2000 --continuous {}'.format(cluster, runtime),
         ],
         [
-            'test-functional.py {} --category diag-pingpong-parallel --continuous {}'.format(cluster, runtime),
+            'test-functional.py {} --category diag-pingpong-parallel --timeout 2000 --continuous {}'.format(cluster, runtime),
         ],
         [
             'test-functional.py {} --category clusrun --command "echo -n test" --result "test" --timeout 200 --continuous {}'.format(cluster, runtime),
@@ -34,8 +34,8 @@ def main(cluster, runtime, mail):
             'test-functional.py {} --category clusrun --command "echo -n test" --result "test" --timeout 200 --continuous {}'.format(cluster, runtime),
             'test-functional.py {} --category clusrun --command "whoami" --result "root\\n" --timeout 200 --continuous {}'.format(cluster, runtime),
             'test-functional.py {} --category clusrun --command "hostname" --timeout 200 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category diag-pingpong-tournament --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category diag-pingpong-parallel --continuous {}'.format(cluster, runtime),
+            'test-functional.py {} --category diag-pingpong-tournament --timeout 2000 --continuous {}'.format(cluster, runtime),
+            'test-functional.py {} --category diag-pingpong-parallel --timeout 2000 --continuous {}'.format(cluster, runtime),
             'test-functional.py {} --category diag-pingpong-tournament --cancel 10 --timeout 200 --continuous {}'.format(cluster, runtime),
             'test-functional.py {} --category diag-pingpong-parallel --cancel 30 --timeout 200 --continuous {}'.format(cluster, runtime),
             'test-restapi-get.py {} --continuous {}'.format(cluster, runtime)
