@@ -32,6 +32,7 @@
                         JsonConvert.SerializeObject(new TaskEventMessage() { JobId = j.JobId, Id = 0, JobType = job?.Type ?? JobType.ClusRun, RequeueCount = 0, EventVerb = "cancel" })),
                         null, null, null, null, token);
 
+                    /* no need cancel tasks in this scenario.
                     // cancel the job and tasks
                     foreach (var t in j.Tasks)
                     {
@@ -40,6 +41,7 @@
                             JsonConvert.SerializeObject(new TaskEventMessage() { JobId = j.JobId, Id = t.TaskId, JobType = job?.Type ?? JobType.ClusRun, RequeueCount = t.TaskRequeueCount ?? 0, EventVerb = "cancel" })),
                             null, null, null, null, token);
                     }
+                    */
                 }
             }
         }

@@ -157,7 +157,20 @@
 
                     try
                     {
-                        taskResultArgs = await monitor.Result.Execution;
+                        if (monitor.Result.Execution == await T.Task.WhenAny(monitor.Result.Execution, T.Task.Delay(TimeSpan.FromSeconds(task.MaximumRuntimeSeconds))))
+                        {
+                            taskResultArgs = monitor.Result.Execution.Result;
+                        }
+                        else
+                        {
+                            logger.Information("Task has timed out");
+                            return true;
+                        }
+                    }
+                    catch (AggregateException ex) when (ex.InnerExceptions.All(e => e is OperationCanceledException))
+                    {
+                        logger.Information("Task has been canceled");
+                        return true;
                     }
                     catch (T.TaskCanceledException)
                     {

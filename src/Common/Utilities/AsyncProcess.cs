@@ -104,18 +104,19 @@
                         outputCloseEvent.TrySetCanceled();
                         errorCloseEvent.TrySetCanceled();
                         exitEvent.TrySetCanceled();
+                    }
 
-                        try
+                    try
+                    {
+                        // Kill hung process
+                        if (!process.HasExited)
                         {
-                            // Kill hung process
-                            if (!process.HasExited)
-                            {
-                                process.Kill();
-                            }
+                            process.Kill();
                         }
-                        catch
-                        {
-                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine("Cannot Kill process {0}", ex);
                     }
                 }
                 else
@@ -124,8 +125,6 @@
                     result.ExitCode = -1;
                     result.Output = "Process was not started.";
                 }
-
-                process.Close();
             }
 
             return result;

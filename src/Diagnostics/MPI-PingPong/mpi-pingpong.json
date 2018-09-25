@@ -15,11 +15,11 @@
             "type":"number",
             "min":0,
             "max":22,
-            "defaultValue":22
+            "defaultValue":0
         },
         {
             "name":"Mode",
-            "description":"Select the way to run tasks.",
+            "description":"Select the way to run tasks, in each of which MPI Pingpong run between a node pair.",
             "type":"string",
             "options":["Tournament", "Serial", "Parallel"],
             "defaultValue":"Tournament"
