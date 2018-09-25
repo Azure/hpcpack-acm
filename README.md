@@ -36,6 +36,7 @@ For an already deployed cluster, to enable the diagnostics functionalities, foll
 </a>
 
    For how to use the template, please refer: [Build HPC ACM Diagnostic service] (https://github.com/EvanCui/hpc-acm/blob/master/src/deployment/template/README.md)
+   
 2. Register the cluster with the service (You can register multiple clusters with the same service by repeating this step for each of your cluster)
 
    1. Enable Managed Service Identity of the VMs inside the cluster.
