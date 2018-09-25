@@ -1,5 +1,8 @@
 import sys, requests, argparse, time
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 REQUEST_TIMEOUT = 300
+REQUEST_HEADER = {'Authorization':'Basic cm9vdDpQYXNzMXdvcmQ='}
 
 def main(uri):
     while uri[-1] == '/':
@@ -76,7 +79,7 @@ def testJobs(category, uri, result):
 
         if finishedJobIds:
             api = "{0}/v1/{1}/{2}/tasks".format(uri, category, finishedJobIds[-1])
-            response = requests.get(api, timeout = REQUEST_TIMEOUT)
+            response = requests.get(api, timeout = REQUEST_TIMEOUT, headers = REQUEST_HEADER, verify = False)
             tasks = response.json()
             
             api = "{0}/v1/{1}/{2}/tasks/{3}".format(uri, category, finishedJobIds[-1], tasks[0]["id"])
@@ -100,7 +103,7 @@ def testAPI(api, result):
     result[1] += 1
     print "Test API: {0}".format(api)
     try:
-        response = requests.get(api, timeout = REQUEST_TIMEOUT)
+        response = requests.get(api, timeout = REQUEST_TIMEOUT, headers = REQUEST_HEADER, verify = False)
         if response:
             result[0] += 1
         print "Result: {0}\n".format(response)

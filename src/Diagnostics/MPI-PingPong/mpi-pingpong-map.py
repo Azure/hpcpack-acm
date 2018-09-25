@@ -1,4 +1,4 @@
-#v0.10
+#v0.12
 
 import sys, json, copy
 
@@ -44,8 +44,9 @@ def main():
             raise Exception("Missing node info: {0}".format(node))
 
     mode = 'Tournament'.lower()
-    level = 22
+    level = 0
     intelMpiLocation = '/opt/intel'
+    debugCommand = None
     if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
         arguments = job['DiagnosticTest']['Arguments']
         if arguments:
@@ -59,16 +60,20 @@ def main():
                 if argument['name'].lower() == 'Intel MPI location'.lower():
                     intelMpiLocation = argument['value']
                     continue
+                if argument['name'].lower() == 'Debug'.lower():
+                    debugCommand = argument['value']
+                    continue
 
     scriptLocation = 'diagtestscripts'
     filterScriptDir = '/tmp/hpc_{}'.format(scriptLocation)
-    filterScriptName = 'mpi-pingpong-filter-0.10.py'
+    filterScriptName = 'mpi-pingpong-filter.py'
+    filterScriptVersion = '#v0.12'
     filterScriptPath = '{}/{}'.format(filterScriptDir, filterScriptName)
-    commandDownloadScript = "if [ ! -f {} ]; then wget -P {} ${{blobEndpoint}}{}/{} >stdout 2>stderr; fi && ".format(filterScriptPath, filterScriptDir, scriptLocation, filterScriptName)
+    commandDownloadScript = 'if [ ! -f {0} ] || [ "`head -n1 {0}`" != "{1}" ]; then wget -P {2} ${{blobEndpoint}}{3}/{4} >stdout 2>stderr; fi && '.format(filterScriptPath, filterScriptVersion, filterScriptDir, scriptLocation, filterScriptName)
     commandParseResult = " && cat stdout | [parseResult] >raw && cat raw | tail -n +2 | awk '{print [columns]}' | tr ' ' '\n' | [parseValue] >data"
     commandGenerateOutput = " && cat data | head -n1 >output && cat data | tail -n1 >>output && cat timeResult >>output && cat raw >>output && cat output | python {}".format(filterScriptPath)
     commandGenerateError = " || (errorcode=$? && cat stdout stderr >>error && cat error && exit $errorcode)"
-    commandLine = commandDownloadScript + "TIMEFORMAT='%3R' && (time timeout [timeout]s bash -c '[sshcommand] && source {}/impi/`ls /opt/intel/impi`/bin64/mpivars.sh && [mpicommand]' >stdout 2>stderr) 2>timeResult".format(intelMpiLocation) + commandParseResult + commandGenerateOutput + commandGenerateError
+    commandLine = commandDownloadScript + "TIMEFORMAT='%3R' && (time timeout [timeout]s bash -c '[sshcommand] && source {0}/impi/`ls {0}/impi | head -n1`/bin64/mpivars.sh && [mpicommand]' >stdout 2>stderr) 2>timeResult".format(intelMpiLocation) + commandParseResult + commandGenerateOutput + commandGenerateError
     privateKey = "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA06bdmM5tU/InWfakBnAltIA2WEvuZ/3qFwaT4EkmgJuEITxi+3NnXn7JfW+q\n6ezBc4lx6J0EuPggDIcslbczyz65QrB2NoH7De1PiRtWNWIonQDZHTYCbnaU3f/Nzsoj62lgfkSf\nUj4Osxd0yHCuGsfCtKMDES3d55RMUdVwbrXPL8jUqA9zh4miV9eX0dh/+6pCqPD7/dnOCy/rYtXs\nwgdjKG57O6eaT3XxiuozP00E5tZ7wF0fzzXBuA2Z21Sa2U42sOeeNuOvOuKQkrIzprhHhpDik31m\nHZK47F7eF2i7j/0ImedOFdgA1ETPPKFLSGspvf1xbHgEgGz1kjFq/QIEAAEAAQKCAQABHZ2IW741\n7RKWsq6J3eIBzKRJft4J7G3tvJxW8e3nOpVNuSXEbUssu/HUOoLdVVhuHPN/1TUgf69oXTtiRIVc\nLIPNwcrGRGHwaP0JJKdY4gallLFMCB9i5FkhnJXbaiJvq+ndoqnnAPLf9GfVDqhV5Jqc8nxeDZ2T\nks037GobtfMuO5WeCyTAMzc7tDIsn0HGyV0pSa7JFHAKorUuBMNnjEM+SBL37AqwcVFkstC4YD3I\n7j4miRE3loxPmBJs5HMTV4jpAGNbNmrPzfrmP4swHNoc9LR7YKpfzVpAzb24QY82fewvOxRZH6Hz\nBVhueJZAGV62JbBeaw9eeujDp+UBAoGBAN6IanPN/wqdqQ0i5dBwPK/0Mcq6bNtQt6n8rHD/C/xL\nFuhuRhLPI6q7sYPeSZu84EjyArLMR1o0GW90Ls4JzIxjxGCBgdUHG8YdmB9jNIjR5notYQcRNxaw\nwLuc5nurPt7QaxvqO3JcaDbw9c6q9c7xNE3Wlak4xxKeiXsWyHQdAoGBAPN7hpqISKIc+8dPc5kg\nuJDDPdFcJ8py0nbysEYtY+hUaDxfw7Cm8zrNj+M9BbQR9yM6EW16P0FQ+/0XBrLMVpRkyJZ0Y3Ij\n5Qol5IxJPyWzfj6e7cd9Rkvqs2sQcBehXCbQHjfpB12yu3excQBPT0Lr5gei7yfc+D21hGWDH1xh\nAoGAM2lm1qxf4O790HggiiB0FN6g5kpdvemPFSm4GT8DYN1kRHy9mbjbb6V/ZIzliqJ/Wrr23qIN\nVgy1V6eK7LUc2c5u3zDscu/6fbH2pEHCMF32FoIHaZ+Tj510WaPtJ+MvWkDijgd2hnxM42yWDZI3\nygC16cnKt9bTPzz7XEGuPA0CgYBco2gQTcAM5igpqiIaZeezNIXFrWF6VnubRDUrTkPP9qV+KxWC\nldK/UczoMaSE4bz9Cy/sTnHYwR5PKj6jMrnSVhI3pGrd16hiVw6BDbFX/9YNr1xa5WAkrFS9bJCp\nfPxZzB9jOGdUEBfhr4KGEqbemHB6AVUq/pj4qaKJGP2KoQKBgFt7cqr8t+0zU5ko+B2pxmMprsUx\nqZ3mBATMD21AshxWxsawpqoPJJ3NTScNrjISERQ6RG3lQNv+30z79k9Fy+5FUH4pvqU4sgmtYSVH\nM4xW+aJnEhzIbE7a4an2eTc0pAxc9GexwtCFwlBouSW6kfOcMgEysoy99wQoGNgRHY/D\n-----END RSA PRIVATE KEY-----"
     taskTemplateOrigin = {
         "Id":0,
@@ -80,12 +85,12 @@ def main():
         "CustomizedData":None,
     }
 
-    commonArguments = taskTemplateOrigin, mode, level
+    commonArguments = taskTemplateOrigin, mode, level, debugCommand
     tasks = createTasks(rdmaNodes, True, 1, *commonArguments)
     tasks += createTasks(normalNodes, False, len(tasks)+1, *commonArguments)
     print(json.dumps(tasks))
 
-def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
+def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level, debugCommand):
     tasks = []
     if len(nodelist) == 0:
         return tasks
@@ -115,6 +120,8 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseResult]", parseResult)
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseValue]", parseValue)
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[timeout]", timeout)
+    if debugCommand:
+        taskTemplate["CommandLine"] = debugCommand
 
     id = headingStartId
     for node in nodelist:
@@ -135,12 +142,12 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
         sampleOption = " -msglog " + str(level-1) + ":" + str(level)
         linesCount = 3
         parseValue = "tail -n2"
-        timeout = 10
+        timeout = 20
     else:
         sampleOption = " -iter 10"
         linesCount = 24
         parseValue = "sed -n '3p;$p'"
-        timeout = 60
+        timeout = 20
 
     
     sshcommand = "host [pairednode] && ssh-keyscan [pairednode] >>~/.ssh/known_hosts" # Add ssh knownhosts
@@ -149,7 +156,7 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
     columns = "$3,$4"
 
     if mode == "Parallel".lower():
-        timeout *= 5
+        timeout *= 10
 
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[sshcommand]", sshcommand)
@@ -173,6 +180,8 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
                 task["CommandLine"] = task["CommandLine"].replace("[dummynodes]", nodes)
                 task["CommandLine"] = task["CommandLine"].replace("[pairednode]", nodepair[1])
                 task["CommandLine"] = task["CommandLine"].replace("[timeout]", str(timeout))
+                if debugCommand:
+                    task["CommandLine"] = debugCommand
                 task["CustomizedData"] = "[RDMA] {}".format(nodes) if isRdma else nodes
                 #task["EnvironmentVariables"] = {"CCP_NODES":"2 "+" 1 ".join(nodepair)+" 1"}
                 tasks.append(task)
@@ -199,6 +208,8 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level):
             task["CommandLine"] = task["CommandLine"].replace("[dummynodes]", nodes)
             task["CommandLine"] = task["CommandLine"].replace("[pairednode]", nodepair[1])
             task["CommandLine"] = task["CommandLine"].replace("[timeout]", str(timeout))
+            if debugCommand:
+                    task["CommandLine"] = debugCommand
             task["Node"] = nodepair[0]
             #task["EnvironmentVariables"] = {"CCP_NODES":"2 "+" 1 ".join(nodepair)+" 1"}
             task["CustomizedData"] = "[RDMA] {}".format(nodes) if isRdma else nodes

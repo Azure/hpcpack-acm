@@ -1,8 +1,10 @@
-#v0.10
+#v0.12
 
-import sys, json, copy, numpy
+import sys, json, copy, numpy, time
 
 def main():
+    startTime = time.time()
+    
     stdin = json.load(sys.stdin)
     job = stdin['Job']
     tasks = stdin['Tasks']
@@ -19,6 +21,8 @@ def main():
     defaultPacketSize = 2**22
     packetSize = defaultPacketSize
     mode = 'Tournament'.lower()
+    intelMpiLocation = '/opt/intel'
+    debug = None
     try:
         if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
             arguments = job['DiagnosticTest']['Arguments']
@@ -30,6 +34,12 @@ def main():
                     if argument['name'].lower() == 'Mode'.lower():
                         mode = argument['value'].lower()
                         continue                        
+                    if argument['name'].lower() == 'Intel MPI location'.lower():
+                        intelMpiLocation = argument['value']
+                        continue
+                    if argument['name'].lower() == 'Debug'.lower():
+                        debug = True
+                        continue
     except Exception as e:
         printErrorAsJson('Failed to parse arguments. ' + str(e))
         return -1
@@ -41,7 +51,8 @@ def main():
     taskId2nodePair = {}
     tasksForStatistics = set()
     rdmaNodes = []
-    canceledNodePairs = []
+    canceledTasks = []
+    canceledNodePairs = set()
     try:
         for task in tasks:
             taskId = task['Id']
@@ -55,7 +66,8 @@ def main():
             if ',' in nodePair and state == taskStateFinished:
                 tasksForStatistics.add(taskId)
             if state == taskStateCanceled:
-                canceledNodePairs.append(nodePair)
+                canceledTasks.append(taskId)
+                canceledNodePairs.add(nodePair)
     except Exception as e:
         printErrorAsJson('Failed to parse tasks. ' + str(e))
         return -1
@@ -63,6 +75,7 @@ def main():
     messages = {}
     failedPairs = []
     failedTasks = {}
+    taskRuntime = {}
     try:
         for taskResult in taskResults:
             taskId = taskResult['TaskId']
@@ -76,6 +89,7 @@ def main():
                     message = json.loads(taskResult['Message'])
                     hasResult = message['Latency'] > 0 and message['Throughput'] > 0
                     detail = message['Detail']
+                    taskRuntime[taskId] = message['Time']
                 except:
                     hasResult = False
                     detail = taskResult['Message']
@@ -95,7 +109,7 @@ def main():
         printErrorAsJson('Failed to parse task result. Task id: {}. {}'.format(taskId, e))
         return -1
 
-    latencyThreshold = packetSize//100 if packetSize > 2**20 else 10000
+    latencyThreshold = packetSize//50 if packetSize > 2**20 else 10000
     throughputThreshold = packetSize//1000 if 2**0 < packetSize < 2**20 else 50
     if len(rdmaNodes) == len(allNodes):
         latencyThreshold = 2**3 if packetSize < 2**13 else packetSize/2**10
@@ -105,7 +119,7 @@ def main():
         throughputThreshold = 0
 
     goodPairs = [pair for pair in messages if messages[pair]["Throughput"] > throughputThreshold]
-    goodNodesGroups = getLargestNonoverlappingGroups(getGroupsOfFullConnectedNodes(goodPairs))
+    goodNodesGroups = getGroupsOfFullConnectedNodes(goodPairs)
     goodNodes = set([node for group in goodNodesGroups for node in group])
     if goodNodes != set([node for pair in goodPairs for node in pair.split(',')]):
         printErrorAsJson('Should not get here!')
@@ -114,21 +128,18 @@ def main():
         goodNodes = [task['Node'] for task in tasks if task['State'] == taskStateFinished]
     badNodes = [node for node in allNodes if node not in goodNodes]
     goodNodes = list(goodNodes)
-    failedReasons = getFailedReasons(failedPairs)
+    failedReasons = getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs)
     failedNodes = getFailedNodes(failedPairs)
 
     result = {
-        'GoodNodesGroups':goodNodesGroups,
+        'GoodNodesGroups':getLargestNonoverlappingGroups(goodNodesGroups),
         'GoodNodes':goodNodes,
         'FailedNodes':failedNodes,
         'BadNodes':badNodes,
         'RdmaNodes':rdmaNodes,
         'FailedReasons':failedReasons,
-        'CanceledNodePairs':canceledNodePairs,
         'Latency':{},
         'Throughput':{},
-        'FailedTasks':failedTasks, # for debug
-        'Warnings':warnings # for debug
         }
 
     if messages:
@@ -198,24 +209,49 @@ def main():
                 result[item]["ResultByNode"][node]["Standard_deviation"] = numpy.std(data)
                 result[item]["ResultByNode"][node]["Variability"] = getVariability(data)
 
+    endTime = time.time()
+    
+    if debug != None:
+        taskRuntime = {
+            'Max': numpy.amax(list(taskRuntime.values())),
+            'Ave': numpy.average(list(taskRuntime.values())),
+            'Sorted': sorted([{'runtime':taskRuntime[key], 'taskId':key, 'nodepair':taskId2nodePair[key]} for key in taskRuntime], key=lambda x:x["runtime"], reverse=True)
+            }
+        result['DebugInfo'] = {
+            'ReduceRuntime':endTime - startTime,
+            'GoodNodesGroups':goodNodesGroups,
+            'CanceledTasks':canceledTasks,
+            'FailedTasks':failedTasks,
+            'Warnings':warnings,
+            'TaskRuntime':taskRuntime,
+            }
+        
     print(json.dumps(result))
     return 0
 
-def getFailedReasons(failedPairs):
+def getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs):
     INTEL_MPI_INSTALL_CLUSRUN_HINT = "wget http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13063/l_mpi_2018.3.222.tgz && tar -zxvf l_mpi_2018.3.222.tgz && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./l_mpi_2018.3.222/silent.cfg && ./l_mpi_2018.3.222/install.sh --silent ./l_mpi_2018.3.222/silent.cfg"
-    reasonMpiNotInstalled = 'Intel MPI is not found in default directory "/opt/intel".'
+
+    reasonMpiNotInstalled = 'Intel MPI is not found in directory "{}".'.format(intelMpiLocation)
     solutionMpiNotInstalled = 'If Intel MPI is installed on other location, specify the directory in parameter "Intel MPI location" of diagnostics test MPI-PingPong. Or download from https://software.intel.com/en-us/intel-mpi-library and install with clusrun command: "{}".'.format(INTEL_MPI_INSTALL_CLUSRUN_HINT)
+
     reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
+
     reasonFireWall = 'The connection was blocked by firewall.'
     reasonFireWallProbably = 'The connection may be blocked by firewall.'
     solutionFireWall = 'Check and configure the firewall properly.'
+
     reasonNodeSingleCore = 'MPI PingPong can not run inside a node with only 1 core.'
     solutionNodeSingleCore = 'Ignore this failure.'
+
     reasonTaskTimeout = 'Task timeout.'
+    reasonPingpongTimeout = 'Pingpong test timeout.'
     reasonSampleTimeout = 'Pingpong test sample timeout.'
     reasonNoResult = 'No result.'
+
     reasonWgetFailed = 'Failed to download filter script.'
+    solutionWgetFailed = 'Check accessibility of "$blobEndpoint/diagtestscripts/mpi-pingpong-filter.py" on nodes.'
     
     failedReasons = {}
     for failedPair in failedPairs:
@@ -235,20 +271,25 @@ def getFailedReasons(failedPairs):
         elif "Benchmark PingPong invalid for 1 processes" in failedPair['Detail']:
             reason = reasonNodeSingleCore
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionNodeSingleCore, 'Nodes':[]})['Nodes'].append(failedPair['NodeName'])
+        elif "wget" in failedPair['Detail'] and failedPair['ExitCode'] == 4 or 'mpi-pingpong-filter.py' in failedPair['Detail'] and failedPair['ExitCode'] == 8:
+            reason = reasonWgetFailed
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionWgetFailed, 'Nodes':set()})['Nodes'].add(failedPair['NodeName'])
         else:
             if "Time limit (secs_per_sample * msg_sizes_list_len) is over;" in failedPair['Detail']:
                 reason = reasonSampleTimeout
             elif failedPair['ExitCode'] == 124:
+                reason = reasonPingpongTimeout
+            elif failedPair['NodePair'] in canceledNodePairs:
                 reason = reasonTaskTimeout
             elif failedPair['Detail'].split('\n', 1)[0] == '[Message before filter]:':
                 reason = reasonNoResult
-            elif "wget" in failedPair['Detail'] and failedPair['ExitCode'] == 4:
-                reason = reasonWgetFailed
             failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
         failedPair['Reason'] = reason
         del failedPair['Detail']
     if reasonMpiNotInstalled in failedReasons:
         failedReasons[reasonMpiNotInstalled]['Nodes'] = list(failedReasons[reasonMpiNotInstalled]['Nodes'])
+    if reasonWgetFailed in failedReasons:
+        failedReasons[reasonWgetFailed]['Nodes'] = list(failedReasons[reasonWgetFailed]['Nodes'])
     return list(failedReasons.values())
 
 def getFailedNodes(failedPairs):

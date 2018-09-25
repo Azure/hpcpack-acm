@@ -1,6 +1,6 @@
 <div class="overview-header">
   <div class="chart-type">
-    <div class="chart-btn" [class.active]="activeMode == 'total'" (click)="setActiveMode('total')">Overviwe</div>
+    <div class="chart-btn" [class.active]="activeMode == 'total'" (click)="setActiveMode('total')">Overview</div>
     <div class="chart-btn" [class.active]="activeMode == 'node'" (click)="setActiveMode('node')">By Node</div>
   </div>
   <div class="select-node" *ngIf="activeMode == 'node'">
