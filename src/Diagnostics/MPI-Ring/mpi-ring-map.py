@@ -1,4 +1,4 @@
-#v0.2
+#v0.3
 
 import sys, json, copy
 
@@ -71,7 +71,7 @@ def main():
     # Create task for every node to run Intel MPI Benchmark - Sendrecv among processors which forms a periodic communication chain within each node.
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
     mpicommand = "mpirun -env I_MPI_SHM_LMT=shm [rdmaOption] IMB-MPI1 sendrecv"
-    rdmaOption = "-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0 -env I_MPI_DYNAMIC_CONNECTION=0 -env I_MPI_FALLBACK_DEVICE=0"
+    rdmaOption = " -env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0 -env I_MPI_DYNAMIC_CONNECTION=0 -env I_MPI_FALLBACK_DEVICE=0"
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[mpicommand]", mpicommand)
 
