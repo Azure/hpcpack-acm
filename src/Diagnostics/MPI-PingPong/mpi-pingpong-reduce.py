@@ -1,4 +1,4 @@
-#v0.11
+#v0.12
 
 import sys, json, copy, numpy, time
 
@@ -231,20 +231,27 @@ def main():
 
 def getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs):
     INTEL_MPI_INSTALL_CLUSRUN_HINT = "wget http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13063/l_mpi_2018.3.222.tgz && tar -zxvf l_mpi_2018.3.222.tgz && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./l_mpi_2018.3.222/silent.cfg && ./l_mpi_2018.3.222/install.sh --silent ./l_mpi_2018.3.222/silent.cfg"
+
     reasonMpiNotInstalled = 'Intel MPI is not found in directory "{}".'.format(intelMpiLocation)
     solutionMpiNotInstalled = 'If Intel MPI is installed on other location, specify the directory in parameter "Intel MPI location" of diagnostics test MPI-PingPong. Or download from https://software.intel.com/en-us/intel-mpi-library and install with clusrun command: "{}".'.format(INTEL_MPI_INSTALL_CLUSRUN_HINT)
+
     reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
+
     reasonFireWall = 'The connection was blocked by firewall.'
     reasonFireWallProbably = 'The connection may be blocked by firewall.'
     solutionFireWall = 'Check and configure the firewall properly.'
+
     reasonNodeSingleCore = 'MPI PingPong can not run inside a node with only 1 core.'
     solutionNodeSingleCore = 'Ignore this failure.'
+
     reasonTaskTimeout = 'Task timeout.'
     reasonPingpongTimeout = 'Pingpong test timeout.'
     reasonSampleTimeout = 'Pingpong test sample timeout.'
     reasonNoResult = 'No result.'
+
     reasonWgetFailed = 'Failed to download filter script.'
+    solutionWgetFailed = 'Check accessibility of "$blobEndpoint/diagtestscripts/mpi-pingpong-filter.py" on nodes.'
     
     failedReasons = {}
     for failedPair in failedPairs:
@@ -264,6 +271,9 @@ def getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs):
         elif "Benchmark PingPong invalid for 1 processes" in failedPair['Detail']:
             reason = reasonNodeSingleCore
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionNodeSingleCore, 'Nodes':[]})['Nodes'].append(failedPair['NodeName'])
+        elif "wget" in failedPair['Detail'] and failedPair['ExitCode'] == 4 or 'mpi-pingpong-filter.py' in failedPair['Detail'] and failedPair['ExitCode'] == 8:
+            reason = reasonWgetFailed
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionWgetFailed, 'Nodes':set()})['Nodes'].add(failedPair['NodeName'])
         else:
             if "Time limit (secs_per_sample * msg_sizes_list_len) is over;" in failedPair['Detail']:
                 reason = reasonSampleTimeout
@@ -273,13 +283,13 @@ def getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs):
                 reason = reasonTaskTimeout
             elif failedPair['Detail'].split('\n', 1)[0] == '[Message before filter]:':
                 reason = reasonNoResult
-            elif "wget" in failedPair['Detail'] and failedPair['ExitCode'] == 4:
-                reason = reasonWgetFailed
             failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
         failedPair['Reason'] = reason
         del failedPair['Detail']
     if reasonMpiNotInstalled in failedReasons:
         failedReasons[reasonMpiNotInstalled]['Nodes'] = list(failedReasons[reasonMpiNotInstalled]['Nodes'])
+    if reasonWgetFailed in failedReasons:
+        failedReasons[reasonWgetFailed]['Nodes'] = list(failedReasons[reasonWgetFailed]['Nodes'])
     return list(failedReasons.values())
 
 def getFailedNodes(failedPairs):

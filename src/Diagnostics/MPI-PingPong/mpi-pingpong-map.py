@@ -1,4 +1,4 @@
-#v0.11
+#v0.12
 
 import sys, json, copy
 
@@ -66,9 +66,10 @@ def main():
 
     scriptLocation = 'diagtestscripts'
     filterScriptDir = '/tmp/hpc_{}'.format(scriptLocation)
-    filterScriptName = 'mpi-pingpong-filter-0.10.py'
+    filterScriptName = 'mpi-pingpong-filter.py'
+    filterScriptVersion = '#v0.12'
     filterScriptPath = '{}/{}'.format(filterScriptDir, filterScriptName)
-    commandDownloadScript = "if [ ! -f {} ]; then wget -P {} ${{blobEndpoint}}{}/{} >stdout 2>stderr; fi && ".format(filterScriptPath, filterScriptDir, scriptLocation, filterScriptName)
+    commandDownloadScript = 'if [ ! -f {0} ] || [ "`head -n1 {0}`" != "{1}" ]; then wget -P {2} ${{blobEndpoint}}{3}/{4} >stdout 2>stderr; fi && '.format(filterScriptPath, filterScriptVersion, filterScriptDir, scriptLocation, filterScriptName)
     commandParseResult = " && cat stdout | [parseResult] >raw && cat raw | tail -n +2 | awk '{print [columns]}' | tr ' ' '\n' | [parseValue] >data"
     commandGenerateOutput = " && cat data | head -n1 >output && cat data | tail -n1 >>output && cat timeResult >>output && cat raw >>output && cat output | python {}".format(filterScriptPath)
     commandGenerateError = " || (errorcode=$? && cat stdout stderr >>error && cat error && exit $errorcode)"
