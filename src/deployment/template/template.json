@@ -192,6 +192,10 @@
                             },
                             "environmentVariables":[
                                 {
+                                    "name": "ServerOptions__Username",
+                                    "value": "root"
+                                },
+                                {
                                     "name": "ServerOptions__Password",
                                     "secureValue": "[parameters('rootPassword')]"
                                 },
