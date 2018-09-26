@@ -7,7 +7,7 @@
 
     public class BasicCredentialVerifier : IBasicCredentialVerifier
     {
-        private string Username { get; }  = "root";
+        private string Username { get; }
 
         private string Password { get; }
 
@@ -15,6 +15,7 @@
         {
             var server = config.GetSection("ServerOptions");
             this.Password = server["Password"];
+            this.Username = server["Username"];
         }
 
         public Task<bool> Authenticate(string username, string password)
