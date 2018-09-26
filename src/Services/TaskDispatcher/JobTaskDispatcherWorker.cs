@@ -210,45 +210,42 @@
             var tasks = messages.Where(msg => msg.RequeueCount == job.RequeueCount).ToList();
 
             this.Logger.Information("Deleting timeout guard {0}", jobPartitionKey);
+            var jobTaskCompletionQueue = this.Utilities.GetJobTaskCompletionQueue(job.Id);
             await T.Task.WhenAll(tasks.Where(t => !t.Timeouted).Select(async t =>
             {
                 if (t.Id == 0) return;
-                var tt = this.tasksDict[t.Id];
-                if (this.taskNodeTimeoutMessages.TryRemove(t.Id, out var nodeTimeoutMsg))
+
+                async T.Task DeleteTimeoutAsync(ConcurrentDictionary<int, CloudQueueMessage> dict, int jobId, int id, CloudQueue queue)
                 {
-                    var nodeCancelQueue = this.Utilities.GetNodeCancelQueue(tt.Node);
-                    try
+                    if (dict.TryRemove(id, out var msg))
                     {
-                        await nodeCancelQueue.DeleteMessageAsync(nodeTimeoutMsg.Id, nodeTimeoutMsg.PopReceipt, null, null, token);
-                        this.Logger.Information("    Deleted Node timeout message for job {0}, task {1}, message {2}", job.Id, t.Id, nodeTimeoutMsg.Id);
+                        try
+                        {
+                            await queue.DeleteMessageAsync(msg.Id, msg.PopReceipt, null, null, token);
+                            this.Logger.Information("    Deleted {0} timeout message for job {1}, task {2}, message {3}", queue.Name, jobId, id, msg.Id);
+                        }
+                        catch (StorageException ex)
+                        {
+                            if (ex.IsNotFound()) this.Logger.Information("    Not found the {0} timeout message {1} for job {2}, task {3}", queue.Name, msg.Id, jobId, id);
+                            else if (ex.IsCancellation()) return;
+                            else this.Logger.Warning(ex, "    Unable to delete the {0} timeout message {1} for job {2}, task {3}", queue.Name, msg.Id, jobId, id);
+                        }
                     }
-                    catch (StorageException ex)
+                    else
                     {
-                        this.Logger.Warning(ex, "    Unable to delete the node timeout message {0}", nodeTimeoutMsg.Id);
+                        this.Logger.Information("    Cannot find the node timeout message in memory for job {0}, task {1}", job.Id, t.Id);
                     }
-                }
-                else
-                {
-                    this.Logger.Information("    Cannot find the node timeout message for job {0}, task {1}", job.Id, t.Id);
                 }
 
-                if (this.taskTimeoutMessages.TryRemove(t.Id, out var taskTimeoutMsg))
+                if (!this.tasksDict.TryGetValue(t.Id, out Task tt))
                 {
-                    var jobTaskCompletionQueue = this.Utilities.GetJobTaskCompletionQueue(job.Id);
-                    try
-                    {
-                        await jobTaskCompletionQueue.DeleteMessageAsync(taskTimeoutMsg.Id, taskTimeoutMsg.PopReceipt, null, null, token);
-                        this.Logger.Information("    Deleted Task timeout message for job {0}, task {1}, message {2}", job.Id, t.Id, taskTimeoutMsg.Id);
-                    }
-                    catch (StorageException ex)
-                    {
-                        this.Logger.Warning(ex, "    Unable to delete the task timeout message {0}", taskTimeoutMsg.Id);
-                    }
+                    this.Logger.Information("    Cannot find task for job {0}, task {1}", job.Id, t.Id);
+                    return;
                 }
-                else
-                {
-                    this.Logger.Information("    Cannot find the task timeout message for job {0}, task {1}", job.Id, t.Id);
-                }
+
+                var nodeCancelQueue = this.Utilities.GetNodeCancelQueue(tt.Node);
+                await T.Task.WhenAll(DeleteTimeoutAsync(this.taskNodeTimeoutMessages, job.Id, t.Id, nodeCancelQueue),
+                    DeleteTimeoutAsync(this.taskTimeoutMessages, job.Id, t.Id, jobTaskCompletionQueue));
             }));
 
             this.Logger.Information("Updating tasks state in memory {0}", jobPartitionKey);
@@ -302,7 +299,7 @@
                     this.diagTests.TryAdd(diagKey, diagTest);
                 }
 
-                if (diagTest?.TaskResultFilterScript?.Name != null)
+                if (diagTest?.TaskResultFilterScript?.Name != null && diagTest.RunTaskResultFilter)
                 {
                     this.Logger.Information("Run task filters for job {0}", jobPartitionKey);
                     if (!this.taskFilterScript.TryGetValue(diagKey, out string script))
@@ -441,7 +438,6 @@
                                 var taskTimeoutMessage = new CloudQueueMessage(
                                     JsonConvert.SerializeObject(new TaskCompletionMessage() { ChildIds = childTask.ChildIds, ExitCode = -1, Id = childTask.Id, JobId = childTask.JobId, JobType = childTask.JobType, RequeueCount = childTask.RequeueCount, Timeouted = true }, Formatting.Indented));
 
-                                var jobTaskCompletionQueue = this.Utilities.GetJobTaskCompletionQueue(job.Id);
                                 await jobTaskCompletionQueue.AddMessageAsync(
                                     taskTimeoutMessage,
                                     null, TimeSpan.FromSeconds(childTask.MaximumRuntimeSeconds), null, null, token);

@@ -13,6 +13,8 @@
             public string Name { get; set; }
         }
 
+        public bool RunTaskResultFilter { get; set; } = false;
+
         public BlobName DispatchScript { get; set; }
         public BlobName AggregationScript { get; set; }
         public BlobName TaskResultFilterScript { get; set; }

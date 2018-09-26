@@ -140,6 +140,7 @@
                     Node = it.Node,
                     RequeueCount = it.RequeueCount,
                     State = string.Equals(it.CustomizedData, Task.StartTaskMark, StringComparison.OrdinalIgnoreCase) ? TaskState.Finished : TaskState.Queued,
+                    MaximumRuntimeSeconds = it.MaximumRuntimeSeconds,
                 };
             }).ToList();
 
