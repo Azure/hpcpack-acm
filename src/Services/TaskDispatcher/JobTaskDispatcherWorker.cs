@@ -212,6 +212,7 @@
             this.Logger.Information("Deleting timeout guard {0}", jobPartitionKey);
             await T.Task.WhenAll(tasks.Where(t => !t.Timeouted).Select(async t =>
             {
+                if (t.Id == 0) return;
                 var tt = this.tasksDict[t.Id];
                 if (this.taskNodeTimeoutMessages.TryRemove(t.Id, out var nodeTimeoutMsg))
                 {

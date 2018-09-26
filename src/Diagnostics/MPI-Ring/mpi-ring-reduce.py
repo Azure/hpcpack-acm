@@ -1,4 +1,4 @@
-#v0.2
+#v0.3
 
 import sys, json
 
@@ -28,7 +28,7 @@ def main():
     message = None
     try:
         for taskResult in taskResults:
-            if taskResult['TaskId'] == 1 and taskResult['ExitCode'] == 0:
+            if taskResult['TaskId'] == len(nodes)+1 and taskResult['ExitCode'] == 0:
                 message = taskResult['Message']
                 break
     except Exception as e:
@@ -70,12 +70,12 @@ td, th {
 <h2>MPI Ring</h2>
 <table>
   <tr>
-    <th>Package Size(Bytes)</th>
+    <th>Package Size (Bytes)</th>
     <th>Repetition Count</th>
-    <th>Min Time(usec)</th>
-    <th>Max Time(usec)</th>
-    <th>Average Time(usec)</th>
-    <th>Throughput(Mbytes/sec)</th>
+    <th>Min Time (usec)</th>
+    <th>Max Time (usec)</th>
+    <th>Average Time (usec)</th>
+    <th>Throughput (Mbytes/sec)</th>
   </tr>
 ''' + '\n'.join(htmlRows) + '''
 </table>
