@@ -137,7 +137,7 @@
         {
             using (var m = this.GetTaskEntry(jobId, key))
             {
-                m?.Result?.CommandResult.SetResult(commandResult);
+                m?.Result?.CommandResult.TrySetResult(commandResult);
             }
         }
 
@@ -145,7 +145,7 @@
         {
             using (var m = this.GetTaskEntry(jobId, key))
             {
-                m?.Result?.CommandResult?.SetException(ex);
+                m?.Result?.CommandResult?.TrySetException(ex);
             }
         }
 
@@ -164,7 +164,7 @@
         {
             using (var m = this.GetTaskEntry(jobId, key))
             {
-                m?.Result?.CommandResult?.SetCanceled();
+                m?.Result?.CommandResult?.TrySetCanceled();
             }
         }
     }

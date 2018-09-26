@@ -32,7 +32,7 @@
                 {
                     if (string.IsNullOrEmpty(e.Data))
                     {
-                        outputCloseEvent.SetResult(true);
+                        outputCloseEvent.TrySetResult(true);
                     }
                     else
                     {
@@ -47,7 +47,7 @@
                 {
                     if (string.IsNullOrEmpty(e.Data))
                     {
-                        errorCloseEvent.SetResult(true);
+                        errorCloseEvent.TrySetResult(true);
                     }
                     else
                     {
@@ -56,7 +56,7 @@
                 };
 
                 var exitEvent = new TaskCompletionSource<bool>();
-                process.Exited += (s, e) => { exitEvent.SetResult(true); };
+                process.Exited += (s, e) => { exitEvent.TrySetResult(true); };
 
                 bool isStarted;
 
@@ -100,7 +100,7 @@
                     {
                         result.Completed = false;
                         result.ExitCode = -1;
-                        result.Error = "Timeouted after {0}";
+                        result.Error = $"Timeouted after {timeoutSeconds} seconds";
                         outputCloseEvent.TrySetCanceled();
                         errorCloseEvent.TrySetCanceled();
                         exitEvent.TrySetCanceled();
