@@ -26,7 +26,7 @@ There are two ways to deploy the service.
 
    A cluster is deployed together with the diagnostic services, allowing the deployer to choose the scheduler, location, cluster size, the portal name, etc.
    This is the easiest way to create an HPC cluster with diagnostics functionalities enabled.
-   For detailed usage of the deployment template, please refer: [Azure cluster deployment] (https://github.com/EvanCui/azure-hpc/blob/master/Templates/hpc-cluster/README.md)
+   For detailed usage of the deployment template, please refer: [Azure cluster deployment](https://github.com/EvanCui/azure-hpc/blob/master/Templates/hpc-cluster/README.md)
 ### Apply to an existing cluster
 For an already deployed cluster, to enable the diagnostics functionalities, follow the steps below:
 1. Create the service alone
@@ -35,7 +35,7 @@ For an already deployed cluster, to enable the diagnostics functionalities, foll
   <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-   For how to use the template, please refer: [Build HPC ACM Diagnostic service] (https://github.com/EvanCui/hpc-acm/blob/master/src/deployment/template/README.md)
+   For how to use the template, please refer: [Build HPC ACM Diagnostic service](https://github.com/EvanCui/hpc-acm/blob/master/src/deployment/template/README.md)
    
 2. Register the cluster with the service (You can register multiple clusters with the same service by repeating this step for each of your cluster)
 
