@@ -7,6 +7,10 @@
         "ContainerName":"diagtestscripts",
         "Name":"mpi-pingpong-reduce.py"
     },
+    "TaskResultFilterScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"mpi-pingpong-filter.py"
+    },
     "description":"Run Intel MPI Benchmark - PingPong between all node pairs in selected nodes.",
     "parameters":[
         {
