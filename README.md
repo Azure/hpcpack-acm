@@ -40,10 +40,36 @@ For an already deployed cluster, to enable the diagnostics functionalities, foll
 2. Register the cluster with the service (You can register multiple clusters with the same service by repeating this step for each of your cluster)
 
    1. Enable Managed Service Identity of the VMs inside the cluster.
+
+      [Enable MSI for VMs] (https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-portal-windows-vm)
+
+      [Enable MSI for VM Scale Sets] (https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-portal-windows-vmss)
+
    1. Install HpcAcmAgent VM extension to VMs inside the cluster.
+
+      ```powershell
+      Set-AzureRmVMExtension -Publisher "Microsoft.HpcPack" -ExtensionType "HpcAcmAgent" -ResourceGroupName $vm.ResourceGroupName -TypeHandlerVersion 1.0 -VMName $vm.Name -Location $vm.Location -Name "HpcAcmAgent"
+      ```
+
    1. Add the storage account name to the resource group of the VMs.
+
+      Find the storage account name generated in the resource group of the HPC Acm service, and add the following content to the tags of the resource group of the VMs.
+
+      ```json
+      "StorageConfiguration": { "AccountName":"the storage account name", "SubscriptionId":"<the subscription id of the ACM services>", "ResourceGroup":"the resource group containing the storage account" }
+      ```
+
+      The subscriptionId could be missed if the ACM services are deployed under the same subscription as the VMs.
+
+      The resourceGroup could be missed if the ACM services are deployed under the same resource group as the VMs.
+
    1. Grant proper permissions of the resource group to the VMs.
+
+      Open the resource group of the VMs on azure portal, click Access control (IAM), grant Reader role to the VMs in the resource group.
+
    1. Grant proper permissions of the storage account to the VMs.
+
+      Open the storage account of the ACM services, click Access control (IAM), grant Storage Account Contributor role to the VMs.
 
    After the configuration, the VMs will register themselves to the HPC ACM services, and you could check the resources section in the portal to see them.
 
