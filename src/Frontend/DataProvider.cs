@@ -398,7 +398,7 @@
             await q.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(new ScriptSyncMessage() { EventVerb = "sync" })), null, null, null, null, token);
             this.Logger.Information("Create sync script message success.");
 
-            return new OkResult();
+            return new NoContentResult();
         }
     }
 }
