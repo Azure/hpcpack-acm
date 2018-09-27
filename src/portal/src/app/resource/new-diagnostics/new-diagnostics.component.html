@@ -65,15 +65,15 @@
                   </mat-select>
                 </div>
                 <ng-template #noOptions>
-                  <input matInput [placeholder]="parameter.name" type="number" [min]="parameter.min" [max]="parameter.max"
-                    *ngIf="parameter.type == 'number';else textInput" [formControlName]='parameter.name'>
+                  <input matInput type="number" [min]="parameter.min" [max]="parameter.max" *ngIf="parameter.type == 'number';else textInput"
+                    [formControlName]='parameter.name' [placeholder]="parameter.name">
                   <ng-template #textInput>
                     <input matInput [placeholder]="parameter.name" [formControlName]='parameter.name' type="text">
                   </ng-template>
                 </ng-template>
-                <mat-hint>{{parameter.description}}</mat-hint>
+                <mat-hint>{{getHint(parameter)}}</mat-hint>
                 <mat-error *ngIf="paraForm.controls[parameter.name].hasError('required')">
-                  {{parameter.name}} field is required.
+                  {{parameter.name}} field is required. Hint: {{getHint(parameter)}}
                 </mat-error>
                 <mat-error *ngIf="paraForm.controls[parameter.name].hasError('min') || paraForm.controls[parameter.name].hasError('max')">
                   {{parameter.name}} should be {{parameter.min}} - {{parameter.max}}

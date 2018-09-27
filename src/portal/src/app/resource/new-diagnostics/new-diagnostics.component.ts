@@ -1,8 +1,7 @@
-import { Component, OnInit, ViewChild, Inject, HostListener, ChangeDetectorRef, OnDestroy } from '@angular/core';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
-import { NodeFilterBuilderComponent } from '../../widgets/node-filter-builder/node-filter-builder.component';
+import { Component, OnInit, ViewChild, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { MatDialogRef } from '@angular/material';
 import { ApiService } from '../../services/api.service';
-import { FormGroup, FormBuilder, Validators, FormControl } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { Subscription } from 'rxjs';
 
@@ -30,8 +29,7 @@ export class NewDiagnosticsComponent implements OnInit, OnDestroy {
     public dialogRef: MatDialogRef<NewDiagnosticsComponent>,
     private cdRef: ChangeDetectorRef,
     private fb: FormBuilder,
-    private authService: AuthService,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    private authService: AuthService
   ) {
   }
 
@@ -83,6 +81,24 @@ export class NewDiagnosticsComponent implements OnInit, OnDestroy {
   }
 
   private _sub: Subscription[];
+  private updateHints(hint, paras, targetParam) {
+    let index = paras.findIndex((data) => {
+      return data.name == targetParam;
+    });
+    paras[index].description = hint;
+  }
+
+  getHint(param) {
+    let type = typeof (param.description);
+    if (type == 'string') {
+      return param.description;
+    }
+    else {
+      let option = this.paraForm.controls[param.name].value;
+      return param.description[option];
+    }
+  }
+
   private updateCheckedNode(node: any, checked: any) {
     let allNodes = node.treeModel.nodes;
     for (let i = 0; i < allNodes.length; i++) {
@@ -102,7 +118,10 @@ export class NewDiagnosticsComponent implements OnInit, OnDestroy {
             if (paras[i].whenChanged != undefined) {
               let selected = paras[i].whenChanged[data];
               for (let key in selected) {
-                this.paraForm.controls[key].setValue(selected[key]);
+                this.paraForm.controls[key].setValue(selected[key].value);
+                if (selected[key].description) {
+                  this.updateHints(selected[key].description, paras, key);
+                }
               }
             }
           });
