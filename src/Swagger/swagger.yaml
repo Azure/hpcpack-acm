@@ -282,7 +282,7 @@ definitions:
   NodeMetrics:
     type: object
     properties:
-      range:
+      rangeSeconds:
         type: number
         format: double
         example: 10.0
@@ -1022,6 +1022,22 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/JobSummary'
+
+  /sync:
+    post:
+      summary: Sync diagnostic and metric scripts from GitHub
+      operationId: syncScripts
+      responses:
+        201:
+          description: OK
+
+  /validation:
+    get:
+      summary: Validate user confidential for HTTP Basic Auth
+      operationId: validateUser
+      responses:
+        201:
+          description: OK
 
 host: localhost
 basePath: /v1
