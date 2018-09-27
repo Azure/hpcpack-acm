@@ -19,6 +19,7 @@
                 var t = InternalTask.CreateFrom(job);
                 t.CustomizedData = t.Node = job.TargetNodes[id - 1];
                 t.Id = id;
+                t.MaximumRuntimeSeconds = job.DefaultTaskMaximumRuntimeSeconds;
                 return t;
             }).ToList());
         }

@@ -37,6 +37,7 @@
         public string PrivateKey { get; set; }
         public string PublicKey { get; set; }
 
+        public int MaximumRuntimeSeconds { get; set; } = 300;
         public string CustomizedData { get; set; }
     }
 }
