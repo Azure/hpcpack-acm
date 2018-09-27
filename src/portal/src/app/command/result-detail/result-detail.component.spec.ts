@@ -102,7 +102,7 @@ class JobStateServiceStub {
   }
 }
 
-fdescribe('ResultDetailComponent', () => {
+fdescribe('ClusrunResultDetailComponent', () => {
   let component: ResultDetailComponent;
   let fixture: ComponentFixture<ResultDetailComponent>;
 

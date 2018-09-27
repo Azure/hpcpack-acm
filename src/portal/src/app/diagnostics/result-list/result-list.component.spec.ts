@@ -61,7 +61,7 @@ class TableDataServiceStub {
   }
 }
 
-fdescribe('ResultListComponent', () => {
+fdescribe('DiagResultListComponent', () => {
   let component: ResultListComponent;
   let fixture: ComponentFixture<ResultListComponent>;
 

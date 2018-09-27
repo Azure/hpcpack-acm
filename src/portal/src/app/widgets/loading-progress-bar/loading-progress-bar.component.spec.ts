@@ -1,16 +1,18 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { LoadingProgressBarComponent } from './loading-progress-bar.component';
+import { MaterialsModule } from '../../materials.module';
 
-describe('LoadingProgressBarComponent', () => {
+fdescribe('LoadingProgressBarComponent', () => {
   let component: LoadingProgressBarComponent;
   let fixture: ComponentFixture<LoadingProgressBarComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ LoadingProgressBarComponent ]
+      declarations: [LoadingProgressBarComponent],
+      imports: [MaterialsModule]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {

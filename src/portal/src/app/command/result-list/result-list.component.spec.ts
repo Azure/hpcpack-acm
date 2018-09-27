@@ -62,7 +62,7 @@ class TableDataServiceStub {
   }
 }
 
-fdescribe('ResultListComponent', () => {
+fdescribe('ClusrunResultListComponent', () => {
   let component: ResultListComponent;
   let fixture: ComponentFixture<ResultListComponent>;
 
