@@ -2,17 +2,17 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "dnsNameLabel": {
-            "type": "string",
-            "metadata": {
-                "description": "The DSN name label"
-            },
-            "defaultValue": "hpcacm"
-        },
         "rootPassword": {
             "type": "securestring",
             "metadata": {
                 "description": "Password for the root account"
+            }
+        },
+        "dnsNameLabel": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The DSN name label. This label should be unique in the deployment location, or leave empty then the deployment process will generate an unique string."
             }
         },
         "newOrExistingStorage": {
@@ -150,7 +150,9 @@
             }
         }
     },
-    "variables": {},
+    "variables": {
+        "generatedDnsNameLabel": "[if(empty(parameters('dnsNameLabel')), uniqueString(resourceGroup().id), parameters('dnsNameLabel'))]"
+    },
     "resources": [
         {
             "condition": "[equals(parameters('newOrExistingStorage'), 'new')]",
@@ -209,11 +211,11 @@
                                 },
                                 {
                                     "name": "fqdn",
-                                    "value": "[concat(parameters('dnsNameLabel'), '.', parameters('location'), '.azurecontainer.io')]"
+                                    "value": "[concat(variables('generatedDnsNameLabel'), '.', parameters('location'), '.azurecontainer.io')]"
                                 },
                                 {
                                     "name": "apibase",
-                                    "value": "[concat('https://', parameters('dnsNameLabel'), '.', parameters('location'), '.azurecontainer.io/v1')]"
+                                    "value": "[concat('https://', variables('generatedDnsNameLabel'), '.', parameters('location'), '.azurecontainer.io/v1')]"
                                 }
                             ]
                         }
@@ -223,7 +225,7 @@
                 "restartPolicy": "OnFailure",
                 "ipAddress": {
                     "type": "Public",
-                    "dnsNameLabel": "[parameters('dnsNameLabel')]",
+                    "dnsNameLabel": "[variables('generatedDnsNameLabel')]",
                     "ports": [
                         {
                             "protocol": "TCP",
