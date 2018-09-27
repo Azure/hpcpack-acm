@@ -1,0 +1,54 @@
+﻿{
+    "DispatchScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"benchmark-cifs-map.py"
+    },
+    "AggregationScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"benchmark-cifs-reduce.py"
+    },
+    "description":"Get the speed of copying file between local disk and CIFS server.",
+    "parameters":[
+        {
+            "name":"Connect by",
+            "options":[
+                "Mount point",
+                "Connection string"
+            ],
+            "description":{
+                "Mount point":"Specify the mount point of target CIFS server on each node when it is already mounted.",
+                "Connection string":"Specify the connection string of target CIFS server, which could be copied from Azure portal."
+            },
+            "type":"select",
+            "defaultValue":"Connection string",
+            "whenChanged":
+            {
+                "Mount point":{
+                    "CIFS server":{
+                        "value":"",
+                        "description":"Example: /mnt/share"
+                    }
+                },
+                "Connection string":{
+                    "CIFS server":{
+                        "value":"",
+                        "description":"Example: sudo mount -t cifs //<storage-account-name>.file.core.windows.net/<share-name> [mount point] -o vers=<smb-version>,username=<storage-account-name>,password=<storage-account-key>,dir_mode=0777,file_mode=0777,serverino"
+                    }
+                }
+            }
+        },
+        {
+            "name":"CIFS server",
+            "description":"Example: sudo mount -t cifs //<storage-account-name>.file.core.windows.net/<share-name> [mount point] -o vers=<smb-version>,username=<storage-account-name>,password=<storage-account-key>,dir_mode=0777,file_mode=0777,serverino",
+            "type":"string",
+            "required":true
+        },
+        {
+            "name":"Mode",
+            "description":"Select the way each node accessing target CIFS server.",
+            "type":"string",
+            "options":["Parallel", "Serial"],
+            "defaultValue":"Parallel"
+        }
+    ]
+}

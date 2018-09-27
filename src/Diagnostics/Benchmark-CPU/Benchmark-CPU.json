@@ -1,0 +1,11 @@
+﻿{
+    "DispatchScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"benchmark-cpu-map.py"
+    },
+    "AggregationScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"benchmark-cpu-reduce.py"
+    },
+    "description":"Install and run sysbench on all selected nodes. Get the CPU benchmark of calculating prime number.",
+}

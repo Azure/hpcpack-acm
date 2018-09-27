@@ -1,0 +1,19 @@
+﻿{
+    "DispatchScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"mpi-ring-map.py"
+    },
+    "AggregationScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"mpi-ring-reduce.py"
+    },
+    "description":"Run Intel MPI Benchmark - Sendrecv among processors, one processor per node, which forms a periodic communication chain in selected nodes.",
+    "parameters":[
+	    {
+	        "name":"Intel MPI location",
+	        "description":"Specify the location of Intel MPI that is installed on the nodes.",
+	        "type":"string",
+	        "defaultValue":"/opt/intel"
+	    }
+	]
+}
