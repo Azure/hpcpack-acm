@@ -50,8 +50,8 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
             "name":name,
             "type":"diagnostics",
             "diagnosticTest":{
-                "name": "pingpong",
-                "category": "mpi",
+                "name": "Pingpong",
+                "category": "MPI",
                 "arguments": [{"name":"Mode", "value": "Tournament"}]
             },
             "targetNodes":randomNodes
@@ -61,8 +61,8 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
             "name":name,
             "type":"diagnostics",
             "diagnosticTest":{
-                "name": "pingpong",
-                "category": "mpi",
+                "name": "Pingpong",
+                "category": "MPI",
                 "arguments": [{"name":"Mode", "value": "Parallel"}]
             },
             "targetNodes":randomNodes
@@ -72,8 +72,8 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
             "name":name,
             "type":"diagnostics",
             "diagnosticTest":{
-                "name": "pingpong",
-                "category": "mpi",
+                "name": "Pingpong",
+                "category": "MPI",
                 "arguments": [{"name":"Mode", "value": "Parallel"}, {"name":"Debug", "value": command}]
             },
             "targetNodes":randomNodes
@@ -83,8 +83,8 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
             "name":name,
             "type":"diagnostics",
             "diagnosticTest":{
-                "name": "cpu",
-                "category": "benchmark",
+                "name": "CPU",
+                "category": "Benchmark",
             },
             "targetNodes":randomNodes
         }
