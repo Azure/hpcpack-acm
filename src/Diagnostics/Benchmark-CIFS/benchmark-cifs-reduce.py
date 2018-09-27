@@ -1,4 +1,4 @@
-#v0.1
+#v0.2
 
 import sys, json
 
@@ -7,6 +7,32 @@ def main():
     job = stdin['Job']
     tasks = stdin['Tasks']
     taskResults = stdin['TaskResults']
+
+    connectWay = 'Connection string'.lower()
+    cifsServer = None
+    try:
+        if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
+            arguments = job['DiagnosticTest']['Arguments']
+            if arguments:
+                for argument in arguments:
+                    if argument['name'].lower() == 'Connect by'.lower():
+                        connectWay = argument['value'].lower()
+                        continue
+                    if argument['name'].lower() == 'CIFS server'.lower():
+                        cifsServer = argument['value']
+                        continue
+    except Exception as e:
+        printErrorAsJson('Failed to parse arguments. ' + str(e))
+        return -1
+
+    if connectWay == 'Connection string'.lower() and cifsServer:
+        connectionString = cifsServer
+        precursor = 'mount -t cifs '
+        successor = ' [mount point]'
+        begin = connectionString.find(precursor) + len(precursor)
+        end = connectionString.find(successor)
+        if 0 < begin < end:
+            cifsServer = connectionString[begin:end]
 
     TASK_STATE_FINISHED = 3
 
@@ -89,7 +115,8 @@ td, th {
   </tr>
 ''' + '\n'.join(htmlRows) + '''
 </table>
-<p>The benchmark shows the speed of copying file between local disk and CIFS server.</p>
+<p>The benchmark shows the speed of copying file between local disk and CIFS server: ''' + cifsServer + '''.</p>
+<p>If result is None, please check it manually following <a href="https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux#install-cifs-utils">Use Azure Files with Linux</a>.</p>
 </body>
 </html>
 '''
