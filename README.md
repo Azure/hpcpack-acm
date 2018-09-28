@@ -39,7 +39,7 @@ For an already deployed cluster, to enable the diagnostics functionalities, foll
    
 2. Register the cluster with the service (You can register multiple clusters with the same service by repeating this step for each of your cluster)
 
-   Download the script from: [RegisterToAcm.ps1] (https://raw.githubusercontent.com/EvanCui/hpc-acm/master/src/deployment/RegisterToACM.ps1)
+   Download the script from: [RegisterToAcm.ps1](https://raw.githubusercontent.com/EvanCui/hpc-acm/master/src/deployment/RegisterToACM.ps1)
    Run it in an elevated powershell window:
    ```
    .\RegisterToAcm.ps1 -resourceGroupName theResourceGroupOfYourCluster -acmRgName theResourceGroupOfAcmServices -subscriptionId theSubscriptionId
