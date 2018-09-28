@@ -4,4 +4,8 @@
   <img src="http://azuredeploy.net/deploybutton.png"/>
   </a>
 
-  This template provides an easy way to deploy HPC ACM services to Azure Container Instance Group.
+  This template provides an easy way to deploy ACM services to Azure Container Instance Group.
+
+## Known issues
+  * Only the following locations are allowed to deploy the ACM services:
+     * West US, East US, West Europe, North Europe, West US 2, Southeast Asia, Australia East, East US 2, Central US

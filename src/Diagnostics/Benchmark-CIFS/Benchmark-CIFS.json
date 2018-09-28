@@ -1,11 +1,11 @@
 ﻿{
     "DispatchScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"benchmark-cifs-map.py"
+        "Name":"Benchmark-CIFS-map.py"
     },
     "AggregationScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"benchmark-cifs-reduce.py"
+        "Name":"Benchmark-CIFS-reduce.py"
     },
     "description":"Get the speed of copying file between local disk and CIFS server.",
     "parameters":[

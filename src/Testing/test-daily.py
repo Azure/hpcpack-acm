@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 from email.utils import COMMASPACE, formatdate
 
-def main(cluster, runtime, mail):
+def main(cluster, runtime, mail, username, password):
     for script in ['test-functional.py', 'test-restapi-get.py']:
         if not os.path.isfile(script):
             print '{} is not in current work directory {}'.format(script, os.getcwd())
@@ -16,29 +16,29 @@ def main(cluster, runtime, mail):
     # 3 test batches currently
     commands = [
         [
-            'test-functional.py {} --category diag-pingpong-tournament --timeout 2000 --continuous {}'.format(cluster, runtime),
+            'test-functional.py {} --category diag-pingpong-tournament --timeout 2000 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
         ],
         [
-            'test-functional.py {} --category diag-pingpong-parallel --timeout 2000 --continuous {}'.format(cluster, runtime),
+            'test-functional.py {} --category diag-pingpong-parallel --timeout 2000 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
         ],
         [
-            'test-functional.py {} --category clusrun --command "echo -n test" --result "test" --timeout 200 --continuous {}'.format(cluster, runtime),
+            'test-functional.py {} --category clusrun --command "echo -n test" --result "test" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
         ],
         [
-            'test-functional.py {} --category clusrun --command "ping localhost" --cancel 10 --timeout 200 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "ping localhost" --cancel 30 --timeout 200 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "ping localhost" --cancel 60 --timeout 200 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "sleep 10" --timeout 200 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "sleep 30" --timeout 200 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "sleep 60" --timeout 200 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "echo -n test" --result "test" --timeout 200 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "whoami" --result "root\\n" --timeout 200 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category clusrun --command "hostname" --timeout 200 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category diag-pingpong-tournament --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category diag-pingpong-parallel --timeout 2000 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category diag-pingpong-tournament --cancel 10 --timeout 200 --continuous {}'.format(cluster, runtime),
-            'test-functional.py {} --category diag-pingpong-parallel --cancel 30 --timeout 200 --continuous {}'.format(cluster, runtime),
-            'test-restapi-get.py {} --continuous {}'.format(cluster, runtime)
+            'test-functional.py {} --category clusrun --command "ping localhost" --cancel 10 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-functional.py {} --category clusrun --command "ping localhost" --cancel 30 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-functional.py {} --category clusrun --command "ping localhost" --cancel 60 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-functional.py {} --category clusrun --command "sleep 10" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-functional.py {} --category clusrun --command "sleep 30" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-functional.py {} --category clusrun --command "sleep 60" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-functional.py {} --category clusrun --command "echo -n test" --result "test" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-functional.py {} --category clusrun --command "whoami" --result "root\\n" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-functional.py {} --category clusrun --command "hostname" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-functional.py {} --category diag-pingpong-tournament --timeout 2000 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-functional.py {} --category diag-pingpong-parallel --timeout 2000 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-functional.py {} --category diag-pingpong-tournament --cancel 10 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-functional.py {} --category diag-pingpong-parallel --cancel 30 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'test-restapi-get.py {} --continuous {}'.format(cluster, runtime, username, password)
         ],
     ]
 
@@ -114,6 +114,8 @@ if __name__ == '__main__':
     parser.add_argument('cluster_uri', help='Specify the cluster to test')
     parser.add_argument('-r', '--runtime', type=check_positive, default=300, help='Specify the test duration as seconds for each test batch')
     parser.add_argument('-m', '--mail', type=argparse.FileType('r'), default=None, help='Specify the mail setting json file')
+    parser.add_argument('-u', '--username', default='root', help='Specify the username of cluster admin')
+    parser.add_argument('-p', '--password', default='Pass1word', help='Specify the password of cluster admin')
 
     args = parser.parse_args()
 
@@ -122,5 +124,5 @@ if __name__ == '__main__':
         with args.mail as f:
             mail = json.load(f)
 
-    main(args.cluster_uri, args.runtime, mail)
+    main(args.cluster_uri, args.runtime, mail, args.username, args.password)
     

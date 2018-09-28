@@ -1,15 +1,15 @@
 ﻿{
     "DispatchScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"mpi-pingpong-map.py"
+        "Name":"MPI-Pingpong-map.py"
     },
     "AggregationScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"mpi-pingpong-reduce.py"
+        "Name":"MPI-Pingpong-reduce.py"
     },
     "TaskResultFilterScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"mpi-pingpong-filter.py"
+        "Name":"MPI-Pingpong-filter.py"
     },
     "description":"Run Intel MPI Benchmark - PingPong between all node pairs in selected nodes.",
     "parameters":[
