@@ -1,4 +1,4 @@
-import sys, requests, argparse, time
+import sys, requests, argparse, time, base64
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 REQUEST_TIMEOUT = 300
@@ -122,7 +122,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Test the availibility of rest APIs against a cluster')
     parser.add_argument('cluster_uri', help='Specify the cluster to test')
     parser.add_argument('-t', '--continuous', type=check_positive, help='Specify the time(seconds) to run the test continuously until this time out')
+    parser.add_argument('-u', '--username', default='root', help='Specify the username of cluster admin')
+    parser.add_argument('-p', '--password', default='Pass1word', help='Specify the password of cluster admin')
     args = parser.parse_args()
+    
+    REQUEST_HEADER = {'Authorization':'Basic {}'.format(base64.b64encode('{}:{}'.format(args.username, args.password)))}
 
     if args.continuous:
         startTime = time.time()
