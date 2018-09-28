@@ -8,13 +8,6 @@ import { RingReportComponent } from './diags/mpi/ring/ring-report/ring-report.co
 import { CpuReportComponent } from './diags/benchmark/cpu/cpu-report/cpu-report.component';
 import { switchMap } from 'rxjs/operators';
 
-const map = {
-  'test': PingPongReportComponent,
-  'pingpong': PingPongReportComponent,
-  'ring': RingReportComponent,
-  'cpu': CpuReportComponent
-}
-
 @Component({
   templateUrl: './result-detail.component.html',
   styleUrls: ['./result-detail.component.css']
@@ -54,9 +47,9 @@ export class ResultDetailComponent implements OnInit {
   getComponent(name) {
     let comp;
     switch (name) {
-      case 'pingpong': comp = PingPongReportComponent; break;
-      case 'ring': comp = RingReportComponent; break;
-      case 'cpu': comp = CpuReportComponent; break;
+      case 'Pingpong': comp = PingPongReportComponent; break;
+      case 'Ring': comp = RingReportComponent; break;
+      case 'CPU': comp = CpuReportComponent; break;
       default: comp = CpuReportComponent;
     }
     return comp;
