@@ -1,4 +1,4 @@
-import sys, requests, time, random, argparse, traceback, json, os, math
+import sys, requests, time, random, argparse, traceback, json, os, math, base64
 from random import sample
 
 import urllib3
@@ -342,8 +342,12 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--cancel', type=check_positive, default=0, help='Specify the time(seconds) to cancel the job')
     parser.add_argument('-t', '--continuous', type=check_positive, help='Specify the time(seconds) to run the test continuously until this time out')
     parser.add_argument('-o', '--timeout', type=check_positive, default=60*60*24*365, help='Specify the max time(seconds) to wait for the job until canceling it in one test')
+    parser.add_argument('-u', '--username', default='root', help='Specify the username of cluster admin')
+    parser.add_argument('-p', '--password', default='Pass1word', help='Specify the password of cluster admin')
     args = parser.parse_args()
-
+    
+    REQUEST_HEADER = {'Authorization':'Basic {}'.format(base64.b64encode('{}:{}'.format(args.username, args.password)))}
+    
     if args.result:
         args.result = args.result.replace('\\n', '\n')
         
