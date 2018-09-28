@@ -66,7 +66,7 @@ def main():
 
     scriptLocation = 'diagtestscripts'
     filterScriptDir = '/tmp/hpc_{}'.format(scriptLocation)
-    filterScriptName = 'mpi-pingpong-filter.py'
+    filterScriptName = 'MPI-Pingpong-filter.py'
     filterScriptVersion = '#v0.12'
     filterScriptPath = '{}/{}'.format(filterScriptDir, filterScriptName)
     commandDownloadScript = 'if [ ! -f {0} ] || [ "`head -n1 {0}`" != "{1}" ]; then wget -P {2} ${{blobEndpoint}}{3}/{4} >stdout 2>stderr; fi && '.format(filterScriptPath, filterScriptVersion, filterScriptDir, scriptLocation, filterScriptName)
