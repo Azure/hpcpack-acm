@@ -1,4 +1,4 @@
-#v0.12
+#v0.13
 
 import sys, json, copy, numpy, time
 
@@ -145,7 +145,12 @@ def main():
     if messages:
         nodesInMessages = [node for nodepair in messages.keys() for node in nodepair.split(',')]
         nodesInMessages = list(set(nodesInMessages))
+        messagesByNode = {}
+        for pair in messages:
+            for node in pair.split(','):
+                messagesByNode.setdefault(node, {})[pair] = messages[pair]
         histogramSize = min(nodesNumber, 10)
+
         statisticsItems = ["Latency", "Throughput"]
         for item in statisticsItems:
             data = [messages[pair][item] for pair in messages]
@@ -186,18 +191,18 @@ def main():
             
             result[item]["ResultByNode"] = {}
             for node in nodesInMessages:
-                data = [messages[pair][item] for pair in messages if node in pair.split(',')]
+                data = [messagesByNode[node][pair][item] for pair in messagesByNode[node]]
                 histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(globalMin, globalMax))]
                 if item == "Latency":
-                    badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold and node in pair.split(',')]
+                    badPairs = [{"Pair":pair, "Value":messagesByNode[node][pair][item]} for pair in messagesByNode[node] if messagesByNode[node][pair][item] > latencyThreshold and node in pair.split(',')]
                     badPairs.sort(key=lambda x:x["Value"], reverse=True)
-                    bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
-                    worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
+                    bestPairs = {"Pairs":[pair for pair in messagesByNode[node] if messagesByNode[node][pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
+                    worstPairs = {"Pairs":[pair for pair in messagesByNode[node] if messagesByNode[node][pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
                 else:
-                    badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] < throughputThreshold and node in pair.split(',')]
+                    badPairs = [{"Pair":pair, "Value":messagesByNode[node][pair][item]} for pair in messagesByNode[node] if messagesByNode[node][pair][item] < throughputThreshold and node in pair.split(',')]
                     badPairs.sort(key=lambda x:x["Value"])
-                    bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
-                    worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
+                    bestPairs = {"Pairs":[pair for pair in messagesByNode[node] if messagesByNode[node][pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
+                    worstPairs = {"Pairs":[pair for pair in messagesByNode[node] if messagesByNode[node][pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
                 result[item]["ResultByNode"][node] = {}
                 result[item]["ResultByNode"][node]["Bad_pairs"] = badPairs
                 result[item]["ResultByNode"][node]["Passed"] = len(badPairs) == 0

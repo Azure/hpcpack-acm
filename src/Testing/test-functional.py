@@ -74,7 +74,7 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
             "diagnosticTest":{
                 "name": "Pingpong",
                 "category": "MPI",
-                "arguments": [{"name":"Mode", "value": "Parallel"}, {"name":"Debug", "value": command}]
+                "arguments": [{"name":"Mode", "value": "Tournament"}, {"name":"Debug", "value": command}]
             },
             "targetNodes":randomNodes
         }
@@ -336,7 +336,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Functional test aganist clusrun, diagnostics or job cancellation')
     parser.add_argument('cluster_uri', help='Specify the cluster to test')
     parser.add_argument('-g', '--category', choices=['clusrun', 'diag-pingpong-parallel', 'diag-pingpong-tournament', 'diag-pingpong-debug', 'diag-cpu'], required=True, help='Choose the category of job to test')
-    parser.add_argument('-m', '--command', help='Specify the command in clusrun or diag-pingpong-debug job', default='hostname')
+    parser.add_argument('-m', '--command', help='Specify the command in clusrun or diag-pingpong-debug job', default='')
     parser.add_argument('-r', '--result', help='Specify the expected result of tasks in clusrun job', default=None)
     parser.add_argument('-n', '--name', help='Specify the job name', default='Functional test by chenling')
     parser.add_argument('-c', '--cancel', type=check_positive, default=0, help='Specify the time(seconds) to cancel the job')
