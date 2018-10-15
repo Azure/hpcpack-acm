@@ -3,6 +3,10 @@
   <mat-form-field class="cmd-line">
     <input [(ngModel)]="command" (keyup.enter)="close()" matInput placeholder="Your command here" value="">
   </mat-form-field>
+  <mat-form-field>
+    <input [(ngModel)]="timeout" (keyup.enter)="close()" matInput placeholder="command timeout" type="number">
+    <span matSuffix>sec</span>
+  </mat-form-field>
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-raised-button [mat-dialog-close]="false">Cancel</button>

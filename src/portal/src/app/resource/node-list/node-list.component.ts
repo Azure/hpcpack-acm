@@ -175,10 +175,10 @@ export class NodeListComponent {
       data: {}
     });
 
-    dialogRef.afterClosed().subscribe(cmd => {
-      if (cmd) {
+    dialogRef.afterClosed().subscribe(params => {
+      if (params.command) {
         let names = this.selectedNodes.map(e => e.name);
-        this.api.command.create(cmd, names).subscribe(obj => {
+        this.api.command.create(params.command, names, params.timeout).subscribe(obj => {
           this.router.navigate([`/command/results/${obj.id}`]);
         });
       }

@@ -134,8 +134,10 @@ fdescribe('NodeListComponent', () => {
 
   it('should run command', () => {
     let cmd = 'x command';
+    let timeout = 1800;
+    let params = { command: cmd, timeout: timeout };
     let dialogRef = jasmine.createSpyObj('dialogRef', ['afterClosed']);
-    dialogRef.afterClosed.and.returnValue(of(cmd));
+    dialogRef.afterClosed.and.returnValue(of(params));
     let dialog = fixture.debugElement.injector.get(MatDialog);
     spyOn(dialog, 'open').and.returnValue(dialogRef);
     let api = fixture.debugElement.injector.get(ApiService);
@@ -144,7 +146,7 @@ fdescribe('NodeListComponent', () => {
     spyOn(router, 'navigate').and.callThrough();
     component.runCommand();
     expect(dialog.open).toHaveBeenCalled();
-    expect(api.command.create).toHaveBeenCalledWith(cmd, []);
+    expect(api.command.create).toHaveBeenCalledWith(cmd, [], timeout);
     expect(router.navigate).toHaveBeenCalledWith(['/command/results/1']);
   });
 

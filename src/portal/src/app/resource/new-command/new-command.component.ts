@@ -9,6 +9,7 @@ import { NodeFilterBuilderComponent } from '../../widgets/node-filter-builder/no
 })
 export class NewCommandComponent implements OnInit {
   public command: string = '';
+  public timeout: number = 1800;
 
   constructor(public dialog: MatDialogRef<NewCommandComponent>) { }
 
@@ -16,6 +17,7 @@ export class NewCommandComponent implements OnInit {
   }
 
   close() {
-    this.dialog.close(this.command);
+    let params = { command: this.command, timeout: this.timeout };
+    this.dialog.close(params);
   }
 }

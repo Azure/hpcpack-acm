@@ -58,7 +58,7 @@ export class ResultDetailComponent implements OnInit {
 
   ngOnInit() {
     this.subcription = this.route.paramMap.subscribe(map => {
-      this.result = { state: 'unknown', command: '', nodes: [] };
+      this.result = { state: 'unknown', command: '', nodes: [], timeout: 1800 };
       this.nodeOutputs = {};
       this.id = map.get('id');
       this.updateJob(this.id);
@@ -86,6 +86,7 @@ export class ResultDetailComponent implements OnInit {
           }
           this.result.state = job.state;
           this.result.command = job.commandLine;
+          this.result.timeout = job.defaultTaskMaximumRuntimeSeconds;
           if (!this.gotTasks) {
             this.result.nodes = job.targetNodes.map(node => ({ name: node, state: '' }));
           }
@@ -272,7 +273,7 @@ export class ResultDetailComponent implements OnInit {
 
   stopNodeOutputKeyLoop(node) {
     let output = this.nodeOutputs[node.name];
-    if (output.keyLoop) {
+    if (output && output.keyLoop) {
       Loop.stop(output.keyLoop);
       output.keyLoop = null;
       if (output.loading === 'key') {
@@ -545,12 +546,12 @@ export class ResultDetailComponent implements OnInit {
   newCommand() {
     let dialogRef = this.dialog.open(CommandInputComponent, {
       width: '98%',
-      data: { command: this.result.command }
+      data: { command: this.result.command, timeout: this.result.timeout }
     });
-    dialogRef.afterClosed().subscribe(cmd => {
-      if (cmd) {
+    dialogRef.afterClosed().subscribe(params => {
+      if (params.command) {
         let names = this.result.nodes.map(node => node.name);
-        this.api.command.create(cmd, names).subscribe(obj => {
+        this.api.command.create(params.command, names, params.timeout).subscribe(obj => {
           this.router.navigate([`/command/results/${obj.id}`]);
         });
       }
