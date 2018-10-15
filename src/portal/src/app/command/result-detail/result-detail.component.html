@@ -2,7 +2,7 @@
   <div class="job-state">
     <mat-spinner *ngIf="!isOver" [diameter]="20"></mat-spinner>
     <div class="name">
-      <div class="state-text" [ngClass]="result.state">{{result.state | titlecase}}</div>
+      <div class="state-text" [ngClass]="stateClass(result.state)">{{result.state}}</div>
       {{id}} - {{result.command}}
     </div>
 

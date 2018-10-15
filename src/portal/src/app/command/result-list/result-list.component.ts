@@ -90,6 +90,9 @@ export class ResultListComponent implements OnInit {
     return this.jobStateService.stateIcon(state);
   }
 
+  private stateClass(state) {
+    return this.jobStateService.stateClass(state);
+  }
 
   private getCommandRequest() {
     return this.api.command.getJobsByPage({ lastId: this.lastId, count: this.maxPageSize, reverse: this.reverse });

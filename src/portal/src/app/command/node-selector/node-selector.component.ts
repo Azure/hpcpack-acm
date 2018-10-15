@@ -19,7 +19,7 @@ export class NodeSelectorComponent implements OnChanges {
   @Output()
   select = new EventEmitter();
 
-  state = 'all';
+  state = 'All';
 
   name = '';
 
@@ -29,7 +29,7 @@ export class NodeSelectorComponent implements OnChanges {
     return this.nodeOutputs && this.nodeOutputs[node.name] && this.nodeOutputs[node.name]['error'] !== '';
   }
 
-  public states = ['all', 'queued', 'running', 'finished', 'failed', 'canceled'];
+  public states = ['All', 'Queued', 'Running', 'Finished', 'Failed', 'Canceled'];
 
   public displayedColumns = ['name', 'state'];
 
@@ -60,7 +60,7 @@ export class NodeSelectorComponent implements OnChanges {
 
   public filter() {
     let res = this.nodes.filter(e => {
-      if (this.state != 'all' && e.state != this.state)
+      if (this.state != 'All' && e.state != this.state)
         return false;
       if (e.name.toLowerCase().indexOf(this.name.toLowerCase()) < 0)
         return false;

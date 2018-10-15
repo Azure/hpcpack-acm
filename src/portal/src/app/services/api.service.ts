@@ -169,7 +169,7 @@ export class CommandApi extends Resource<CommandResult> {
     return {
       id: result.id,
       commandLine: result.commandLine,
-      state: result.state.toLowerCase(),
+      state: result.state,
       targetNodes: result.targetNodes
     } as CommandResult;
   }
@@ -179,7 +179,7 @@ export class CommandApi extends Resource<CommandResult> {
       return {
         id: item.id,
         command: item.commandLine,
-        state: item.state.toLowerCase(),
+        state: item.state,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
         progress: item.progress

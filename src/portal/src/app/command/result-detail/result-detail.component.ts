@@ -70,6 +70,10 @@ export class ResultDetailComponent implements OnInit {
     return this.gotTasks;
   }
 
+  public stateClass(state) {
+    return this.jobStateService.stateClass(state);
+  }
+
   updateJob(id) {
     this.jobLoop = Loop.start(
       //observable:
@@ -403,8 +407,7 @@ export class ResultDetailComponent implements OnInit {
   }
 
   isJobOver(state): boolean {
-    state = state.toLowerCase();
-    return state == 'finished' || state == 'failed' || state == 'canceled';
+    return state == 'Finished' || state == 'Failed' || state == 'Canceled';
   }
 
   get isOver(): boolean {

@@ -34,7 +34,7 @@ class WindowScrollDirectiveStub {
 
 
 class ApiServiceStub {
-  static results = [{ command: 'a command', state: 'finished' }]
+  static results = [{ command: 'a command', state: 'Finished' }]
 
   command = {
     getJobsByPage: () => of(ApiServiceStub.results),
