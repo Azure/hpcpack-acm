@@ -214,6 +214,8 @@
 
                 if (heartbeats.TryGetValue(nodeName, out (ComputeClusterNodeInformation, DateTimeOffset) n))
                 {
+                    node.LastHeartbeatTime = n.Item2;
+
                     if (n.Item2.AddSeconds(u.Option.MaxMissedHeartbeats * u.Option.HeartbeatIntervalSeconds) > DateTimeOffset.UtcNow)
                     {
                         node.Health = NodeHealth.OK;

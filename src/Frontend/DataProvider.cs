@@ -151,8 +151,8 @@
             var heartbeatKey = this.Utilities.GetHeartbeatKey(id);
             var nodeInfo = await this.nodesTable.RetrieveJsonTableEntityAsync(this.Utilities.NodesPartitionKey, heartbeatKey, token);
 
-            var node = new Node() { NodeRegistrationInfo = registerInfo, Name = id, };
-            if (nodeInfo != null && nodeInfo.Timestamp.AddSeconds(this.Utilities.Option.MaxMissedHeartbeats * this.Utilities.Option.HeartbeatIntervalSeconds) > DateTimeOffset.UtcNow)
+            var node = new Node() { NodeRegistrationInfo = registerInfo, Name = id, LastHeartbeatTime = nodeInfo?.Timestamp };
+            if (node.LastHeartbeatTime != null && node.LastHeartbeatTime.Value.AddSeconds(this.Utilities.Option.MaxMissedHeartbeats * this.Utilities.Option.HeartbeatIntervalSeconds) > DateTimeOffset.UtcNow)
             {
                 node.Health = NodeHealth.OK;
                 node.RunningJobCount = nodeInfo.GetObject<ComputeClusterNodeInformation>().Jobs.Count;
