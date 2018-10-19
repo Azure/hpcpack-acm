@@ -12,7 +12,7 @@
       "value": "frontend"
     },
     "frontendImageName": {
-      "value": "evancui/hpcacm:frontend"
+      "value": "hpcacm.azurecr.io/public/hpcacm:frontend"
     },
     "frontendPort": {
       "value": "443"
@@ -24,19 +24,19 @@
       "value": "jobmonitor"
     },
     "jobMonitorImageName": {
-      "value": "evancui/hpcacm:jobmonitor"
+      "value": "hpcacm.azurecr.io/public/hpcacm:jobmonitor"
     },
     "taskDispatcherName": {
       "value": "taskdispatcher"
     },
     "taskDispatcherImageName": {
-      "value": "evancui/hpcacm:taskdispatcher"
+      "value": "hpcacm.azurecr.io/public/hpcacm:taskdispatcher"
     },
     "dashboardName": {
       "value": "dashboard"
     },
     "dashboardImageName": {
-      "value": "evancui/hpcacm:dashboard"
+      "value": "hpcacm.azurecr.io/public/hpcacm:dashboard"
     },
     "dnsNameLabel": {
       "value": "hpcacm"
