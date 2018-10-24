@@ -70,7 +70,7 @@
             "metadata": {
                 "description": "Name for the frontend image"
             },
-            "defaultValue": "mcr.microsoft.com/hpcacm:frontend"
+            "defaultValue": "mcr.microsoft.com/hpcpack/hpcacm:frontend"
         },
         "frontendPort": {
             "type": "string",
@@ -98,7 +98,7 @@
             "metadata": {
                 "description": "Name for the jobmonitor image"
             },
-            "defaultValue": "mcr.microsoft.com/hpcacm:jobmonitor"
+            "defaultValue": "mcr.microsoft.com/hpcpack/hpcacm:jobmonitor"
         },
         "taskDispatcherName": {
             "type": "string",
@@ -112,7 +112,7 @@
             "metadata": {
                 "description": "Name for the taskdispatcher image"
             },
-            "defaultValue": "mcr.microsoft.com/hpcacm:taskdispatcher"
+            "defaultValue": "mcr.microsoft.com/hpcpack/hpcacm:taskdispatcher"
         },
         "dashboardName": {
             "type": "string",
@@ -126,7 +126,7 @@
             "metadata": {
                 "description": "Name for the dashboard image"
             },
-            "defaultValue": "mcr.microsoft.com/hpcacm:dashboard"
+            "defaultValue": "mcr.microsoft.com/hpcpack/hpcacm:dashboard"
         },
         "cpuCores": {
             "type": "string",
