@@ -38,20 +38,23 @@ def main():
             nodeSize[node] = "Unknown"
             
     uris = {
-        '2019'.lower(): ["http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13584/l_mpi_2019.0.117.tgz", "2019.0.117"],
-        '2018 Update 4'.lower(): ["http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13741/l_mpi_2018.4.274.tgz", "2018.4.274"],
-        '2018 Update 3'.lower(): ["http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13112/l_mpi_2018.3.222.tgz", "2018.3.222"],
-        '2018 Update 2'.lower(): ["http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12748/l_mpi_2018.2.199.tgz", "2018.2.199"],
-        '2018 Update 1'.lower(): ["http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12414/l_mpi_2018.1.163.tgz", "2018.1.163"],
-        '2018'.lower(): ["http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12120/l_mpi_2018.0.128.tgz" "2018.0.128"]
+        '2019'.lower(): "http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13584/l_mpi_2019.0.117.tgz",
+        '2018 Update 4'.lower(): "http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13741/l_mpi_2018.4.274.tgz",
+        '2018 Update 3'.lower(): "http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13112/l_mpi_2018.3.222.tgz",
+        '2018 Update 2'.lower(): "http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12748/l_mpi_2018.2.199.tgz",
+        '2018 Update 1'.lower(): "http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12414/l_mpi_2018.1.163.tgz",
+        '2018'.lower(): "http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12120/l_mpi_2018.0.128.tgz"
         }
 
-    installDirectory = "/opt/intel/impi/{}".format(uris[version][1])
+    uri = uris[version]
+    packageName = uri[-len("l_mpi_xxxx.x.xxx.tgz"):-len(".tgz")]
+    versionNumber = packageName[-len("xxxx.x.xxx"):]
+    installDirectory = "/opt/intel/impi/{}".format(versionNumber)
     wgetOutput = "wget.output"
     commandCheckExist = "[ -d {0} ] && echo 'Already installed in {0}'".format(installDirectory)
     commandShowOutput = r"cat {} | sed 's/.*\r//'".format(wgetOutput)
-    commandDownload = "timeout {0}s wget --progress=bar:force {1} >{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)".format(timeout, uris[version][0], wgetOutput, commandShowOutput)
-    commandInstall = "tar -zxf l_mpi_{0}.tgz && cd l_mpi_{0} && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg".format(uris[version][1])
+    commandDownload = "timeout {0}s wget --progress=bar:force {1} >{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)".format(timeout, uri, wgetOutput, commandShowOutput)
+    commandInstall = "tar -zxf {0}.tgz && cd {0} && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg".format(packageName)
     command = "{} || ({} && {}) ".format(commandCheckExist, commandDownload, commandInstall)
     
     taskTemplate = {
