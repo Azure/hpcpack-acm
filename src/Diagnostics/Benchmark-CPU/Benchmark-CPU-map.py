@@ -34,16 +34,19 @@ def main():
             raise Exception("Can not retrive distroInfo from NodeRegistrationInfo of node {0}. Exception: {1}".format(node, e))
 
     commandInstallSysbenchOnUbuntu = "(apt install -y sysbench || apt update && apt install -y sysbench) >/dev/null 2>&1 && "
+    commandInstallSysbenchOnSuse = "(zypper install -y sysbench) >/dev/null 2>&1 && "
     commandInstallSysbenchOnCentos = "(yum install -y epel-release && yum install -y sysbench) >/dev/null 2>&1 && "
     commandInstallSysbenchOnRedhat = "(curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | bash && yum install -y sysbench) >/dev/null 2>&1 && "
     commandRunLscpu = "lscpu && "
     commandRunSysbench = "sysbench --test=cpu --num-threads=`grep -c ^processor /proc/cpuinfo` run >output 2>&1 && cat output"
     commandDetectDistroAndRun = ("cat /etc/*release > distroInfo && "
                                  "if cat distroInfo | grep -Fiq 'Ubuntu'; then ({});"
+                                 "elif cat distroInfo | grep -Fiq 'Suse'; then ({});"
                                  "elif cat distroInfo | grep -Fiq 'CentOS'; then ({});"
                                  "elif cat distroInfo | grep -Fiq 'Redhat'; then ({});"
                                  "elif cat distroInfo | grep -Fiq 'Red Hat'; then ({});"
                                  "fi").format(commandInstallSysbenchOnUbuntu + commandRunSysbench, 
+                                              commandInstallSysbenchOnSuse + commandRunSysbench,
                                               commandInstallSysbenchOnCentos + commandRunSysbench,
                                               commandInstallSysbenchOnRedhat + commandRunSysbench,
                                               commandInstallSysbenchOnRedhat + commandRunSysbench)

@@ -65,8 +65,8 @@ def main():
     tempFileName = "hpc_diag_benchmark_cifs_`hostname`"
     commandGetLocation = "(curl --header 'metadata: true' --connect-timeout 5 http://169.254.169.254/metadata/instance?api-version=2017-08-01 2>/dev/null | tr ',' '\n' | grep location || :) && "
     commandInstallCifsUtilsOnUbuntu = "(apt install -y cifs-utils || apt update && apt install -y cifs-utils) >/dev/null 2>&1 && "
-    commandInstallCifsUtilsOnCentos = "yum install -y cifs-utils >/dev/null 2>&1 && "
-    commandInstallCifsUtilsOnRedhat = "yum install -y cifs-utils >/dev/null 2>&1 && "
+    commandInstallCifsUtilsOnSuse = "zypper install -y >/dev/null 2>&1 && "
+    commandInstallCifsUtilsOnOthers = "yum install -y cifs-utils >/dev/null 2>&1 && "
     commandMountShare = "mkdir -p {} && ".format(tempMountPoint) + connectionString.replace("[mount point]", tempMountPoint)
     commandUnmountShare = "(umount -l {} >/dev/null 2>&1 && rm -rf {} || :)".format(tempMountPoint, tempMountPoint)
     commandCopyLocal = "dd if=/dev/zero of=/tmp/{} bs=1M count=100".format(tempFileName)
@@ -79,13 +79,15 @@ def main():
         commandRun = "{} && {} && {} && {} || {}".format(commandUnmountShare, commandMountShare, commandRun, commandUnmountShare, commandUnmountShare)
     commandDetectDistroAndRun = ("cat /etc/*release >distroInfo && "
                                  "if cat distroInfo | grep -Fiq 'Ubuntu'; then ({});"
+                                 "elif cat distroInfo | grep -Fiq 'Suse'; then ({});"
                                  "elif cat distroInfo | grep -Fiq 'CentOS'; then ({});"
                                  "elif cat distroInfo | grep -Fiq 'Redhat'; then ({});"
                                  "elif cat distroInfo | grep -Fiq 'Red Hat'; then ({});"
                                  "fi").format(commandInstallCifsUtilsOnUbuntu + commandRun, 
-                                              commandInstallCifsUtilsOnCentos + commandRun,
-                                              commandInstallCifsUtilsOnRedhat + commandRun,
-                                              commandInstallCifsUtilsOnRedhat + commandRun)
+                                              commandInstallCifsUtilsOnSuse + commandRun,
+                                              commandInstallCifsUtilsOnOthers + commandRun,
+                                              commandInstallCifsUtilsOnOthers + commandRun,
+                                              commandInstallCifsUtilsOnOthers + commandRun)
     taskTemplate = {
         "Id":0,
         "CommandLine":None,
@@ -107,9 +109,9 @@ def main():
         if nodeOS[node] == "ubuntu":
             task["CommandLine"] += commandInstallCifsUtilsOnUbuntu + commandRun
         elif nodeOS[node] == "centos":
-            task["CommandLine"] += commandInstallCifsUtilsOnCentos + commandRun
+            task["CommandLine"] += commandInstallCifsUtilsOnOthers + commandRun
         elif nodeOS[node] == "redhat":
-            task["CommandLine"] += commandInstallCifsUtilsOnRedhat + commandRun
+            task["CommandLine"] += commandInstallCifsUtilsOnOthers + commandRun
         else:
             task["CommandLine"] += commandDetectDistroAndRun
         tasks.append(task)
