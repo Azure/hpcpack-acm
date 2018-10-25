@@ -83,6 +83,7 @@ def main():
         "Password":None,
         "PrivateKey":privateKey,
         "CustomizedData":None,
+        "MaximumRuntimeSeconds":60
     }
 
     commonArguments = taskTemplateOrigin, mode, level, debugCommand
@@ -149,14 +150,10 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level, debu
         parseValue = "sed -n '3p;$p'"
         timeout = 20
 
-    
     sshcommand = "host [pairednode] && ssh-keyscan [pairednode] >>~/.ssh/known_hosts" # Add ssh knownhosts
     mpicommand = "mpirun -hosts [dummynodes]" + rdmaOption+ " -ppn 1 IMB-MPI1 -time 60" + sampleOption + " pingpong"
     parseResult = "tail -n" + str(linesCount+5) + " | head -n" + str(linesCount+1)
     columns = "$3,$4"
-
-    if mode == "Parallel".lower():
-        timeout *= 10
 
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[sshcommand]", sshcommand)
@@ -164,6 +161,10 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level, debu
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[columns]", columns)
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseResult]", parseResult)
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseValue]", parseValue)
+
+    if mode == "Parallel".lower():
+        timeout *= 10
+        taskTemplate["MaximumRuntimeSeconds"] = 300
 
     if mode == 'Tournament'.lower():
         taskgroups = getGroupsOptimal(nodelist)

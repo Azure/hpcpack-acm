@@ -7,7 +7,7 @@
         "ContainerName":"diagtestscripts",
         "Name":"MPI-Installation-reduce.py"
     },
-    "description":"Install Intel MPI on selected nodes.",
+    "description":"Download and install Intel MPI on selected nodes.",
     "parameters":[
 	    {
 	        "name":"Version",
@@ -24,12 +24,12 @@
 	        "defaultValue":"2018 Update 4"
 	    },
         {
-            "name":"Timeout",
-            "description":"Specify the max time in seconds to download Intel MPI package.",
+            "name":"Max runtime",
+            "description":"Specify the max time in seconds the test could run.",
             "type":"number",
-            "min":1,
-            "max":1500,
-            "defaultValue":1500
+            "min":180,
+            "max":36000,
+            "defaultValue":3600
         }
 	]
 }

@@ -66,6 +66,7 @@ def main():
         "Password":None,
         "PrivateKey":privateKey,
         "CustomizedData":None,
+        "MaximumRuntimeSeconds":60
     }
 
     # Create task for every node to run Intel MPI Benchmark - Sendrecv among processors which forms a periodic communication chain within each node.
@@ -103,7 +104,6 @@ def main():
         task["Node"] = nodelist[0]
         task["CustomizedData"] = "[RDMA] {}".format(nodes) if len(normalNodes) == 0 else nodes
         task["EnvironmentVariables"] = {"CCP_NODES":nodesCount + " " + " 1 ".join(nodelist) + " 1"}
-        task["MaximumRuntimeSeconds"] = 60
         tasks.append(task)
     
     print(json.dumps(tasks))

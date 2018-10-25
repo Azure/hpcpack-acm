@@ -13,7 +13,7 @@ def main():
         raise Exception('Duplicate nodes')
     
     version = '2018 Update 4'.lower()
-    timeout = 1500
+    timeout = 3600
     if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
         arguments = job['DiagnosticTest']['Arguments']
         if arguments:
@@ -21,9 +21,13 @@ def main():
                 if argument['name'].lower() == 'Version'.lower():
                     version = argument['value'].lower()
                     continue
-                if argument['name'].lower() == 'Timeout'.lower():
+                if argument['name'].lower() == 'Max runtime'.lower():
                     timeout = int(argument['value'])
                     continue
+
+    timeout -= 179
+    if timeout <= 0:
+        raise Exception("The Max runtime parameter should be equal or larger than 180.")
 
     nodeSize = {}
     for nodeInfo in nodesInfo:
@@ -55,7 +59,7 @@ def main():
         "CommandLine":command,
         "Node":None,
         "CustomizedData":None,
-        "MaximumRuntimeSeconds":timeout + 300,
+        "MaximumRuntimeSeconds":36000
     }
 
     tasks = []

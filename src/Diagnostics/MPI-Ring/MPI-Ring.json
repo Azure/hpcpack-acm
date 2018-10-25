@@ -14,6 +14,14 @@
 	        "description":"Specify the location of Intel MPI that is installed on the nodes.",
 	        "type":"string",
 	        "defaultValue":"/opt/intel/impi/2018.4.274"
-	    }
+        },
+        {
+            "name":"Max runtime",
+            "description":"Specify the max time in seconds the test could run.",
+            "type":"number",
+            "min":1,
+            "max":3600,
+            "defaultValue":180
+        }
 	]
 }
