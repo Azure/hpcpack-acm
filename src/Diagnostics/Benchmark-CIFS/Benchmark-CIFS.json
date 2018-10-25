@@ -46,7 +46,7 @@
         {
             "name":"Mode",
             "description":"Select the way each node accessing target CIFS server.",
-            "type":"string",
+            "type":"select",
             "options":["Parallel", "Serial"],
             "defaultValue":"Parallel"
         }

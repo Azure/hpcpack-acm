@@ -24,7 +24,7 @@
         {
             "name":"Mode",
             "description":"Select the way to run tasks, in each of which MPI Pingpong run between a node pair.",
-            "type":"string",
+            "type":"select",
             "options":["Tournament", "Serial", "Parallel"],
             "defaultValue":"Tournament"
         },
@@ -32,7 +32,7 @@
             "name":"Intel MPI location",
             "description":"Specify the location of Intel MPI that is installed on the nodes.",
             "type":"string",
-            "defaultValue":"/opt/intel"
+            "defaultValue":"/opt/intel/impi/2018.4.274"
         }
     ]
 }
