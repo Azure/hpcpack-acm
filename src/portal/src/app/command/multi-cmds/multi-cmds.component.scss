@@ -1,0 +1,62 @@
+@import "../../stylesheets/job-result.scss";
+
+.waiting {
+  mat-spinner {
+    margin: 1em auto;
+  }
+
+  text-align: center;
+}
+
+.actions {
+  margin-top: 1em;
+}
+
+.container-fluid {
+  margin-top: 1em;
+}
+
+.selection,
+.output {
+  max-height: 800px;
+  margin-bottom: 1em;
+}
+
+.control.bottom {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
+  margin-top: 0.5em;
+
+  a {
+    color: inherit;
+  }
+
+  a .material-icons {
+    vertical-align: top;
+  }
+}
+
+.cmd-tab {
+  display: flex;
+  align-items: center;
+  max-width: 200px;
+}
+
+.tab-icon {
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.tab-text {
+  @include ellipsis-text;
+}
+
+:host ::ng-deep .mat-tab-labels .mat-tab-label {
+  padding: 0 2px;
+
+  .mat-tab-label-content {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

@@ -7,8 +7,11 @@
     <input [(ngModel)]="timeout" (keyup.enter)="close()" matInput placeholder="command timeout" type="number">
     <span matSuffix>sec</span>
   </mat-form-field>
+  <section class="checkbox-section">
+    <mat-checkbox color="primary" [(ngModel)]="multiCmds">Multi-commands View</mat-checkbox>
+  </section>
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
-  <button mat-raised-button [mat-dialog-close]="command">Run</button>
+  <button mat-raised-button (click)="close()">Run</button>
 </mat-dialog-actions>

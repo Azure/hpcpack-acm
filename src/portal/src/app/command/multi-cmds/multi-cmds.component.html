@@ -1,0 +1,62 @@
+<ng-container *ngIf="isLoaded; else waiting">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-3 selection">
+        <node-selector [nodes]="result.nodes" (select)="selectNode($event)" [nodeOutputs]="nodeOutputs">
+        </node-selector>
+      </div>
+
+      <mat-tab-group mat-align-tabs="start" class="col-md-9" [selectedIndex]="selected.value" (selectedIndexChange)="changeTab($event)">
+        <mat-tab *ngFor="let tab of this.tabs; index as i">
+          <ng-template mat-tab-label>
+            <div class="cmd-tab">
+              <mat-icon class="tab-icon" color="primary" *ngIf='isJobOver(tab.state)'>call_to_action</mat-icon>
+              <mat-spinner *ngIf='!isJobOver(tab.state)' [diameter]="15"></mat-spinner>
+              <div class="tab-text">{{tab.id}} - {{tab.command}}</div>
+            </div>
+            <button mat-icon-button (click)="closeTab(i)" *ngIf="tabs.length > 1">
+              <mat-icon class="tab-icon">close</mat-icon>
+            </button>
+          </ng-template>
+          <div class="output">
+            <command-output (loadPrev)="loadPrevAndScroll(selectedNode, $event)" (loadNext)="loadNext(selectedNode)"
+              (gotoTop)="loadFromBeginAndScroll(selectedNode, $event)" [content]="currentOutput?.content" [disabled]="isOutputDisabled"
+              [loading]="loading" [bof]="currentOutput?.start === 0" [eof]="currentOutput?.end">
+            </command-output>
+
+            <div class="control bottom">
+              <a [href]="currentOutputUrl" *ngIf="currentOutputUrl">
+                <i class="material-icons">file_download</i> Download the whole output
+              </a>
+              <mat-checkbox color="primary" [disabled]="loading && loading != 'auto'" [checked]="autoload" (change)="toggleAutoload($event.checked)">Autoscroll</mat-checkbox>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+    <div class="row justify-content-end">
+      <mat-form-field class="col-md-9">
+        <input matInput placeholder="New Command here, press enter to excute" [(ngModel)]='newCmd' (keyup)="onKey($event)">
+      </mat-form-field>
+    </div>
+  </div>
+</ng-container>
+
+<ng-template #waiting>
+  <div class="waiting">
+    <p>{{errorMsg}}</p>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-3 selection">
+          <node-selector [nodes]="result?.nodes">
+          </node-selector>
+        </div>
+
+        <div class="col-md-9 output">
+          <command-output [disabled]="true" [loading]="true">
+          </command-output>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-template>

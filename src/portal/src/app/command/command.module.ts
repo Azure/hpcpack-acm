@@ -13,6 +13,7 @@ import { NodeSelectorComponent } from './node-selector/node-selector.component';
 import { CommandInputComponent } from './command-input/command-input.component';
 import { SharedModule } from '../shared.module';
 import { TaskErrorComponent } from './node-selector/task-error/task-error.component';
+import { MultiCmdsComponent } from './multi-cmds/multi-cmds.component';
 
 @NgModule({
   imports: [
@@ -24,7 +25,7 @@ import { TaskErrorComponent } from './node-selector/task-error/task-error.compon
     ChartModule,
     SharedModule
   ],
-  declarations: [CommandComponent, ResultListComponent, ResultDetailComponent, CommandOutputComponent, NodeSelectorComponent, CommandInputComponent, TaskErrorComponent],
+  declarations: [CommandComponent, ResultListComponent, ResultDetailComponent, CommandOutputComponent, NodeSelectorComponent, CommandInputComponent, TaskErrorComponent, MultiCmdsComponent],
   entryComponents: [CommandInputComponent, TaskErrorComponent],
 })
 export class CommandModule { }

@@ -5,11 +5,12 @@ import { NodeFilterBuilderComponent } from '../../widgets/node-filter-builder/no
 @Component({
   selector: 'app-new',
   templateUrl: './new-command.component.html',
-  styleUrls: ['./new-command.component.css']
+  styleUrls: ['./new-command.component.scss']
 })
 export class NewCommandComponent implements OnInit {
   public command: string = '';
   public timeout: number = 1800;
+  public multiCmds: boolean = false;
 
   constructor(public dialog: MatDialogRef<NewCommandComponent>) { }
 
@@ -17,7 +18,7 @@ export class NewCommandComponent implements OnInit {
   }
 
   close() {
-    let params = { command: this.command, timeout: this.timeout };
+    let params = { command: this.command, timeout: this.timeout, multiCmds: this.multiCmds };
     this.dialog.close(params);
   }
 }

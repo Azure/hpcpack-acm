@@ -179,7 +179,12 @@ export class NodeListComponent {
       if (params.command) {
         let names = this.selectedNodes.map(e => e.name);
         this.api.command.create(params.command, names, params.timeout).subscribe(obj => {
-          this.router.navigate([`/command/results/${obj.id}`]);
+          if (params.multiCmds) {
+            this.router.navigate([`/command/multi-cmds`], { queryParams: { firstJobId: obj.id } });
+          }
+          else {
+            this.router.navigate([`/command/results/${obj.id}`]);
+          }
         });
       }
     });

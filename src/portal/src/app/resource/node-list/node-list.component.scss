@@ -1,49 +1,61 @@
 @import "../../stylesheets/mixin.scss";
 @import "../../stylesheets/table.scss";
+
 nav {
-    margin-bottom: 1em;
+  margin-bottom: 1em;
 }
 
 .mat-column-runningJobCount,
 .mat-column-coreCount,
 .mat-column-memory,
-.mat-column-health,
 .mat-column-state,
 .mat-column-eventCount {
-    flex: 0.5;
+  flex: 0.5;
 }
 
 .mat-column-os {
-    flex: 2;
+  flex: 2;
 }
 
 .mat-column-name {
-    flex: 0.8;
+  flex: 0.8;
+}
+
+.mat-column-health {
+  flex: 1;
 }
 
 .mat-cell.mat-column-os {
-    @include ellipsis-text;
+  @include ellipsis-text;
 }
 
 .mat-column-runningJobCount,
 .mat-column-coreCount,
 .mat-column-memory,
 .mat-column-eventCount {
-    justify-content: flex-end;
+  justify-content: flex-end;
 }
 
 .online {
-    color: $color;
+  color: $color;
 }
 
 .offline {
-    color: #6c727c;
+  color: #6c727c;
 }
 
 .healthy {
-    color: $color;
+  color: $color;
 }
 
 .error {
-    color: #D84315;
+  color: #D84315;
+}
+
+.node-error {
+  padding-left: 3px;
+}
+
+.inline {
+  display: inline;
 }

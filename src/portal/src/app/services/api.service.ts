@@ -196,7 +196,8 @@ export class CommandApi extends Resource<CommandResult> {
   }
 
   create(commandLine: string, targetNodes: string[], defaultTaskMaximumRuntimeSeconds: number): any {
-    return this.http.post<any>(this.url, { commandLine, targetNodes, defaultTaskMaximumRuntimeSeconds }, { observe: 'response', responseType: 'json' })
+    let maximumRuntimeSeconds = defaultTaskMaximumRuntimeSeconds;
+    return this.http.post<any>(this.url, { commandLine, targetNodes, defaultTaskMaximumRuntimeSeconds, maximumRuntimeSeconds }, { observe: 'response', responseType: 'json' })
       .pipe(
         map(res => {
           let url = res.headers.get('Location');
