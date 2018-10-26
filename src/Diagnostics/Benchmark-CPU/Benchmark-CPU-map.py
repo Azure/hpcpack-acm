@@ -1,4 +1,4 @@
-#v0.3
+#v0.4
 
 import sys, json, copy
 
@@ -33,23 +33,28 @@ def main():
         except Exception as e:
             raise Exception("Can not retrive distroInfo from NodeRegistrationInfo of node {0}. Exception: {1}".format(node, e))
 
-    commandInstallSysbenchOnUbuntu = "(apt install -y sysbench || apt update && apt install -y sysbench) >/dev/null 2>&1 && "
-    commandInstallSysbenchOnSuse = "(zypper install -y sysbench) >/dev/null 2>&1 && "
-    commandInstallSysbenchOnCentos = "(yum install -y epel-release && yum install -y sysbench) >/dev/null 2>&1 && "
-    commandInstallSysbenchOnRedhat = "(curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | bash && yum install -y sysbench) >/dev/null 2>&1 && "
+    commandInstallSysbenchOnUbuntu = "apt install -y sysbench || apt update && apt install -y sysbench"
+    commandInstallSysbenchOnSuse = "zypper install -y sysbench"
+    commandInstallSysbenchOnCentos = "yum install -y epel-release && yum install -y sysbench"
+    commandInstallSysbenchOnRedhat = "curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | bash && yum install -y sysbench"
+    commandInstallQuiet = "({}) >/dev/null 2>&1"
+    commandInstallSysbenchOnUbuntu = commandInstallQuiet.format(commandInstallSysbenchOnUbuntu)
+    commandInstallSysbenchOnSuse = commandInstallQuiet.format(commandInstallSysbenchOnSuse)
+    commandInstallSysbenchOnCentos = commandInstallQuiet.format(commandInstallSysbenchOnCentos)
+    commandInstallSysbenchOnRedhat = commandInstallQuiet.format(commandInstallSysbenchOnRedhat)
     commandRunLscpu = "lscpu && "
     commandRunSysbench = "sysbench --test=cpu --num-threads=`grep -c ^processor /proc/cpuinfo` run >output 2>&1 && cat output"
-    commandDetectDistroAndRun = ("cat /etc/*release > distroInfo && "
-                                 "if cat distroInfo | grep -Fiq 'Ubuntu'; then ({});"
-                                 "elif cat distroInfo | grep -Fiq 'Suse'; then ({});"
-                                 "elif cat distroInfo | grep -Fiq 'CentOS'; then ({});"
-                                 "elif cat distroInfo | grep -Fiq 'Redhat'; then ({});"
-                                 "elif cat distroInfo | grep -Fiq 'Red Hat'; then ({});"
-                                 "fi").format(commandInstallSysbenchOnUbuntu + commandRunSysbench, 
-                                              commandInstallSysbenchOnSuse + commandRunSysbench,
-                                              commandInstallSysbenchOnCentos + commandRunSysbench,
-                                              commandInstallSysbenchOnRedhat + commandRunSysbench,
-                                              commandInstallSysbenchOnRedhat + commandRunSysbench)
+    commandDetectDistroAndInstall = ("cat /etc/*release > distroInfo && "
+                                 "if cat distroInfo | grep -Fiq 'Ubuntu'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Suse'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'CentOS'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Redhat'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Red Hat'; then {};"
+                                 "fi").format(commandInstallSysbenchOnUbuntu, 
+                                              commandInstallSysbenchOnSuse,
+                                              commandInstallSysbenchOnCentos,
+                                              commandInstallSysbenchOnRedhat,
+                                              commandInstallSysbenchOnRedhat)
     taskTemplate = {
         "Id":0,
         "CommandLine":None,
@@ -67,13 +72,13 @@ def main():
         task["CustomizedData"] = nodeSize[node]
         task["CommandLine"] = commandRunLscpu
         if nodeOS[node] == "ubuntu":
-            task["CommandLine"] += commandInstallSysbenchOnUbuntu + commandRunSysbench
+            task["CommandLine"] += "{} && {}".format(commandInstallSysbenchOnUbuntu, commandRunSysbench)
         elif nodeOS[node] == "centos":
-            task["CommandLine"] += commandInstallSysbenchOnCentos + commandRunSysbench
+            task["CommandLine"] += "{} && {}".format(commandInstallSysbenchOnCentos, commandRunSysbench)
         elif nodeOS[node] == "redhat":
-            task["CommandLine"] += commandInstallSysbenchOnRedhat + commandRunSysbench
+            task["CommandLine"] += "{} && {}".format(commandInstallSysbenchOnRedhat, commandRunSysbench)
         else:
-            task["CommandLine"] += commandDetectDistroAndRun
+            task["CommandLine"] += "{} && {}".format(commandDetectDistroAndInstall, commandRunSysbench)
         tasks.append(task)
 
     print(json.dumps(tasks))
