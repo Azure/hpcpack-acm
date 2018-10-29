@@ -28,27 +28,6 @@ def main():
     if not 1 <= sizeLevel <= 15:
         raise Exception("Parameter Size level should be in 1 ~ 15.")
 
-    nodeOS = {}
-    nodeSize = {}
-    for nodeInfo in nodesInfo:
-        node = nodeInfo["Node"]
-        try:
-            nodeSize[node] = json.loads(nodeInfo["Metadata"])["compute"]["vmSize"]
-        except Exception as e:
-            nodeSize[node] = "Unknown"
-        try:
-            distroInfo = nodeInfo["NodeRegistrationInfo"]["DistroInfo"]
-            if "Ubuntu".lower() in distroInfo.lower():
-                nodeOS[node] = "ubuntu"
-            elif "CentOS".lower() in distroInfo.lower():
-                nodeOS[node] = "centos"
-            elif "Redhat".lower() in distroInfo.lower():
-                nodeOS[node] = "redhat"
-            else:
-                nodeOS[node] = "other"
-        except Exception as e:
-            raise Exception("Can not retrive distroInfo from NodeRegistrationInfo of node {0}. Exception: {1}".format(node, e))
-
     commandInstallNumactlOnUbuntu = "apt install -y numactl"
     commandInstallNumactlOnSuse = "zypper install -y numactl"
     commandInstallNumactlOnOthers = "yum install -y numactl"
@@ -56,8 +35,6 @@ def main():
     commandInstallNumactlOnUbuntu = commandInstallNumactlQuietOrWarn.format(commandInstallNumactlOnUbuntu)
     commandInstallNumactlOnSuse = commandInstallNumactlQuietOrWarn.format(commandInstallNumactlOnSuse)
     commandInstallNumactlOnOthers = commandInstallNumactlQuietOrWarn.format(commandInstallNumactlOnOthers)
-    commandModify = "sed -i 's/ | tee lin_$arch.txt//' runme_xeon64 && sed -i 's/.*# number of tests/{} # number of tests/' lininput_xeon64".format(sizeLevel)
-    commandRunLinpack = "cd {}/benchmarks/linpack && {} && ./runme_xeon64".format(intelMklLocation, commandModify)
     commandDetectDistroAndInstall = ("cat /etc/*release > distroInfo && "
                                  "if cat distroInfo | grep -Fiq 'Ubuntu'; then {};"
                                  "elif cat distroInfo | grep -Fiq 'Suse'; then {};"
@@ -69,7 +46,30 @@ def main():
                                               commandInstallNumactlOnOthers,
                                               commandInstallNumactlOnOthers,
                                               commandInstallNumactlOnOthers)
-    commandRun = "{} && {}".format(commandDetectDistroAndInstall, commandRunLinpack)
+
+    commandInstallByNode = {}
+    nodeSize = {}
+    for nodeInfo in nodesInfo:
+        node = nodeInfo["Node"]
+        try:
+            nodeSize[node] = json.loads(nodeInfo["Metadata"])["compute"]["vmSize"]
+        except Exception as e:
+            nodeSize[node] = "Unknown"
+        try:
+            distroInfo = nodeInfo["NodeRegistrationInfo"]["DistroInfo"]
+            if "Ubuntu".lower() in distroInfo.lower():
+                commandInstallByNode[node] = commandInstallNumactlOnUbuntu
+            elif "CentOS".lower() in distroInfo.lower():
+                commandInstallByNode[node] = commandInstallNumactlOnOthers
+            elif "Redhat".lower() in distroInfo.lower():
+                commandInstallByNode[node] = commandInstallNumactlOnOthers
+            else:
+                commandInstallByNode[node] = commandDetectDistroAndInstall
+        except Exception as e:
+            raise Exception("Can not retrive distroInfo from NodeRegistrationInfo of node {0}. Exception: {1}".format(node, e))
+
+    commandModify = "sed -i 's/.*# number of tests/{} # number of tests/' lininput_xeon64".format(sizeLevel)
+    commandRunLinpack = "cd {}/benchmarks/linpack && {} && ./runme_xeon64".format(intelMklLocation, commandModify)
 
     taskTemplate = {
         "Id":0,
@@ -91,7 +91,7 @@ def main():
         task["Id"] = id
         task["Node"] = node
         task["CustomizedData"] = nodeSize[node]
-        task["CommandLine"] = "{} && {} 2>&1 | tee {}".format(commandCreateTempOutputDir, commandRun, outputFile)
+        task["CommandLine"] = "{} && {} && {} 2>&1 | tee {}".format(commandCreateTempOutputDir, commandInstallByNode[node], commandRunLinpack, outputFile)
         tasks.append(task)
         task = copy.deepcopy(task)
         task["ParentIds"] = [id]
