@@ -1,4 +1,4 @@
-#v0.2
+#v0.3
 
 import sys, json, copy
 
@@ -39,7 +39,26 @@ def main():
     if not mountPoint and not connectionString:
         raise Exception('Neither mount point nor connection string of CIFS server is specified.')
 
-    nodeOS = {}
+    commandInstallCifsUtilsOnUbuntu = "apt install -y cifs-utils || apt update && apt install -y cifs-utils"
+    commandInstallCifsUtilsOnSuse = "zypper install -y"
+    commandInstallCifsUtilsOnOthers = "yum install -y cifs-utils"
+    commandInstallQuiet = "({}) >/dev/null 2>&1"
+    commandInstallCifsUtilsOnUbuntu = commandInstallQuiet.format(commandInstallCifsUtilsOnUbuntu)
+    commandInstallCifsUtilsOnSuse = commandInstallQuiet.format(commandInstallCifsUtilsOnSuse)
+    commandInstallCifsUtilsOnOthers = commandInstallQuiet.format(commandInstallCifsUtilsOnOthers)
+    commandDetectDistroAndInstall = ("cat /etc/*release >distroInfo && "
+                                 "if cat distroInfo | grep -Fiq 'Ubuntu'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Suse'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'CentOS'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Redhat'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Red Hat'; then {};"
+                                 "fi").format(commandInstallCifsUtilsOnUbuntu, 
+                                              commandInstallCifsUtilsOnSuse,
+                                              commandInstallCifsUtilsOnOthers,
+                                              commandInstallCifsUtilsOnOthers,
+                                              commandInstallCifsUtilsOnOthers)
+
+    commandInstallByNode = {}
     nodeSize = {}
     for nodeInfo in nodesInfo:
         node = nodeInfo["Node"]
@@ -50,42 +69,32 @@ def main():
         try:
             distroInfo = nodeInfo["NodeRegistrationInfo"]["DistroInfo"]
             if "Ubuntu".lower() in distroInfo.lower():
-                nodeOS[node] = "ubuntu"
+                commandInstallByNode[node] = commandInstallCifsUtilsOnUbuntu
             elif "CentOS".lower() in distroInfo.lower():
-                nodeOS[node] = "centos"
+                commandInstallByNode[node] = commandInstallCifsUtilsOnOthers
             elif "Redhat".lower() in distroInfo.lower():
-                nodeOS[node] = "redhat"
+                commandInstallByNode[node] = commandInstallCifsUtilsOnOthers
             else:
-                nodeOS[node] = "other"
+                commandInstallByNode[node] = commandDetectDistroAndInstall
         except Exception as e:
             raise Exception("Can not retrive distroInfo from NodeRegistrationInfo of node {0}. Exception: {1}".format(node, e))
 
     tempMountPoint = "/mnt/hpc_diag_benchmark_cifs_share"
     tempDir = "hpc_diag_benchmark_cifs_tmp"
     tempFileName = "hpc_diag_benchmark_cifs_`hostname`"
-    commandGetLocation = "(curl --header 'metadata: true' --connect-timeout 5 http://169.254.169.254/metadata/instance?api-version=2017-08-01 2>/dev/null | tr ',' '\n' | grep location || :) && "
-    commandInstallCifsUtilsOnUbuntu = "(apt install -y cifs-utils || apt update && apt install -y cifs-utils) >/dev/null 2>&1 && "
-    commandInstallCifsUtilsOnCentos = "yum install -y cifs-utils >/dev/null 2>&1 && "
-    commandInstallCifsUtilsOnRedhat = "yum install -y cifs-utils >/dev/null 2>&1 && "
-    commandMountShare = "mkdir -p {} && ".format(tempMountPoint) + connectionString.replace("[mount point]", tempMountPoint)
+    commandMountShare = "mkdir -p {} && {}".format(tempMountPoint, connectionString.replace("[mount point]", tempMountPoint))
     commandUnmountShare = "(umount -l {} >/dev/null 2>&1 && rm -rf {} || :)".format(tempMountPoint, tempMountPoint)
     commandCopyLocal = "dd if=/dev/zero of=/tmp/{} bs=1M count=100".format(tempFileName)
     mountDir = mountPoint if mountPoint else tempMountPoint
     commandCopyToCifs = "mkdir -p {0}/{1} && dd if=/tmp/{2} of={0}/{1}/{2}".format(mountDir, tempDir, tempFileName)
     commandCopyFromCifs = "dd if={0}/{1}/{2} of=/tmp/{2}".format(mountDir, tempDir, tempFileName)
     commandCleanup = "rm -f /tmp/{} && rm -f {}/{}/{}".format(tempFileName, mountDir, tempDir, tempFileName)
-    commandRun = "{} && {} && {} && {} || {}".format(commandCopyLocal, commandCopyToCifs, commandCopyFromCifs, commandCleanup, commandCleanup)
+    
+    commandGetLocation = "(curl --header 'metadata: true' --connect-timeout 5 http://169.254.169.254/metadata/instance?api-version=2017-08-01 2>/dev/null | tr ',' '\n' | grep location || :)"
+    commandRun = "({} && {} && {} || :) && {}".format(commandCopyLocal, commandCopyToCifs, commandCopyFromCifs, commandCleanup)
     if not mountPoint:
-        commandRun = "{} && {} && {} && {} || {}".format(commandUnmountShare, commandMountShare, commandRun, commandUnmountShare, commandUnmountShare)
-    commandDetectDistroAndRun = ("cat /etc/*release >distroInfo && "
-                                 "if cat distroInfo | grep -Fiq 'Ubuntu'; then ({});"
-                                 "elif cat distroInfo | grep -Fiq 'CentOS'; then ({});"
-                                 "elif cat distroInfo | grep -Fiq 'Redhat'; then ({});"
-                                 "elif cat distroInfo | grep -Fiq 'Red Hat'; then ({});"
-                                 "fi").format(commandInstallCifsUtilsOnUbuntu + commandRun, 
-                                              commandInstallCifsUtilsOnCentos + commandRun,
-                                              commandInstallCifsUtilsOnRedhat + commandRun,
-                                              commandInstallCifsUtilsOnRedhat + commandRun)
+        commandRun = "({} && {} && {} || :) && {}".format(commandUnmountShare, commandMountShare, commandRun, commandUnmountShare)
+    
     taskTemplate = {
         "Id":0,
         "CommandLine":None,
@@ -103,15 +112,7 @@ def main():
         id += 1
         task["Node"] = node
         task["CustomizedData"] = nodeSize[node]
-        task["CommandLine"] = commandGetLocation
-        if nodeOS[node] == "ubuntu":
-            task["CommandLine"] += commandInstallCifsUtilsOnUbuntu + commandRun
-        elif nodeOS[node] == "centos":
-            task["CommandLine"] += commandInstallCifsUtilsOnCentos + commandRun
-        elif nodeOS[node] == "redhat":
-            task["CommandLine"] += commandInstallCifsUtilsOnRedhat + commandRun
-        else:
-            task["CommandLine"] += commandDetectDistroAndRun
+        task["CommandLine"] = "{} && {} && {}".format(commandGetLocation, commandInstallByNode[node], commandRun)
         tasks.append(task)
 
     print(json.dumps(tasks))

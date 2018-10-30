@@ -1,4 +1,4 @@
-#v0.13
+#v0.14
 
 import sys, json, copy, numpy, time
 
@@ -21,7 +21,7 @@ def main():
     defaultPacketSize = 2**22
     packetSize = defaultPacketSize
     mode = 'Tournament'.lower()
-    intelMpiLocation = '/opt/intel'
+    intelMpiLocation = '/opt/intel/impi/2018.4.274'
     debug = None
     try:
         if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
@@ -235,10 +235,8 @@ def main():
     return 0
 
 def getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs):
-    INTEL_MPI_INSTALL_CLUSRUN_HINT = "wget http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13063/l_mpi_2018.3.222.tgz && tar -zxvf l_mpi_2018.3.222.tgz && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./l_mpi_2018.3.222/silent.cfg && ./l_mpi_2018.3.222/install.sh --silent ./l_mpi_2018.3.222/silent.cfg"
-
     reasonMpiNotInstalled = 'Intel MPI is not found in directory "{}".'.format(intelMpiLocation)
-    solutionMpiNotInstalled = 'If Intel MPI is installed on other location, specify the directory in parameter "Intel MPI location" of diagnostics test MPI-PingPong. Or download from https://software.intel.com/en-us/intel-mpi-library and install with clusrun command: "{}".'.format(INTEL_MPI_INSTALL_CLUSRUN_HINT)
+    solutionMpiNotInstalled = 'Please ensure Intel MPI is installed on the location specified by parameter "Intel MPI location" of diagnostics test MPI-PingPong. Run diagnostics test MPI-Installaion on the selected nodes if it is not installed on them.'
 
     reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
@@ -264,6 +262,9 @@ def getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs):
         if "mpivars.sh: No such file or directory" in failedPair['Detail']:
             reason = reasonMpiNotInstalled
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedPair['NodeName'])
+        elif "linux/mpi/intel64/bin/pmi_proxy: No such file or directory" in failedPair['Detail']:
+            reason = reasonMpiNotInstalled
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedPair['NodePair'].split(',')[-1])            
         elif "Host {} not found:".format(failedPair['NodePair'].split(',')[-1]) in failedPair['Detail']:
             reason = reasonHostNotFound
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHostNotFound, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])

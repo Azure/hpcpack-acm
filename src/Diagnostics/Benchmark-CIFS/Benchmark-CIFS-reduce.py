@@ -1,4 +1,4 @@
-#v0.2
+#v0.3
 
 import sys, json
 
@@ -34,17 +34,13 @@ def main():
         if 0 < begin < end:
             cifsServer = connectionString[begin:end]
 
-    TASK_STATE_FINISHED = 3
-
     taskDetail = {}
     try:
         for task in tasks:
             taskId = task['Id']
-            state = task['State']
             node = task['Node']
             size = task['CustomizedData']
             taskDetail[taskId] = {
-                'State': state,
                 'Node': node,
                 'Size': size
                 }
@@ -57,34 +53,22 @@ def main():
             taskId = taskResult['TaskId']
             output = taskResult['Message']
             taskDetail[taskId]['Output'] = output
-            exitcode = taskResult['ExitCode']
-            taskDetail[taskId]['ExitCode'] = exitcode
     except Exception as e:
         printErrorAsJson('Failed to parse task results. ' + str(e))
         return -1
 
     htmlRows = []
     for task in taskDetail.values():
-        if task['State'] == TASK_STATE_FINISHED:
-            try:
-                location, local, toCifs, fromCifs = parseTaskOutput(task['Output'])
-            except Exception as e:
-                printErrorAsJson('Failed to parse task output. ' + str(e))
-                return -1
-            task['Location'] = location
-            task['Local'] = local
-            task['ToCifs'] = toCifs
-            task['FromCifs'] = fromCifs
-            del task['State']
-            del task['Output']
-            del task['ExitCode']
-            htmlRows.append(
-                '\n'.join([
-                    '  <tr>',
-                    '\n'.join(['    <td>{}</td>'.format(task[column]) for column in ['Node', 'Size', 'Location', 'Local', 'ToCifs', 'FromCifs']]),
-                    '  </tr>'
-                    ]))
+        task['Location'], task['Local'], task['ToCifs'], task['FromCifs'] = parseTaskOutput(task['Output'])
+        htmlRows.append(
+            '\n'.join([
+                '  <tr>',
+                '\n'.join(['    <td>{}</td>'.format(task[column]) for column in ['Node', 'Size', 'Location', 'Local', 'ToCifs', 'FromCifs']]),
+                '  </tr>'
+                ]))
+        del task['Output']
 
+    description = "The benchmark shows the speed of copying file between local disk and CIFS server: {}.".format(cifsServer)
     html = '''
 <!DOCTYPE html>
 <html>
@@ -115,7 +99,7 @@ td, th {
   </tr>
 ''' + '\n'.join(htmlRows) + '''
 </table>
-<p>The benchmark shows the speed of copying file between local disk and CIFS server: ''' + cifsServer + '''.</p>
+<p>''' + description + '''</p>
 <p>If result is None, please check it manually following <a href="https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux#install-cifs-utils">Use Azure Files with Linux</a>.</p>
 </body>
 </html>
@@ -123,7 +107,7 @@ td, th {
     
     result = {
         'Title': 'Benchmark-CIFS',
-        'Description': 'The benchmark shows the speed of copying file between local disk and CIFS server.',
+        'Description': description,
         'Results': list(taskDetail.values()),
         'Html': html
         }
@@ -133,21 +117,24 @@ td, th {
 
 def parseTaskOutput(raw):
     location = local = toCifs = fromCifs = None
-    lines = raw.split('\n')
-    for line in lines:
-        if 'location' in line:
-            location = line.split(':')[-1][1:-1]
-        if 'copied' in line:
-            speed = line.split(',')[-1]
-            if not local:
-                local = speed
-                continue
-            if not toCifs:
-                toCifs = speed
-                continue
-            if not fromCifs:
-                fromCifs = speed
-                continue
+    try:
+        lines = raw.split('\n')
+        for line in lines:
+            if 'location' in line:
+                location = line.split(':')[-1][1:-1]
+            if 'copied' in line:
+                speed = line.split(',')[-1]
+                if not local:
+                    local = speed
+                    continue
+                if not toCifs:
+                    toCifs = speed
+                    continue
+                if not fromCifs:
+                    fromCifs = speed
+                    continue
+    except:
+        pass
     return (location, local, toCifs, fromCifs)
 
 def printErrorAsJson(errormessage):

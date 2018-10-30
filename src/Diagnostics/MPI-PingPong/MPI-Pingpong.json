@@ -24,15 +24,40 @@
         {
             "name":"Mode",
             "description":"Select the way to run tasks, in each of which MPI Pingpong run between a node pair.",
-            "type":"string",
+            "type":"select",
             "options":["Tournament", "Serial", "Parallel"],
-            "defaultValue":"Tournament"
+            "defaultValue":"Tournament",
+            "whenChanged":{
+                "Parallel":{
+                    "Max runtime":{
+                        "value":1800
+                    }
+                },
+                "Tournament":{
+                    "Max runtime":{
+                        "value":1800
+                    }
+                },
+                "Serial":{
+                    "Max runtime":{
+                        "value":100000
+                    }
+                }
+            }
         },
         {
             "name":"Intel MPI location",
             "description":"Specify the location of Intel MPI that is installed on the nodes.",
             "type":"string",
-            "defaultValue":"/opt/intel"
+            "defaultValue":"/opt/intel/impi/2018.4.274"
+        },
+        {
+            "name":"Max runtime",
+            "description":"Specify the max time in seconds the test could run.",
+            "type":"number",
+            "min":1,
+            "max":100000,
+            "defaultValue":1800
         }
     ]
 }
