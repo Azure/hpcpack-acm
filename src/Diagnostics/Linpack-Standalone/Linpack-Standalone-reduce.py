@@ -5,9 +5,23 @@ import sys, json
 def main():
     stdin = json.load(sys.stdin)
     job = stdin['Job']
+    nodelist = job["TargetNodes"]
     tasks = stdin['Tasks']
     taskResults = stdin['TaskResults']
-
+    
+    intelMklLocation = '/opt/intel/mkl'
+    try:
+        if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
+            arguments = job['DiagnosticTest']['Arguments']
+            if arguments:
+                for argument in arguments:                    
+                    if argument['name'].lower() == 'Intel MKL location'.lower():
+                        intelMklLocation = argument['value']
+                        continue
+    except Exception as e:
+        printErrorAsJson('Failed to parse arguments. ' + str(e))
+        return -1
+                
     taskDetail = {}
     try:
         for task in tasks:
@@ -109,9 +123,9 @@ def main():
     for task in taskDetail.values():
         perf, n = parseTaskOutput(task['Output'])
         theoreticalPerf = theoreticalPerfBySize.get(task['Size'])
-        task['Perf'] = perf
-        task['N'] = n
         task['TheoreticalPerf'] = "{} = {}".format(theoreticalPerf, eval(theoreticalPerf)) if theoreticalPerf else None
+        task['Perf'] = "{:.1f}".format(perf) if perf else None
+        task['N'] = n
         task['Efficiency'] = "{:.1%}".format(perf/eval(theoreticalPerf)) if perf and theoreticalPerf else None
         htmlRows.append(
             '\n'.join([
@@ -121,8 +135,9 @@ def main():
                 ]))
     
     description = 'The table shows the result of running <a href="https://software.intel.com/en-us/mkl-linux-developer-guide-intel-optimized-linpack-benchmark-for-linux">Intel Optimized LINPACK Benchmark</a> on each node.'
-    nodesWithoutIntelMklInstalled = 'Intel MKL are not installed on node{}: {}'.format('' if len(nodesWithoutIntelMklInstalled) == 1 else 's', ', '.join(nodesWithoutIntelMklInstalled)) if nodesWithoutIntelMklInstalled else ''
-    installIntelMkl = 'Diagnostics test "Linpack-Installation" can be used to install Intel MKL.' if nodesWithoutIntelMklInstalled else ''
+    intelMklNotFound = 'Intel MKL is not found in <b>{}</b> on node{}: {}'.format(intelMklLocation, '' if len(nodesWithoutIntelMklInstalled) == 1 else 's', ', '.join(nodesWithoutIntelMklInstalled)) if nodesWithoutIntelMklInstalled else ''
+    installIntelMkl = 'Diagnostics test <b>Linpack-Installation</b> can be used to install Intel MKL.' if nodesWithoutIntelMklInstalled else ''
+    specifyIntelMklLocation = 'Set the parameter <b>Intel MKL location</b> to specify the location of Intel MKL if it is already installed.' if len(nodesWithoutIntelMklInstalled) == len(nodelist) else ''
     html = '''
 <!DOCTYPE html>
 <html>
@@ -154,8 +169,9 @@ td, th {
 ''' + '\n'.join(htmlRows) + '''
 </table>
 <p>''' + description + '''</p>
-<p>''' + nodesWithoutIntelMklInstalled + '''</p>
+<p>''' + intelMklNotFound + '''</p>
 <p>''' + installIntelMkl + '''</p>
+<p>''' + specifyIntelMklLocation + '''</p>
 </body>
 </html>
 '''
