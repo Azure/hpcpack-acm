@@ -1,4 +1,4 @@
-#v0.1
+#v0.2
 
 import sys, json, copy, uuid
 
@@ -86,17 +86,18 @@ def main():
     tasks = []
     id = 1
     for node in nodelist:
-        outputFile = "{}/{}".format(tempOutputDir, uuid.uuid1())
+        outputFile = "{}/{}".format(tempOutputDir, uuid.uuid4())
+        commandClearFile = "rm -f {}".format(outputFile)
         task = copy.deepcopy(taskTemplate)
         task["Id"] = id
         task["Node"] = node
         task["CustomizedData"] = nodeSize[node]
-        task["CommandLine"] = "{} && {} && {} 2>&1 | tee {}".format(commandCreateTempOutputDir, commandInstallByNode[node], commandRunLinpack, outputFile)
+        task["CommandLine"] = "{} && {} && {} && {} 2>&1 | tee {}".format(commandClearFile, commandCreateTempOutputDir, commandInstallByNode[node], commandRunLinpack, outputFile)
         tasks.append(task)
         task = copy.deepcopy(task)
         task["ParentIds"] = [id]
         task["Id"] += 1
-        task["CommandLine"] = "cat {}".format(outputFile)
+        task["CommandLine"] = "cat {} && {}".format(outputFile, commandClearFile)
         tasks.append(task)
         id += 2
 
