@@ -1,4 +1,4 @@
-#v0.14
+#v0.15
 
 import sys, json, copy, numpy, time
 
@@ -255,6 +255,9 @@ def getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs):
 
     reasonWgetFailed = 'Failed to download filter script.'
     solutionWgetFailed = 'Check accessibility of "$blobEndpoint/diagtestscripts/mpi-pingpong-filter.py" on nodes.'
+
+    reasonAvSet = 'The nodes may not be in the same availability set.(CM ADDR ERROR)'
+    solutionAvSet = 'Recreate the node(s) and ensure the nodes are in the same availability set.'
     
     failedReasons = {}
     for failedPair in failedPairs:
@@ -280,6 +283,9 @@ def getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs):
         elif "wget" in failedPair['Detail'] and failedPair['ExitCode'] == 4 or 'mpi-pingpong-filter.py' in failedPair['Detail'] and failedPair['ExitCode'] == 8:
             reason = reasonWgetFailed
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionWgetFailed, 'Nodes':set()})['Nodes'].add(failedPair['NodeName'])
+        elif "CM ADDR ERROR" in failedPair['Detail']:
+            reason = reasonAvSet
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionAvSet, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
         else:
             if "Time limit (secs_per_sample * msg_sizes_list_len) is over;" in failedPair['Detail']:
                 reason = reasonSampleTimeout
