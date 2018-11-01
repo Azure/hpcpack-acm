@@ -13,7 +13,7 @@
 	        "name":"Intel MKL location",
 	        "description":"Specify the location of Intel MKL that is installed on the nodes.",
 	        "type":"string",
-	        "defaultValue":"/opt/intel/mkl"
+	        "defaultValue":"/opt/intel/compilers_and_libraries_2018/linux/mkl"
         },
         {
             "name":"Size level",
