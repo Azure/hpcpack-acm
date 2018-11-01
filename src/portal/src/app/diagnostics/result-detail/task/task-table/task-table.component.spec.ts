@@ -50,17 +50,12 @@ fdescribe('TaskTableComponent', () => {
     component = fixture.componentInstance;
     component.tableName = "test";
     component.customizableColumns = [
-      { name: 'nodes', displayName: 'Nodes', displayed: true },
-      { name: 'latency', displayName: 'Latency', displayed: true },
-      { name: 'throughput', displayName: 'Throughput', displayed: true },
+      { name: 'nodes', displayName: 'Nodes', displayed: true }
     ];
     component.dataSource = new MatTableDataSource();
     component.dataSource.data = [{
-      customizedData: "node1,node2", state: "Finished", taskInfo: {
-        message: {
-          Latency: 0.42, Throughput: 5989.34
-        }
-      }
+      customizedData: "node1,node2",
+      state: "Finished"
     }];
     component.currentData = [];
     component.loadFinished = false;
@@ -75,9 +70,5 @@ fdescribe('TaskTableComponent', () => {
     expect(text).toEqual("node1,node2");
     text = fixture.nativeElement.querySelector('.mat-cell.mat-column-state .icon-cell .cell-text').textContent;
     expect(text).toEqual("Finished");
-    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-latency').textContent;
-    expect(text).toEqual("0.42");
-    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-throughput').textContent;
-    expect(text).toEqual("5989.34");
   });
 });

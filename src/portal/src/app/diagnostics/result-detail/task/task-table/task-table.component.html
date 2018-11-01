@@ -10,7 +10,8 @@
   </mat-form-field>
 </div> -->
 
-<mat-table #table [dataSource]="dataSource" appWindowScroll [dataLength]="currentData.length" [pageSize]="maxPageSize" (scrollEvent)="onScrollEvent($event)">
+<mat-table #table [dataSource]="dataSource" appWindowScroll [dataLength]="currentData.length" [pageSize]="maxPageSize"
+  (scrollEvent)="onScrollEvent($event)">
   <!--
        Note that these columns can be defined in any order. The actual rendered
        columns are set as a property on the row definition, displayedColumns."
@@ -45,16 +46,6 @@
     </mat-cell>
   </ng-container>
 
-  <ng-container matColumnDef="size">
-    <mat-header-cell *matHeaderCellDef>Size</mat-header-cell>
-    <mat-cell *matCellDef="let task">
-      <div class="icon-cell">
-        <!-- <div class="material-icons cell-icon">view_module</div> -->
-        <div class="cell-text">{{task.customizedData}}</div>
-      </div>
-    </mat-cell>
-  </ng-container>
-
   <ng-container matColumnDef="state">
     <mat-header-cell *matHeaderCellDef>State</mat-header-cell>
     <mat-cell *matCellDef="let task">
@@ -63,16 +54,6 @@
         <div class="cell-text">{{task.state}}</div>
       </div>
     </mat-cell>
-  </ng-container>
-
-  <ng-container matColumnDef="latency">
-    <mat-header-cell *matHeaderCellDef>Latency [usec]</mat-header-cell>
-    <mat-cell *matCellDef="let task">{{task.taskInfo.message.Latency}}</mat-cell>
-  </ng-container>
-
-  <ng-container matColumnDef="throughput">
-    <mat-header-cell *matHeaderCellDef>Throughput [MB/s]</mat-header-cell>
-    <mat-cell *matCellDef="let task">{{task.taskInfo.message.Throughput}}</mat-cell>
   </ng-container>
 
   <ng-container matColumnDef="detail">

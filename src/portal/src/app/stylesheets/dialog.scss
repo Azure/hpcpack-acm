@@ -1,65 +1,68 @@
 .dialog-title {
-    @include display-flex($justify-content: space-between);
-    font-size: 1.1em;
+  @include display-flex($justify-content: space-between);
+  font-size: 1.1em;
 }
 
 .close-icon:hover {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .msg-item {
-    white-space: pre;
-    font-family: "Courier New", Courier, monospace;
-    background: rgba(0, 0, 0, 0.9);
-    color: #FFF;
-    text-align: center;
-    padding: 10px 0;
-    font-size: .8em;
-    line-height: 1.5em;
+  white-space: pre-wrap;
+  font-family: "Courier New", Courier, monospace;
+  background: rgba(0, 0, 0, 0.9);
+  color: #FFF;
+  padding: 10px;
+  font-size: .8em;
+  line-height: 1.5em;
+}
+
+.text-center {
+  text-align: center;
 }
 
 .task-detail {
-    border-left: 4px solid #3f51b5;
-    padding: 10px;
-    margin: 10px 0;
-    font-weight: 500;
-    background: #eee;
+  border-left: 4px solid #3f51b5;
+  padding: 10px;
+  margin: 10px 0;
+  font-weight: 500;
+  background: #eee;
 }
 
 .mat-dialog-title {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 mat-divider {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 .detail-item {
-    margin-bottom: 1em;
+  margin-bottom: 1em;
 }
 
 .title-icon {
-    font-size: 1em;
-    padding-right: 0.2em;
+  font-size: 1em;
+  padding-right: 0.2em;
 }
 
 .overview-info {
-    margin: .5em;
+  margin: .5em;
 }
 
 .overview-title {
-    @include display-flex($align-items: center);
+  @include display-flex($align-items: center);
 }
 
 .overview {
-    @include display-flex($justify-content: space-around);
-    font-family: Roboto, "Helvetica Neue", sans-serif;
-    margin: 0;
+  @include display-flex($justify-content: space-around);
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  margin: 0;
 }
 
 .title {
-    @include display-flex(center);
-    .diag-title-icon {
-        padding-right: .3em;
-    }
+  @include display-flex(center);
+  .diag-title-icon {
+    padding-right: .3em;
+  }
 }
