@@ -12,7 +12,7 @@
       "value": "frontend"
     },
     "frontendImageName": {
-      "value": "mcr.microsoft.com/hpcacm:frontend"
+      "value": "mcr.microsoft.com/hpcpack/hpcacm:frontend"
     },
     "frontendPort": {
       "value": "443"
@@ -24,19 +24,19 @@
       "value": "jobmonitor"
     },
     "jobMonitorImageName": {
-      "value": "mcr.microsoft.com/hpcacm:jobmonitor"
+      "value": "mcr.microsoft.com/hpcpack/hpcacm:jobmonitor"
     },
     "taskDispatcherName": {
       "value": "taskdispatcher"
     },
     "taskDispatcherImageName": {
-      "value": "mcr.microsoft.com/hpcacm:taskdispatcher"
+      "value": "mcr.microsoft.com/hpcpack/hpcacm:taskdispatcher"
     },
     "dashboardName": {
       "value": "dashboard"
     },
     "dashboardImageName": {
-      "value": "mcr.microsoft.com/hpcacm:dashboard"
+      "value": "mcr.microsoft.com/hpcpack/hpcacm:dashboard"
     },
     "dnsNameLabel": {
       "value": "hpcacm"
