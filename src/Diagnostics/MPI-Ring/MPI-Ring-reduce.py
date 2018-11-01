@@ -1,4 +1,4 @@
-#v0.4
+#v0.5
 
 import sys, json
 
@@ -43,16 +43,25 @@ def main():
     htmlRows = []
     if message:
         data = message.split('\n')
-        data = [line.split() for line in data if line]
-        if len(data) == 25:
-            for row in data[1:]:
-                if len(row) == 6:
-                    htmlRows.append(
-                        '\n'.join([
-                            '  <tr>',
-                            '\n'.join(['    <td>{}</td>'.format(number) for number in row]),
-                            '  </tr>'
-                            ]))
+        title = '#bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]   Mbytes/sec'
+        if data[0] and title in data[0]:
+            maxThroughput = greenLineNumber = lineNumber = 0
+            for line in data[1:]:
+                row = line.split()
+                if len(row) != len(title.split()):
+                    break
+                throughput = float(row[-1])
+                if throughput > maxThroughput:
+                    maxThroughput = throughput
+                    greenLineNumber = lineNumber
+                htmlRows.append(
+                    '\n'.join([
+                        '  <tr>',
+                        '\n'.join(['    <td>{}</td>'.format(number) for number in row]),
+                        '  </tr>'
+                        ]))
+                lineNumber += 1
+            htmlRows[greenLineNumber] = htmlRows[greenLineNumber].replace('<tr>', '<tr bgcolor="#d8fcd4">')
             
     html = '''
 <!DOCTYPE html>
