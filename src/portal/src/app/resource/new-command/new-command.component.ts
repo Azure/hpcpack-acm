@@ -11,6 +11,7 @@ export class NewCommandComponent implements OnInit {
   public command: string = '';
   public timeout: number = 1800;
   public multiCmds: boolean = false;
+  public commandLine: string = 'single';
 
   constructor(public dialog: MatDialogRef<NewCommandComponent>) { }
 

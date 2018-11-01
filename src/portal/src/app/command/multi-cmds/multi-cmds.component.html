@@ -34,10 +34,40 @@
         </mat-tab>
       </mat-tab-group>
     </div>
-    <div class="row justify-content-end">
-      <mat-form-field class="col-md-9">
-        <input matInput placeholder="New Command here, press enter to excute" [(ngModel)]='newCmd' (keyup)="onKey($event)">
+    <div class="row">
+      <div class="col-md-3">
+      </div>
+      <div class="col-md-6">
+        <mat-radio-group [(ngModel)]="commandLine">
+          <mat-radio-button value="single" color="primary" class="radio-btn">
+            Single Line Command
+          </mat-radio-button>
+          <mat-radio-button value="multiple" color="primary" class="radio-btn">
+            Multi-line Command
+          </mat-radio-button>
+        </mat-radio-group>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-3">
+      </div>
+      <mat-form-field class="col-md-3">
+        <input matInput placeholder="timeout" type="number" class="timeout-text" [(ngModel)]="timeout">
+        <span matSuffix>sec</span>
       </mat-form-field>
+    </div>
+    <div class="row justify-content-end">
+      <mat-form-field class="col-md-7" *ngIf="commandLine == 'single'">
+        <input matInput placeholder="New single line command here, press enter to excute" [(ngModel)]='newCmd'
+          (keyup.ArrowUp)="getPreviousCmd()" (keyup.ArrowDown)="getNextCmd()" (keyup.Enter)="excuteCmd()">
+      </mat-form-field>
+      <mat-form-field class="col-md-7" *ngIf="commandLine == 'multiple'">
+        <textarea matInput placeholder="New multiple line command here, press ctrl+enter to excute" [(ngModel)]='newCmd'
+          (keyup.ArrowUp)="getPreviousCmd()" (keyup.ArrowDown)="getNextCmd()" (keyup.control.Enter)="excuteCmd()"></textarea>
+      </mat-form-field>
+      <div class="col-md-2 excute-btn">
+        <button mat-flat-button color="primary" (click)="excuteCmd()">Excute</button>
+      </div>
     </div>
   </div>
 </ng-container>

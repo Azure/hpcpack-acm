@@ -50,6 +50,10 @@ export class MultiCmdsComponent implements OnInit {
 
   public cmds = [];
 
+  public commandLine = 'single';
+
+  public timeout = 1800;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -60,7 +64,7 @@ export class MultiCmdsComponent implements OnInit {
 
   ngOnInit() {
     this.subcription = this.route.queryParams.subscribe(map => {
-      this.result = { state: 'unknown', command: '', nodes: [], timeout: 1800 };
+      this.result = { state: 'unknown', command: '', nodes: [] };
       this.id = map.firstJobId;
       this.tabs = [];
       this.tabs.push({ id: this.id, outputs: {}, command: '', state: '' });
@@ -90,11 +94,11 @@ export class MultiCmdsComponent implements OnInit {
           }
           this.result.state = job.state;
           this.result.command = job.commandLine;
-          this.result.timeout = job.defaultTaskMaximumRuntimeSeconds;
           this.tabs[this.selected.value].state = job.state;
           if (!this.tabs[this.selected.value].command) {
             this.tabs[this.selected.value].command = job.commandLine;
             this.cmds.push(job.commandLine);
+            this.timeout = job.defaultTaskMaximumRuntimeSeconds;
           }
 
           if (!this.gotTasks) {
@@ -418,7 +422,7 @@ export class MultiCmdsComponent implements OnInit {
   }
 
   get isOutputDisabled(): boolean {
-    return !this.selectedNode || this.currentOutput ? !this.currentOutput.key : true;
+    return !this.selectedNode || this.currentOutput ? (!this.currentOutput.key) : true;
   }
 
   get currentOutputUrl(): string {
@@ -571,7 +575,7 @@ export class MultiCmdsComponent implements OnInit {
   excuteCmd() {
     if (this.newCmd) {
       let names = this.result.nodes.map(node => node.name);
-      this.api.command.create(this.newCmd, names, this.result.timeout).subscribe(obj => {
+      this.api.command.create(this.newCmd, names, this.timeout).subscribe(obj => {
         this.id = obj.id;
         this.tabs.push({ id: this.id, outputs: {}, command: this.newCmd, state: '' });
         this.cmds.push(this.newCmd);
@@ -631,21 +635,5 @@ export class MultiCmdsComponent implements OnInit {
       this.commandIndex = this.cmds.length;
     }
 
-  }
-
-  onKey(e) {
-    if (e.key == 'ArrowUp') {
-      if (this.commandIndex > 0) {
-        this.getPreviousCmd();
-      }
-    }
-    else if (e.key == 'ArrowDown') {
-      if (this.commandIndex < this.cmds.length) {
-        this.getNextCmd();
-      }
-    }
-    else if (e.key == 'Enter') {
-      this.excuteCmd();
-    }
   }
 }

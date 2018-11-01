@@ -60,3 +60,21 @@
     justify-content: space-between;
   }
 }
+
+.radio-btn {
+  padding-right: 15px;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.timeout-text {
+  font-size: 14px;
+}
+
+:host ::ng-deep .output .content pre {
+  height: 530px;
+}
+
+.excute-btn {
+  @include display-flex(center, center);
+}
