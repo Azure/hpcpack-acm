@@ -1,4 +1,4 @@
-#v0.14
+#v0.16
 
 import sys, json, copy, numpy, time
 
@@ -73,8 +73,7 @@ def main():
         return -1
 
     messages = {}
-    failedPairs = []
-    failedTasks = {}
+    failedTasks = []
     taskRuntime = {}
     try:
         for taskResult in taskResults:
@@ -82,8 +81,6 @@ def main():
             nodeName = taskResult['NodeName']
             nodePair = taskId2nodePair[taskId]
             exitCode = taskResult['ExitCode']
-            if exitCode != 0:
-                failedTasks.setdefault(exitCode, []).append(taskId)
             if 'Message' in taskResult and taskResult['Message']:
                 try:
                     message = json.loads(taskResult['Message'])
@@ -96,13 +93,14 @@ def main():
                 if taskId in tasksForStatistics and hasResult:
                     messages[taskId2nodePair[taskId]] = message
                 if exitCode != 0 or not hasResult:
-                    failedPair = {
+                    failedTask = {
+                        'TaskId':taskId,
                         'NodeName':nodeName,
-                        'NodePair':nodePair,
+                        'NodeOrPair':nodePair,
                         'ExitCode':exitCode,
                         'Detail':detail
                         }
-                    failedPairs.append(failedPair)
+                    failedTasks.append(failedTask)
             else:
                 raise Exception("No Message")
     except Exception as e:
@@ -128,13 +126,12 @@ def main():
         goodNodes = [task['Node'] for task in tasks if task['State'] == taskStateFinished]
     badNodes = [node for node in allNodes if node not in goodNodes]
     goodNodes = list(goodNodes)
-    failedReasons = getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs)
-    failedNodes = getFailedNodes(failedPairs)
+    failedReasons, failedReasonsByNode = getFailedReasons(failedTasks, intelMpiLocation, canceledNodePairs)
 
     result = {
         'GoodNodesGroups':getLargestNonoverlappingGroups(goodNodesGroups),
         'GoodNodes':goodNodes,
-        'FailedNodes':failedNodes,
+        'FailedNodes':failedReasonsByNode,
         'BadNodes':badNodes,
         'RdmaNodes':rdmaNodes,
         'FailedReasons':failedReasons,
@@ -222,11 +219,14 @@ def main():
             'Ave': numpy.average(list(taskRuntime.values())),
             'Sorted': sorted([{'runtime':taskRuntime[key], 'taskId':key, 'nodepair':taskId2nodePair[key]} for key in taskRuntime], key=lambda x:x["runtime"], reverse=True)
             }
+        failedTasksByExitcode = {}
+        for task in failedTasks:
+            failedTasksByExitcode.setdefault(task['ExitCode'], []).append(task['TaskId'])
         result['DebugInfo'] = {
             'ReduceRuntime':endTime - startTime,
             'GoodNodesGroups':goodNodesGroups,
             'CanceledTasks':canceledTasks,
-            'FailedTasks':failedTasks,
+            'FailedTasksGroupByExitcode':failedTasksByExitcode,
             'Warnings':warnings,
             'TaskRuntime':taskRuntime,
             }
@@ -234,7 +234,7 @@ def main():
     print(json.dumps(result))
     return 0
 
-def getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs):
+def getFailedReasons(failedTasks, intelMpiLocation, canceledNodePairs):
     reasonMpiNotInstalled = 'Intel MPI is not found in directory "{}".'.format(intelMpiLocation)
     solutionMpiNotInstalled = 'Please ensure Intel MPI is installed on the location specified by parameter "Intel MPI location" of diagnostics test MPI-PingPong. Run diagnostics test MPI-Installaion on the selected nodes if it is not installed on them.'
 
@@ -255,55 +255,67 @@ def getFailedReasons(failedPairs, intelMpiLocation, canceledNodePairs):
 
     reasonWgetFailed = 'Failed to download filter script.'
     solutionWgetFailed = 'Check accessibility of "$blobEndpoint/diagtestscripts/mpi-pingpong-filter.py" on nodes.'
+
+    reasonAvSet = 'The nodes may not be in the same availability set.(CM ADDR ERROR)'
+    solutionAvSet = 'Recreate the node(s) and ensure the nodes are in the same availability set.'
     
     failedReasons = {}
-    for failedPair in failedPairs:
+    for failedPair in failedTasks:
         reason = "Unknown"
         if "mpivars.sh: No such file or directory" in failedPair['Detail']:
             reason = reasonMpiNotInstalled
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedPair['NodeName'])
+            failedNode = failedPair['NodeName']
+            failedPair['NodeOrPair'] = failedNode
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)
         elif "linux/mpi/intel64/bin/pmi_proxy: No such file or directory" in failedPair['Detail']:
             reason = reasonMpiNotInstalled
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedPair['NodePair'].split(',')[-1])            
-        elif "Host {} not found:".format(failedPair['NodePair'].split(',')[-1]) in failedPair['Detail']:
+            failedNode = failedPair['NodeOrPair'].split(',')[-1]
+            failedPair['NodeOrPair'] = failedNode
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)            
+        elif "Host {} not found:".format(failedPair['NodeOrPair'].split(',')[-1]) in failedPair['Detail']:
             reason = reasonHostNotFound
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHostNotFound, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHostNotFound, 'NodePairs':[]})['NodePairs'].append(failedPair['NodeOrPair'])
         elif "check for firewalls!" in failedPair['Detail']:
             reason = reasonFireWall
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedPair['NodeOrPair'])
         elif "Assertion failed in file ../../src/mpid/ch3/channels/nemesis/netmod/tcp/socksm.c at line 2988: (it_plfd->revents & POLLERR) == 0" in failedPair['Detail']:
             reason = reasonFireWallProbably
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionFireWall, 'NodePairs':[]})['NodePairs'].append(failedPair['NodeOrPair'])
         elif "Benchmark PingPong invalid for 1 processes" in failedPair['Detail']:
             reason = reasonNodeSingleCore
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionNodeSingleCore, 'Nodes':[]})['Nodes'].append(failedPair['NodeName'])
         elif "wget" in failedPair['Detail'] and failedPair['ExitCode'] == 4 or 'mpi-pingpong-filter.py' in failedPair['Detail'] and failedPair['ExitCode'] == 8:
             reason = reasonWgetFailed
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionWgetFailed, 'Nodes':set()})['Nodes'].add(failedPair['NodeName'])
+        elif "CM ADDR ERROR" in failedPair['Detail']:
+            reason = reasonAvSet
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionAvSet, 'NodePairs':[]})['NodePairs'].append(failedPair['NodeOrPair'])
         else:
             if "Time limit (secs_per_sample * msg_sizes_list_len) is over;" in failedPair['Detail']:
                 reason = reasonSampleTimeout
             elif failedPair['ExitCode'] == 124:
                 reason = reasonPingpongTimeout
-            elif failedPair['NodePair'] in canceledNodePairs:
+            elif failedPair['NodeOrPair'] in canceledNodePairs:
                 reason = reasonTaskTimeout
             elif failedPair['Detail'].split('\n', 1)[0] == '[Message before filter]:':
                 reason = reasonNoResult
-            failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(failedPair['NodePair'])
+            failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(failedPair['NodeOrPair'])
         failedPair['Reason'] = reason
-        del failedPair['Detail']
     if reasonMpiNotInstalled in failedReasons:
         failedReasons[reasonMpiNotInstalled]['Nodes'] = list(failedReasons[reasonMpiNotInstalled]['Nodes'])
     if reasonWgetFailed in failedReasons:
         failedReasons[reasonWgetFailed]['Nodes'] = list(failedReasons[reasonWgetFailed]['Nodes'])
-    return list(failedReasons.values())
 
-def getFailedNodes(failedPairs):
-    failedNodes = {}
-    for failedPair in failedPairs:
-        for node in failedPair['NodePair'].split(','):
-            failedNodes.setdefault(node, {}).setdefault(failedPair['Reason'], []).append(failedPair['NodePair'])
-    return failedNodes
+    failedReasonsByNode = {}
+    for failedPair in failedTasks:
+        for node in failedPair['NodeOrPair'].split(','):
+            failedReasonsByNode.setdefault(node, {}).setdefault(failedPair['Reason'], []).append(failedPair['NodeOrPair'])
+    for value in failedReasonsByNode.values():
+        nodesOrPairs = value.get(reasonMpiNotInstalled)
+        if nodesOrPairs:
+            value[reasonMpiNotInstalled] = list(set(nodesOrPairs))
+
+    return (list(failedReasons.values()), failedReasonsByNode)
 
 def getNodeMap(pairs):
     connectedNodesOfNode = {}

@@ -13,7 +13,7 @@
 	        "name":"Version",
 	        "type":"select",
             "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4", "2019"],
-            "description":"Specify the version of Intel MKL to be installed in /opt/intel/mkl on the nodes.",
+            "description":"Specify the version of Intel MKL to be installed in /opt/intel on the nodes.",
 	        "defaultValue":"2018 Update 4"
 	    },
         {
