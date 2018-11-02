@@ -33,8 +33,7 @@ export class CpuReportComponent implements OnInit {
   private componentName = "cpuReport";
 
   private customizableColumns = [
-    { name: 'node', displayName: 'Node', displayed: true },
-    { name: 'size', displayName: 'Size', displayed: true },
+    { name: 'node', displayName: 'Node', displayed: true }
   ];
 
   constructor(
