@@ -1,4 +1,4 @@
-#v0.5
+#v0.6
 
 import sys, json, copy
 
@@ -12,7 +12,7 @@ def main():
         # Duplicate nodes
         raise Exception('Duplicate nodes')
 
-    intelMpiLocation = '/opt/intel/impi/2018.4.274'
+    intelMpiLocation = '/opt/intel/compilers_and_libraries_2018/linux/mpi'
     try:
         if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
             arguments = job['DiagnosticTest']['Arguments']

@@ -1,4 +1,4 @@
-#v0.2
+#v0.3
 
 import sys, json, copy, uuid
 
@@ -12,7 +12,7 @@ def main():
         # Duplicate nodes
         raise Exception('Duplicate nodes')
 
-    intelMklLocation = '/opt/intel/mkl'
+    intelMklLocation = '/opt/intel/compilers_and_libraries_2018/linux/mkl'
     sizeLevel = 10
     if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
         arguments = job['DiagnosticTest']['Arguments']

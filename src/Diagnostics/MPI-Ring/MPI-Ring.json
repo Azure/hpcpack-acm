@@ -13,7 +13,7 @@
 	        "name":"Intel MPI location",
 	        "description":"Specify the location of Intel MPI that is installed on the nodes.",
 	        "type":"string",
-	        "defaultValue":"/opt/intel/impi/2018.4.274"
+	        "defaultValue":"/opt/intel/compilers_and_libraries_2018/linux/mpi"
         },
         {
             "name":"Max runtime",
