@@ -1,0 +1,33 @@
+﻿{
+    "DispatchScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"Linpack-HPL-map.py"
+    },
+    "AggregationScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"Linpack-HPL-reduce.py"
+    },
+    "description":"Run Intel HPL on each selected node.",
+    "parameters":[
+	    {
+	        "name":"Intel MKL location",
+	        "description":"Specify the location of Intel MKL that is installed on the nodes.",
+	        "type":"string",
+	        "defaultValue":"/opt/intel/compilers_and_libraries_2018/linux/mkl"
+        },
+        {
+            "name":"Intel MPI location",
+            "description":"Specify the location of Intel MPI that is installed on the nodes.",
+            "type":"string",
+            "defaultValue":"/opt/intel/compilers_and_libraries_2018/linux/mpi"
+        },
+        {
+            "name":"Max runtime",
+            "description":"Specify the max time in seconds the test could run.",
+            "type":"number",
+            "min":1,
+            "max":100000,
+            "defaultValue":10000
+        }
+    ]
+}
