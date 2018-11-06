@@ -12,7 +12,6 @@ export class FailedReasonsComponent implements OnInit {
   @Input()
   failedReasons: any;
 
-  @Input()
   nodes: any;
 
   activeMode = "total";
@@ -22,6 +21,7 @@ export class FailedReasonsComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
+    this.nodes = Object.keys(this.failedNodes);
     this.showReasons();
   }
 

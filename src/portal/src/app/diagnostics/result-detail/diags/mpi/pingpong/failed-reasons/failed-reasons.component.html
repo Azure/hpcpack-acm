@@ -1,11 +1,11 @@
 <div class="overview-header">
   <div class="chart-type">
     <div class="chart-btn" [class.active]="activeMode == 'total'" (click)="setActiveMode('total')">Overview</div>
-    <div class="chart-btn" [class.active]="activeMode == 'node'" (click)="setActiveMode('node')">By Node</div>
+    <div class="chart-btn" [class.active]="activeMode == 'node'" (click)="setActiveMode('node')">By Failed Node</div>
   </div>
   <div class="select-node" *ngIf="activeMode == 'node'">
     <mat-form-field>
-      <mat-select placeholder="Select Node" [(ngModel)]="selectedNode" (selectionChange)="changeNode()">
+      <mat-select placeholder="Select Failed Node" [(ngModel)]="selectedNode" (selectionChange)="changeNode()">
         <mat-option *ngFor="let node of nodes" [value]="node" style="font-size: .9em;">
           {{ node }}
         </mat-option>

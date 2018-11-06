@@ -22,7 +22,7 @@
         <div class="overview-progress">
           <mat-progress-bar mode="indeterminate" *ngIf="!failedReasons"></mat-progress-bar>
         </div>
-        <pingpong-failed-reasons [nodes]="nodes" [failedNodes]="failedNodes" [failedReasons]="failedReasons" class="overview-data"
+        <pingpong-failed-reasons [failedNodes]="failedNodes" [failedReasons]="failedReasons" class="overview-data"
           *ngIf="failedReasons"></pingpong-failed-reasons>
       </mat-tab>
       <mat-tab label="Nodes Groups" *ngIf="!hasError">
