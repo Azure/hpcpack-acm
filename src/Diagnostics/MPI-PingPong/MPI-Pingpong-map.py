@@ -1,4 +1,4 @@
-#v0.16
+#v0.17
 
 import sys, json, copy
 
@@ -45,7 +45,7 @@ def main():
 
     mode = 'Tournament'.lower()
     level = 0
-    intelMpiLocation = '/opt/intel/impi/2018.4.274'
+    intelMpiLocation = '/opt/intel/compilers_and_libraries_2018/linux/mpi'
     debugCommand = None
     if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
         arguments = job['DiagnosticTest']['Arguments']

@@ -1,4 +1,4 @@
-#v0.16
+#v0.17
 
 import sys, json, copy, numpy, time
 
@@ -21,7 +21,7 @@ def main():
     defaultPacketSize = 2**22
     packetSize = defaultPacketSize
     mode = 'Tournament'.lower()
-    intelMpiLocation = '/opt/intel/impi/2018.4.274'
+    intelMpiLocation = '/opt/intel/compilers_and_libraries_2018/linux/mpi'
     debug = None
     try:
         if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
