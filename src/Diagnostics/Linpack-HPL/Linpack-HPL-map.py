@@ -1,4 +1,4 @@
-#v0.1
+#v0.2
 
 import sys, json, copy, uuid, math
 
@@ -12,13 +12,17 @@ def main():
         # Duplicate nodes
         raise Exception('Duplicate nodes')
 
+    memoryPercentage = 0.1
     intelMklLocation = '/opt/intel/compilers_and_libraries_2018/linux/mkl'
     intelMpiLocation = '/opt/intel/compilers_and_libraries_2018/linux/mpi'
-    debug = False
+    debug = 0
     if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
         arguments = job['DiagnosticTest']['Arguments']
         if arguments:
             for argument in arguments:                    
+                if argument['name'].lower() == 'Memory Limit'.lower():
+                    memoryPercentage = float(argument['value'])
+                    continue
                 if argument['name'].lower() == 'Intel MKL location'.lower():
                     intelMklLocation = argument['value']
                     continue
@@ -26,15 +30,15 @@ def main():
                     intelMpiLocation = argument['value']
                     continue
                 if argument['name'].lower() == 'Debug'.lower():
-                    debug = True
-                    continue
+                    debug = int(argument['value'])
 
     minCoreCount = float('inf')
     minMemoryMb = float('inf')
     nodeSize = {}
     for nodeInfo in nodesInfo:
+        node = nodeInfo["Node"]
         try:
-            nodeSize[nodeInfo["Node"]] = json.loads(nodeInfo["Metadata"])["compute"]["vmSize"]
+            nodeSize[node] = json.loads(nodeInfo["Metadata"])["compute"]["vmSize"]
         except:
             raise Exception("Failed to extract node info from Metadata of node {0}.".format(node))
         try:
@@ -105,13 +109,14 @@ HPL.out      output file name (if any)
 8            memory alignment in double (> 0)'''
     commandCreateHplDat = 'echo "{}" >HPL.dat'.format(hplDateFile)
     commandSourceMpiEnv = 'source {}/intel64/bin/mpivars.sh'.format(intelMpiLocation)
-    commandRunHpl = "mpirun -hosts {} {} -ppn {} {}/benchmarks/mp_linpack/xhpl_intel64_dynamic -n [N] -p [P] -q [Q]".format(nodes, rdmaOption, minCoreCount, intelMklLocation)
+    commandRunHpl = "mpirun -hosts {} {} -ppn {} {}/benchmarks/mp_linpack/xhpl_intel64_dynamic -n [N] -b [NB] -p [P] -q [Q]".format(nodes, rdmaOption, minCoreCount, intelMklLocation)
     
     # Create task to run Intel HPL locally to ensure every node is ready
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
-    commandCheckHpl = '{}/benchmarks/mp_linpack/xhpl_intel64_dynamic >/dev/null && echo "Node is ready."'.format(intelMklLocation)
+    commandCheckHpl = '{}/benchmarks/mp_linpack/xhpl_intel64_dynamic >/dev/null && echo MKL test succeed.'.format(intelMklLocation)
+    commandCheckMpi = 'mpirun IMB-MPI1 pingpong >/dev/null && echo MPI test succeed.'
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
-    taskTemplate["CommandLine"] = "{}; {}; {}".format(commandCreateHplDat, commandSourceMpiEnv, commandCheckHpl)
+    taskTemplate["CommandLine"] = "{}; {}; {} && {}".format(commandCreateHplDat, commandSourceMpiEnv, commandCheckHpl, commandCheckMpi)
     taskTemplate["MaximumRuntimeSeconds"] = 60
     for node in nodelist:
         task = copy.deepcopy(taskTemplate)
@@ -121,28 +126,36 @@ HPL.out      output file name (if any)
         task["CustomizedData"] = nodeSize[node]
         tasks.append(task)
 
-    tempOutputDir = "/tmp/hpc_diag_linpack_hpl"
-    flagFile = "{}/{}".format(tempOutputDir, uuid.uuid4())
-    tempOutputFile = "{}.output".format(flagFile)
+    hplWorkingDir = "/tmp/hpc_diag_linpack_hpl"
+    flagDir = "{}/{}.{}".format(hplWorkingDir, job["Id"], uuid.uuid4())
     nodesCount = len(nodelist)
     threadsCount = minCoreCount * nodesCount
 
     # Create task to run Intel HPL with Intel MPI among the nodes to ensure cluster integrity
-    commandCreateTempOutputDir = "mkdir -p {}".format(tempOutputDir)
-    commandClearFlagFile = "rm -f {}".format(flagFile)
-    commandSetFlagFile = "touch {}".format(flagFile)
     N = 10000
+    NB = 192
     P = 1
     Q = threadsCount
+    tmpOutputFile = "{}.failed".format(flagDir)
+    commandCreateHplWorkingDir = "mkdir -p {}".format(hplWorkingDir)
+    commandClearFlagDir = "rm -f {}".format(flagDir)
+    commandRun = "{} >{} 2>&1".format(commandRunHpl.replace('[N]', str(N)).replace('[P]', str(P)).replace('[Q]', str(Q)).replace('[NB]', str(NB)), tmpOutputFile)
+    commadnClearTmp = "rm -f {}".format(tmpOutputFile)
+    commandCreateFlagDir = "mkdir -p {}".format(flagDir)
+    commandSuccess = "echo Cluster is ready."
+    commandFailure = "echo Cluster is not ready. && cat {} && exit -1".format(tmpOutputFile)
     task = copy.deepcopy(taskTemplateOrigin)
     task["Id"] = taskId
     taskId += 1
-    task["CommandLine"] = "{} && {} && {} && {} && {} | tail -n20 && {}".format(commandCreateTempOutputDir,
-                                                                                commandClearFlagFile,
-                                                                                commandCreateHplDat,
-                                                                                commandSourceMpiEnv,
-                                                                                commandRunHpl.replace('[N]', str(N)).replace('[P]', str(P)).replace('[Q]', str(Q)),
-                                                                                commandSetFlagFile)
+    task["CommandLine"] = "{} && {} && {} && {} && {} && {} && {} && {} || ({})".format(commandCreateHplWorkingDir,
+                                                                                        commandClearFlagDir,
+                                                                                        commandCreateHplDat,
+                                                                                        commandSourceMpiEnv,
+                                                                                        commandRun,
+                                                                                        commadnClearTmp,
+                                                                                        commandCreateFlagDir,
+                                                                                        commandSuccess,
+                                                                                        commandFailure)
     task["ParentIds"] = list(range(1, len(nodelist)+1))
     task["Node"] = masterNode
     task["CustomizedData"] = nodeSize[masterNode]
@@ -152,37 +165,45 @@ HPL.out      output file name (if any)
 
     # Create HPL tunning tasks
     PQs = [(p, threadsCount//p) for p in range(1, int(math.sqrt(threadsCount)) + 1) if p * (threadsCount//p) == threadsCount]
-    Ns = [int(math.sqrt(minMemoryMb * 1024 * 1024 * nodesCount / 8 * percent / 100)) for percent in range(85, 60, -1)]
-    commandCheckFlag = '[ -f "{}" ]'.format(flagFile)
+    NBs = [192, 256]
+    memoryRange = [float(memory) / 10 for memory in list(range(int(memoryPercentage*10), 700, -10)) + list(range(int(memoryPercentage*10), 500, -20)) + list(range(int(memoryPercentage*10), 0, -50))]
+    Ns = [int(math.sqrt(float(nodesCount) / 8 * 1024 * 1024 * minMemoryMb * percent / 100)) for percent in memoryRange]
+    commandCheckFlag = '[ -d "{}" ]'.format(flagDir)
     for P, Q in PQs:
-        outputFile = "{}.{}x{}".format(flagFile, P, Q)
-        commandCheckFinish = '[ ! -f "{}" ]'.format(outputFile)
-        for N in Ns:
-            if debug:
-                N = 10000
-            task = copy.deepcopy(taskTemplateOrigin)
-            task["Id"] = taskId
-            taskId += 1
-            task["CommandLine"] = "{} && {} && {} && {} && {} >{} && mv {} {}".format(commandCheckFlag,
+        for NB in NBs:
+            outputPrefix = "{}/{}x{}.{}".format(flagDir, P, Q, NB)
+            outputResult = "{}.result".format(outputPrefix)
+            for N in Ns:
+                # N = N // NB * NB # this would decrease perf instead of increases
+                if debug:
+                    N = debug
+                tempOutputFile = "{}.{}".format(outputPrefix, N)
+                commandCheckFinish = '[ ! -f "{}" ]'.format(outputResult)
+                commandRun = "{} >{} 2>&1".format(commandRunHpl.replace('[N]', str(N)).replace('[P]', str(P)).replace('[Q]', str(Q)).replace('[NB]', str(NB)), tempOutputFile)
+                commandSuccess = "mv {} {} && cat {} | tail -n20".format(tempOutputFile, outputResult, outputResult)
+                commandFailure = "echo Test skiped. N={} NB={} P={} Q={}".format(N, NB, P, Q)
+                task = copy.deepcopy(taskTemplateOrigin)
+                task["Id"] = taskId
+                taskId += 1
+                task["CommandLine"] = "{} && {} && {} && {} && {} && {} || {}".format(commandCheckFlag,
                                                                                       commandCheckFinish,
                                                                                       commandCreateHplDat,
                                                                                       commandSourceMpiEnv,
-                                                                                      commandRunHpl.replace('[N]', str(N)).replace('[P]', str(P)).replace('[Q]', str(Q)),
-                                                                                      tempOutputFile,
-                                                                                      tempOutputFile,
-                                                                                      outputFile)
-            task["ParentIds"] = [task["Id"] - 1]
-            task["Node"] = masterNode
-            task["CustomizedData"] = nodeSize[masterNode]
-            task["EnvironmentVariables"] = {"CCP_NODES":"{} {}".format(nodesCount, " ".join("{} 1".format(node) for node in nodelist))} 
-            task["MaximumRuntimeSeconds"] = 3600
-            tasks.append(task)
+                                                                                      commandRun,
+                                                                                      commandSuccess,
+                                                                                      commandFailure)
+                task["ParentIds"] = [task["Id"] - 1]
+                task["Node"] = masterNode
+                task["CustomizedData"] = nodeSize[masterNode]
+                task["EnvironmentVariables"] = {"CCP_NODES":"{} {}".format(nodesCount, " ".join("{} 1".format(node) for node in nodelist))} 
+                task["MaximumRuntimeSeconds"] = 36000 if rdmaVmCount else 3600 # need to change in terms of cluster size?
+                tasks.append(task)
     
     # Create result collecting task
     task = copy.deepcopy(taskTemplateOrigin)
     task["Id"] = taskId
     taskId += 1
-    task["CommandLine"] = "{} && for file in $(ls {}.*); do cat $file | tail -n17 | head -n1; done".format(commandCheckFlag, flagFile)
+    task["CommandLine"] = "{} && for file in $(ls {}/*.result); do cat $file | tail -n17 | head -n1; done".format(commandCheckFlag, flagDir)
     task["ParentIds"] = [task["Id"] - 1]
     task["Node"] = masterNode
     task["CustomizedData"] = nodeSize[masterNode]

@@ -10,6 +10,14 @@
     "description":"Run Intel HPL on each selected node.",
     "parameters":[
 	    {
+	        "name":"Memory Limit",
+	        "description":"Specify the most percentage of memory used in the test.",
+            "type":"number",
+            "min":0.1,
+            "max":85,
+            "defaultValue":"0.1"
+        },
+	    {
 	        "name":"Intel MKL location",
 	        "description":"Specify the location of Intel MKL that is installed on the nodes.",
 	        "type":"string",
@@ -26,8 +34,8 @@
             "description":"Specify the max time in seconds the test could run.",
             "type":"number",
             "min":1,
-            "max":100000,
-            "defaultValue":10000
+            "max":10000000,
+            "defaultValue":86400
         }
     ]
 }

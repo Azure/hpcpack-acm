@@ -1,4 +1,4 @@
-#v0.1
+#v0.2
 
 import sys, json
 
@@ -56,6 +56,8 @@ def main():
                 taskStates.append('Intel MPI is not found in directory: {}'.format(intelMpiLocation))
             if 'xhpl_intel64_dynamic: No such file or directory' in task['Output']:
                 taskStates.append('Intel MKL is not found in directory: {}'.format(intelMklLocation))
+            if 'dapl fabric is not available' in task['Output']:
+                taskStates.append('Error when running MPI test')
             state = '<br>'.join(taskStates)
             if not state:
                 state = 'Error'
@@ -76,7 +78,7 @@ def main():
 '''.format('\n'.join(htmlRows))
         resultCode = -1
     elif anchorTask['ExitCode'] != 0:
-        htmlContent = '<p>The cluster is not ready to run Intel HPL. Please run diagnostics test <b>MPI-Pingpong</b> to diagnose the cluster.</p>'
+        htmlContent = '<p>The cluster is not ready to run Intel HPL. Diagnostics test <b>MPI-Pingpong</b> may help to diagnose the cluster.</p>'
         resultCode = -1
     else:
         theoreticalPerfBySize = {
@@ -183,30 +185,46 @@ def main():
             warning = 'Node size info is empty.'
 
         resultTask = taskDetail[len(taskDetail)]
-        result = resultTask['Output']
-        if '.*: No such file or directory' in result:
-            htmlContent = '<p>No result. The cluster may be busy.</p>'
+        output = resultTask['Output']
+        result = []
+        if '*.result: No such file or directory' in output:
+            keyWord = '*.result:'
+            logDir = [word for word in output.split() if word.endswith(keyWord)][0][:-(len(keyWord))]
+            node = resultTask['Node']
+            htmlContent = '<p>No result. The cluster may be too busy or has broken node(s). Check log in {} on {}</p>'.format(logDir, node)
         else:
-            result = [line.split() for line in result.splitlines()]
+            output = [line.split() for line in output.splitlines()]
             htmlRows = []
-            maxPerf = greenLineNumber = lineNumber = 0
-            for row in result:
-                try:
-                    perf = float(row[-1])
-                    efficiency = "{:.2%}".format(perf/eval(theoreticalPerf)) if theoreticalPerf else None
-                    if perf > maxPerf:
-                        maxPerf = perf
-                        greenLineNumber = lineNumber
-                    htmlRows.append(
-                        '\n'.join([
-                            '  <tr>',
-                            '\n'.join(['    <td>{}</td>'.format(item) for item in row[1:] + [efficiency]]),
-                            '  </tr>'
-                            ]))
-                    lineNumber += 1
-                except:
-                    pass
-            htmlRows[greenLineNumber] = htmlRows[greenLineNumber].replace('<tr>', '<tr bgcolor="#d8fcd4">')
+            maxPerf = greenLineNumber = -1
+            lineNumber = 0
+            for row in output:
+                if len(row) == 7:
+                    try:
+                        perf = float(row[6])
+                        efficiency = "{:.2%}".format(perf/eval(theoreticalPerf)) if theoreticalPerf else None
+                        result.append({
+                            "N":int(row[1]),
+                            "NB":int(row[2]),
+                            "P":int(row[3]),
+                            "Q":int(row[4]),
+                            "Time":float(row[5]),
+                            "Perf":perf,
+                            "Efficiency":efficiency
+                        })
+                        if perf > maxPerf:
+                            maxPerf = perf
+                            greenLineNumber = lineNumber
+                        htmlRows.append(
+                            '\n'.join([
+                                '  <tr>',
+                                '\n'.join(['    <td>{}</td>'.format(item) for item in row[1:] + [efficiency]]),
+                                '  </tr>'
+                                ]))
+                        lineNumber += 1
+                    except:
+                        pass
+            if greenLineNumber >= 0:
+                htmlRows[greenLineNumber] = htmlRows[greenLineNumber].replace('<tr>', '<tr bgcolor="#d8fcd4">')
             htmlContent = '''
 <table>
   <tr>
