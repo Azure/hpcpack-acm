@@ -307,13 +307,18 @@ def getFailedReasons(failedTasks, intelMpiLocation, canceledNodePairs):
         failedReasons[reasonWgetFailed]['Nodes'] = list(failedReasons[reasonWgetFailed]['Nodes'])
 
     failedReasonsByNode = {}
-    for failedPair in failedTasks:
-        for node in failedPair['NodeOrPair'].split(','):
-            failedReasonsByNode.setdefault(node, {}).setdefault(failedPair['Reason'], []).append(failedPair['NodeOrPair'])
+    for failedTask in failedTasks:
+        for node in failedTask['NodeOrPair'].split(','):
+            failedReasonsByNode.setdefault(node, {}).setdefault(failedTask['Reason'], []).append(failedTask['NodeOrPair'])
+            severity = failedReasonsByNode[node].setdefault('Severity', 0)
+            failedReasonsByNode[node]['Severity'] = severity + 1
     for value in failedReasonsByNode.values():
         nodesOrPairs = value.get(reasonMpiNotInstalled)
         if nodesOrPairs:
             value[reasonMpiNotInstalled] = list(set(nodesOrPairs))
+    for key in failedReasonsByNode.keys():
+        severity = failedReasonsByNode[key].pop('Severity')
+        failedReasonsByNode["{} ({})".format(key, severity)] = failedReasonsByNode.pop(key)
 
     return (list(failedReasons.values()), failedReasonsByNode)
 
