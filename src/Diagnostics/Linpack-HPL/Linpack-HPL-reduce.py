@@ -1,4 +1,4 @@
-#v0.2
+#v0.3
 
 import sys, json
 
@@ -43,46 +43,14 @@ def main():
         return -1
 
     nodeCheckingTasks = [taskDetail[taskId] for taskId in range(1, len(nodes) + 1)]
-    anchorTask = taskDetail[len(nodes) + 1]
-    result = 'Cluster is not ready to run Intel HPL.'
-    resultCode = 0
-    if any(task['ExitCode'] != 0 for task in nodeCheckingTasks):
-        htmlRows = []
-        for task in nodeCheckingTasks:
-            taskStates = []
-            if 'Node is ready.' in task['Output']:
-                taskStates.append('Ready')
-            if 'mpivars.sh: No such file or directory' in task['Output']:
-                taskStates.append('Intel MPI is not found in directory: {}'.format(intelMpiLocation))
-            if 'xhpl_intel64_dynamic: No such file or directory' in task['Output']:
-                taskStates.append('Intel MKL is not found in directory: {}'.format(intelMklLocation))
-            if 'dapl fabric is not available' in task['Output']:
-                taskStates.append('Error when running MPI test')
-            state = '<br>'.join(taskStates)
-            if not state:
-                state = 'Error'
-            htmlRows.append(
-                '\n'.join([
-                    '  <tr>',
-                    '\n'.join(['    <td>{}</td>'.format(item) for item in [task['Node'], state]]),
-                    '  </tr>'
-                    ]))
-        htmlContent = '''
-<table>
-  <tr>
-    <th>Node</th>
-    <th>State</th>
-  </tr>
-{}
-</table>
-'''.format('\n'.join(htmlRows))
-        resultCode = -1
-    elif anchorTask['ExitCode'] != 0:
-        htmlContent = '<p>The cluster is not ready to run Intel HPL. Diagnostics test <b>MPI-Pingpong</b> may help to diagnose the cluster.</p>'
-        resultCode = -1
-    else:
+    flagTask = taskDetail[len(nodes) + 1]
+    description = 'This is the result of running {} in the cluster.'
+    intelHpl = 'Intel Distribution for LINPACK Benchmark'
+    result = None
+    resultCode = -1
+    if flagTask['ExitCode'] == 0:
         theoreticalPerfBySize = {
-            # Size: Cores * DP FLOPs/cycle * Freq
+            # Size : Cores * DP FLOPs/cycle * Freq
             
             # Dsv3/Ev3/Esv3: 2.3(3.5) E5-2673 v4 Broadwell
             'Standard_D2s_v3': '2 * 16 * 2.3',
@@ -146,7 +114,22 @@ def main():
             'Standard_F16s_v2': '16 * 16 * 2.7',
             'Standard_F32s_v2': '32 * 16 * 2.7',
             'Standard_F64s_v2': '64 * 16 * 2.7',
-            'Standard_F72s_v2': '72 * 16 * 2.7'
+            'Standard_F72s_v2': '72 * 16 * 2.7',
+
+            # Above VM sizes info(vCPUs, microarchitecture, frequency) were extracted from "Sizes for Linux virtual machines in Azure"(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes) at 2018.11.8
+            # Below VM sizes info(vCPUs, microarchitecture, frequency) were extracted from "CPU(s)" and "Model name" in result of running command "lscpu" on the VMs
+            
+            # G/Gs: 2.0 E5-2698B v3 Haswell
+            'Standard_G1': '2 * 16 * 2.0',
+            'Standard_G2': '4 * 16 * 2.0',
+            'Standard_G3': '8 * 16 * 2.0',
+            'Standard_G4': '16 * 16 * 2.0',
+            'Standard_G5': '32 * 16 * 2.0',
+            'Standard_GS1': '2 * 16 * 2.0',
+            'Standard_GS2': '4 * 16 * 2.0',
+            'Standard_GS3': '8 * 16 * 2.0',
+            'Standard_GS4': '16 * 16 * 2.0',
+            'Standard_GS5': '32 * 16 * 2.0'
             }
 
         sizeByNode = {}
@@ -186,13 +169,14 @@ def main():
 
         resultTask = taskDetail[len(taskDetail)]
         output = resultTask['Output']
-        result = []
         if '*.result: No such file or directory' in output:
             keyWord = '*.result:'
             logDir = [word for word in output.split() if word.endswith(keyWord)][0][:-(len(keyWord))]
             node = resultTask['Node']
-            htmlContent = '<p>No result. The cluster may be too busy or has broken node(s). Check log in {} on {}</p>'.format(logDir, node)
+            result = 'No result. The cluster may be too busy or has broken node(s). Check log in {} on {}'.format(logDir, node)
+            htmlContent = '<p>{}</p>'.format(result)
         else:
+            result = []
             output = [line.split() for line in output.splitlines()]
             htmlRows = []
             maxPerf = greenLineNumber = -1
@@ -225,6 +209,8 @@ def main():
                         pass
             if greenLineNumber >= 0:
                 htmlRows[greenLineNumber] = htmlRows[greenLineNumber].replace('<tr>', '<tr bgcolor="#d8fcd4">')
+            intelHplWithLink = '<a href="https://software.intel.com/en-us/mkl-linux-developer-guide-overview-of-the-intel-distribution-for-linpack-benchmark">{}</a>'.format(intelHpl)
+            descriptionInHtml = '<p>{}</p>'.format(description.format(intelHplWithLink))
             htmlContent = '''
 <table>
   <tr>
@@ -240,7 +226,44 @@ def main():
 </table>
 <p>{}</p>
 <p>{}</p>
-'''.format('\n'.join(htmlRows), theoreticalPerfDescription, warning)
+<p>{}</p>
+'''.format('\n'.join(htmlRows), descriptionInHtml, theoreticalPerfDescription, warning)
+        resultCode = 0
+    else:
+        result = 'Cluster is not ready to run Intel HPL. Diagnostics test MPI-Pingpong may help to diagnose the cluster.'
+        htmlContent = '<p>{}</p>'.format(result).replace('MPI-Pingpong', '<b>MPI-Pingpong</b>')
+        resultCode = -1
+        if any(task['ExitCode'] != 0 for task in nodeCheckingTasks):
+            htmlRows = []
+            for task in nodeCheckingTasks:
+                taskStates = []
+                output = task['Output']
+                if 'MKL test succeed.' in output and 'MPI test succeed.' in output:
+                    taskStates.append('Ready')
+                if 'mpivars.sh: No such file or directory' in output:
+                    taskStates.append('Intel MPI is not found in directory: {}'.format(intelMpiLocation))
+                if 'xhpl_intel64_dynamic: No such file or directory' in output:
+                    taskStates.append('Intel MKL is not found in directory: {}'.format(intelMklLocation))
+                if 'dapl fabric is not available' in output:
+                    taskStates.append('Error when running MPI test')
+                state = '<br>'.join(taskStates)
+                if not state:
+                    state = 'Unknown state'
+                htmlRows.append(
+                    '\n'.join([
+                        '  <tr>',
+                        '\n'.join(['    <td>{}</td>'.format(item) for item in [task['Node'], state]]),
+                        '  </tr>'
+                        ]))
+            htmlContent += '''
+<table>
+  <tr>
+    <th>Node</th>
+    <th>State</th>
+  </tr>
+{}
+</table>
+'''.format('\n'.join(htmlRows))
 
     html = '''
 <!DOCTYPE html>
@@ -265,8 +288,7 @@ td, th {
 </body>
 </html>
 '''
-
-    description = 'This is the result of running <a href="https://software.intel.com/en-us/mkl-linux-developer-guide-overview-of-the-intel-distribution-for-linpack-benchmark">Intel Distribution for LINPACK Benchmark</a> in the cluster.'
+    description = description.format(intelHpl)
     result = {
         'Title': 'Linpack-HPL',
         'Description': description,

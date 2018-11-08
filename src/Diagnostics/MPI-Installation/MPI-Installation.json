@@ -7,7 +7,7 @@
         "ContainerName":"diagtestscripts",
         "Name":"MPI-Installation-reduce.py"
     },
-    "description":"Download and install Intel MPI on selected nodes.",
+    "description":"Download and install Intel MPI(Message Passing Interface) on selected nodes.",
     "parameters":[
 	    {
 	        "name":"Version",

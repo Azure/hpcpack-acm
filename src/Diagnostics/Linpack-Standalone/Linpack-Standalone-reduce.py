@@ -1,4 +1,4 @@
-#v0.3
+#v0.4
 
 import sys, json
 
@@ -116,11 +116,27 @@ def main():
         'Standard_F16s_v2': '16 * 16 * 2.7',
         'Standard_F32s_v2': '32 * 16 * 2.7',
         'Standard_F64s_v2': '64 * 16 * 2.7',
-        'Standard_F72s_v2': '72 * 16 * 2.7'
+        'Standard_F72s_v2': '72 * 16 * 2.7',
+
+        # Above VM sizes info(vCPUs, microarchitecture, frequency) were extracted from "Sizes for Linux virtual machines in Azure"(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes) at 2018.11.8
+        # Below VM sizes info(vCPUs, microarchitecture, frequency) were extracted from "CPU(s)" and "Model name" in result of running command "lscpu" on the VMs
+        
+        # G/Gs: 2.0 E5-2698B v3 Haswell
+        'Standard_G1': '2 * 16 * 2.0',
+        'Standard_G2': '4 * 16 * 2.0',
+        'Standard_G3': '8 * 16 * 2.0',
+        'Standard_G4': '16 * 16 * 2.0',
+        'Standard_G5': '32 * 16 * 2.0',
+        'Standard_GS1': '2 * 16 * 2.0',
+        'Standard_GS2': '4 * 16 * 2.0',
+        'Standard_GS3': '8 * 16 * 2.0',
+        'Standard_GS4': '16 * 16 * 2.0',
+        'Standard_GS5': '32 * 16 * 2.0'
         }
-    
+
+    results = list(taskDetail.values())
     htmlRows = []
-    for task in taskDetail.values():
+    for task in results:
         perf, n = parseTaskOutput(task['Output'])
         theoreticalPerf = theoreticalPerfBySize.get(task['Size'])
         task['TheoreticalPerf'] = "{} = {}".format(theoreticalPerf, eval(theoreticalPerf)) if theoreticalPerf else None
@@ -134,7 +150,11 @@ def main():
                 '  </tr>'
                 ]))
     
-    description = 'The table shows the result of running <a href="https://software.intel.com/en-us/mkl-linux-developer-guide-intel-optimized-linpack-benchmark-for-linux">Intel Optimized LINPACK Benchmark</a> on each node.'
+    description = 'This is the result of running {} on each node.'
+    intelLinpack = 'Intel Optimized LINPACK Benchmark'
+    intelLinpackWithLink = '<a href="https://software.intel.com/en-us/mkl-linux-developer-guide-intel-optimized-linpack-benchmark-for-linux">{}</a>'.format(intelLinpack)
+    descriptionInHtml = '<p>{}</p>'.format(description.format(intelLinpackWithLink))
+    theoreticalPerfDescription = "The theoretical peak performance of each node is calculated by: [core count of node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]" if any([task['TheoreticalPerf'] for task in results]) else None
     intelMklNotFound = 'Intel MKL is not found in <b>{}</b> on node{}: {}'.format(intelMklLocation, '' if len(nodesWithoutIntelMklInstalled) == 1 else 's', ', '.join(nodesWithoutIntelMklInstalled)) if nodesWithoutIntelMklInstalled else ''
     installIntelMkl = 'Diagnostics test <b>Linpack-Installation</b> can be used to install Intel MKL.' if nodesWithoutIntelMklInstalled else ''
     specifyIntelMklLocation = 'Set the parameter <b>Intel MKL location</b> to specify the location of Intel MKL if it is already installed.' if len(nodesWithoutIntelMklInstalled) == len(nodelist) else ''
@@ -168,18 +188,19 @@ td, th {
   </tr>
 ''' + '\n'.join(htmlRows) + '''
 </table>
-<p>''' + description + '''</p>
+<p>''' + descriptionInHtml + '''</p>
+<p>''' + theoreticalPerfDescription + '''</p>
 <p>''' + intelMklNotFound + '''</p>
 <p>''' + installIntelMkl + '''</p>
 <p>''' + specifyIntelMklLocation + '''</p>
 </body>
 </html>
 '''
-    
+    description = description.format(intelLinpack)
     result = {
         'Title': 'Linpack-Standalone',
         'Description': description,
-        'Results': list(taskDetail.values()),
+        'Results': results,
         'Html': html
         }
 

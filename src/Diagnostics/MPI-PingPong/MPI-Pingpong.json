@@ -11,7 +11,7 @@
         "ContainerName":"diagtestscripts",
         "Name":"MPI-Pingpong-filter.py"
     },
-    "description":"Run Intel MPI Benchmark - PingPong between all node pairs in selected nodes.",
+    "description":"Run Intel MPI-1 Benchmark PingPong between all node pairs in selected nodes, on which Intel MPI should be installed as prerequisite.",
     "parameters":[
         {
             "name":"Packet size",

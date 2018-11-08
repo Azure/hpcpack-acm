@@ -1,4 +1,4 @@
-#v0.2
+#v0.3
 
 import sys, json, copy, uuid, math
 
@@ -107,9 +107,11 @@ HPL.out      output file name (if any)
 1            U  in (0=transposed,1=no-transposed) form
 0            Equilibration (0=no,1=yes)
 8            memory alignment in double (> 0)'''
+    nodesCount = len(nodelist)
+    threadsCount = minCoreCount * nodesCount
     commandCreateHplDat = 'echo "{}" >HPL.dat'.format(hplDateFile)
     commandSourceMpiEnv = 'source {}/intel64/bin/mpivars.sh'.format(intelMpiLocation)
-    commandRunHpl = "mpirun -hosts {} {} -ppn {} {}/benchmarks/mp_linpack/xhpl_intel64_dynamic -n [N] -b [NB] -p [P] -q [Q]".format(nodes, rdmaOption, minCoreCount, intelMklLocation)
+    commandRunHpl = "mpirun -hosts {} {} -np {} -ppn {} {}/benchmarks/mp_linpack/xhpl_intel64_dynamic -n [N] -b [NB] -p [P] -q [Q]".format(nodes, rdmaOption, threadsCount, minCoreCount, intelMklLocation)
     
     # Create task to run Intel HPL locally to ensure every node is ready
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
@@ -128,8 +130,6 @@ HPL.out      output file name (if any)
 
     hplWorkingDir = "/tmp/hpc_diag_linpack_hpl"
     flagDir = "{}/{}.{}".format(hplWorkingDir, job["Id"], uuid.uuid4())
-    nodesCount = len(nodelist)
-    threadsCount = minCoreCount * nodesCount
 
     # Create task to run Intel HPL with Intel MPI among the nodes to ensure cluster integrity
     N = 10000
@@ -195,8 +195,7 @@ HPL.out      output file name (if any)
                 task["ParentIds"] = [task["Id"] - 1]
                 task["Node"] = masterNode
                 task["CustomizedData"] = nodeSize[masterNode]
-                task["EnvironmentVariables"] = {"CCP_NODES":"{} {}".format(nodesCount, " ".join("{} 1".format(node) for node in nodelist))} 
-                task["MaximumRuntimeSeconds"] = 36000 if rdmaVmCount else 3600 # need to change in terms of cluster size?
+                task["MaximumRuntimeSeconds"] = N / 10
                 tasks.append(task)
     
     # Create result collecting task

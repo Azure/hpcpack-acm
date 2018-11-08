@@ -7,7 +7,7 @@
         "ContainerName":"diagtestscripts",
         "Name":"MPI-Ring-reduce.py"
     },
-    "description":"Run Intel MPI Benchmark - Sendrecv among processors, one processor per node, which forms a periodic communication chain in selected nodes.",
+    "description":"Run Intel MPI-1 Benchmark Sendrecv among processors, one processor per node, which forms a periodic communication chain in selected nodes, on which Intel MPI should be installed as prerequisite.",
     "parameters":[
 	    {
 	        "name":"Intel MPI location",

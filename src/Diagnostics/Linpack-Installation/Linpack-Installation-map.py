@@ -1,4 +1,4 @@
-#v0.1
+#v0.2
 
 import sys, json, copy
 
@@ -61,7 +61,7 @@ def main():
         "CommandLine":command,
         "Node":None,
         "CustomizedData":None,
-        "MaximumRuntimeSeconds":999999
+        "MaximumRuntimeSeconds":36000
     }
 
     tasks = []

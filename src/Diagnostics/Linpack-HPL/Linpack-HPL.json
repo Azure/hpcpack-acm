@@ -7,7 +7,7 @@
         "ContainerName":"diagtestscripts",
         "Name":"Linpack-HPL-reduce.py"
     },
-    "description":"Run Intel HPL on each selected node.",
+    "description":"Run Intel HPL(High Performance Linpack, Intel Distribution for LINPACK Benchmark) on each selected node, on which Intel MPI and Intel MKL shoule be installed as prerequisites.",
     "parameters":[
 	    {
 	        "name":"Memory Limit",

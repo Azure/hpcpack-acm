@@ -7,7 +7,7 @@
         "ContainerName":"diagtestscripts",
         "Name":"Linpack-Standalone-reduce.py"
     },
-    "description":"Run Linpack with Intel MKL on each selected node.",
+    "description":"Run Intel Optimized LINPACK Benchmark on each selected node, on which Intel MKL should be installed as prerequisite.",
     "parameters":[
 	    {
 	        "name":"Intel MKL location",

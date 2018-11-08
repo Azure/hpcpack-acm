@@ -7,7 +7,7 @@
         "ContainerName":"diagtestscripts",
         "Name":"Linpack-Installation-reduce.py"
     },
-    "description":"Download and install Intel Math Kernel Library on selected nodes.",
+    "description":"Download and install Intel MKL(Math Kernel Library) on selected nodes.",
     "parameters":[
 	    {
 	        "name":"Version",

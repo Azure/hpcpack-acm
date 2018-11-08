@@ -1,4 +1,4 @@
-#v0.1
+#v0.2
 
 import sys, json
 

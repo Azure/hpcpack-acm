@@ -1,4 +1,4 @@
-#v0.3
+#v0.4
 
 import sys, json, copy, uuid
 
@@ -76,7 +76,7 @@ def main():
         "CommandLine":None, # r"printf '\n\n1\n40000\n40000\n1\n1' | /opt/intel/mkl/benchmarks/linpack/xlinpack_xeon64",
         "Node":None,
         "CustomizedData":None,
-        "MaximumRuntimeSeconds":999999        
+        "MaximumRuntimeSeconds":sizeLevel * 1000
     }
 
     # Bug: the output of task is empty when it runs Linpack with large problem size, thus start another task to collect the output
