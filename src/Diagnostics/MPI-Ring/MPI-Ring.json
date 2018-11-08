@@ -9,11 +9,50 @@
     },
     "description":"Run Intel MPI-1 Benchmark Sendrecv among processors, one processor per node, which forms a periodic communication chain in selected nodes, on which Intel MPI should be installed as prerequisite.",
     "parameters":[
-	    {
-	        "name":"Intel MPI location",
-	        "description":"Specify the location of Intel MPI that is installed on the nodes.",
-	        "type":"string",
-	        "defaultValue":"/opt/intel/compilers_and_libraries_2018/linux/mpi"
+        {
+            "name":"Intel MPI Version",
+            "description":"Specify the location of Intel MPI that is installed on the nodes.",
+            "type":"string",
+            "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4", "2019"],
+            "defaultValue":"2018 Update 4",
+            "whenChanged":{
+                    "2018":{
+                        "Intel MPI location":{
+                            "value":"/opt/intel/impi/2018.0.128"
+                        }
+                    },
+                    "2018 Update 1":{
+                        "Intel MPI location":{
+                            "value":"/opt/intel/impi/2018.1.163"
+                        }
+                    },
+                    "2018 Update 2":{
+                        "Intel MPI location":{
+                            "value":"/opt/intel/impi/2018.2.199"
+                        }
+                    },
+                    "2018 Update 3":{
+                        "Intel MPI location":{
+                            "value":"/opt/intel/impi/2018.3.222"
+                        }
+                    },
+                    "2018 Update 4":{
+                        "Intel MPI location":{
+                            "value":"/opt/intel/impi/2018.4.274"
+                        }
+                    },
+                    "2019":{
+                        "Intel MPI location":{
+                            "value":"/opt/intel/impi/2019.0.117"
+                        }
+                    }
+                }
+        },
+        {
+            "name":"Intel MPI location",
+            "description":"Specify the location of Intel MPI that is installed on each node, which will be used to run Intel MPI-1 Benchmark Sendrecv.",
+            "type":"string",
+            "defaultValue":"/opt/intel/impi/2018.4.274"
         },
         {
             "name":"Max runtime",

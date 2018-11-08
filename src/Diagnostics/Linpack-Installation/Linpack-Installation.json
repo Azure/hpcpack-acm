@@ -13,7 +13,14 @@
 	        "name":"Version",
 	        "type":"select",
             "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4", "2019"],
-            "description":"Specify the version of Intel MKL to be installed in /opt/intel on the nodes.",
+            "description":{
+                "2018":"Intel MKL 2018 will be installed in /opt/intel/compilers_and_libraries_2018.0.128/linux/mkl on the nodes.",
+                "2018 Update 1":"Intel MKL 2018 Update 1 will be installed in /opt/intel/compilers_and_libraries_2018.1.163/linux/mkl on the nodes.",
+                "2018 Update 2":"Intel MKL 2018 Update 2 will be installed in /opt/intel/compilers_and_libraries_2018.2.199/linux/mkl on the nodes.",
+                "2018 Update 3":"Intel MKL 2018 Update 3 will be installed in /opt/intel/compilers_and_libraries_2018.3.222/linux/mkl on the nodes.",
+                "2018 Update 4":"Intel MKL 2018 Update 4 will be installed in /opt/intel/compilers_and_libraries_2018.5.274/linux/mkl on the nodes.",
+                "2019":"Intel MKL 2019 will be installed in /opt/intel/compilers_and_libraries_2019.0.117/linux/mkl on the nodes."
+            },
 	        "defaultValue":"2018 Update 4"
 	    },
         {
