@@ -47,12 +47,12 @@ def main():
         }
 
     locations = {
-        "2018":"/opt/intel/compilers_and_libraries_2018.0.128/linux/mkl",
-        "2018 Update 1":"/opt/intel/compilers_and_libraries_2018.1.163/linux/mkl",
-        "2018 Update 2":"/opt/intel/compilers_and_libraries_2018.2.199/linux/mkl",
-        "2018 Update 3":"/opt/intel/compilers_and_libraries_2018.3.222/linux/mkl",
-        "2018 Update 4":"/opt/intel/compilers_and_libraries_2018.5.274/linux/mkl",
-        "2019":"/opt/intel/compilers_and_libraries_2019.0.117/linux/mkl"
+        "2018".lower():"/opt/intel/compilers_and_libraries_2018.0.128/linux/mkl",
+        "2018 Update 1".lower():"/opt/intel/compilers_and_libraries_2018.1.163/linux/mkl",
+        "2018 Update 2".lower():"/opt/intel/compilers_and_libraries_2018.2.199/linux/mkl",
+        "2018 Update 3".lower():"/opt/intel/compilers_and_libraries_2018.3.222/linux/mkl",
+        "2018 Update 4".lower():"/opt/intel/compilers_and_libraries_2018.5.274/linux/mkl",
+        "2019".lower():"/opt/intel/compilers_and_libraries_2019.0.117/linux/mkl"
         }
     
     uri = uris[version]
