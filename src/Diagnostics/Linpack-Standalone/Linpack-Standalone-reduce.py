@@ -1,4 +1,4 @@
-#v0.4
+#v0.5
 
 import sys, json
 
@@ -137,18 +137,24 @@ def main():
     results = list(taskDetail.values())
     htmlRows = []
     for task in results:
-        perf, n = parseTaskOutput(task['Output'])
-        theoreticalPerf = theoreticalPerfBySize.get(task['Size'])
-        task['TheoreticalPerf'] = "{} = {}".format(theoreticalPerf, eval(theoreticalPerf)) if theoreticalPerf else None
-        task['Perf'] = "{:.1f}".format(perf) if perf else None
-        task['N'] = n
-        task['Efficiency'] = "{:.1%}".format(perf/eval(theoreticalPerf)) if perf and theoreticalPerf else None
+        perf, N = parseTaskOutput(task['Output'])
+        theoreticalPerfExpr = theoreticalPerfBySize.get(task['Size'])
+        theoreticalPerf = eval(theoreticalPerfExpr) if theoreticalPerfExpr else None
+        efficiency = perf / theoreticalPerf if perf and theoreticalPerf else None
+        task['TheoreticalPerf'] = theoreticalPerf
+        task['Perf'] = perf
+        task['N'] = N
+        task['Efficiency'] = efficiency
+        theoreticalPerfInHtml = "{} = {}".format(theoreticalPerfExpr, theoreticalPerf) if theoreticalPerfExpr else None
+        perfInHtml = "{:.1f}".format(perf) if perf else None
+        efficiencyInHtml = "{:.1%}".format(efficiency) if efficiency else None
         htmlRows.append(
             '\n'.join([
                 '  <tr>',
-                '\n'.join(['    <td>{}</td>'.format(task[column]) for column in ['Node', 'Size', 'TheoreticalPerf', 'Perf', 'N', 'Efficiency']]),
+                '\n'.join(['    <td>{}</td>'.format(item) for item in [task['Node'], task['Size'], theoreticalPerfInHtml, perfInHtml, N, efficiencyInHtml]]),
                 '  </tr>'
                 ]))
+        del task['Output']
     
     description = 'This is the result of running {} on each node.'
     intelLinpack = 'Intel Optimized LINPACK Benchmark'

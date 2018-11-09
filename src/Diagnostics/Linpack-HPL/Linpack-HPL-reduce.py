@@ -1,4 +1,4 @@
-#v0.3
+#v0.4
 
 import sys, json
 
@@ -147,25 +147,25 @@ def main():
         theoreticalPerfDescription = ''
         nodeSizes = set(sizeByNode.values())
         if len(nodeSizes) > 1:
-            warning = 'Optimal perfermance may not be achieved in this test because this is a heterogeneous cluster with node sizes: {}'.format(', '.join(nodeSizes))
+            vmSizeDescription = 'The cluster is heterogeneous with node sizes: {}. Optimal perfermance may not be achieved in this test.'.format(', '.join(nodeSizes))
             missingSizeInfo = [size for size in nodeSizes if not theoreticalPerfBySize.get(size)]
             if missingSizeInfo:
-                theoreticalPerfDescription = "The theoretical peak performance of the heterogeneous cluster can not be calculated because no info is found for node size{}: {}".format('s' if len(missingSizeInfo) > 1 else '', ', '.join(missingSizeInfo))
+                theoreticalPerfDescription = "The theoretical peak performance of the cluster can not be calculated because no info is found for node size{}: {}".format('s' if len(missingSizeInfo) > 1 else '', ', '.join(missingSizeInfo))
             else:
                 sizes = [sizeByNode[node] for node in nodes]
                 theoreticalPerf = " + ".join(["{} * {}".format(sizes.count(size), theoreticalPerfBySize[size]) for size in nodeSizes])
-                theoreticalPerfDescription = "The theoretical peak performance of the heterogeneous cluster is <b>{}</b> GFlop/s, which is calculated as the sum of FLOPs of each node: SUM([core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]) = {}".format(eval(theoreticalPerf), theoreticalPerf)
+                theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated as the sum of FLOPs of each node: SUM([core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]) = {}".format(eval(theoreticalPerf), theoreticalPerf)
         elif len(nodeSizes) == 1:
-            warning = ''
             size = list(nodeSizes)[0]
+            vmSizeDescription = 'The cluster is homogeneous with node size: {}.'.format(size)
             theoreticalPerf = theoreticalPerfBySize.get(size)
             if theoreticalPerf:
                 theoreticalPerf = "{} * {}".format(len(nodes), theoreticalPerf)
-                theoreticalPerfDescription = "The theoretical peak performance of the homogeneous cluster is <b>{}</b> GFlop/s, which is calculated by: [node count] * [core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core] = {}".format(eval(theoreticalPerf), theoreticalPerf)
+                theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by: [node count] * [core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core] = {}".format(eval(theoreticalPerf), theoreticalPerf)
             else:
-                theoreticalPerfDescription = "The theoretical peak performance of the homogeneous cluster can not be calculated because no info is found for node size: {}".format(size)
+                theoreticalPerfDescription = "The theoretical peak performance of the cluster can not be calculated because no info is found for node size: {}".format(size)
         else:
-            warning = 'Node size info is empty.'
+            vmSizeDescription = 'The node size in the cluster is unknown.'
 
         resultTask = taskDetail[len(taskDetail)]
         output = resultTask['Output']
@@ -185,7 +185,7 @@ def main():
                 if len(row) == 7:
                     try:
                         perf = float(row[6])
-                        efficiency = "{:.2%}".format(perf/eval(theoreticalPerf)) if theoreticalPerf else None
+                        efficiency = perf/eval(theoreticalPerf) if theoreticalPerf else None
                         result.append({
                             "N":int(row[1]),
                             "NB":int(row[2]),
@@ -201,7 +201,7 @@ def main():
                         htmlRows.append(
                             '\n'.join([
                                 '  <tr>',
-                                '\n'.join(['    <td>{}</td>'.format(item) for item in row[1:] + [efficiency]]),
+                                '\n'.join(['    <td>{}</td>'.format(item) for item in row[1:-1] + ["{:.2f}".format(perf), "{:.2%}".format(efficiency)]]),
                                 '  </tr>'
                                 ]))
                         lineNumber += 1
@@ -218,7 +218,7 @@ def main():
     <th>Block size(NB)</th>
     <th>P</th>
     <th>Q</th>
-    <th>Time</th>
+    <th>Time(s)</th>
     <th>Performance(GFlop/s)</th>
     <th>Efficiency</th>
   </tr>
@@ -227,7 +227,7 @@ def main():
 <p>{}</p>
 <p>{}</p>
 <p>{}</p>
-'''.format('\n'.join(htmlRows), descriptionInHtml, theoreticalPerfDescription, warning)
+'''.format('\n'.join(htmlRows), descriptionInHtml, vmSizeDescription, theoreticalPerfDescription)
         resultCode = 0
     else:
         result = 'Cluster is not ready to run Intel HPL. Diagnostics test MPI-Pingpong may help to diagnose the cluster.'
