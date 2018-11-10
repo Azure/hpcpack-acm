@@ -198,10 +198,12 @@ def main():
                         if perf > maxPerf:
                             maxPerf = perf
                             greenLineNumber = lineNumber
+                        perfInHtml = "{:.2f}".format(perf)
+                        efficiencyInHtml = "{:.2%}".format(efficiency) if efficiency else None
                         htmlRows.append(
                             '\n'.join([
                                 '  <tr>',
-                                '\n'.join(['    <td>{}</td>'.format(item) for item in row[1:-1] + ["{:.2f}".format(perf), "{:.2%}".format(efficiency)]]),
+                                '\n'.join(['    <td>{}</td>'.format(item) for item in row[1:-1] + [perfInHtml, efficiencyInHtml]]),
                                 '  </tr>'
                                 ]))
                         lineNumber += 1
