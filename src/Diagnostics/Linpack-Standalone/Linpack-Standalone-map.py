@@ -70,6 +70,7 @@ def main():
 
     commandModify = "sed -i 's/.*# number of tests/{} # number of tests/' lininput_xeon64".format(sizeLevel)
     commandRunLinpack = "cd {}/benchmarks/linpack && {} && ./runme_xeon64".format(intelMklLocation, commandModify)
+    commandCheckCpu = "lscpu | egrep '^CPU\(s\)|Model name'"
 
     taskTemplate = {
         "Id":0,
@@ -97,7 +98,7 @@ def main():
         task = copy.deepcopy(task)
         task["ParentIds"] = [id]
         task["Id"] += 1
-        task["CommandLine"] = "cat {} && {}".format(outputFile, commandClearFile)
+        task["CommandLine"] = "{}; cat {} && {}".format(commandCheckCpu, outputFile, commandClearFile)
         tasks.append(task)
         id += 2
 

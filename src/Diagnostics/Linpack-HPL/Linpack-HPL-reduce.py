@@ -49,124 +49,72 @@ def main():
     result = None
     resultCode = -1
     if flagTask['ExitCode'] == 0:
-        theoreticalPerfBySize = {
-            # Size : Cores * DP FLOPs/cycle * Freq
-            
-            # Dsv3/Ev3/Esv3: 2.3(3.5) E5-2673 v4 Broadwell
-            'Standard_D2s_v3': '2 * 16 * 2.3',
-            'Standard_D4s_v3': '4 * 16 * 2.3',
-            'Standard_D8s_v3': '8 * 16 * 2.3',
-            'Standard_D16s_v3': '16 * 16 * 2.3',
-            'Standard_D32s_v3': '32 * 16 * 2.3',
-            'Standard_D64s_v3': '64 * 16 * 2.3',
-            'Standard_E2s_v3': '2 * 16 * 2.3',
-            'Standard_E4s_v3': '4 * 16 * 2.3',
-            'Standard_E8s_v3': '8 * 16 * 2.3',
-            'Standard_E16s_v3': '16 * 16 * 2.3',
-            'Standard_E20s_v3': '20 * 16 * 2.3',
-            'Standard_E32s_v3': '32 * 16 * 2.3',
-            'Standard_E64s_v3': '64 * 16 * 2.3',
-            'Standard_E64is_v3': '64 * 16 * 2.3',
-            'Standard_E2_v3': '2 * 16 * 2.3',
-            'Standard_E4_v3': '4 * 16 * 2.3',
-            'Standard_E8_v3': '8 * 16 * 2.3',
-            'Standard_E16_v3': '16 * 16 * 2.3',
-            'Standard_E20_v3': '20 * 16 * 2.3',
-            'Standard_E32_v3': '32 * 16 * 2.3',
-            'Standard_E64_v3': '64 * 16 * 2.3',
-            'Standard_E64i_v3': '64 * 16 * 2.3',
-            
-            # Dv2/Dv3/F/Fs: 2.4(3.1) E5-2673 v3 Haswell
-            'Standard_D2_v3': '2 * 16 * 2.4',
-            'Standard_D4_v3': '4 * 16 * 2.4',
-            'Standard_D8_v3': '8 * 16 * 2.4',
-            'Standard_D16_v3': '16 * 16 * 2.4',
-            'Standard_D32_v3': '32 * 16 * 2.4',
-            'Standard_D64_v3': '64 * 16 * 2.4',
-            'Standard_DS1_v2': '1 * 16 * 2.4',
-            'Standard_DS2_v2': '2 * 16 * 2.4',
-            'Standard_DS3_v2': '4 * 16 * 2.4',
-            'Standard_DS4_v2': '8 * 16 * 2.4',
-            'Standard_DS5_v2': '16 * 16 * 2.4',
-            'Standard_F1s': '1 *16 * 2.4',
-            'Standard_F2s': '2 *16 * 2.4',
-            'Standard_F4s': '4 *16 * 2.4',
-            'Standard_F8s': '8 *16 * 2.4',
-            'Standard_F16s': '16 *16 * 2.4',
-            'Standard_F1': '1 *16 * 2.4',
-            'Standard_F2': '2 *16 * 2.4',
-            'Standard_F4': '4 *16 * 2.4',
-            'Standard_F8': '8 *16 * 2.4',
-            'Standard_F16': '16 *16 * 2.4',
-            
-            # H: 3.2(3.6) E5-2667 V3 Haswell
-            'Standard_H8': '8 * 16 * 3.2',
-            'Standard_H16': '16 * 16 * 3.2',
-            'Standard_H8m': '8 * 16 * 3.2',
-            'Standard_H16m': '16 * 16 * 3.2',
-            'Standard_H16r': '16 * 16 * 3.2',
-            'Standard_H16mr': '16 * 16 * 3.2',
+        # get CPU info from node checking tasks
+        cpuFreqByNode = {}
+        cpuCoreByNode = {}
+        for task in nodeCheckingTasks:
+            node = task['Node']
+            output = task['Output']
+            try:
+                for line in output.splitlines():
+                    if line.startswith('CPU'):
+                        coreCount = int(line.split()[-1])
+                        cpuCoreByNode[node] = coreCount
+                    elif line.startswith('Model name'):
+                        coreFreq = float([word for word in line.split() if word.endswith('GHz')][0][:-3])
+                        cpuFreqByNode[node] = coreFreq
+            except:
+                pass
 
-            # Fsv2: 2.7(3.7) Platinum 8168
-            'Standard_F2s_v2': '2 * 16 * 2.7',
-            'Standard_F4s_v2': '4 * 16 * 2.7',
-            'Standard_F8s_v2': '8 * 16 * 2.7',
-            'Standard_F16s_v2': '16 * 16 * 2.7',
-            'Standard_F32s_v2': '32 * 16 * 2.7',
-            'Standard_F64s_v2': '64 * 16 * 2.7',
-            'Standard_F72s_v2': '72 * 16 * 2.7',
-
-            # Above VM sizes info(vCPUs, microarchitecture, frequency) were extracted from "Sizes for Linux virtual machines in Azure"(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes) at 2018.11.8
-            # Below VM sizes info(vCPUs, microarchitecture, frequency) were extracted from "CPU(s)" and "Model name" in result of running command "lscpu" on the VMs
-            
-            # G/Gs: 2.0 E5-2698B v3 Haswell
-            'Standard_G1': '2 * 16 * 2.0',
-            'Standard_G2': '4 * 16 * 2.0',
-            'Standard_G3': '8 * 16 * 2.0',
-            'Standard_G4': '16 * 16 * 2.0',
-            'Standard_G5': '32 * 16 * 2.0',
-            'Standard_GS1': '2 * 16 * 2.0',
-            'Standard_GS2': '4 * 16 * 2.0',
-            'Standard_GS3': '8 * 16 * 2.0',
-            'Standard_GS4': '16 * 16 * 2.0',
-            'Standard_GS5': '32 * 16 * 2.0'
-            }
-
+        # get VM size info from task CustomizedData which is set in map script
         sizeByNode = {}
+        cpuCoreBySize = {}
+        cpuFreqBySize = {}
         try:
             for task in tasks:
                 node = task['Node']
                 size = task['CustomizedData']
-                if size:
+                if node not in sizeByNode and size:
+                    freq = cpuFreqByNode.get(node)
+                    if freq:
+                        size += "({}GHz)".format(freq)
+                        cpuFreqBySize[size] = freq
+                    coreCount = cpuCoreByNode.get(node)
+                    if coreCount:
+                        cpuCoreBySize[size] = coreCount
                     sizeByNode[node] = size
         except Exception as e:
             printErrorAsJson('Failed to parse tasks. ' + str(e))
             return -1
 
+        if len(sizeByNode) != len(nodes):
+            printErrorAsJson('VM size info is missing.')
+            return -1
+
+        # get theoretical peak performance of cluster
+        defaultFlopsPerCycle = 16 # Use this default value because currently it seems that the Intel microarchitectures used in Azure VM are in "Intel Haswell/Broadwell/Skylake/Kaby Lake". Consider getting this value from test parameter in case new Azure VM sizes are introduced.
         theoreticalPerf = None
-        theoreticalPerfDescription = ''
+        theoreticalPerfExpr = None
+        theoreticalPerfDescription = "The theoretical peak performance of the cluster can not be calculated because CPU info is missing."
         nodeSizes = set(sizeByNode.values())
         if len(nodeSizes) > 1:
             vmSizeDescription = 'The cluster is heterogeneous with node sizes: {}. Optimal perfermance may not be achieved in this test.'.format(', '.join(nodeSizes))
-            missingSizeInfo = [size for size in nodeSizes if not theoreticalPerfBySize.get(size)]
-            if missingSizeInfo:
-                theoreticalPerfDescription = "The theoretical peak performance of the cluster can not be calculated because no info is found for node size{}: {}".format('s' if len(missingSizeInfo) > 1 else '', ', '.join(missingSizeInfo))
-            else:
-                sizes = [sizeByNode[node] for node in nodes]
-                theoreticalPerf = " + ".join(["{} * {}".format(sizes.count(size), theoreticalPerfBySize[size]) for size in nodeSizes])
-                theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated as the sum of FLOPs of each node: SUM([core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]) = {}".format(eval(theoreticalPerf), theoreticalPerf)
+            sizes = [sizeByNode[node] for node in nodes]
+            theoreticalPerfExpr = " + ".join(["{} * {} * {} * {}".format(sizes.count(size), cpuCoreBySize.get(size), defaultFlopsPerCycle, cpuFreqBySize.get(size)) for size in nodeSizes])
+            if 'None' not in theoreticalPerfExpr:
+                theoreticalPerf = eval(theoreticalPerfExpr)
+                theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by summing the FLOPs of each node: SUM([core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]) = {}".format(theoreticalPerf, theoreticalPerfExpr)
         elif len(nodeSizes) == 1:
             size = list(nodeSizes)[0]
             vmSizeDescription = 'The cluster is homogeneous with node size: {}.'.format(size)
-            theoreticalPerf = theoreticalPerfBySize.get(size)
-            if theoreticalPerf:
-                theoreticalPerf = "{} * {}".format(len(nodes), theoreticalPerf)
-                theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by: [node count] * [core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core] = {}".format(eval(theoreticalPerf), theoreticalPerf)
-            else:
-                theoreticalPerfDescription = "The theoretical peak performance of the cluster can not be calculated because no info is found for node size: {}".format(size)
+            theoreticalPerfExpr = "{} * {} * {} * {}".format(len(nodes), cpuCoreBySize.get(size), defaultFlopsPerCycle, cpuFreqBySize.get(size))
+            if 'None' not in theoreticalPerfExpr:
+                theoreticalPerf = eval(theoreticalPerfExpr)
+                theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by: [node count] * [core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core] = {}".format(theoreticalPerf, theoreticalPerfExpr)
         else:
             vmSizeDescription = 'The node size in the cluster is unknown.'
 
+        # get result from result task and generate output
         resultTask = taskDetail[len(taskDetail)]
         output = resultTask['Output']
         if '*.result: No such file or directory' in output:
@@ -185,7 +133,7 @@ def main():
                 if len(row) == 7:
                     try:
                         perf = float(row[6])
-                        efficiency = perf/eval(theoreticalPerf) if theoreticalPerf else None
+                        efficiency = perf/theoreticalPerf if theoreticalPerf else None
                         result.append({
                             "N":int(row[1]),
                             "NB":int(row[2]),
@@ -250,7 +198,7 @@ def main():
                     taskStates.append('Error when running MPI test')
                 state = '<br>'.join(taskStates)
                 if not state:
-                    state = 'Unknown state'
+                    state = 'Unknown'
                 htmlRows.append(
                     '\n'.join([
                         '  <tr>',

@@ -1,4 +1,4 @@
-#v0.18
+#v0.19
 
 import sys, json, copy, numpy, time
 
@@ -21,7 +21,7 @@ def main():
     defaultPacketSize = 2**22
     packetSize = defaultPacketSize
     mode = 'Tournament'.lower()
-    intelMpiLocation = '/opt/intel/compilers_and_libraries_2018/linux/mpi'
+    intelMpiLocation = '/opt/intel/impi/2018.4.274'
     debug = None
     try:
         if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
@@ -259,6 +259,9 @@ def getFailedReasons(failedTasks, intelMpiLocation, canceledNodePairs):
     reasonAvSet = 'The nodes may not be in the same availability set.(CM ADDR ERROR)'
     solutionAvSet = 'Recreate the node(s) and ensure the nodes are in the same availability set.'
     
+    reasonDapl = 'MPI issue: "dapl fabric is not available and fallback fabric is not enabled"'
+    solutionDapl = 'Please re-create the VM.'
+
     failedReasons = {}
     for failedPair in failedTasks:
         reason = "Unknown"
@@ -286,10 +289,18 @@ def getFailedReasons(failedTasks, intelMpiLocation, canceledNodePairs):
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionNodeSingleCore, 'Nodes':[]})['Nodes'].append(failedPair['NodeName'])
         elif "wget" in failedPair['Detail'] and failedPair['ExitCode'] == 4 or 'mpi-pingpong-filter.py' in failedPair['Detail'] and failedPair['ExitCode'] == 8:
             reason = reasonWgetFailed
+            failedPair['NodeOrPair'] = failedPair['NodeName']
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionWgetFailed, 'Nodes':set()})['Nodes'].add(failedPair['NodeName'])
         elif "CM ADDR ERROR" in failedPair['Detail']:
             reason = reasonAvSet
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionAvSet, 'NodePairs':[]})['NodePairs'].append(failedPair['NodeOrPair'])
+        elif "dapl fabric is not available and fallback fabric is not enabled" in failedPair['Detail']:
+            reason = reasonDapl
+            failedNode = failedPair['NodeName']
+            if '[1] MPI startup(): dapl fabric is not available and fallback fabric is not enabled' in failedPair['Detail']:
+                failedNode = failedPair['NodeOrPair'].split(',')[-1]
+            failedPair['NodeOrPair'] = failedNode
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionDapl, 'Nodes':set()})['Nodes'].add(failedNode)            
         else:
             if "Time limit (secs_per_sample * msg_sizes_list_len) is over;" in failedPair['Detail']:
                 reason = reasonSampleTimeout
@@ -305,6 +316,8 @@ def getFailedReasons(failedTasks, intelMpiLocation, canceledNodePairs):
         failedReasons[reasonMpiNotInstalled]['Nodes'] = list(failedReasons[reasonMpiNotInstalled]['Nodes'])
     if reasonWgetFailed in failedReasons:
         failedReasons[reasonWgetFailed]['Nodes'] = list(failedReasons[reasonWgetFailed]['Nodes'])
+    if reasonDapl in failedReasons:
+        failedReasons[reasonDapl]['Nodes'] = list(failedReasons[reasonDapl]['Nodes'])
 
     failedReasonsByNode = {}
     for failedTask in failedTasks:

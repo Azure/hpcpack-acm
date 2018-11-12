@@ -51,94 +51,13 @@ def main():
         printErrorAsJson('Failed to parse task results. ' + str(e))
         return -1
 
-    theoreticalPerfBySize = {
-        # Size : Cores * DP FLOPs/cycle * Freq
-        
-        # Dsv3/Ev3/Esv3: 2.3(3.5) E5-2673 v4 Broadwell
-        'Standard_D2s_v3': '2 * 16 * 2.3',
-        'Standard_D4s_v3': '4 * 16 * 2.3',
-        'Standard_D8s_v3': '8 * 16 * 2.3',
-        'Standard_D16s_v3': '16 * 16 * 2.3',
-        'Standard_D32s_v3': '32 * 16 * 2.3',
-        'Standard_D64s_v3': '64 * 16 * 2.3',
-        'Standard_E2s_v3': '2 * 16 * 2.3',
-        'Standard_E4s_v3': '4 * 16 * 2.3',
-        'Standard_E8s_v3': '8 * 16 * 2.3',
-        'Standard_E16s_v3': '16 * 16 * 2.3',
-        'Standard_E20s_v3': '20 * 16 * 2.3',
-        'Standard_E32s_v3': '32 * 16 * 2.3',
-        'Standard_E64s_v3': '64 * 16 * 2.3',
-        'Standard_E64is_v3': '64 * 16 * 2.3',
-        'Standard_E2_v3': '2 * 16 * 2.3',
-        'Standard_E4_v3': '4 * 16 * 2.3',
-        'Standard_E8_v3': '8 * 16 * 2.3',
-        'Standard_E16_v3': '16 * 16 * 2.3',
-        'Standard_E20_v3': '20 * 16 * 2.3',
-        'Standard_E32_v3': '32 * 16 * 2.3',
-        'Standard_E64_v3': '64 * 16 * 2.3',
-        'Standard_E64i_v3': '64 * 16 * 2.3',
-        
-        # Dv2/Dv3/F/Fs: 2.4(3.1) E5-2673 v3 Haswell
-        'Standard_D2_v3': '2 * 16 * 2.4',
-        'Standard_D4_v3': '4 * 16 * 2.4',
-        'Standard_D8_v3': '8 * 16 * 2.4',
-        'Standard_D16_v3': '16 * 16 * 2.4',
-        'Standard_D32_v3': '32 * 16 * 2.4',
-        'Standard_D64_v3': '64 * 16 * 2.4',
-        'Standard_DS1_v2': '1 * 16 * 2.4',
-        'Standard_DS2_v2': '2 * 16 * 2.4',
-        'Standard_DS3_v2': '4 * 16 * 2.4',
-        'Standard_DS4_v2': '8 * 16 * 2.4',
-        'Standard_DS5_v2': '16 * 16 * 2.4',
-        'Standard_F1s': '1 *16 * 2.4',
-        'Standard_F2s': '2 *16 * 2.4',
-        'Standard_F4s': '4 *16 * 2.4',
-        'Standard_F8s': '8 *16 * 2.4',
-        'Standard_F16s': '16 *16 * 2.4',
-        'Standard_F1': '1 *16 * 2.4',
-        'Standard_F2': '2 *16 * 2.4',
-        'Standard_F4': '4 *16 * 2.4',
-        'Standard_F8': '8 *16 * 2.4',
-        'Standard_F16': '16 *16 * 2.4',
-        
-        # H: 3.2(3.6) E5-2667 V3 Haswell
-        'Standard_H8': '8 * 16 * 3.2',
-        'Standard_H16': '16 * 16 * 3.2',
-        'Standard_H8m': '8 * 16 * 3.2',
-        'Standard_H16m': '16 * 16 * 3.2',
-        'Standard_H16r': '16 * 16 * 3.2',
-        'Standard_H16mr': '16 * 16 * 3.2',
-
-        # Fsv2: 2.7(3.7) Platinum 8168
-        'Standard_F2s_v2': '2 * 16 * 2.7',
-        'Standard_F4s_v2': '4 * 16 * 2.7',
-        'Standard_F8s_v2': '8 * 16 * 2.7',
-        'Standard_F16s_v2': '16 * 16 * 2.7',
-        'Standard_F32s_v2': '32 * 16 * 2.7',
-        'Standard_F64s_v2': '64 * 16 * 2.7',
-        'Standard_F72s_v2': '72 * 16 * 2.7',
-
-        # Above VM sizes info(vCPUs, microarchitecture, frequency) were extracted from "Sizes for Linux virtual machines in Azure"(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes) at 2018.11.8
-        # Below VM sizes info(vCPUs, microarchitecture, frequency) were extracted from "CPU(s)" and "Model name" in result of running command "lscpu" on the VMs
-        
-        # G/Gs: 2.0 E5-2698B v3 Haswell
-        'Standard_G1': '2 * 16 * 2.0',
-        'Standard_G2': '4 * 16 * 2.0',
-        'Standard_G3': '8 * 16 * 2.0',
-        'Standard_G4': '16 * 16 * 2.0',
-        'Standard_G5': '32 * 16 * 2.0',
-        'Standard_GS1': '2 * 16 * 2.0',
-        'Standard_GS2': '4 * 16 * 2.0',
-        'Standard_GS3': '8 * 16 * 2.0',
-        'Standard_GS4': '16 * 16 * 2.0',
-        'Standard_GS5': '32 * 16 * 2.0'
-        }
+    defaultFlopsPerCycle = 16 # Use this default value because currently it seems that the Intel microarchitectures used in Azure VM are in "Intel Haswell/Broadwell/Skylake/Kaby Lake". Consider getting this value from test parameter in case new Azure VM sizes are introduced.
 
     results = list(taskDetail.values())
     htmlRows = []
     for task in results:
-        perf, N = parseTaskOutput(task['Output'])
-        theoreticalPerfExpr = theoreticalPerfBySize.get(task['Size'])
+        perf, N, coreCount, coreFreq = parseTaskOutput(task['Output'])
+        theoreticalPerfExpr = "{} * {} * {}".format(coreCount, defaultFlopsPerCycle, coreFreq) if coreCount and coreFreq else None
         theoreticalPerf = eval(theoreticalPerfExpr) if theoreticalPerfExpr else None
         efficiency = perf / theoreticalPerf if perf and theoreticalPerf else None
         task['TheoreticalPerf'] = theoreticalPerf
@@ -160,7 +79,7 @@ def main():
     intelLinpack = 'Intel Optimized LINPACK Benchmark'
     intelLinpackWithLink = '<a href="https://software.intel.com/en-us/mkl-linux-developer-guide-intel-optimized-linpack-benchmark-for-linux">{}</a>'.format(intelLinpack)
     descriptionInHtml = '<p>{}</p>'.format(description.format(intelLinpackWithLink))
-    theoreticalPerfDescription = "The theoretical peak performance of each node is calculated by: [core count of node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]" if any([task['TheoreticalPerf'] for task in results]) else None
+    theoreticalPerfDescription = "The theoretical peak performance of each node is calculated by: [core count of node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]" if any([task['TheoreticalPerf'] for task in results]) else ''
     intelMklNotFound = 'Intel MKL is not found in <b>{}</b> on node{}: {}'.format(intelMklLocation, '' if len(nodesWithoutIntelMklInstalled) == 1 else 's', ', '.join(nodesWithoutIntelMklInstalled)) if nodesWithoutIntelMklInstalled else ''
     installIntelMkl = 'Diagnostics test <b>Linpack-Installation</b> can be used to install Intel MKL.' if nodesWithoutIntelMklInstalled else ''
     specifyIntelMklLocation = 'Set the parameter <b>Intel MKL location</b> to specify the location of Intel MKL if it is already installed.' if len(nodesWithoutIntelMklInstalled) == len(nodelist) else ''
@@ -214,7 +133,7 @@ td, th {
     return 0
 
 def parseTaskOutput(raw):
-    bestPerf = n = None
+    bestPerf = n = coreCount = coreFreq = None
     try:
         start = raw.find('Performance Summary (GFlops)')
         end = raw.find('Residual checks PASSED')
@@ -227,9 +146,16 @@ def parseTaskOutput(raw):
                 if perf > bestPerf:
                     bestPerf = perf
                     n = int(numbers[0])
+        cpuInfo = raw.split('\n', 2)[:2]
+        if len(cpuInfo) == 2:
+            firstLine = cpuInfo[0]
+            secondLine = cpuInfo[1]
+            if firstLine.startswith('CPU') and secondLine.startswith('Model name'):
+                coreCount = int(firstLine.split()[-1])
+                coreFreq = float([word for word in secondLine.split() if word.endswith('GHz')][0][:-3])
     except:
         pass
-    return (bestPerf, n)
+    return (bestPerf, n, coreCount, coreFreq)
 
 def printErrorAsJson(errormessage):
     print(json.dumps({"Error":errormessage}))

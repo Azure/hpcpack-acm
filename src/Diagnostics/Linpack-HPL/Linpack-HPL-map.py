@@ -14,7 +14,7 @@ def main():
 
     memoryPercentage = 0.1
     intelMklLocation = '/opt/intel/compilers_and_libraries_2018/linux/mkl'
-    intelMpiLocation = '/opt/intel/compilers_and_libraries_2018/linux/mpi'
+    intelMpiLocation = '/opt/intel/impi/2018.4.274'
     debug = 0
     if 'DiagnosticTest' in job and 'Arguments' in job['DiagnosticTest']:
         arguments = job['DiagnosticTest']['Arguments']
@@ -115,10 +115,11 @@ HPL.out      output file name (if any)
     
     # Create task to run Intel HPL locally to ensure every node is ready
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
+    commandCheckCpu = "lscpu | egrep '^CPU\(s\)|Model name'"
     commandCheckHpl = '{}/benchmarks/mp_linpack/xhpl_intel64_dynamic >/dev/null && echo MKL test succeed.'.format(intelMklLocation)
     commandCheckMpi = 'mpirun IMB-MPI1 pingpong >/dev/null && echo MPI test succeed.'
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
-    taskTemplate["CommandLine"] = "{}; {}; {} && {}".format(commandCreateHplDat, commandSourceMpiEnv, commandCheckHpl, commandCheckMpi)
+    taskTemplate["CommandLine"] = "{}; {}; {}; {} && {}".format(commandCheckCpu, commandCreateHplDat, commandSourceMpiEnv, commandCheckHpl, commandCheckMpi)
     taskTemplate["MaximumRuntimeSeconds"] = 60
     for node in nodelist:
         task = copy.deepcopy(taskTemplate)
@@ -165,9 +166,18 @@ HPL.out      output file name (if any)
 
     # Create HPL tunning tasks
     PQs = [(p, threadsCount//p) for p in range(1, int(math.sqrt(threadsCount)) + 1) if p * (threadsCount//p) == threadsCount]
-    NBs = [192, 256]
-    memoryRange = [float(memory) / 10 for memory in list(range(int(memoryPercentage*10), 700, -10)) + list(range(int(memoryPercentage*10), 500, -20)) + list(range(int(memoryPercentage*10), 0, -50))]
-    Ns = [int(math.sqrt(float(nodesCount) / 8 * 1024 * 1024 * minMemoryMb * percent / 100)) for percent in memoryRange]
+    NBs = [192]
+    memoryRange = []
+    while memoryPercentage > 70:
+        memoryRange.append(memoryPercentage)
+        memoryPercentage -= 1
+    while memoryPercentage > 50:
+        memoryRange.append(memoryPercentage)
+        memoryPercentage -= 2
+    while memoryPercentage > 0:
+        memoryRange.append(memoryPercentage)
+        memoryPercentage -= 5
+    Ns = [int(math.sqrt(minMemoryMb * 1024 * 1024 * nodesCount / 8 * percent / 100)) for percent in memoryRange]
     commandCheckFlag = '[ -d "{}" ]'.format(flagDir)
     for P, Q in PQs:
         for NB in NBs:
