@@ -9,6 +9,11 @@ def main():
     taskResults = stdin['TaskResults']
     nodes = job['TargetNodes']
 
+    if len(tasks) > len(taskResults):
+        resultMissingTasks = set([task['Id'] for task in tasks]) - set([task['TaskId'] for task in taskResults])
+        printErrorAsJson('No result of tasks: {}'.format(resultMissingTasks))
+        return -1
+
     taskDetail = {}
     try:
         for taskResult in taskResults:
