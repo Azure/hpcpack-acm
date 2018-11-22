@@ -57,6 +57,7 @@ def main():
         # get CPU info from node checking tasks
         cpuFreqByNode = {}
         cpuCoreByNode = {}
+        hyperThreadingNodes = []
         for task in nodeCheckingTasks:
             node = task['Node']
             output = task['Output']
@@ -68,6 +69,10 @@ def main():
                     elif line.startswith('Model name'):
                         coreFreq = float([word for word in line.split() if word.endswith('GHz')][0][:-3])
                         cpuFreqByNode[node] = coreFreq
+                    elif line.startswith('Thread(s) per core'):
+                        threads = int(line.split()[-1])
+                        if threads > 1:
+                            hyperThreadingNodes.append(node)
             except:
                 pass
 
@@ -118,6 +123,9 @@ def main():
                 theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by: [node count] * [core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core] = {}".format(theoreticalPerf, theoreticalPerfExpr)
         else:
             vmSizeDescription = 'The node size in the cluster is unknown.'
+
+        # warning for Hyper-Threading
+        hyperThreadingDescription = 'Optimal perfermance may not be achieved in this test because Hyper-Threading is enabled on the node(s): {}'.format(', '.join(hyperThreadingNodes)) if hyperThreadingNodes else ''
 
         # get result from result task and generate output
         resultTask = taskDetail[len(taskDetail)]
@@ -182,7 +190,8 @@ def main():
 <p>{}</p>
 <p>{}</p>
 <p>{}</p>
-'''.format('\n'.join(htmlRows), descriptionInHtml, vmSizeDescription, theoreticalPerfDescription)
+<p>{}</p>
+'''.format('\n'.join(htmlRows), descriptionInHtml, vmSizeDescription, theoreticalPerfDescription, hyperThreadingDescription)
         resultCode = 0
     else:
         result = 'Cluster is not ready to run Intel HPL. Diagnostics test MPI-Pingpong may help to diagnose the cluster.'

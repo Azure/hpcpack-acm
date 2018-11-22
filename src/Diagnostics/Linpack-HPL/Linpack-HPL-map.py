@@ -115,7 +115,7 @@ HPL.out      output file name (if any)
     
     # Create task to run Intel HPL locally to ensure every node is ready
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
-    commandCheckCpu = "lscpu | egrep '^CPU\(s\)|Model name'"
+    commandCheckCpu = "lscpu | egrep '^CPU\(s\)|^Model name|^Thread\(s\) per core'"
     commandCheckHpl = '{}/benchmarks/mp_linpack/xhpl_intel64_dynamic >/dev/null && echo MKL test succeed.'.format(intelMklLocation)
     commandCheckMpi = 'mpirun IMB-MPI1 pingpong >/dev/null && echo MPI test succeed.'
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
