@@ -23,7 +23,7 @@ import { CpuComponent } from './node-heatmap/cpu/cpu.component';
     MaterialsModule,
     FormsModule,
     ReactiveFormsModule,
-    TreeModule,
+    TreeModule.forRoot(),
     WidgetsModule,
     ChartModule,
     SharedModule

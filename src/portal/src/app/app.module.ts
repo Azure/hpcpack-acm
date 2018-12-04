@@ -23,6 +23,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BasicInterceptor } from './helpers/basic.interceptor';
 import { ErrorInterceptor } from './helpers/error.interceptor';
 import { DiagReportService } from './services/diag-report/diag-report.service';
+import { DragulaModule } from 'ng2-dragula';
 
 @NgModule({
   declarations: [
@@ -35,16 +36,10 @@ import { DiagReportService } from './services/diag-report/diag-report.service';
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
-    //HttpClientInMemoryWebApiModule.forRoot(
-    //  InMemoryDataService,
-    //  {
-    //    apiBase: env.apiBase,
-    //    passThruUnknownUrl: true
-    //  }
-    //),
     MaterialsModule,
     WidgetsModule,
     AppRoutingModule,
+    DragulaModule.forRoot()
   ],
   providers: [AuthGuardService, AuthService, LoginGuardService, ApiService, JobStateService, DateFormatterService, TableDataService,
     TableSettingsService, UserSettingsService, LocalStorageService, DiagReportService,

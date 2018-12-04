@@ -3,6 +3,7 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { TableOptionComponent } from './table-option.component';
 import { MaterialsModule } from '../../materials.module';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
+import { DragulaModule } from 'ng2-dragula';
 
 class MatDialogModuleMock {
   close() { }
@@ -24,7 +25,7 @@ fdescribe('TableOptionComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [TableOptionComponent],
-      imports: [MaterialsModule],
+      imports: [MaterialsModule, DragulaModule],
       providers: [
         { provide: MatDialogRef, useClass: MatDialogModuleMock },
         { provide: MAT_DIALOG_DATA, useValue: { columns: customizableColumns } }

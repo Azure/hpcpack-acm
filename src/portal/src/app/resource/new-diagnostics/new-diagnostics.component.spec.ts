@@ -109,7 +109,7 @@ fdescribe('NewDiagnosticsComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [NewDiagnosticsComponent],
-      imports: [MaterialsModule, FormsModule, ReactiveFormsModule, BrowserAnimationsModule, TreeModule],
+      imports: [MaterialsModule, FormsModule, ReactiveFormsModule, BrowserAnimationsModule, TreeModule.forRoot()],
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
         { provide: MatDialogRef, useClass: MatDialogModuleMock },

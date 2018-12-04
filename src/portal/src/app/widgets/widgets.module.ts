@@ -8,6 +8,7 @@ import { TableOptionComponent } from './table-option/table-option.component';
 import { EventListComponent } from './event-list/event-list.component';
 import { ScheduledEventsComponent } from './scheduled-events/scheduled-events.component'
 import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
+import { DragulaModule } from 'ng2-dragula';
 
 const components = [
   NodeFilterBuilderComponent,
@@ -23,6 +24,7 @@ const components = [
     CommonModule,
     FormsModule,
     MaterialsModule,
+    DragulaModule
   ],
   declarations: components,
   entryComponents: components,

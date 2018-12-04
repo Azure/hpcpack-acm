@@ -8,13 +8,13 @@
   <div class="content">
     <div class='column'>
       <div class="label">Options</div>
-      <div class='box' [dragula]='"columns"' [dragulaModel]='options'>
+      <div class='box' [dragula]='"columns"' [(dragulaModel)]='options'>
         <div *ngFor='let item of options' class="name">{{item.displayName}}</div>
       </div>
     </div>
     <div class='column'>
       <div class="label">Selected</div>
-      <div class='box' [dragula]='"columns"' [dragulaModel]='selected'>
+      <div class='box' [dragula]='"columns"' [(dragulaModel)]='selected'>
         <div *ngFor='let item of selected' class="name">{{item.displayName}}</div>
       </div>
     </div>
