@@ -1,4 +1,4 @@
-#v0.7
+#v0.8
 
 import sys, json
 
@@ -26,20 +26,19 @@ def main():
         return -1
     
     message = None
+    failed = False
     try:
         for taskResult in taskResults:
-            if taskResult['TaskId'] == len(nodes)+1:
+            if taskResult['TaskId'] == len(nodes) + 1:
                 if taskResult['ExitCode'] == 0:
                     message = taskResult['Message']
                     break
                 else:
-                    noresult = "No result"
-                    print(json.dumps({"Html" : noresult, "Result" : noresult}))
-                    return -1
+                    failed = True
     except Exception as e:
         printErrorAsJson('Failed to parse task result. ' + str(e))
         return -1
-
+    
     htmlRows = []
     if message:
         data = message.split('\n')
@@ -62,7 +61,11 @@ def main():
                         ]))
                 lineNumber += 1
             htmlRows[greenLineNumber] = htmlRows[greenLineNumber].replace('<tr>', '<tr bgcolor="#d8fcd4">')
-            
+    else:
+        noresult = "No result"
+        print(json.dumps({"Html" : noresult, "Result" : noresult}))
+        return -1 if failed else 0
+
     html = '''
 <!DOCTYPE html>
 <html>
