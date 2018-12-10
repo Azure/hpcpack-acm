@@ -1,12 +1,12 @@
-import { Component, OnInit, OnDestroy, ViewChild, HostListener, ElementRef, ViewChildren } from '@angular/core';
-import { MatTableDataSource, MatPaginator } from '@angular/material';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
-import { SelectionModel } from '@angular/cdk/collections';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { MatDialog } from '@angular/material';
 import { ApiService, Loop } from '../../services/api.service';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { TableSettingsService } from '../../services/table-settings.service';
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { TableDataService } from '../../services/table-data/table-data.service';
+import { VirtualScrollService } from '../../services/virtual-scroll/virtual-scroll.service';
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
 @Component({
   selector: 'diagnostics-results',
@@ -14,6 +14,8 @@ import { TableDataService } from '../../services/table-data/table-data.service';
   styleUrls: ['./result-list.component.scss'],
 })
 export class ResultListComponent implements OnInit, OnDestroy {
+  @ViewChild('content') cdkVirtualScrollViewport: CdkVirtualScrollViewport;
+
   static customizableColumns = [
     { name: 'createdAt', displayName: 'Created', displayed: true },
     { name: 'test', displayName: 'Test', displayed: true },
@@ -21,23 +23,31 @@ export class ResultListComponent implements OnInit, OnDestroy {
     { name: 'category', displayName: 'Category', displayed: true },
     { name: 'state', displayName: 'State', displayed: true },
     { name: 'progress', displayName: 'Progress', displayed: true },
-    { name: 'lastChangedAt', displayName: 'Last Changed', displayed: true }
+    { name: 'updatedAt', displayName: 'Last Changed', displayed: true }
   ];
 
   private availableColumns;
 
-  public dataSource = new MatTableDataSource();
-  public displayedColumns = ['id', 'test', 'diagnostic', 'category', 'progress', 'state', 'createdAt', 'lastChangedAt'];
+  public dataSource = [];
+  public displayedColumns = ['id', 'test', 'diagnostic', 'category', 'progress', 'state', 'createdAt', 'updatedAt'];
 
-  private selection = new SelectionModel(true, []);
   private interval: number;
   private diagsLoop: Object;
   private lastId = 0;
-  public maxPageSize = 120;
+  public maxPageSize = 300;
   private reverse = true;
-  public currentData = [];
   public scrolled = false;
   public loadFinished = false;
+
+  pivot = Math.round(this.maxPageSize / 2) - 1;
+
+  startIndex = 0;
+  lastScrolled = 0;
+
+  public loading = false;
+  public empty = true;
+  private endId = -1;
+
 
   constructor(
     private api: ApiService,
@@ -45,7 +55,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
     private tableDataService: TableDataService,
     private settings: TableSettingsService,
     public dialog: MatDialog,
-    public el: ElementRef,
+    private virtualScrollService: VirtualScrollService
   ) {
     this.interval = 2000;
   }
@@ -70,14 +80,14 @@ export class ResultListComponent implements OnInit, OnDestroy {
       this.getDiagRequest(),
       {
         next: (result) => {
-          if (result.length > 0 && result[0]['id'] <= result[result.length - 1]['id']) {
-            result = result.reverse();
+          this.empty = false;
+          if (this.endId != -1 && result[result.length - 1].id != this.endId) {
+            this.loading = false;
           }
-          this.currentData = result;
           if (this.reverse && result.length < this.maxPageSize) {
             this.loadFinished = true;
           }
-          this.tableDataService.updateData(result, this.dataSource, 'id');
+          this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
           return this.getDiagRequest();
         }
       },
@@ -89,38 +99,6 @@ export class ResultListComponent implements OnInit, OnDestroy {
     if (this.diagsLoop) {
       Loop.stop(this.diagsLoop);
     }
-  }
-
-  public onScrollEvent(data) {
-    this.lastId = data.dataIndex < 0 ? 0 : this.dataSource.data[data.dataIndex]['id'];
-    this.loadFinished = data.loadFinished;
-    this.scrolled = data.scrolled;
-    this.reverse = data.scrollDirection == 'down' ? true : false;
-  }
-
-  private hasNoSelection(): boolean {
-    return this.selection.selected.length == 0;
-  }
-
-  private isAllSelected() {
-    const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.data.length;
-    return numSelected == numRows;
-  }
-
-  private masterToggle() {
-    this.isAllSelected() ?
-      this.selection.clear() :
-      this.dataSource.data.forEach(row => this.selection.select(row));
-  }
-
-  private select(node) {
-    this.selection.clear();
-    this.selection.toggle(node);
-  }
-
-  applyFilter(text: string): void {
-    this.dataSource.filter = text;
   }
 
   getDisplayedColumns(): void {
@@ -149,5 +127,35 @@ export class ResultListComponent implements OnInit, OnDestroy {
 
   loadSettings(): void {
     this.availableColumns = this.settings.load('DiagList', ResultListComponent.customizableColumns);
+  }
+
+  trackByFn(index, item) {
+    return this.tableDataService.trackByFn(item, this.displayedColumns);
+  }
+
+  getColumnOrder(col) {
+    let index = this.displayedColumns.findIndex(item => {
+      return item == col;
+    });
+
+    let order = index + 1;
+    if (order) {
+      return { 'order': index + 1 };
+    }
+    else {
+      return { 'display': 'none' };
+    }
+  }
+
+
+  indexChanged($event) {
+    let result = this.virtualScrollService.indexChangedCalc(this.maxPageSize, this.pivot, this.cdkVirtualScrollViewport, this.dataSource, this.lastScrolled, this.startIndex);
+    this.pivot = result.pivot;
+    this.lastScrolled = result.lastScrolled;
+    this.lastId = result.lastId == undefined ? this.lastId : result.lastId;
+    this.endId = result.endId == undefined ? this.endId : result.endId;
+    this.loading = result.loading;
+    this.startIndex = result.startIndex;
+    this.scrolled = result.scrolled;
   }
 }

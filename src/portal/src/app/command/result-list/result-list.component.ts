@@ -1,11 +1,12 @@
-import { Component, OnInit } from '@angular/core';
-import { MatTableDataSource, MatDialog } from '@angular/material';
-import { SelectionModel } from '@angular/cdk/collections';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { MatDialog } from '@angular/material';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { ApiService, Loop } from '../../services/api.service';
 import { TableSettingsService } from '../../services/table-settings.service';
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { TableDataService } from '../../services/table-data/table-data.service';
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { VirtualScrollService } from '../../services/virtual-scroll/virtual-scroll.service';
 
 @Component({
   selector: 'app-result-list',
@@ -13,34 +14,38 @@ import { TableDataService } from '../../services/table-data/table-data.service';
   styleUrls: ['./result-list.component.scss']
 })
 export class ResultListComponent implements OnInit {
-
-  public dataSource = new MatTableDataSource();
+  @ViewChild('content') cdkVirtualScrollViewport: CdkVirtualScrollViewport;
+  public dataSource = [];
 
   static customizableColumns = [
     { name: 'createdAt', displayName: 'Created', displayed: true },
     { name: 'command', displayName: 'Command', displayed: true },
     { name: 'state', displayName: 'State', displayed: true },
     { name: 'progress', displayName: 'Progress', displayed: true },
-    { name: 'lastChangedAt', displayName: 'Last Changed', displayed: true },
+    { name: 'updatedAt', displayName: 'Last Changed', displayed: true },
   ];
 
   private availableColumns;
 
   public displayedColumns;
 
-  private selection = new SelectionModel(true, []);
-
   private lastId = 0;
 
   private commandLoop: object;
-  public maxPageSize = 120;
+  public maxPageSize = 300;
   private reverse = true;
-  public currentData = [];
   public scrolled = false;
   public loadFinished = false;
   private interval = 2000;
 
-  private loading = false;
+  pivot = Math.round(this.maxPageSize / 2) - 1;
+
+  startIndex = 0;
+  lastScrolled = 0;
+
+  public loading = false;
+  public empty = true;
+  private endId = -1;
 
   constructor(
     private api: ApiService,
@@ -48,6 +53,7 @@ export class ResultListComponent implements OnInit {
     private tableDataService: TableDataService,
     private dialog: MatDialog,
     private settings: TableSettingsService,
+    private virtualScrollService: VirtualScrollService
   ) { }
 
   ngOnInit() {
@@ -58,14 +64,14 @@ export class ResultListComponent implements OnInit {
       this.getCommandRequest(),
       {
         next: (result) => {
-          if (result.length > 0 && result[0]['id'] <= result[result.length - 1]['id']) {
-            result = result.reverse();
+          this.empty = false;
+          if (this.endId != -1 && result[result.length - 1].id != this.endId) {
+            this.loading = false;
           }
-          this.currentData = result;
           if (this.reverse && result.length < this.maxPageSize) {
             this.loadFinished = true;
           }
-          this.tableDataService.updateData(result, this.dataSource, 'id');
+          this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
           return this.getCommandRequest();
         }
       },
@@ -78,14 +84,6 @@ export class ResultListComponent implements OnInit {
       Loop.stop(this.commandLoop);
     }
   }
-
-  public onScrollEvent(data) {
-    this.lastId = data.dataIndex == -1 ? 0 : this.dataSource.data[data.dataIndex]['id'];
-    this.loadFinished = data.loadFinished;
-    this.scrolled = data.scrolled;
-    this.reverse = data.scrollDirection == 'down' ? true : false;
-  }
-
   private stateIcon(state) {
     return this.jobStateService.stateIcon(state);
   }
@@ -98,26 +96,6 @@ export class ResultListComponent implements OnInit {
     return this.api.command.getJobsByPage({ lastId: this.lastId, count: this.maxPageSize, reverse: this.reverse });
   }
 
-  private hasNoSelection(): boolean {
-    return this.selection.selected.length == 0;
-  }
-
-  private isAllSelected() {
-    const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.data.length;
-    return numSelected == numRows;
-  }
-
-  private masterToggle() {
-    this.isAllSelected() ?
-      this.selection.clear() :
-      this.dataSource.data.forEach(row => this.selection.select(row));
-  }
-
-  private select(node) {
-    this.selection.clear();
-    this.selection.toggle(node);
-  }
 
   getDisplayedColumns(): void {
     let columns = this.availableColumns.filter(e => e.displayed).map(e => e.name);
@@ -146,4 +124,34 @@ export class ResultListComponent implements OnInit {
   loadSettings(): void {
     this.availableColumns = this.settings.load('CommandList', ResultListComponent.customizableColumns);
   }
+
+  trackByFn(index, item) {
+    return this.tableDataService.trackByFn(item, this.displayedColumns);
+  }
+
+  getColumnOrder(col) {
+    let index = this.displayedColumns.findIndex(item => {
+      return item == col;
+    });
+
+    let order = index + 1;
+    if (order) {
+      return { 'order': index + 1 };
+    }
+    else {
+      return { 'display': 'none' };
+    }
+  }
+
+  indexChanged($event) {
+    let result = this.virtualScrollService.indexChangedCalc(this.maxPageSize, this.pivot, this.cdkVirtualScrollViewport, this.dataSource, this.lastScrolled, this.startIndex);
+    this.pivot = result.pivot;
+    this.lastScrolled = result.lastScrolled;
+    this.lastId = result.lastId == undefined ? this.lastId : result.lastId;
+    this.endId = result.endId == undefined ? this.endId : result.endId;
+    this.loading = result.loading;
+    this.startIndex = result.startIndex;
+    this.scrolled = result.scrolled;
+  }
+
 }

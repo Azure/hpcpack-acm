@@ -1,131 +1,210 @@
 @import "./mixin.scss";
+
 .filter mat-form-field {
-    width: 100%;
-    margin-bottom: 1em;
+  width: 100%;
+  margin-bottom: 1em;
 }
 
 mat-header-cell {
-    font-size: .8em;
+  font-size: .8em;
 }
 
 .mat-row>.mat-cell {
-    font-size: .8em;
+  font-size: .8em;
 }
 
 .mat-row:hover {}
 
 .mat-row a {
-    color: #3b46da;
+  color: #3b46da;
 }
 
 .mat-cell,
 .mat-header-cell {
-    padding: 0 2px; // text-align: center;  
+  padding: 0 2px; // text-align: center;  
 }
 
 .mat-row,
 .mat-header-row {
-    min-height: 40px;
-    padding: 0 10px;
+  min-height: 40px;
+  padding: 0 10px;
 }
 
 .mat-column-select {
-    overflow: initial;
-    flex: 0.2;
+  overflow: initial;
+  flex: 0.2;
 }
 
 .mat-column-actions {
-    flex: 0.2;
-    text-align: right;
+  flex: 0.2;
+  text-align: right;
 }
 
 .finished {
-    color: #2E7D32;
+  color: #2E7D32;
 }
 
 .queued {
-    color: #FF8F00;
+  color: #FF8F00;
 }
 
 .failed {
-    color: #D84315;
+  color: #D84315;
 }
 
 .running {
-    color: #283593;
+  color: #283593;
 }
 
 .canceled {
-    color: #6c727c;
+  color: #6c727c;
 }
 
 .table-progress {
-    @include display-flex(center, center);
-    width: 100%;
-    .progress-bar {
-        width: 75%;
-    }
-    .progress-num {
-        width: 25%;
-        padding-left: .3em;
-    }
+  @include display-flex(center, center);
+  width: 100%;
+
+  .progress-bar {
+    width: 75%;
+  }
+
+  .progress-num {
+    width: 25%;
+    padding-left: .3em;
+  }
 }
 
 .icon-cell {
-    @include display-flex(center);
-    min-width: 2em;
+  @include display-flex(center);
+  min-width: 2em;
 }
 
 .cell-icon {
-    font-size: 1.5em;
-    width: auto;
-    height: auto;
-    margin-right: .3em;
-    text-align: right;
+  font-size: 1.5em;
+  width: auto;
+  height: auto;
+  margin-right: .3em;
+  text-align: right;
 }
 
 .cell-text {
-    @include ellipsis-text;
-    text-align: left;
+  @include ellipsis-text;
+  text-align: left;
 }
 
 .wd-30 {
-    width: 30%;
+  width: 30%;
 }
 
 .wd-70 {
-    width: 70%;
+  width: 70%;
 }
 
 .wd-20 {
-    width: 20%;
+  width: 20%;
 }
 
 .wd-80 {
-    width: 80%;
+  width: 80%;
 }
 
 .wd-10 {
-    width: 10%;
+  width: 10%;
 }
 
 .wd-90 {
-    width: 90%;
+  width: 90%;
 }
 
 .btn-icon {
-    font-size: 1.3em;
-    padding-right: .3em;
+  font-size: 1.3em;
+  padding-right: .3em;
 }
 
 .actions {
-    margin-bottom: 1em;
+  margin-bottom: 1em;
 }
 
 .action-btn {
-    @include display-flex(center);
+  @include display-flex(center);
 }
 
 .actions button {
-    margin-right: .5em;
+  margin-right: .5em;
+}
+
+.list-container {
+  width: 100%;
+  overflow-x: hidden;
+  font-family: $font-stack;
+  font-size: .8em;
+}
+
+.list-content {
+  height: calc(100vh - 205px);
+  position: relative;
+  width: 100%;
+
+  a:link,
+  a:visited {
+    color: $color;
+  }
+}
+
+.list-item,
+.list-header {
+  @include display-flex;
+  height: 40px;
+  width: 100%;
+  background: #ffffff;
+  padding: 5px 15px;
+  border-bottom: 1px solid rgba(0, 0, 0, .12);
+}
+
+.list-header {
+  align-items: center;
+}
+
+@mixin none-animation {
+  animation: none !important;
+  transition-property: none !important;
+}
+
+:host ::ng-deep .mat-progress-bar .mat-progress-bar-buffer {
+  @include none-animation;
+}
+
+:host ::ng-deep .mat-progress-bar .mat-progress-bar-fill {
+  @include none-animation;
+}
+
+:host ::ng-deep .cdk-virtual-scroll-content-wrapper {
+  right: 0;
+}
+
+.loading {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(238, 238, 238, .55);
+  z-index: 100;
+  @include display-flex(center, center);
+}
+
+.color-icon {
+  color: $color;
+}
+
+.virtual-scroll-loading {
+  position: fixed;
+  z-index: 300;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+}
+
+.list-header .header {
+  display: flex;
 }

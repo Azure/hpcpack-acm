@@ -1,10 +1,22 @@
+@import "../../stylesheets/mixin.scss";
+
 .loading {
-    display: flex;
-    justify-content: center;
-    margin: 20px auto;
+  display: flex;
+  justify-content: center;
+  margin-top: 6px;
+  font-family: $font-stack;
 }
 
-.load-finish {
-    color: #3f51b5;
-    font-size: .9em;
+.load-info {
+  color: #3f51b5;
+  font-size: .9em;
+}
+
+.load-area {
+  display: flex;
+  justify-content: center;
+}
+
+.loading-text {
+  padding-left: 10px;
 }

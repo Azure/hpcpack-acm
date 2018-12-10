@@ -1,34 +1,40 @@
 @import "../../stylesheets/mixin.scss";
 @import "../../stylesheets/table.scss";
-mat-table {
-    margin-top: 1em;
+
+.actions {
+  @include display-flex(center, space-between);
 }
 
-.mat-column-id {
-    flex: 0.2;
-    .icon-cell {
-        color: #3f51b5;
+.filter-area {
+  @include display-flex(center, flex-end);
+
+  mat-form-field {
+    margin: 0 10px;
+
+    input {
+      font-size: 14px;
     }
+  }
 }
 
-.mat-column-command {
-    // flex: 2.5;
-    @include ellipsis-text;
+.job-id {
+  flex: 0.2;
 }
 
-.mat-column-progress {
-    flex: 0.8; // text-align: right;
+.job-command {
+  flex: 1;
+  @include ellipsis-text;
 }
 
-.mat-column-lastChangedAt {
-    flex: 0.4;
+.job-progress {
+  flex: 0.8; // text-align: right;
 }
 
-.mat-column-createdAt,
-.mat-column-state {
-    flex: 0.4;
+.job-updated {
+  flex: 0.4;
 }
 
-.control {
-    margin-top: 1em;
+.job-created,
+.job-state {
+  flex: 0.4;
 }

@@ -14,6 +14,7 @@ import { CommandInputComponent } from './command-input/command-input.component';
 import { SharedModule } from '../shared.module';
 import { TaskErrorComponent } from './node-selector/task-error/task-error.component';
 import { MultiCmdsComponent } from './multi-cmds/multi-cmds.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 @NgModule({
   imports: [
@@ -23,7 +24,8 @@ import { MultiCmdsComponent } from './multi-cmds/multi-cmds.component';
     WidgetsModule,
     FormsModule,
     ChartModule,
-    SharedModule
+    SharedModule,
+    ScrollingModule
   ],
   declarations: [CommandComponent, ResultListComponent, ResultDetailComponent, CommandOutputComponent, NodeSelectorComponent, CommandInputComponent, TaskErrorComponent, MultiCmdsComponent],
   entryComponents: [CommandInputComponent, TaskErrorComponent],

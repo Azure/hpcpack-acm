@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatTableDataSource, MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { SelectionModel } from '@angular/cdk/collections';
@@ -9,6 +9,8 @@ import { TableOptionComponent } from '../../widgets/table-option/table-option.co
 import { ApiService, Loop } from '../../services/api.service';
 import { TableSettingsService } from '../../services/table-settings.service';
 import { TableDataService } from '../../services/table-data/table-data.service';
+import { VirtualScrollService } from '../../services/virtual-scroll/virtual-scroll.service';
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
 @Component({
   selector: 'resource-node-list',
@@ -16,6 +18,8 @@ import { TableDataService } from '../../services/table-data/table-data.service';
   styleUrls: ['./node-list.component.scss']
 })
 export class NodeListComponent {
+  @ViewChild('content') cdkVirtualScrollViewport: CdkVirtualScrollViewport;
+
   public query = { filter: '' };
 
   private subcription: Subscription;
@@ -39,14 +43,23 @@ export class NodeListComponent {
 
   private lastId = 0;
   private nodeLoop: object;
-  public maxPageSize = 120;
+  public maxPageSize = 30000;
   public currentData = [];
   public scrolled = false;
   public loadFinished = false;
   private interval = 5000;
-  private loading = false;
+  private reverse = true;
   private scrollDirection = 'down';
   private selectedNodes = [];
+
+  pivot = Math.round(this.maxPageSize / 2) - 1;
+
+  startIndex = 0;
+  lastScrolled = 0;
+
+  public loading = false;
+  public empty = true;
+  private endId = -1;
 
   constructor(
     private dialog: MatDialog,
@@ -54,7 +67,8 @@ export class NodeListComponent {
     private router: Router,
     private route: ActivatedRoute,
     private settings: TableSettingsService,
-    private tableDataService: TableDataService
+    private tableDataService: TableDataService,
+    private virtualScrollService: VirtualScrollService
   ) { }
 
   ngOnInit() {
@@ -67,11 +81,20 @@ export class NodeListComponent {
       this.getNodesRequest(),
       {
         next: (result) => {
-          this.currentData = result;
-          if (this.scrollDirection == 'down' && result.length < this.maxPageSize) {
+          // this.currentData = result;
+          // if (this.scrollDirection == 'down' && result.length < this.maxPageSize) {
+          //   this.loadFinished = true;
+          // }
+          // this.tableDataService.updateDatasource(result, this.dataSource, 'id');
+          // return this.getNodesRequest();
+          this.empty = false;
+          if (this.endId != -1 && result[result.length - 1].id != this.endId) {
+            this.loading = false;
+          }
+          if (this.reverse && result.length < this.maxPageSize) {
             this.loadFinished = true;
           }
-          this.tableDataService.updateData(result, this.dataSource, 'id');
+          this.tableDataService.updateDatasource(result, this.dataSource, 'id');
           return this.getNodesRequest();
         }
       },
@@ -89,14 +112,6 @@ export class NodeListComponent {
     }
     this.subcription.unsubscribe();
   }
-
-  public onScrollEvent(data) {
-    this.lastId = data.dataIndex == -1 ? 0 : this.dataSource.data[data.dataIndex]['id'];
-    this.loadFinished = data.loadFinished;
-    this.scrolled = data.scrolled;
-    this.scrollDirection = data.scrollDirection;
-  }
-
   private getNodesRequest() {
     return this.api.node.getNodesByPage(this.lastId, this.maxPageSize)
   }
@@ -219,5 +234,35 @@ export class NodeListComponent {
 
   loadSettings(): void {
     this.availableColumns = this.settings.load('NodeListComponent', NodeListComponent.customizableColumns);
+  }
+
+  trackByFn(index, item) {
+    return this.tableDataService.trackByFn(item, this.displayedColumns);
+  }
+
+  getColumnOrder(col) {
+    let index = this.displayedColumns.findIndex(item => {
+      return item == col;
+    });
+
+    let order = index + 1;
+    if (order) {
+      return { 'order': index + 1 };
+    }
+    else {
+      return { 'display': 'none' };
+    }
+  }
+
+
+  indexChanged($event) {
+    let result = this.virtualScrollService.indexChangedCalc(this.maxPageSize, this.pivot, this.cdkVirtualScrollViewport, this.dataSource.data, this.lastScrolled, this.startIndex);
+    this.pivot = result.pivot;
+    this.lastScrolled = result.lastScrolled;
+    this.lastId = result.lastId == undefined ? this.lastId : result.lastId;
+    this.endId = result.endId == undefined ? this.endId : result.endId;
+    this.loading = result.loading;
+    this.startIndex = result.startIndex;
+    this.scrolled = result.scrolled;
   }
 }
