@@ -81,7 +81,7 @@ const tableSettingsStub = {
 }
 
 class TableDataServiceStub {
-  updateData(newData, dataSource, propertyName) {
+  updateDatasource(newData, dataSource, propertyName) {
     return dataSource.data = newData;
   }
 }

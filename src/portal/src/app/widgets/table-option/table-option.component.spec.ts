@@ -25,7 +25,7 @@ fdescribe('TableOptionComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [TableOptionComponent],
-      imports: [MaterialsModule, DragulaModule],
+      imports: [MaterialsModule, DragulaModule.forRoot()],
       providers: [
         { provide: MatDialogRef, useClass: MatDialogModuleMock },
         { provide: MAT_DIALOG_DATA, useValue: { columns: customizableColumns } }

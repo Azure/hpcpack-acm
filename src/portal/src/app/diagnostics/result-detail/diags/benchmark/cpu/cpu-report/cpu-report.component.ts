@@ -71,7 +71,7 @@ export class CpuReportComponent implements OnInit {
       {
         next: (result) => {
           this.currentData = result;
-          this.tableDataService.updateData(result, this.dataSource, 'id');
+          this.tableDataService.updateDatasource(result, this.dataSource, 'id');
           if (result.length < this.pageSize && this.scrollDirection == 'down') {
             this.loadFinished = true;
           }
