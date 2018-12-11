@@ -10,6 +10,7 @@ import { MatDialog } from '@angular/material';
 import { MaterialsModule } from '../../materials.module';
 import { NodeListComponent } from './node-list.component';
 import { TableDataService } from '../../services/table-data/table-data.service';
+import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
 @Directive({
   selector: '[routerLink]',
@@ -77,7 +78,7 @@ const tableSettingsStub = {
 }
 
 class TableDataServiceStub {
-  updateData(newData, dataSource, propertyName) {
+  updateDatasource(newData, dataSource, propertyName) {
     return dataSource.data = newData;
   }
 }
@@ -85,6 +86,7 @@ class TableDataServiceStub {
 fdescribe('NodeListComponent', () => {
   let component: NodeListComponent;
   let fixture: ComponentFixture<NodeListComponent>;
+  let viewport: CdkVirtualScrollViewport;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
@@ -97,6 +99,7 @@ fdescribe('NodeListComponent', () => {
         NoopAnimationsModule,
         FormsModule,
         MaterialsModule,
+        ScrollingModule
       ],
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
@@ -121,15 +124,13 @@ fdescribe('NodeListComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(NodeListComponent);
     component = fixture.componentInstance;
+    viewport = component.cdkVirtualScrollViewport;
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
-    let text = fixture.nativeElement.querySelector('.mat-cell.mat-column-name').textContent;
-    expect(text).toContain(ApiServiceStub.nodes[0].name);
-    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-state').textContent;
-    expect(text).toContain(ApiServiceStub.nodes[0].state);
+    expect(viewport.getDataLength()).toEqual(1);
   });
 
   it('should run command', () => {
