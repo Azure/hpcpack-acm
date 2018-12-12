@@ -50,7 +50,7 @@ export class NodeListComponent {
   private interval = 5000;
   private reverse = true;
   private scrollDirection = 'down';
-  private selectedNodes = [];
+  public selectedNodes = [];
 
   pivot = Math.round(this.maxPageSize / 2) - 1;
 
@@ -125,13 +125,13 @@ export class NodeListComponent {
     this.router.navigate(['.'], { relativeTo: this.route, queryParams: this.query });
   }
 
-  private isAllSelected() {
+  public isAllSelected() {
     const numSelected = this.selectedNodes.length;
     const numRows = this.dataSource.data.length;
     return numSelected == numRows;
   }
 
-  private masterToggle() {
+  public masterToggle() {
     this.isAllSelected() ?
       this.selectedNodes = [] :
       this.dataSource.data.forEach(row => {
