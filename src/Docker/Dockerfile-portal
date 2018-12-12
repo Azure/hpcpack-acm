@@ -1,5 +1,0 @@
-FROM evancui/hpcacm:latest as final
-EXPOSE 443
-WORKDIR /app/portal
-ENTRYPOINT ["/bin/bash", "/app/scripts/start-portal.sh"]
-
