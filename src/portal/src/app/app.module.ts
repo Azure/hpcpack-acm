@@ -55,7 +55,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
     UserSettingsService,
     LocalStorageService,
     DiagReportService,
-    // { provide: HTTP_INTERCEPTORS, useClass: BasicInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: BasicInterceptor, multi: true },
     // { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
   ],
   bootstrap: [AppComponent]

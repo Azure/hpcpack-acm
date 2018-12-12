@@ -27,12 +27,12 @@ export class NodeListComponent {
   public dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
   static customizableColumns = [
-    { name: 'health', displayName: 'Health', displayed: true, },
-    { name: 'state', displayName: 'State', displayed: true, },
-    { name: 'os', displayName: 'OS', displayed: true },
-    { name: 'runningJobCount', displayName: 'Jobs', displayed: true },
-    { name: 'eventCount', displayName: 'Events', displayed: true },
-    { name: 'memory', displayName: 'Memory', displayed: true },
+    { name: 'health', displayed: true, },
+    { name: 'state', displayed: true, },
+    { name: 'os', displayed: true },
+    { name: 'runningJobCount', displayed: true },
+    { name: 'eventCount', displayed: true },
+    { name: 'memory', displayed: true },
   ];
 
   private availableColumns;
@@ -74,19 +74,10 @@ export class NodeListComponent {
   ngOnInit() {
     this.loadSettings();
     this.getDisplayedColumns();
-    // this.api.node.getAll().subscribe(nodes => {
-    //   this.dataSource.data = nodes;
-    // });
     this.nodeLoop = Loop.start(
       this.getNodesRequest(),
       {
         next: (result) => {
-          // this.currentData = result;
-          // if (this.scrollDirection == 'down' && result.length < this.maxPageSize) {
-          //   this.loadFinished = true;
-          // }
-          // this.tableDataService.updateDatasource(result, this.dataSource, 'id');
-          // return this.getNodesRequest();
           this.empty = false;
           if (this.endId != -1 && result[result.length - 1].id != this.endId) {
             this.loading = false;
@@ -94,7 +85,9 @@ export class NodeListComponent {
           if (this.reverse && result.length < this.maxPageSize) {
             this.loadFinished = true;
           }
-          this.tableDataService.updateDatasource(result, this.dataSource, 'id');
+          if (result.length > 0) {
+            this.tableDataService.updateDatasource(result, this.dataSource, 'id');
+          }
           return this.getNodesRequest();
         }
       },

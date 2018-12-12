@@ -1,40 +1,36 @@
 @import "../../../../stylesheets/table.scss";
+
 .node.success {
-    background-color: #d5ffd4;
+  background-color: #d5ffd4;
 }
 
 .node.failure {
-    background-color: #ffdada;
+  background-color: #ffdada;
 }
 
 .node {
-    cursor: pointer;
+  cursor: pointer;
 }
 
-.mat-header-cell.mat-column-id {
-    /* text-align: center; */
-    flex: 1;
-    /* padding-right: 0.8em; */
+.task-id {
+  flex: 0.5;
 }
 
-mat-row .mat-column-id {
-    flex: 1;
+.task-detail {
+  flex: 0.3;
+
+  button {
+    text-align: right;
+  }
 }
 
-mat-row .mat-column-detail {
-    color: $color;
+.task-remark {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 3;
 }
 
-.mat-column-detail {
-    flex: 0.2;
-}
-
-.mat-column-nodes {
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 3;
-}
-
-.mat-column-state {
-    flex: 0.5;
+.task-state,
+.task-node {
+  flex: 1;
 }

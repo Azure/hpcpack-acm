@@ -16,7 +16,7 @@ export class VirtualScrollService {
     let endId: number;
     let initialPivot = Math.round(pageSize / 2);
     // Add increasedIndex to update startIndex and pivot 
-    let increasedIndex = Math.round(pageSize / 3);
+    let increasedIndex = Math.round(cdkVirtualScrollViewport.getViewportSize() / 40);
     let isScrolled: boolean;
 
     if (scrolled > lastScrolled) {
@@ -63,10 +63,9 @@ export class VirtualScrollService {
     // Scroll up logic
     if (end <= pivot && direction == 'up') {
       startIndex = (startIndex + 1 - increasedIndex) <= 0 ? 0 : (startIndex + 1 - increasedIndex);
-      pivot = startIndex == 0 ? initialPivot : (pivot - increasedIndex);
+      pivot = startIndex == 0 ? initialPivot : ((pivot - increasedIndex) < initialPivot) ? initialPivot : (pivot - increasedIndex);
       lastId = startIndex == 0 ? 0 : dataSource[startIndex].id;
     }
-
     return {
       lastId: lastId,
       loading: loading,

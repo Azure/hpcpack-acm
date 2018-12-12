@@ -17,19 +17,19 @@ export class ResultListComponent implements OnInit, OnDestroy {
   @ViewChild('content') cdkVirtualScrollViewport: CdkVirtualScrollViewport;
 
   static customizableColumns = [
-    { name: 'createdAt', displayName: 'Created', displayed: true },
-    { name: 'test', displayName: 'Test', displayed: true },
-    { name: 'diagnostic', displayName: 'Diagnostic', displayed: true },
-    { name: 'category', displayName: 'Category', displayed: true },
-    { name: 'state', displayName: 'State', displayed: true },
-    { name: 'progress', displayName: 'Progress', displayed: true },
-    { name: 'updatedAt', displayName: 'Last Changed', displayed: true }
+    { name: 'createdAt', displayed: true },
+    { name: 'test', displayed: true },
+    { name: 'diagnostic', displayed: true },
+    { name: 'category', displayed: true },
+    { name: 'state', displayed: true },
+    { name: 'progress', displayed: true },
+    { name: 'updatedAt', displayed: true }
   ];
 
   private availableColumns;
 
   public dataSource = [];
-  public displayedColumns = ['id', 'test', 'diagnostic', 'category', 'progress', 'state', 'createdAt', 'updatedAt'];
+  public displayedColumns = [];
 
   private interval: number;
   private diagsLoop: Object;
@@ -87,7 +87,9 @@ export class ResultListComponent implements OnInit, OnDestroy {
           if (this.reverse && result.length < this.maxPageSize) {
             this.loadFinished = true;
           }
-          this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
+          if (result.length > 0) {
+            this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
+          }
           return this.getDiagRequest();
         }
       },

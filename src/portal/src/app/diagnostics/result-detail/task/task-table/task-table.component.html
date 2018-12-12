@@ -1,73 +1,54 @@
-<!-- <div class="actions">
-  <button mat-raised-button (click)="customizeTable()">Customize Columns...</button>
-</div> -->
+<div class="list-container">
+  <div class="list-header">
+    <div class="task-id" [ngStyle]="getColumnOrder('id')">
+      ID
+    </div>
+    <div class="task-node" [ngStyle]="getColumnOrder('node')">
+      Allocated Node
+    </div>
+    <div class="task-state" [ngStyle]="getColumnOrder('state')">
+      State
+    </div>
+    <div class="task-remark" [ngStyle]="getColumnOrder('remark')">
+      Remark
+    </div>
+    <div class="task-detail" [ngStyle]="getColumnOrder('detail')">
+      Detail
+    </div>
+  </div>
 
-<!-- <div class="filter">
-  <mat-form-field>
-    <input #filter matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter">
-    <mat-hint>Filter results by node name or state</mat-hint>
-    <mat-hint align="end">{{dataSource.filteredData.length}} results</mat-hint>
-  </mat-form-field>
-</div> -->
-
-<mat-table #table [dataSource]="dataSource" appWindowScroll [dataLength]="currentData.length" [pageSize]="maxPageSize"
-  (scrollEvent)="onScrollEvent($event)">
-  <!--
-       Note that these columns can be defined in any order. The actual rendered
-       columns are set as a property on the row definition, displayedColumns."
-      -->
-  <ng-container matColumnDef="id">
-    <mat-header-cell *matHeaderCellDef>Id</mat-header-cell>
-    <mat-cell *matCellDef="let task">
-      <div class="icon-cell">
-        <div class="material-icons cell-icon">timelapse</div>
-        <div class="cell-text">{{task.id}}</div>
+  <div class="list-content">
+    <cdk-virtual-scroll-viewport itemSize="40" #content class="list-content" (scrolledIndexChange)="indexChanged($event)">
+      <div *cdkVirtualFor="let task of dataSource; templateCacheSize: 0; trackBy: trackByFn.bind(this)" class="list-item">
+        <div class="icon-cell task-id" [ngStyle]="getColumnOrder('id')">
+          <i class="material-icons cell-icon color-icon">timelapse</i>
+          <div class="cell-text">{{task.id}}</div>
+        </div>
+        <div class="icon-cell task-node" [ngStyle]="getColumnOrder('node')">
+          <i class="material-icons cell-icon">desktop_windows</i>
+          <div class="cell-text">{{task.node}}</div>
+        </div>
+        <div class="icon-cell task-state" [ngStyle]="getColumnOrder('state')">
+          <i class="material-icons cell-icon" [ngClass]="stateClass(task.state)">{{setIcon(task.state)}}</i>
+          <div class="cell-text">{{task.state}}</div>
+        </div>
+        <div class="icon-cell task-remark" [ngStyle]="getColumnOrder('remark')">
+          <div class="cell-text">{{task.customizedData}}</div>
+        </div>
+        <div class="icon-cell task-detail" [ngStyle]="getColumnOrder('detail')">
+          <button mat-icon-button (click)="showDetail(task.jobId, task.id, task.state)">
+            <i class="material-icons color-icon">settings_ethernet</i>
+          </button>
+        </div>
       </div>
-    </mat-cell>
-  </ng-container>
+    </cdk-virtual-scroll-viewport>
 
-  <ng-container matColumnDef="nodes">
-    <mat-header-cell *matHeaderCellDef>Nodes</mat-header-cell>
-    <mat-cell *matCellDef="let task">
-      <div class="icon-cell">
-        <div class="material-icons cell-icon">view_module</div>
-        <div class="cell-text">{{task.customizedData}}</div>
-      </div>
-    </mat-cell>
-  </ng-container>
+    <app-scroll-to-top [scrolled]="scrolled" [targetEle]="content"></app-scroll-to-top>
 
-  <ng-container matColumnDef="node">
-    <mat-header-cell *matHeaderCellDef>Node</mat-header-cell>
-    <mat-cell *matCellDef="let task">
-      <div class="icon-cell">
-        <div class="material-icons cell-icon">view_module</div>
-        <div class="cell-text">{{task.node}}</div>
-      </div>
-    </mat-cell>
-  </ng-container>
+    <div class="list-loading" *ngIf="empty">
+      <mat-spinner></mat-spinner>
+    </div>
+  </div>
+</div>
 
-  <ng-container matColumnDef="state">
-    <mat-header-cell *matHeaderCellDef>State</mat-header-cell>
-    <mat-cell *matCellDef="let task">
-      <div class="icon-cell">
-        <i class="material-icons cell-icon" [ngClass]="stateClass(task.state)">{{setIcon(task.state)}}</i>
-        <div class="cell-text">{{task.state}}</div>
-      </div>
-    </mat-cell>
-  </ng-container>
-
-  <ng-container matColumnDef="detail">
-    <mat-header-cell *matHeaderCellDef>Detail</mat-header-cell>
-    <mat-cell *matCellDef="let task">
-      <button mat-icon-button (click)="showDetail(task.jobId, task.id, task.state)">
-        <i class="material-icons">settings_ethernet</i>
-      </button>
-    </mat-cell>
-  </ng-container>
-
-  <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-  <mat-row *matRowDef="let task; columns: displayedColumns;"></mat-row>
-</mat-table>
-
-<app-loading-progress-bar [loadFinished]="loadFinished"></app-loading-progress-bar>
-<app-scroll-to-top [scrolled]="scrolled"></app-scroll-to-top>
+<app-loading-progress-bar [loadFinished]="loadFinished" [hidden]="!loading" class="virtual-scroll-loading"></app-loading-progress-bar>

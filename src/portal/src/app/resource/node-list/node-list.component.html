@@ -62,7 +62,7 @@
   </div>
 
   <div class="list-content">
-    <cdk-virtual-scroll-viewport itemSize="20" #content class="list-content" (scrolledIndexChange)="indexChanged($event)">
+    <cdk-virtual-scroll-viewport itemSize="40" #content class="list-content" (scrolledIndexChange)="indexChanged($event)">
       <div *cdkVirtualFor="let node of dataSource; templateCacheSize: 0; trackBy: trackByFn.bind(this)" class="list-item">
         <div class="icon-cell node-checkbox">
           <mat-checkbox color="primary" (click)="$event.stopPropagation();" (change)="$event? updateSelectedNodes(node) : null"
@@ -107,10 +107,10 @@
     </cdk-virtual-scroll-viewport>
     <app-scroll-to-top [scrolled]="scrolled" [targetEle]="content"></app-scroll-to-top>
 
-    <div class="loading" *ngIf="empty">
+    <div class="list-loading" *ngIf="empty">
       <mat-spinner></mat-spinner>
     </div>
   </div>
 </div>
 
-<!-- <app-loading-progress-bar [loadFinished]="loadFinished" *ngIf="loading" class="virtual-scroll-loading"></app-loading-progress-bar> -->
+<app-loading-progress-bar [loadFinished]="loadFinished" [hidden]="!loading" class="virtual-scroll-loading"></app-loading-progress-bar>

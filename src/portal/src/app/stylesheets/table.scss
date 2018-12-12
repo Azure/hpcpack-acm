@@ -144,6 +144,7 @@ mat-header-cell {
   height: calc(100vh - 205px);
   position: relative;
   width: 100%;
+  margin-bottom: 5px;
 
   a:link,
   a:visited {
@@ -182,7 +183,7 @@ mat-header-cell {
   right: 0;
 }
 
-.loading {
+.list-loading {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -195,14 +196,6 @@ mat-header-cell {
 
 .color-icon {
   color: $color;
-}
-
-.virtual-scroll-loading {
-  position: fixed;
-  z-index: 300;
-  bottom: 6px;
-  left: 0;
-  right: 0;
 }
 
 .list-header .header {

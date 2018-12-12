@@ -35,7 +35,7 @@
     </div>
   </div>
   <div class="list-content">
-    <cdk-virtual-scroll-viewport itemSize="20" #content class="list-content" (scrolledIndexChange)="indexChanged($event)">
+    <cdk-virtual-scroll-viewport itemSize="40" #content class="list-content" (scrolledIndexChange)="indexChanged($event)">
       <div *cdkVirtualFor="let job of dataSource; templateCacheSize: 0; trackBy: trackByFn.bind(this)" class="list-item">
         <div class="icon-cell job-id" [ngStyle]="getColumnOrder('id')">
           <i class="material-icons cell-icon color-icon">local_hospital</i>
@@ -78,10 +78,10 @@
 
     <app-scroll-to-top [scrolled]="scrolled" [targetEle]="content"></app-scroll-to-top>
 
-    <div class="loading" *ngIf="empty">
+    <div class="list-loading" *ngIf="empty">
       <mat-spinner></mat-spinner>
     </div>
   </div>
 </div>
 
-<app-loading-progress-bar [loadFinished]="loadFinished" *ngIf="loading" class="virtual-scroll-loading"></app-loading-progress-bar>
+<app-loading-progress-bar [loadFinished]="loadFinished" [hidden]="!loading" class="virtual-scroll-loading"></app-loading-progress-bar>

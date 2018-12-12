@@ -8,7 +8,7 @@ import { AuthService } from './services/auth.service';
 })
 export class AppComponent {
   constructor(public authService: AuthService) {
-    this.authService.getUserInfo();
+    // this.authService.getUserInfo();
   }
 
 }
