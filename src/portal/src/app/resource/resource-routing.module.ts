@@ -9,7 +9,7 @@ import { NodeDetailComponent } from './node-detail/node-detail.component';
 const routes: Routes = [{
   path: '',
   component: ResourceComponent,
-  canActivate: [AuthGuardService],
+  // canActivate: [AuthGuardService],
   children: [
     { path: 'list', component: NodeListComponent, data: { breadcrumb: "List" }},
     { path: 'heatmap', component: NodeHeatmapComponent, data: { breadcrumb: "Heatmap" }},
