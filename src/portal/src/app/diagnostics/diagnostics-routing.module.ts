@@ -8,7 +8,6 @@ import { ResultDetailComponent } from './result-detail/result-detail.component';
 const routes: Routes = [{
   path: '',
   component: DiagnosticsComponent,
-  canActivate: [AuthGuardService],
   children: [
     { path: 'results', component: ResultListComponent, data: { breadcrumb: "Results" }},
     { path: 'results/:id', component: ResultDetailComponent, data: { breadcrumb: "Result" }},
