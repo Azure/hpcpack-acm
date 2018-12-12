@@ -1,4 +1,4 @@
-#v0.19
+#v0.20
 
 import sys, json, copy, numpy, time
 
