@@ -1,11 +1,9 @@
 ﻿namespace Microsoft.HpcAcm.Frontend.Controllers
 {
-    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using System.Threading;
     using System.Threading.Tasks;
 
-    [Authorize]
     [Route("v1/sync")]
     public class SyncScriptV1Controller : Controller
     {
