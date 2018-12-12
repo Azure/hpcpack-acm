@@ -138,7 +138,7 @@
                     logger.Information("Call startjobandtask for task {0}", taskKey);
                     (taskInfo.StartInfo.environmentVariables ?? (taskInfo.StartInfo.environmentVariables = new Dictionary<string, string>()))
                         .Add("blobEndpoint", this.Utilities.Account.BlobEndpoint.AbsoluteUri);
-                    taskInfo.StartInfo.stdout = $"{this.Communicator.Options.AgentUriBase}/output/{jobId}/{taskKey}";
+                    taskInfo.StartInfo.stdout = taskInfo.StartInfo.stderr = $"{this.Communicator.Options.AgentUriBase}/output/{jobId}/{taskKey}";
 
                     await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = TaskState.Dispatching, token, this.logger);
                     await this.Communicator.StartJobAndTaskAsync(
