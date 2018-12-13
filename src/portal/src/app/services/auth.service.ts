@@ -35,17 +35,21 @@ export class AuthService {
   }
 
   getUserInfo(): void {
-    this.api.user.getUserInfo().subscribe((res) => {
-      if (res.status == 404) {
-        this.user.name = 'Anonymous';
-        this.loggedIn = true;
-        sessionStorage.setItem('username', this.user.name);
+    this.api.user.getUserInfo().subscribe(
+      (res) => {
+        if (res.status == 200) {
+          this.user.name = res.body[0].user_id;
+          this.loggedIn = true;
+          sessionStorage.setItem('username', this.user.name);
+        }
+      },
+      (error) => {
+        if (error.status == 404) {
+          this.user.name = 'Anonymous';
+          this.loggedIn = true;
+          sessionStorage.setItem('username', this.user.name);
+        }
       }
-      else if (res.status == 200) {
-        this.user.name = res[0].user_id;
-        this.loggedIn = true;
-        sessionStorage.setItem('username', this.user.name);
-      }
-    });
+    );
   }
 }
