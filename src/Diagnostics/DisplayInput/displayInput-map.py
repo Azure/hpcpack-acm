@@ -12,7 +12,7 @@ def main():
 
     taskTemplate = {
         "Id":0,
-        "CommandLine":"echo {0}".format(json.dumps(stdin)),
+        "CommandLine":"echo '{0}'".format(json.dumps(stdin)),
         "Node":None,
         "UserName":"hpc_diagnostics",
         "Password":None,
