@@ -5,90 +5,93 @@ $font-size: 16px;
 $font-weight: normal;
 $color: #3f51b5;
 $info-color: rgba(0, 0, 0, .8);
+
 @mixin display-flex($align-items: stretch, $justify-content: normal, $flex-direction: row) {
-    display: -webkit-flex;
-    display: flex;
-    flex-direction: $flex-direction;
-    align-items: $align-items;
-    justify-content: $justify-content;
+  display: -webkit-flex;
+  display: flex;
+  flex-direction: $flex-direction;
+  align-items: $align-items;
+  justify-content: $justify-content;
 }
 
 @mixin full-size {
-    height: 100%;
-    width: 100%;
+  height: 100%;
+  width: 100%;
 }
 
 @mixin pd($top, $right, $bottom, $left) {
-    padding-top: $top;
-    padding-right: $right;
-    padding-bottom: $bottom;
-    padding-left: $left;
+  padding-top: $top;
+  padding-right: $right;
+  padding-bottom: $bottom;
+  padding-left: $left;
 }
 
 @mixin mg($top, $right, $bottom, $left) {
-    margin-top: $top;
-    margin-right: $right;
-    margin-bottom: $bottom;
-    margin-left: $left;
+  margin-top: $top;
+  margin-right: $right;
+  margin-bottom: $bottom;
+  margin-left: $left;
 }
 
 @mixin border-radius($radius) {
-    -webkit-border-radius: $radius;
-    -moz-border-radius: $radius;
-    -ms-border-radius: $radius;
-    border-radius: $radius;
+  -webkit-border-radius: $radius;
+  -moz-border-radius: $radius;
+  -ms-border-radius: $radius;
+  border-radius: $radius;
 }
 
 @mixin position-fixed($top: auto, $right: auto, $bottom: auto, $left: auto) {
-    position: fixed;
-    top: $top;
-    right: $right;
-    bottom: $bottom;
-    left: $left;
+  position: fixed;
+  top: $top;
+  right: $right;
+  bottom: $bottom;
+  left: $left;
 }
 
 @mixin position-absolute($top: auto, $right: auto, $bottom: auto, $left: auto) {
-    position: absolute;
-    top: $top;
-    right: $right;
-    bottom: $bottom;
-    left: $left;
+  position: absolute;
+  top: $top;
+  right: $right;
+  bottom: $bottom;
+  left: $left;
 }
 
 @mixin position-relative($top: auto, $right: auto, $bottom: auto, $left: auto) {
-    position: relative;
-    top: $top;
-    right: $right;
-    bottom: $bottom;
-    left: $left;
+  position: relative;
+  top: $top;
+  right: $right;
+  bottom: $bottom;
+  left: $left;
 }
 
 @mixin box-s($x, $y, $offset, $color, $inset: false) {
-    $ie-color: ie-hex-str($color);
-    @if $inset {
-        -webkit-box-shadow: inset $x $y $offset $color;
-        box-shadow: inset $x $y $offset $color;
-    }
-    @else {
-        -webkit-box-shadow: $x $y $offset $color;
-        box-shadow: $x $y $offset $color;
-        filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=#{$x}, OffY=#{$y}, Color='#{$ie-color}');
-    }
+  $ie-color: ie-hex-str($color);
+
+  @if $inset {
+    -webkit-box-shadow: inset $x $y $offset $color;
+    box-shadow: inset $x $y $offset $color;
+  }
+
+  @else {
+    -webkit-box-shadow: $x $y $offset $color;
+    box-shadow: $x $y $offset $color;
+    filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=#{$x}, OffY=#{$y}, Color='#{$ie-color}');
+  }
 }
 
 @mixin font-basic($font-size: $font-size, $font-color: #000, $font-family: $font-stack) {
-    font-size: $font-size;
-    color: $font-color;
-    font-family: $font-family;
+  font-size: $font-size;
+  color: $font-color;
+  font-family: $font-family;
 }
 
 @mixin ellipsis-text() {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 @mixin width-height($width, $height) {
-    width: $width;
-    height: $height;
+  width: $width;
+  height: $height;
 }
