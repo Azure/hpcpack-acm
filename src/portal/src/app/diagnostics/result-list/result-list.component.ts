@@ -17,13 +17,13 @@ export class ResultListComponent implements OnInit, OnDestroy {
   @ViewChild('content') cdkVirtualScrollViewport: CdkVirtualScrollViewport;
 
   static customizableColumns = [
-    { name: 'createdAt', displayed: true },
-    { name: 'test', displayed: true },
-    { name: 'diagnostic', displayed: true },
-    { name: 'category', displayed: true },
-    { name: 'state', displayed: true },
-    { name: 'progress', displayed: true },
-    { name: 'updatedAt', displayed: true }
+    { name: 'createdAt', displayed: true, displayName: 'Created' },
+    { name: 'test', displayed: true, displayName: 'Test Name' },
+    { name: 'diagnostic', displayed: true, displayName: 'Diagnostic' },
+    { name: 'category', displayed: true, displayName: 'Category' },
+    { name: 'state', displayed: true, displayName: 'State' },
+    { name: 'progress', displayed: true, displayName: 'Progress' },
+    { name: 'updatedAt', displayed: true, displayName: 'Last Changed' }
   ];
 
   private availableColumns;

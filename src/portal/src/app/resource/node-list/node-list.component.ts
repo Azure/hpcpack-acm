@@ -27,12 +27,12 @@ export class NodeListComponent {
   public dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
   static customizableColumns = [
-    { name: 'health', displayed: true, },
-    { name: 'state', displayed: true, },
-    { name: 'os', displayed: true },
-    { name: 'runningJobCount', displayed: true },
-    { name: 'eventCount', displayed: true },
-    { name: 'memory', displayed: true },
+    { name: 'health', displayed: true, displayName: 'Health' },
+    { name: 'state', displayed: true, displayName: 'State' },
+    { name: 'os', displayed: true, displayName: 'OS' },
+    { name: 'runningJobCount', displayed: true, displayName: 'Jobs' },
+    { name: 'eventCount', displayed: true, displayName: 'Events' },
+    { name: 'memory', displayed: true, displayName: 'Memory(MB)' },
   ];
 
   private availableColumns;
@@ -44,7 +44,6 @@ export class NodeListComponent {
   private lastId = 0;
   private nodeLoop: object;
   public maxPageSize = 30000;
-  public currentData = [];
   public scrolled = false;
   public loadFinished = false;
   private interval = 5000;

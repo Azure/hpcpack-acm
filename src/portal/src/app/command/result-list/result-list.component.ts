@@ -18,11 +18,11 @@ export class ResultListComponent implements OnInit {
   public dataSource = [];
 
   static customizableColumns = [
-    { name: 'createdAt', displayed: true },
-    { name: 'command', displayed: true },
-    { name: 'state', displayed: true },
-    { name: 'progress', displayed: true },
-    { name: 'updatedAt', displayed: true },
+    { name: 'createdAt', displayed: true, displayName: 'Created' },
+    { name: 'command', displayed: true, displayName: 'Command' },
+    { name: 'state', displayed: true, displayName: 'State' },
+    { name: 'progress', displayed: true, displayName: 'Progress' },
+    { name: 'updatedAt', displayed: true, displayName: 'Last Changed' },
   ];
 
   private availableColumns;
