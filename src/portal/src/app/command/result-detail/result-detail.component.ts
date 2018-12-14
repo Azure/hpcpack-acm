@@ -9,6 +9,7 @@ import { CommandOutputComponent } from '../command-output/command-output.compone
 import { CommandInputComponent } from '../command-input/command-input.component';
 import { ConfirmDialogComponent } from '../../widgets/confirm-dialog/confirm-dialog.component';
 import { JobStateService } from '../../services/job-state/job-state.service';
+import { TableDataService } from '../../services/table-data/table-data.service';
 
 @Component({
   selector: 'app-result-detail',
@@ -16,9 +17,6 @@ import { JobStateService } from '../../services/job-state/job-state.service';
   styleUrls: ['./result-detail.component.scss']
 })
 export class ResultDetailComponent implements OnInit {
-  @ViewChild(NodeSelectorComponent)
-  private selector: NodeSelectorComponent;
-
   @ViewChild('output')
   private output: CommandOutputComponent;
 
@@ -48,12 +46,29 @@ export class ResultDetailComponent implements OnInit {
 
   public canceling = false;
 
+  private lastId = 0;
+  public maxPageSize = 100;
+  public scrolled = false;
+  public loadFinished = false;
+  private reverse = true;
+  private selectedNodes = [];
+
+  pivot = Math.round(this.maxPageSize / 2) - 1;
+
+  startIndex = 0;
+  lastScrolled = 0;
+
+  public listLoading = false;
+  public empty = true;
+  private endId = -1;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private api: ApiService,
     private jobStateService: JobStateService,
     private dialog: MatDialog,
+    private tableDataService: TableDataService
   ) { }
 
   ngOnInit() {
@@ -87,9 +102,6 @@ export class ResultDetailComponent implements OnInit {
           this.result.state = job.state;
           this.result.command = job.commandLine;
           this.result.timeout = job.defaultTaskMaximumRuntimeSeconds;
-          if (!this.gotTasks) {
-            this.result.nodes = job.targetNodes.map(node => ({ name: node, state: '' }));
-          }
           return true;
         },
         error: (err) => {
@@ -99,35 +111,45 @@ export class ResultDetailComponent implements OnInit {
     );
   }
 
-  getNodesFromTasks(tasks) {
-    return tasks.map((e: any) => ({
-      name: e.node,
-      state: e.state,
-      taskId: e.id,
-    }));
+  private getTasksRequest() {
+    return this.api.command.getTasksByPage(this.id, this.lastId, this.maxPageSize);
   }
 
   updateNodes(id) {
     this.nodesLoop = Loop.start(
       //observable:
-      this.api.command.getTasks(id),
+      this.getTasksRequest(),
       //observer:
       {
         next: (tasks) => {
           if (id != this.id) {
             return;
           }
+          this.empty = false;
           if (tasks.length > 0) {
             this.gotTasks = true;
-            this.result.nodes = this.getNodesFromTasks(tasks);
+            // this.result.nodes = tasks;
+            this.result.nodes = this.tableDataService.updateData(tasks, this.result.nodes, 'id');
           }
-          return true;
+
+          if (this.endId != -1 && tasks[tasks.length - 1].id != this.endId) {
+            this.listLoading = false;
+          }
+          if (this.reverse && tasks.length < this.maxPageSize) {
+            this.loadFinished = true;
+          }
+          return this.getTasksRequest();
         },
         error: (err) => {
           this.errorMsg = err;
         }
       }
     );
+  }
+
+  onUpdateLastIdEvent(data) {
+    this.lastId = data.lastId;
+    this.endId = data.endId;
   }
 
   ngOnDestroy() {
@@ -185,7 +207,7 @@ export class ResultDetailComponent implements OnInit {
     return Loop.start(
       //observable:
       Observable.create((observer) => {
-        this.api.command.getTaskResult(this.id, node.taskId).subscribe(
+        this.api.command.getTaskResult(this.id, node.id).subscribe(
           result => {
             observer.next(result.resultKey);
             observer.complete();

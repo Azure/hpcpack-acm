@@ -1,39 +1,43 @@
 @import "../../stylesheets/table.scss";
 @import "../../stylesheets/info.scss";
+
 mat-form-field {
-    width: 100%;
+  width: 100%;
 }
 
-mat-row {
-    cursor: pointer;
+.list-item {
+  cursor: pointer;
 }
 
-mat-row:hover {
-    background: rgba(0, 0, 0, .04);
+.list-item:hover {
+  background: rgba(0, 0, 0, .04);
 }
 
-.mat-column-state {
-    flex: 0.5;
+.node-name {
+  flex: 1;
+}
+
+.node-state {
+  flex: 0.5;
 }
 
 .selected {
-    background-color: rgba(0, 0, 0, 0.08);
+  background-color: rgba(0, 0, 0, 0.08);
 }
 
 .mat-form-field input {
-    font-size: .9em;
+  font-size: .9em;
 }
 
-.mat-table {
-    max-height: 60vh;
-    overflow: auto;
+.list-content {
+  height: 50vh;
 }
 
 .mat-select {
-    font-size: .9em;
+  font-size: .9em;
 }
 
-.mat-row a {
-    color: #d64205;
-    text-decoration-line: underline;
+.list-item a {
+  color: #d64205;
+  text-decoration-line: underline;
 }

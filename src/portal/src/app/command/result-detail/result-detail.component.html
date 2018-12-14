@@ -28,7 +28,8 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-3 selection">
-        <node-selector [nodes]="result.nodes" (select)="selectNode($event)" [nodeOutputs]="nodeOutputs">
+        <node-selector [nodes]="result.nodes" [loadFinished]='loadFinished' [maxPageSize]="maxPageSize" (select)="selectNode($event)"
+          (updateLastIdEvent)="onUpdateLastIdEvent($event)" [nodeOutputs]="nodeOutputs" [empty]="empty">
         </node-selector>
       </div>
 
