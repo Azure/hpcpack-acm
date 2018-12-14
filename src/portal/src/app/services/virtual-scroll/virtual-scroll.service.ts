@@ -54,18 +54,19 @@ export class VirtualScrollService {
     // change lastId to update the request url
 
     // Scroll down logic
-    if (start >= pivot && direction == 'down') {
+    if ((start >= pivot || end > (totalLen - increasedIndex)) && direction == 'down') {
       startIndex = (startIndex + increasedIndex) > totalLen ? startIndex : (startIndex + increasedIndex - 1);
       pivot = pivot + increasedIndex > totalLen ? pivot : (pivot + increasedIndex);
       lastId = dataSource[startIndex].id;
     }
 
     // Scroll up logic
-    if (end <= pivot && direction == 'up') {
+    if ((end <= pivot || start < startIndex) && direction == 'up') {
       startIndex = (startIndex + 1 - increasedIndex) <= 0 ? 0 : (startIndex + 1 - increasedIndex);
       pivot = startIndex == 0 ? initialPivot : ((pivot - increasedIndex) < initialPivot) ? initialPivot : (pivot - increasedIndex);
       lastId = startIndex == 0 ? 0 : dataSource[startIndex].id;
     }
+
     return {
       lastId: lastId,
       loading: loading,
