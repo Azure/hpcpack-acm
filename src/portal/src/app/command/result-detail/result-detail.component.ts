@@ -311,7 +311,7 @@ export class ResultDetailComponent implements OnInit {
       return false;
     }
     //Update start field when and only when it's not updated yet.
-    if (typeof (output.start) === 'undefined') {
+    if (typeof (output.start) === 'undefined' && result.offset >= 0) {
       output.start = result.offset;
     }
     //NOTE: result.end depends on passing an opt.over parameter to API getOutput.
@@ -465,7 +465,7 @@ export class ResultDetailComponent implements OnInit {
   }
 
   loadPrev(node, onload = undefined) {
-    let output = this.getNodeOutput(node)
+    let output = this.getNodeOutput(node);
     if (output.start === 0 || output.loading) {
       return;
     }
