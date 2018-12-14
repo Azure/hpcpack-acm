@@ -12,14 +12,15 @@
 	    {
 	        "name":"Version",
 	        "type":"select",
-            "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4", "2019"],
+            "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4", "2019", "2019 Update 1"],
             "description":{
-                "2018":"Intel MPI 2018 will be installed in /opt/intel/impi/2018.0.128 on the nodes.",
-                "2018 Update 1":"Intel MPI 2018 Update 1 will be installed in /opt/intel/impi/2018.1.163 on the nodes.",
-                "2018 Update 2":"Intel MPI 2018 Update 2 will be installed in /opt/intel/impi/2018.2.199 on the nodes.",
-                "2018 Update 3":"Intel MPI 2018 Update 3 will be installed in /opt/intel/impi/2018.3.222 on the nodes.",
-                "2018 Update 4":"Intel MPI 2018 Update 4 will be installed in /opt/intel/impi/2018.4.274 on the nodes.",
-                "2019":"Intel MPI 2019 will be installed in /opt/intel/impi/2019.0.117 on the nodes."
+                "2018":"Intel MPI 2018 will be installed in /opt/intel/impi/2018.0.128 on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.0.128 on Windows nodes.",
+                "2018 Update 1":"Intel MPI 2018 Update 1 will be installed in /opt/intel/impi/2018.1.163 on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.1.156 on Windows nodes.",
+                "2018 Update 2":"Intel MPI 2018 Update 2 will be installed in /opt/intel/impi/2018.2.199 on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.2.185 on Windows nodes.",
+                "2018 Update 3":"Intel MPI 2018 Update 3 will be installed in /opt/intel/impi/2018.3.222 on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.3.210 on Windows nodes.",
+                "2018 Update 4":"Intel MPI 2018 Update 4 will be installed in /opt/intel/impi/2018.4.274 on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.4.274 on Windows nodes.",
+                "2019":"Intel MPI 2019 will be installed in /opt/intel/impi/2019.0.117 on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2019.0.117 on Windows nodes.",
+                "2019 Update 1":"Intel MPI 2019 Update 1 will be installed in /opt/intel/impi/2019.1.144 on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2019.1.144 on Windows nodes.",
             },
 	        "defaultValue":"2018 Update 4"
 	    },
