@@ -27,40 +27,35 @@
             "name":"Intel MPI Version",
             "description":"Specify the location of Intel MPI that is installed on the nodes.",
             "type":"string",
-            "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4", "2019"],
+            "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4"],
             "defaultValue":"2018 Update 4",
             "whenChanged":{
-                    "2018":{
-                        "Intel MPI location":{
-                            "value":"/opt/intel/impi/2018.0.128"
-                        }
-                    },
-                    "2018 Update 1":{
-                        "Intel MPI location":{
-                            "value":"/opt/intel/impi/2018.1.163"
-                        }
-                    },
-                    "2018 Update 2":{
-                        "Intel MPI location":{
-                            "value":"/opt/intel/impi/2018.2.199"
-                        }
-                    },
-                    "2018 Update 3":{
-                        "Intel MPI location":{
-                            "value":"/opt/intel/impi/2018.3.222"
-                        }
-                    },
-                    "2018 Update 4":{
-                        "Intel MPI location":{
-                            "value":"/opt/intel/impi/2018.4.274"
-                        }
-                    },
-                    "2019":{
-                        "Intel MPI location":{
-                            "value":"/opt/intel/impi/2019.0.117"
-                        }
+                "2018":{
+                    "Intel MPI location":{
+                        "value":"/opt/intel/impi/2018.0.128"
+                    }
+                },
+                "2018 Update 1":{
+                    "Intel MPI location":{
+                        "value":"/opt/intel/impi/2018.1.163"
+                    }
+                },
+                "2018 Update 2":{
+                    "Intel MPI location":{
+                        "value":"/opt/intel/impi/2018.2.199"
+                    }
+                },
+                "2018 Update 3":{
+                    "Intel MPI location":{
+                        "value":"/opt/intel/impi/2018.3.222"
+                    }
+                },
+                "2018 Update 4":{
+                    "Intel MPI location":{
+                        "value":"/opt/intel/impi/2018.4.274"
                     }
                 }
+            }
         },
         {
             "name":"Intel MPI location",
