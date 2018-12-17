@@ -64,20 +64,18 @@ export class NewDiagnosticsComponent implements OnInit, OnDestroy {
     tree.treeModel.expandAll();
   }
 
-  private check(node, checked) {
+  private check() {
     this.selectedDescription = '';
     this.testInfoLink = '';
-    if (checked) {
-      this.selectedDescription = node.data.description;
-      if (this.selectedDescription) {
-        let index = this.selectedDescription.indexOf('http');
-        if (index != -1) {
-          this.testInfoLink = this.selectedDescription.substr(index);
-          this.selectedDescription = this.selectedDescription.substr(0, index);
-        }
+    this.selectedDescription = this.selectedTest.description;
+    if (this.selectedDescription) {
+      let index = this.selectedDescription.indexOf('http');
+      if (index != -1) {
+        this.testInfoLink = this.selectedDescription.substr(index);
+        this.selectedDescription = this.selectedDescription.substr(0, index);
       }
     }
-    this.updateCheckedNode(node, checked);
+    this.updateCheckedNode();
   }
 
   private _sub: Subscription[];
@@ -99,41 +97,27 @@ export class NewDiagnosticsComponent implements OnInit, OnDestroy {
     }
   }
 
-  private updateCheckedNode(node: any, checked: any) {
-    let allNodes = node.treeModel.nodes;
-    for (let i = 0; i < allNodes.length; i++) {
-      for (let j = 0; j < allNodes[i].children.length; j++) {
-        allNodes[i].children[j].checked = false;
-      }
-    }
-    node.data.checked = checked;
+  private updateCheckedNode() {
     this._sub = new Array<Subscription>();
-    if (checked) {
-      this.selectedTest = node.data;
-      let paras = this.selectedTest.parameters;
-      if (paras) {
-        this.paraForm = this.fb.group(this.ctlConfig[this.selectedTest.name]);
-        for (let i = 0; i < paras.length; i++) {
-          let sub = this.paraForm.controls[paras[i].name].valueChanges.subscribe(data => {
-            if (paras[i].whenChanged != undefined) {
-              let selected = paras[i].whenChanged[data];
-              for (let key in selected) {
-                this.paraForm.controls[key].setValue(selected[key].value);
-                if (selected[key].description) {
-                  this.updateHints(selected[key].description, paras, key);
-                }
+    let paras = this.selectedTest.parameters;
+    if (paras) {
+      this.paraForm = this.fb.group(this.ctlConfig[this.selectedTest.name]);
+      for (let i = 0; i < paras.length; i++) {
+        let sub = this.paraForm.controls[paras[i].name].valueChanges.subscribe(data => {
+          if (paras[i].whenChanged != undefined) {
+            let selected = paras[i].whenChanged[data];
+            for (let key in selected) {
+              this.paraForm.controls[key].setValue(selected[key].value);
+              if (selected[key].description) {
+                this.updateHints(selected[key].description, paras, key);
               }
             }
-          });
-          this._sub.push(sub);
-        }
+          }
+        });
+        this._sub.push(sub);
       }
-      this.diagTestName = `${this.selectedTest.name} created by ${this.authService.username}`;
     }
-    else {
-      this.selectedTest = undefined;
-      this.diagTestName = `created by ${this.authService.username}`;
-    }
+    this.diagTestName = `${this.selectedTest.name} created by ${this.authService.username}`;
   }
 
   ngOnDestroy() {
