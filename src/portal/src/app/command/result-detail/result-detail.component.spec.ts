@@ -10,6 +10,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MaterialsModule } from '../../materials.module';
 import { ResultDetailComponent } from './result-detail.component';
 import { JobStateService } from '../../services/job-state/job-state.service';
+import { TableDataService } from '../../services/table-data/table-data.service';
 
 @Component({ selector: 'command-output', template: '' })
 class CommandOutputStubComponent {
@@ -64,7 +65,7 @@ class NodeSelectorStubComponent {
 class ApiServiceStub {
   static job = { commandLine: 'TEST COMMAND', state: 'Finished', targetNodes: ['TEST NODE'] };
 
-  static tasks = [{ id: 1, node: 'TEST NODE', state: 'Finished' }];
+  static tasks = [{ id: 1, name: 'TEST NODE', state: 'Finished' }];
 
   static taskResult1 = { resultKey: 'key001' };
 
@@ -75,9 +76,9 @@ class ApiServiceStub {
   command: any;
 
   constructor() {
-    this.command = jasmine.createSpyObj('Command', ['get', 'getTasks', 'getTaskResult', 'getOutput', 'getDownloadUrl']);
+    this.command = jasmine.createSpyObj('Command', ['get', 'getTasksByPage', 'getTaskResult', 'getOutput', 'getDownloadUrl']);
     this.command.get.and.returnValue(of(ApiServiceStub.job));
-    this.command.getTasks.and.returnValue(of(ApiServiceStub.tasks));
+    this.command.getTasksByPage.and.returnValue(of(ApiServiceStub.tasks));
     this.command.getTaskResult.and.returnValue(of(ApiServiceStub.taskResult1));
     let value = { content: ApiServiceStub.outputContent, size: ApiServiceStub.outputContent.length, offset: 0, end: true };
     this.command.getOutput.and.returnValues(of(value));
@@ -102,6 +103,12 @@ class JobStateServiceStub {
   }
 }
 
+class TableDataServiceStub {
+  updateData(newData, dataSource, propertyName) {
+    return newData;
+  }
+}
+
 fdescribe('ClusrunResultDetailComponent', () => {
   let component: ResultDetailComponent;
   let fixture: ComponentFixture<ResultDetailComponent>;
@@ -123,6 +130,7 @@ fdescribe('ClusrunResultDetailComponent', () => {
         { provide: JobStateService, useClass: JobStateServiceStub },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
         { provide: Router, useValue: routerStub },
+        { provide: TableDataService, useClass: TableDataServiceStub }
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })
@@ -147,7 +155,7 @@ fdescribe('ClusrunResultDetailComponent', () => {
     expect(component.currentOutput.content).toEqual(ApiServiceStub.outputContent);
 
     let selectedNode = component.selectedNode;
-    expect(selectedNode.name).toEqual(ApiServiceStub.tasks[0].node);
+    expect(selectedNode.name).toEqual(ApiServiceStub.tasks[0].name);
     expect(selectedNode.state).toEqual(ApiServiceStub.tasks[0].state);
   }));
 });

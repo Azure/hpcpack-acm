@@ -74,6 +74,9 @@ class DiagTaskTableComponent {
 
   @Output()
   updateLastIdEvent = new EventEmitter();
+
+  @Input()
+  public empty: boolean;
 }
 
 @Component({
@@ -113,8 +116,8 @@ const tableSettingsStub = {
 }
 
 class TableDataServiceStub {
-  updateDatasource(newData, dataSource, propertyName) {
-    return dataSource.data = newData;
+  updateData(newData, dataSource, propertyName) {
+    return newData;
   }
 }
 

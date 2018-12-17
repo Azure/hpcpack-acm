@@ -7,6 +7,8 @@ import { MatTableDataSource } from '@angular/material';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { JobStateService } from '../../../../services/job-state/job-state.service';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { TableDataService } from '../../../../services/table-data/table-data.service';
 
 const tableSettingsStub = {
   load: (key, initVal) => initVal,
@@ -23,9 +25,16 @@ class JobStateServiceStub {
   }
 }
 
+class TableDataServiceStub {
+  updateData(newData, dataSource, propertyName) {
+    return newData;
+  }
+}
+
 fdescribe('TaskTableComponent', () => {
   let component: TaskTableComponent;
   let fixture: ComponentFixture<TaskTableComponent>;
+  let viewport: CdkVirtualScrollViewport;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
@@ -34,11 +43,13 @@ fdescribe('TaskTableComponent', () => {
       ],
       imports: [
         MaterialsModule,
+        ScrollingModule,
         NoopAnimationsModule
       ],
       providers: [
         { provide: TableSettingsService, useValue: tableSettingsStub },
         { provide: JobStateService, useClass: JobStateServiceStub },
+        { provide: TableDataService, useClass: TableDataServiceStub }
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })
@@ -52,23 +63,18 @@ fdescribe('TaskTableComponent', () => {
     component.customizableColumns = [
       { name: 'nodes', displayName: 'Nodes', displayed: true }
     ];
-    component.dataSource = new MatTableDataSource();
-    component.dataSource.data = [{
+    component.dataSource = [{
       customizedData: "node1,node2",
       state: "Finished"
     }];
-    component.currentData = [];
     component.loadFinished = false;
     component.maxPageSize = 120;
-
+    viewport = component.cdkVirtualScrollViewport;
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
-    let text = fixture.nativeElement.querySelector('.mat-cell.mat-column-nodes .icon-cell .cell-text').textContent;
-    expect(text).toEqual("node1,node2");
-    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-state .icon-cell .cell-text').textContent;
-    expect(text).toEqual("Finished");
+    expect(viewport.getDataLength()).toEqual(1);
   });
 });
