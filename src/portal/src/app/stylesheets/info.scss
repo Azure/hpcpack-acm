@@ -96,7 +96,7 @@
 
 .error-message {
   padding: 1em;
-  @include font-basic($font-size: .8em, $font-color: rgba(206, 80, 57, .9));
+  @include font-basic($font-size: .9em, $font-color: rgba(206, 80, 57, .9));
 }
 
 a {

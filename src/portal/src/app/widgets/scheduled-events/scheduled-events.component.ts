@@ -22,14 +22,11 @@ export class ScheduledEventsComponent implements OnInit {
   }
 
   typeColor(type) {
-    if (type == "Reboot") {
-      return "reboot";
-    }
-    else if (type == "Redeploy") {
-      return "redeploy";
-    }
-    else if (type == "Freeze") {
-      return "freeze";
+    switch (type) {
+      case 'Reboot': return 'reboot';
+      case 'Redeploy': return 'redeploy';
+      case 'Freeze': return 'freeze';
+      default: return '';
     }
   }
 }

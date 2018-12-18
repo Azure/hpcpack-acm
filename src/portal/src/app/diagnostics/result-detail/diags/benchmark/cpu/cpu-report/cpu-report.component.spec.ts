@@ -61,6 +61,9 @@ class DiagTaskTableComponent {
 
   @Output()
   updateLastIdEvent = new EventEmitter();
+
+  @Input()
+  public empty: boolean;
 }
 
 @Component({

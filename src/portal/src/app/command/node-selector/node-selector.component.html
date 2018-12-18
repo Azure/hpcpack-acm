@@ -1,5 +1,5 @@
 <mat-form-field>
-  <mat-select placeholder="State" [(ngModel)]="state" (change)="filter()">
+  <mat-select placeholder="State" [(ngModel)]="state" (selectionChange)="filter()">
     <mat-option *ngFor="let opt of states" [value]="opt">
       {{ opt }}
     </mat-option>
@@ -10,25 +10,44 @@
   <input matInput placeholder="Name" [(ngModel)]="name" (keyup)="filter()">
 </mat-form-field>
 
-<mat-table #table [dataSource]="dataSource">
-  <ng-container matColumnDef="name">
-    <mat-header-cell *matHeaderCellDef> Node </mat-header-cell>
-    <mat-cell *matCellDef="let node" class="icon-cell">
-      <div class="cell-text" *ngIf="!hasError(node)">{{node.name}}</div>
-      <div class="cell-text" *ngIf="hasError(node)">
-        <a class="error" (click)="showError(node)">{{node.name}}</a>
+<div class="list-container">
+  <div class="list-header">
+    <div class="header node-state">
+      ID
+    </div>
+    <div class="header node-name">
+      Name
+    </div>
+    <div class="header node-state">
+      state
+    </div>
+  </div>
+
+  <div class="list-content">
+    <cdk-virtual-scroll-viewport itemSize="40" #content class="list-content" (scrolledIndexChange)="indexChanged($event)">
+      <div *cdkVirtualFor="let node of nodes; templateCacheSize: 0; trackBy: trackByFn.bind(this)" class="list-item"
+        (click)="selectNode(node)" [ngClass]="{ selected: isSelected(node) }">
+        <div class="icon-cell node-state">
+          <div class="cell-text">{{node.id}}</div>
+        </div>
+        <div class="icon-cell node-name">
+          <div class="cell-text" *ngIf="!hasError(node)">{{node.name}}</div>
+          <div class="cell-text" *ngIf="hasError(node)">
+            <a class="error" (click)="showError(node)">{{node.name}}</a>
+          </div>
+        </div>
+        <div class="icon-cell node-state">
+          <i class="material-icons cell-icon" [ngClass]="stateClass(node.state)">{{stateIcon(node.state)}}</i>
+          <div class="cell-text">{{node.state}}</div>
+        </div>
       </div>
-    </mat-cell>
-  </ng-container>
+    </cdk-virtual-scroll-viewport>
 
-  <ng-container matColumnDef="state">
-    <mat-header-cell *matHeaderCellDef> State </mat-header-cell>
-    <mat-cell *matCellDef="let node" class="icon-cell">
-      <i class="material-icons cell-icon" [ngClass]="stateClass(node.state)">{{stateIcon(node.state)}}</i>
-      <div class="cell-text">{{node.state}}</div>
-    </mat-cell>
-  </ng-container>
+    <app-scroll-to-top [scrolled]="scrolled" [targetEle]="content"></app-scroll-to-top>
 
-  <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-  <mat-row *matRowDef="let node; columns: displayedColumns;" [ngClass]="{ selected: isSelected(node) }" (click)="selectNode(node)"></mat-row>
-</mat-table>
+    <div class="list-loading" *ngIf="empty">
+      <mat-spinner></mat-spinner>
+    </div>
+  </div>
+</div>
+<app-loading-progress-bar [loadFinished]="loadFinished" [hidden]="!loading || !scrolled" class="virtual-scroll-loading"></app-loading-progress-bar>

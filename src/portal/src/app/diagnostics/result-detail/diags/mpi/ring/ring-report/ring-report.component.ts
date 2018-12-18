@@ -13,26 +13,29 @@ import { DiagReportService } from '../../../../../../services/diag-report/diag-r
 export class RingReportComponent implements OnInit {
   @Input() result: any;
 
-  private dataSource = new MatTableDataSource();
-  private currentData = [];
+  private dataSource = [];
   private lastId = 0;
-  private pageSize = 120;
+  private pageSize = 300;
   private loadFinished = false;
-  private scrollDirection = 'down';
-
   private jobId: string;
   private interval: number;
   private tasksLoop: Object;
   private jobState: string;
-  private events = [];
-  private nodes = [];
+  public events = [];
+  public nodes = [];
   public aggregationResult: any;
 
+  public loading = false;
+  public empty = true;
+  private endId = -1;
 
-  private componentName = "RingReport";
+  public componentName = "RingReport";
 
-  private customizableColumns = [
-    { name: 'nodes', displayName: 'nodes', displayed: true },
+  public customizableColumns = [
+    { name: 'node', displayed: true },
+    { name: 'state', displayed: true },
+    { name: 'remark', displayed: true },
+    { name: 'detail', displayed: true }
   ];
 
   constructor(
@@ -69,10 +72,15 @@ export class RingReportComponent implements OnInit {
       this.getTasksRequest(),
       {
         next: (result) => {
-          this.currentData = result;
-          this.tableDataService.updateDatasource(result, this.dataSource, 'id');
-          if (result.length < this.pageSize && this.scrollDirection == 'down') {
+          this.empty = false;
+          if (this.endId != -1 && result[result.length - 1].id != this.endId) {
+            this.loading = false;
+          }
+          if (result.length < this.pageSize) {
             this.loadFinished = true;
+          }
+          if (result.length > 0) {
+            this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
           }
           if (this.jobFinished) {
             this.getAggregationResult();
@@ -87,7 +95,6 @@ export class RingReportComponent implements OnInit {
 
   onUpdateLastIdEvent(data) {
     this.lastId = data.lastId;
-    this.scrollDirection = data.direction;
   }
 
   ngOnDestroy() {

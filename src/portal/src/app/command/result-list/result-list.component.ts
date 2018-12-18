@@ -18,11 +18,11 @@ export class ResultListComponent implements OnInit {
   public dataSource = [];
 
   static customizableColumns = [
-    { name: 'createdAt', displayName: 'Created', displayed: true },
-    { name: 'command', displayName: 'Command', displayed: true },
-    { name: 'state', displayName: 'State', displayed: true },
-    { name: 'progress', displayName: 'Progress', displayed: true },
-    { name: 'updatedAt', displayName: 'Last Changed', displayed: true },
+    { name: 'createdAt', displayed: true, displayName: 'Created' },
+    { name: 'command', displayed: true, displayName: 'Command' },
+    { name: 'state', displayed: true, displayName: 'State' },
+    { name: 'progress', displayed: true, displayName: 'Progress' },
+    { name: 'updatedAt', displayed: true, displayName: 'Last Changed' },
   ];
 
   private availableColumns;
@@ -71,7 +71,9 @@ export class ResultListComponent implements OnInit {
           if (this.reverse && result.length < this.maxPageSize) {
             this.loadFinished = true;
           }
-          this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
+          if (result.length > 0) {
+            this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
+          }
           return this.getCommandRequest();
         }
       },

@@ -14,26 +14,31 @@ export class CpuReportComponent implements OnInit {
 
   @Input() result: any;
 
-  private dataSource = new MatTableDataSource();
-  private currentData = [];
+  private dataSource = [];
   private lastId = 0;
-  private pageSize = 120;
-  private loadFinished = false;
-  private scrollDirection = 'down';
+  private pageSize = 300;
+  public loadFinished = false;
 
   private jobId: string;
   private interval: number;
   private tasksLoop: Object;
   private jobState: string;
-  private tasks = [];
-  private events = [];
-  private nodes = [];
+  public tasks = [];
+  public events = [];
+  public nodes = [];
   public aggregationResult: any;
 
-  private componentName = "cpuReport";
+  public loading = false;
+  public empty = true;
+  private endId = -1;
 
-  private customizableColumns = [
-    { name: 'node', displayName: 'Node', displayed: true }
+  public componentName = "cpuReport";
+
+  public customizableColumns = [
+    { name: 'node', displayed: true },
+    { name: 'state', displayed: true },
+    { name: 'remark', displayed: true },
+    { name: 'detail', displayed: true }
   ];
 
   constructor(
@@ -70,10 +75,15 @@ export class CpuReportComponent implements OnInit {
       this.getTasksRequest(),
       {
         next: (result) => {
-          this.currentData = result;
-          this.tableDataService.updateDatasource(result, this.dataSource, 'id');
-          if (result.length < this.pageSize && this.scrollDirection == 'down') {
+          this.empty = false;
+          if (this.endId != -1 && result[result.length - 1].id != this.endId) {
+            this.loading = false;
+          }
+          if (result.length < this.pageSize) {
             this.loadFinished = true;
+          }
+          if (result.length > 0) {
+            this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
           }
           if (this.jobFinished) {
             this.getAggregationResult();
@@ -88,7 +98,7 @@ export class CpuReportComponent implements OnInit {
 
   onUpdateLastIdEvent(data) {
     this.lastId = data.lastId;
-    this.scrollDirection = data.direction;
+    this.endId = data.endId;
   }
 
   ngOnDestroy() {

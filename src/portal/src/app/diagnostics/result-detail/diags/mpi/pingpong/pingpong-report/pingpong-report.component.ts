@@ -13,34 +13,38 @@ import { DiagReportService } from '../../../../../../services/diag-report/diag-r
 export class PingPongReportComponent implements OnInit {
   @Input() result: any;
 
-  private dataSource = new MatTableDataSource();
-  private currentData = [];
+  private dataSource = [];
   private lastId = 0;
-  private pageSize = 120;
-  private loadFinished = false;
-  private scrollDirection = 'down';
+  public pageSize = 300;
+  public loadFinished = false;
 
   private jobId: string;
   private interval: number;
   private tasksLoop: Object;
   private jobState: string;
-  private tasks = [];
-  private events = [];
-  private nodes = [];
-  private failedNodes: any;
-  private failedReasons: any;
+  public tasks = [];
+  public events = [];
+  public nodes = [];
+  public failedNodes: any;
+  public failedReasons: any;
   public aggregationResult: object;
-  private latencyData: any;
-  private throughputData: any;
+  public latencyData: any;
+  public throughputData: any;
   public goodGroups: Array<any>;
   public badNodes: Array<any>;
 
+  public loading = false;
+  public empty = true;
+  private endId = -1;
+
   private componentName = "PingPongReport";
 
-  private customizableColumns = [
-    { name: 'nodes', displayName: 'Nodes', displayed: true },
+  public customizableColumns = [
+    { name: 'node', displayed: true },
+    { name: 'state', displayed: true },
+    { name: 'remark', displayed: true },
+    { name: 'detail', displayed: true }
   ];
-
 
 
   constructor(
@@ -85,10 +89,15 @@ export class PingPongReportComponent implements OnInit {
       this.getTasksRequest(),
       {
         next: (result) => {
-          this.currentData = result;
-          this.tableDataService.updateDatasource(result, this.dataSource, 'id');
-          if (result.length < this.pageSize && this.scrollDirection == 'down') {
+          this.empty = false;
+          if (this.endId != -1 && result[result.length - 1].id != this.endId) {
+            this.loading = false;
+          }
+          if (result.length < this.pageSize) {
             this.loadFinished = true;
+          }
+          if (result.length > 0) {
+            this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
           }
           if (this.jobFinished) {
             this.getAggregationResult();
@@ -103,7 +112,7 @@ export class PingPongReportComponent implements OnInit {
 
   onUpdateLastIdEvent(data) {
     this.lastId = data.lastId;
-    this.scrollDirection = data.direction;
+    this.endId = data.endId;
   }
 
   ngOnDestroy() {

@@ -41,8 +41,7 @@
   </ng-template>
 
   <ng-template #task>
-    <diag-task-table [dataSource]="dataSource" [loadFinished]='loadFinished' [currentData]="currentData"
-      [customizableColumns]="customizableColumns" [maxPageSize]="pageSize" [tableName]="componentName"
-      (updateLastIdEvent)="onUpdateLastIdEvent($event)"></diag-task-table>
+    <diag-task-table [dataSource]="dataSource" [loadFinished]='loadFinished' [customizableColumns]="customizableColumns"
+      [maxPageSize]="pageSize" [tableName]="componentName" (updateLastIdEvent)="onUpdateLastIdEvent($event)" [empty]="empty"></diag-task-table>
   </ng-template>
 </app-result-layout>

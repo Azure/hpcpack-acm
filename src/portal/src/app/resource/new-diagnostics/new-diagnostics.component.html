@@ -21,13 +21,14 @@
     <mat-step label="Select test to run">
       <div class="select-tests">
         <tree-root #tree [nodes]="tests" (updateData)="onTreeLoad($event)" class="test-tree">
-          <ng-template #treeNodeTemplate let-node let-index="index">
-            <mat-checkbox *ngIf="node.children == undefined" (change)="check(node, $event.checked)" [checked]="node.data.checked"
-              color="primary">
-              <span>{{node.data.name}}</span>
-            </mat-checkbox>
-            <span *ngIf="node.children != undefined && node.children.length > 0">{{node.data.name}}</span>
-          </ng-template>
+          <mat-radio-group [(ngModel)]="selectedTest" (change)="check()">
+            <ng-template #treeNodeTemplate let-node let-index="index">
+              <mat-radio-button *ngIf="node.children == undefined" [value]="node.data" color="primary">
+                <span>{{node.data.name}}</span>
+              </mat-radio-button>
+              <span *ngIf="node.children != undefined && node.children.length > 0">{{node.data.name}}</span>
+            </ng-template>
+          </mat-radio-group>
         </tree-root>
         <div class="test-description" *ngIf="selectedDescription">
           <div class="test-description-title">{{selectedTest.name | titlecase}} Introduction</div>

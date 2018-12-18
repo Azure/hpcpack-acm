@@ -27,12 +27,12 @@ export class NodeListComponent {
   public dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
   static customizableColumns = [
-    { name: 'health', displayName: 'Health', displayed: true, },
-    { name: 'state', displayName: 'State', displayed: true, },
-    { name: 'os', displayName: 'OS', displayed: true },
-    { name: 'runningJobCount', displayName: 'Jobs', displayed: true },
-    { name: 'eventCount', displayName: 'Events', displayed: true },
-    { name: 'memory', displayName: 'Memory', displayed: true },
+    { name: 'health', displayed: true, displayName: 'Health' },
+    { name: 'state', displayed: true, displayName: 'State' },
+    { name: 'os', displayed: true, displayName: 'OS' },
+    { name: 'runningJobCount', displayed: true, displayName: 'Jobs' },
+    { name: 'eventCount', displayed: true, displayName: 'Events' },
+    { name: 'memory', displayed: true, displayName: 'Memory(MB)' },
   ];
 
   private availableColumns;
@@ -44,7 +44,6 @@ export class NodeListComponent {
   private lastId = 0;
   private nodeLoop: object;
   public maxPageSize = 30000;
-  public currentData = [];
   public scrolled = false;
   public loadFinished = false;
   private interval = 5000;
@@ -74,19 +73,10 @@ export class NodeListComponent {
   ngOnInit() {
     this.loadSettings();
     this.getDisplayedColumns();
-    // this.api.node.getAll().subscribe(nodes => {
-    //   this.dataSource.data = nodes;
-    // });
     this.nodeLoop = Loop.start(
       this.getNodesRequest(),
       {
         next: (result) => {
-          // this.currentData = result;
-          // if (this.scrollDirection == 'down' && result.length < this.maxPageSize) {
-          //   this.loadFinished = true;
-          // }
-          // this.tableDataService.updateDatasource(result, this.dataSource, 'id');
-          // return this.getNodesRequest();
           this.empty = false;
           if (this.endId != -1 && result[result.length - 1].id != this.endId) {
             this.loading = false;
@@ -94,7 +84,9 @@ export class NodeListComponent {
           if (this.reverse && result.length < this.maxPageSize) {
             this.loadFinished = true;
           }
-          this.tableDataService.updateDatasource(result, this.dataSource, 'id');
+          if (result.length > 0) {
+            this.tableDataService.updateDatasource(result, this.dataSource, 'id');
+          }
           return this.getNodesRequest();
         }
       },
