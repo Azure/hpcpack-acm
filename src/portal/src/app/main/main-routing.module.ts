@@ -10,22 +10,26 @@ const routes: Routes = [{
         {
             path: 'dashboard',
             loadChildren: 'app/dashboard/dashboard.module#DashboardModule',
-            data: { breadcrumb: "Dashboard" }
+            data: { breadcrumb: "Dashboard" },
+            canActivate: [AuthGuardService]
         },
         {
             path: 'resource',
             loadChildren: 'app/resource/resource.module#ResourceModule',
-            data: { breadcrumb: "Resource" }
+            data: { breadcrumb: "Resource" },
+            canActivate: [AuthGuardService]
         },
         {
             path: 'diagnostics',
             loadChildren: 'app/diagnostics/diagnostics.module#DiagnosticsModule',
-            data: { breadcrumb: "Diagnostics" }
+            data: { breadcrumb: "Diagnostics" },
+            canActivate: [AuthGuardService]
         },
         {
             path: 'command',
             loadChildren: 'app/command/command.module#CommandModule',
-            data: { breadcrumb: "Cluster Run" }
+            data: { breadcrumb: "Cluster Run" },
+            canActivate: [AuthGuardService]
         },
         {
             path: '',

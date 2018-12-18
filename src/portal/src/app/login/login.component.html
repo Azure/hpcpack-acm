@@ -1,0 +1,32 @@
+<div class="login-page">
+	<div class="login-area">
+		<div class="login-banner">
+			<div class="logo">
+				<img src="../../assets/logo.jpg" class="login-logo" />
+			</div>
+			<div class="login-title">
+				Microsoft HPC
+			</div>
+		</div>
+		<div class="login-form">
+			<mat-form-field class="login-input">
+				<input matInput placeholder="Enter your username" type="text" [(ngModel)]="username" required (keyup.enter)="pwdInput.focus()"
+				 autofocus>
+				<mat-error>username is required.</mat-error>
+			</mat-form-field>
+			<mat-form-field class="login-input">
+				<input matInput placeholder="Enter your password" [type]="hide ? 'password' : 'text'" [(ngModel)]="pwd" required #pwdInput
+				 (keyup.enter)="login(username,pwd)">
+				<mat-icon matSuffix (click)="hide = !hide">{{hide ? 'visibility' : 'visibility_off'}}</mat-icon>
+				<mat-error>password is required.</mat-error>
+			</mat-form-field>
+		</div>
+		<div class="login-btn">
+			<button mat-raised-button (click)="login(username, pwd)" *ngIf="!logged">Log in</button>
+			<button mat-raised-button (click)="logout()" *ngIf="logged">Log out</button>
+		</div>
+		<div class="error-msg">
+			{{errorMsg}}
+		</div>
+	</div>
+</div>

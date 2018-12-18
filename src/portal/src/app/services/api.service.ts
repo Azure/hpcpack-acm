@@ -564,18 +564,6 @@ export class UserApi extends Resource<any>{
       observe: 'response'
     });
   }
-
-  getUserInfo() {
-    let url = `/.auth/me`;
-    return this.http.get(url, {
-      observe: 'response'
-    });
-  }
-
-  logout() {
-    let url = `/.auth/logout`;
-    return this.http.get(url);
-  }
 }
 
 @Injectable()

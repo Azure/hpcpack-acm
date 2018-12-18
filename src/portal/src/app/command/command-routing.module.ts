@@ -9,7 +9,7 @@ import { MultiCmdsComponent } from './multi-cmds/multi-cmds.component';
 const routes: Routes = [{
   path: '',
   component: CommandComponent,
-  // canActivate: [AuthGuardService],
+  canActivate: [AuthGuardService],
   children: [
     { path: 'results', component: ResultListComponent, data: { breadcrumb: "Results" } },
     { path: 'results/:id', component: ResultDetailComponent, data: { breadcrumb: "Result" } },
