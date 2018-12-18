@@ -48,7 +48,7 @@
             this.diagUri = srcTree.tree.Single(n => n.path == "Diagnostics").url;
             this.metricsUri = srcTree.tree.Single(n => n.path == "Metrics").url;
 
-            await queue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(new ScriptSyncMessage() { EventVerb = "sync" })), null, null, null, null, token);
+            await this.ProcessTaskItemAsync(null, token);
 
             await base.InitializeAsync(token);
         }
@@ -137,17 +137,17 @@
 
         public override async T.Task<bool> ProcessTaskItemAsync(TaskItem taskItem, CancellationToken token)
         {
-            this.Logger.Information("Do work for Script sync message {0}", taskItem.Id);
+            this.Logger.Information("Do work for Script sync message {0}", taskItem?.Id);
 
             try
             {
-                var message = taskItem.GetMessage<ScriptSyncMessage>();
+                var message = taskItem?.GetMessage<ScriptSyncMessage>();
                 var results = await T.Task.WhenAll(this.SyncDiagScriptsAsync(token), this.SyncMetricScriptsAsync(token));
                 return results.All(r => r);
             }
             catch (Exception ex)
             {
-                this.Logger.Error("Exception occurred when process script sync message {0}, {1}", taskItem.Id, ex);
+                this.Logger.Error("Exception occurred when process script sync message {0}, {1}", taskItem?.Id, ex);
             }
 
             return true;

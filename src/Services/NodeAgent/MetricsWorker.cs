@@ -93,11 +93,21 @@
                     result = await this.nodesTable.ExecuteAsync(TableOperation.Retrieve<JsonTableEntity>(nodesPartitionKey, minuteHistoryKey), null, null, token);
 
                     var history = result.Result is JsonTableEntity historyEntity ? historyEntity.GetObject<MetricHistory>() : new MetricHistory(TimeSpan.FromSeconds(10));
-                    var currentMetrics = results.Select(r => new MetricItem()
+                    var currentMetrics = results.Select(r =>
                     {
-                        Category = r.Item1,
-                        InstanceValues = JsonConvert.DeserializeObject<Dictionary<string, double?>>(r.Item2)
-                    }).ToList();
+                        try
+                        {
+                            return new MetricItem()
+                            {
+                                Category = r.Item1,
+                                InstanceValues = JsonConvert.DeserializeObject<Dictionary<string, double?>>(r.Item2)
+                            };
+                        }
+                        catch (JsonReaderException)
+                        {
+                            return new MetricItem() { Category = r.Item1, InstanceValues = null };
+                        }
+                    }).Where(m => m.InstanceValues != null).ToList();
 
                     history.RangeSeconds = 10;
                     history.Put(time, currentMetrics);

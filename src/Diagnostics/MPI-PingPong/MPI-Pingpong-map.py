@@ -1,4 +1,4 @@
-#v0.19
+#v0.20
 
 import sys, json, copy
 
@@ -25,23 +25,11 @@ def main():
             continue
         except:
             pass
-        try:
-            networksInfos = nodeInfo["NodeRegistrationInfo"]["NetworksInfo"]
-            isIB = False
-            for networksInfo in networksInfos:
-                if networksInfo["IsIB"]:
-                    isIB = True
-            if isIB:
-                rdmaNodes.append(node)
-            else:
-                normalNodes.append(node)
-        except:
-            raise Exception("Neither VM size from Metadata nor IsIB from NodeRegistrationInfo of node {0} could be found.".format(node))
 
     allNodes = set([node for node in normalNodes + rdmaNodes])
-    for node in nodelist:
-        if node not in allNodes:
-            raise Exception("Missing node info: {0}".format(node))
+    missingNodes = set(nodelist) - allNodes
+    if missingNodes:
+        raise Exception("No metadata for node(s): {}".format(', '.join(missingNodes)))
 
     mode = 'Tournament'.lower()
     level = 0
@@ -98,7 +86,7 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level, debu
 
     rdmaOption = ""
     if isRdma:
-        rdmaOption = " -env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0 -env I_MPI_DYNAMIC_CONNECTION=0 -env I_MPI_FALLBACK_DEVICE=0"
+        rdmaOption = "-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0"
 
     headingStartId = startId
     headingNode2Id = {}
@@ -108,8 +96,8 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level, debu
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
 
     sshcommand = "rm -f ~/.ssh/known_hosts" # Clear ssh knownhosts
-    checkcore = ' && bash -c "if [ `grep -c ^processor /proc/cpuinfo` -eq 1 ]; then exit -10; fi"' # MPI Ping Pong can not get result but return 0 if core number is less than 2, so check core number
-    mpicommand = "mpirun -env I_MPI_SHM_LMT=shm" + rdmaOption + " IMB-MPI1 pingpong" + checkcore
+    checkcore = 'bash -c "if [ `grep -c ^processor /proc/cpuinfo` -eq 1 ]; then exit -10; fi"' # MPI Ping Pong can not get result but return 0 if core number is less than 2, so check core number and fail mpicommand if there is no result
+    mpicommand = "mpirun -env I_MPI_SHM_LMT=shm {} IMB-MPI1 pingpong && {}".format(rdmaOption, checkcore)
     parseResult = "tail -n29 | head -n25"
     columns = "$3,$4"
     parseValue = "sed -n '3p;$p'"
@@ -140,19 +128,19 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level, debu
     # Create tasks to run Intel MPI Benchmark - PingPong between all node pairs in selected nodes.
 
     if 0 < level < 30:
-        sampleOption = " -msglog " + str(level-1) + ":" + str(level)
+        sampleOption = "-msglog {}:{}".format(level-1, level)
         linesCount = 3
         parseValue = "tail -n2"
         timeout = 20
     else:
-        sampleOption = " -iter 10"
+        sampleOption = "-iter 10"
         linesCount = 24
         parseValue = "sed -n '3p;$p'"
         timeout = 20
 
     sshcommand = "host [pairednode] && ssh-keyscan [pairednode] >>~/.ssh/known_hosts" # Add ssh knownhosts
-    mpicommand = "mpirun -hosts [dummynodes]" + rdmaOption+ " -ppn 1 IMB-MPI1 -time 60" + sampleOption + " pingpong"
-    parseResult = "tail -n" + str(linesCount+5) + " | head -n" + str(linesCount+1)
+    mpicommand = "mpirun -hosts [dummynodes] {} -ppn 1 IMB-MPI1 -time 60 {} pingpong".format(rdmaOption, sampleOption)
+    parseResult = "tail -n {} | head -n {}".format(linesCount+5, linesCount+1)
     columns = "$3,$4"
 
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
@@ -184,7 +172,6 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level, debu
                 if debugCommand:
                     task["CommandLine"] = debugCommand
                 task["CustomizedData"] = "[RDMA] {}".format(nodes) if isRdma else nodes
-                #task["EnvironmentVariables"] = {"CCP_NODES":"2 "+" 1 ".join(nodepair)+" 1"}
                 tasks.append(task)
                 nodeToIdNext[nodepair[0]] = id
                 nodeToIdNext[nodepair[1]] = id
@@ -210,9 +197,8 @@ def createTasks(nodelist, isRdma, startId, taskTemplateOrigin, mode, level, debu
             task["CommandLine"] = task["CommandLine"].replace("[pairednode]", nodepair[1])
             task["CommandLine"] = task["CommandLine"].replace("[timeout]", str(timeout))
             if debugCommand:
-                    task["CommandLine"] = debugCommand
+                task["CommandLine"] = debugCommand
             task["Node"] = nodepair[0]
-            #task["EnvironmentVariables"] = {"CCP_NODES":"2 "+" 1 ".join(nodepair)+" 1"}
             task["CustomizedData"] = "[RDMA] {}".format(nodes) if isRdma else nodes
             tasks.append(task)
     return tasks

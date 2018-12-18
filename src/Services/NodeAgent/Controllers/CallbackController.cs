@@ -22,13 +22,15 @@
         private readonly TaskMonitor monitor;
         private readonly CloudUtilities utilities;
         private readonly NodeSynchronizer synchronizer;
+        private readonly NodeRegister register;
 
-        public CallbackController(ILogger logger, TaskMonitor monitor, CloudUtilities utilities, NodeSynchronizer synchronizer)
+        public CallbackController(ILogger logger, TaskMonitor monitor, CloudUtilities utilities, NodeSynchronizer synchronizer, NodeRegister register)
         {
             this.logger = logger;
             this.monitor = monitor;
             this.utilities = utilities;
             this.synchronizer = synchronizer;
+            this.register = register;
         }
 
         [HttpPost("computenodereported")]
@@ -104,17 +106,7 @@
         {
             try
             {
-                var nodeName = registerInfo.NodeName.ToLowerInvariant();
-                this.logger.Information("RegisterRequested, NodeName {0}, Distro {1} ", nodeName, registerInfo.DistroInfo);
-                var nodeTable = this.utilities.GetNodesTable();
-
-                var jsonTableEntity = new JsonTableEntity(this.utilities.NodesPartitionKey, this.utilities.GetRegistrationKey(nodeName), registerInfo);
-                var result = await nodeTable.ExecuteAsync(TableOperation.InsertOrReplace(jsonTableEntity), null, null, token);
-
-                using (HttpResponseMessage r = new HttpResponseMessage((HttpStatusCode)result.HttpStatusCode))
-                {
-                    r.EnsureSuccessStatusCode();
-                }
+                await this.register.RegisterNodeAsync(registerInfo, token);
 
                 // 5 minutes
                 return this.utilities.Option.RegistrationIntervalSeconds * 1000;
