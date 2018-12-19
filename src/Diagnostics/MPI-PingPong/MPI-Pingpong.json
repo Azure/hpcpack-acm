@@ -1,11 +1,11 @@
 ﻿{
     "DispatchScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"MPI-Pingpong-map.py"
+        "Name":"diags-map-reduce-1.0.x.py"
     },
     "AggregationScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"MPI-Pingpong-reduce.py"
+        "Name":"diags-map-reduce-1.0.x.py"
     },
     "TaskResultFilterScript":{
         "ContainerName":"diagtestscripts",
@@ -15,75 +15,24 @@
     "parameters":[
         {
             "name":"Packet size",
-            "description":"Specify the size(0-22, as exponent of 2) of transfer messages used in testing. Sizes from 2^0 to 2^22 bytes will be included in testing if the value is 0.",
+            "description":"Specify the size(0-22, as exponent of 2) of transfer messages used in testing. Sizes from 2^0 to 2^22 bytes will be included in testing if the value is -1.",
             "type":"number",
-            "min":0,
+            "min":-1,
             "max":22,
-            "defaultValue":0
-        },
-        {
-            "name":"Mode",
-            "description":"Select the way to run tasks, in each of which MPI Pingpong run between a node pair.",
-            "type":"select",
-            "options":["Tournament", "Serial", "Parallel"],
-            "defaultValue":"Tournament",
-            "whenChanged":{
-                "Parallel":{
-                    "Max runtime":{
-                        "value":1800
-                    }
-                },
-                "Tournament":{
-                    "Max runtime":{
-                        "value":1800
-                    }
-                },
-                "Serial":{
-                    "Max runtime":{
-                        "value":100000
-                    }
-                }
-            }
+            "defaultValue":-1
         },
         {
             "name":"Intel MPI Version",
-            "description":"Specify the location of Intel MPI that is installed on the nodes.",
             "type":"string",
             "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4"],
             "defaultValue":"2018 Update 4",
-            "whenChanged":{
-                "2018":{
-                    "Intel MPI location":{
-                        "value":"/opt/intel/impi/2018.0.128"
-                    }
-                },
-                "2018 Update 1":{
-                    "Intel MPI location":{
-                        "value":"/opt/intel/impi/2018.1.163"
-                    }
-                },
-                "2018 Update 2":{
-                    "Intel MPI location":{
-                        "value":"/opt/intel/impi/2018.2.199"
-                    }
-                },
-                "2018 Update 3":{
-                    "Intel MPI location":{
-                        "value":"/opt/intel/impi/2018.3.222"
-                    }
-                },
-                "2018 Update 4":{
-                    "Intel MPI location":{
-                        "value":"/opt/intel/impi/2018.4.274"
-                    }
-                }
+            "description":{
+                "2018":"The Intel MPI 2018, installed in /opt/intel/impi/2018.0.128, will be used to run Intel MPI-1 Benchmark PingPong.",
+                "2018 Update 1":"The Intel MPI 2018 Update 1, installed in /opt/intel/impi/2018.1.163, will be used to run Intel MPI-1 Benchmark PingPong.",
+                "2018 Update 2":"The Intel MPI 2018 Update 2, installed in /opt/intel/impi/2018.2.199, will be used to run Intel MPI-1 Benchmark PingPong.",
+                "2018 Update 3":"The Intel MPI 2018 Update 3, installed in /opt/intel/impi/2018.3.222, will be used to run Intel MPI-1 Benchmark PingPong.",
+                "2018 Update 4":"The Intel MPI 2018 Update 4, installed in /opt/intel/impi/2018.4.274, will be used to run Intel MPI-1 Benchmark PingPong."
             }
-        },
-        {
-            "name":"Intel MPI location",
-            "description":"Specify the location of Intel MPI that is installed on each node, which will be used to run Intel MPI-1 Benchmark PingPong.",
-            "type":"string",
-            "defaultValue":"/opt/intel/impi/2018.4.274"
         },
         {
             "name":"Max runtime",
