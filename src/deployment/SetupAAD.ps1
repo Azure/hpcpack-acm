@@ -6,13 +6,12 @@ param (
   [string]$ResourceGroupName,
 
   [Parameter(Mandatory=$true)]
-  [string]$WebAppName,
-
-  [Parameter(Mandatory=$false)]
-  [String]$Password
+  [string]$WebAppName
 )
 
-function createAADApp() {
+$ErrorActionPreference = 'Stop'
+
+function CreateAADApp() {
   param (
     [Parameter(Mandatory=$true)]
     [System.Uri]$SiteUri,
@@ -67,7 +66,7 @@ function createAADApp() {
 }
 
 function ConfigAADForAppService() {
-  param(
+  param (
     [Parameter(Mandatory=$true)]
     [string]$ResourceGroupName,
 
@@ -101,13 +100,13 @@ function ConfigAADForAppService() {
 
 function Login {
   $needLogin = $true
-  Try {
+  try {
     $context = Get-AzureRmContext
     if ($context) {
       $needLogin = ([string]::IsNullOrEmpty($context.Account))
     }
   }
-  Catch {
+  catch {
     if ($_ -like "*Login-AzureRmAccount to login*") {
       $needLogin = $true
     }
@@ -129,7 +128,7 @@ $context = Select-AzureRmSubscription -SubscriptionId $SubscriptionId
 [System.Uri]$SiteUri = 'https://' + $WebAppName + '.azurewebsites.net'
 
 Write-Host 'Creating AAD App...'
-$aadApp = createAADApp -SiteUri $SiteUri -TenantId $context.Tenant.Id -AccountId $context.Account.Id -Password $Password
+$aadApp = CreateAADApp -SiteUri $SiteUri -TenantId $context.Tenant.Id -AccountId $context.Account.Id
 
 Write-Host 'Configurating App Service...'
 ConfigAADForAppService -ResourceGroupName $ResourceGroupName -WebAppName $WebAppName `
