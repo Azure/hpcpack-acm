@@ -100,7 +100,7 @@ td, th {
 ''' + '\n'.join(htmlRows) + '''
 </table>
 <p>''' + description + '''</p>
-<p>If result is None, please check it manually following <a href="https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux#install-cifs-utils">Use Azure Files with Linux</a>.</p>
+<p>If result is None, please check it manually following <a target="_blank" rel="noopener noreferrer" href="https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux#install-cifs-utils">Use Azure Files with Linux</a>.</p>
 </body>
 </html>
 '''

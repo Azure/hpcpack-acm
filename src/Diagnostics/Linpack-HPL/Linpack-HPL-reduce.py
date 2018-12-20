@@ -172,7 +172,7 @@ def main():
                         pass
             if greenLineNumber >= 0:
                 htmlRows[greenLineNumber] = htmlRows[greenLineNumber].replace('<tr>', '<tr bgcolor="#d8fcd4">')
-            intelHplWithLink = '<a href="https://software.intel.com/en-us/mkl-linux-developer-guide-overview-of-the-intel-distribution-for-linpack-benchmark">{}</a>'.format(intelHpl)
+            intelHplWithLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl-linux-developer-guide-overview-of-the-intel-distribution-for-linpack-benchmark">{}</a>'.format(intelHpl)
             descriptionInHtml = '<p>{}</p>'.format(description.format(intelHplWithLink))
             htmlContent = '''
 <table>
