@@ -1,8 +1,9 @@
 <app-result-layout [result]="result">
   <ng-template #overview>
     <mat-tab-group>
-      <mat-tab label="Result" *ngIf="!hasError">
-        <ring-overview-result [result]="aggregationResult" *ngIf="aggregationResult"></ring-overview-result>
+      <mat-tab label="Performance" *ngIf="!hasError">
+        <!-- <ring-overview-result [result]="aggregationResult" *ngIf="aggregationResult"></ring-overview-result> -->
+        <mpi-performance [result]="aggregationResult" *ngIf="aggregationResult"></mpi-performance>
         <div class="overview-progress">
           <mat-progress-bar mode="indeterminate" *ngIf="!aggregationResult"></mat-progress-bar>
         </div>

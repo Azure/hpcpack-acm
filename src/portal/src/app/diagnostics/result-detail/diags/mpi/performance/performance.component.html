@@ -1,0 +1,19 @@
+<div class="performance">
+  <div class="description">
+    <div class="title">
+      Description
+    </div>
+    <div class="content">
+      {{result.Description}}
+    </div>
+  </div>
+  <div class="charts row">
+    <div class="col-lg-6 chart">
+      <chart type="line" [data]="latency" [options]="latencyOption" #latencyChart>
+      </chart>
+    </div>
+    <div class="col-lg-6 chart">
+      <chart type="line" [data]="throughput" [options]="throughputOption" #throughputChart>
+      </chart>
+    </div>
+  </div>

@@ -22,6 +22,7 @@ import { CpuReportComponent } from './result-detail/diags/benchmark/cpu/cpu-repo
 import { FailedReasonsComponent } from './result-detail/diags/mpi/pingpong/failed-reasons/failed-reasons.component';
 import { GoodNodesComponent } from './result-detail/diags/mpi/pingpong/good-nodes/good-nodes.component';
 import { ScrollingModule } from '@angular/cdk/scrolling';
+import { PerformanceComponent } from './result-detail/diags/mpi/performance/performance.component';
 
 @NgModule({
   imports: [
@@ -49,7 +50,8 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
     OverviewResultComponent,
     CpuReportComponent,
     FailedReasonsComponent,
-    GoodNodesComponent
+    GoodNodesComponent,
+    PerformanceComponent
   ],
   entryComponents: [RingReportComponent, PingPongReportComponent, TaskDetailComponent, CpuReportComponent]
 })

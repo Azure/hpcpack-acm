@@ -79,6 +79,13 @@ class DiagTaskTableComponent {
   public empty: boolean;
 }
 
+@Component({ selector: 'mpi-performance', template: '' })
+class PerformanceComponent {
+  @Input()
+  result: any;
+}
+
+
 @Component({
   template: `
     <div class="error-message" *ngIf="result.aggregationResult != undefined && result.aggregationResult.Error != undefined">{{result.aggregationResult.Error}}</div>
@@ -152,6 +159,7 @@ fdescribe('RingReportComponent', () => {
         RingOverviewResultComponent,
         DiagTaskTableComponent,
         EventListComponent,
+        PerformanceComponent,
         WrapperComponent
       ],
       imports: [MaterialsModule, NoopAnimationsModule],

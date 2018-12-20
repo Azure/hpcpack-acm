@@ -1,0 +1,27 @@
+@import "../../../../../stylesheets/mixin.scss";
+
+.performance {
+  font-family: $font-stack;
+  padding: 1em;
+  padding-bottom: 0;
+}
+
+.description {
+  font-size: .9em;
+  margin-bottom: 20px;
+
+  .title {
+    color: $color;
+    font-size: 1em;
+  }
+
+  .content {
+    white-space: pre-line;
+  }
+}
+
+.charts {
+  .chart {
+    text-align: center;
+  }
+}
