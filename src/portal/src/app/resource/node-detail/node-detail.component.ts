@@ -40,7 +40,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
         },
         scaleLabel: {
           display: true,
-          labelString: 'Percentage'
+          labelString: 'Percentage ( % )'
         }
       }]
     },
@@ -186,7 +186,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
         next: (res) => {
           this.labels = this.makeLabels(res.history);
           let cpuTotal = this.makeCpuTotalData(res.history);
-          this.cpuData = { labels: this.labels, datasets: [{ label: 'CPU usage', data: cpuTotal, borderColor: '#215ebb' }] };
+          this.cpuData = { labels: this.labels, datasets: [{ label: 'CPU usage', data: cpuTotal, borderColor: '#215ebb', fill: false }] };
           return true;
         }
       },
