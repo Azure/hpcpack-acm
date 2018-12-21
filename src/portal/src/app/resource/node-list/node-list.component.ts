@@ -119,14 +119,14 @@ export class NodeListComponent {
 
   private isAllSelected() {
     const numSelected = this.selectedNodes.length;
-    const numRows = this.dataSource.data.length;
+    const numRows = this.dataSource.filteredData.length;
     return numSelected == numRows;
   }
 
-  private masterToggle() {
+  public masterToggle() {
     this.isAllSelected() ?
       this.selectedNodes = [] :
-      this.dataSource.data.forEach(row => {
+      this.dataSource.filteredData.forEach(row => {
         let index = this.selectedNodes.findIndex(n => {
           return n.id == row.id;
         });
@@ -136,7 +136,7 @@ export class NodeListComponent {
       });
   }
 
-  private isSelected(node) {
+  public isSelected(node) {
     let index = this.selectedNodes.findIndex(n => {
       return n.id == node.id;
     });
