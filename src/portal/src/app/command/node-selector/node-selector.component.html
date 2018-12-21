@@ -12,9 +12,6 @@
 
 <div class="list-container">
   <div class="list-header">
-    <div class="header node-state">
-      ID
-    </div>
     <div class="header node-name">
       Name
     </div>
@@ -27,9 +24,6 @@
     <cdk-virtual-scroll-viewport itemSize="40" #content class="list-content" (scrolledIndexChange)="indexChanged($event)">
       <div *cdkVirtualFor="let node of nodes; templateCacheSize: 0; trackBy: trackByFn.bind(this)" class="list-item"
         (click)="selectNode(node)" [ngClass]="{ selected: isSelected(node) }">
-        <div class="icon-cell node-state">
-          <div class="cell-text">{{node.id}}</div>
-        </div>
         <div class="icon-cell node-name">
           <div class="cell-text" *ngIf="!hasError(node)">{{node.name}}</div>
           <div class="cell-text" *ngIf="hasError(node)">
