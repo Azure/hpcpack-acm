@@ -36,6 +36,7 @@ INTEL_MPI_URI = {
 def main():
     diagName, diagArgs, targetNodes, windowsNodes, linuxNodes, rdmaNodes, tasks, taskResults = parseStdin()
     isMap = False if tasks and taskResults else True
+
     if diagName.lower() == 'MPI-Pingpong'.lower():
         arguments = {
             'Intel MPI Version': '2018 Update 4',
@@ -49,11 +50,23 @@ def main():
         else:
             return mpiPingpongReduce(arguments, targetNodes, tasks, taskResults)
 
+    if diagName.lower() == 'MPI-Ring'.lower():
+        arguments = {
+            'Intel MPI Version': '2018 Update 4',
+        }
+        parseArgs(diagArgs, arguments)
+        if isMap:
+            return mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes)
+        else:
+            return mpiRingReduce(targetNodes, tasks, taskResults)
+   
 def parseStdin():
     stdin = json.load(sys.stdin)
 
     job = stdin['Job']
     targetNodes = job['TargetNodes']
+    if not targetNodes:
+        raise Exception('No node specified for running the job')
     if len(targetNodes) != len(set([node.lower() for node in targetNodes])):
         raise Exception('Duplicate name of nodes')
     diagName = '{}-{}'.format(job['DiagnosticTest']['Category'], job['DiagnosticTest']['Name'])
@@ -65,17 +78,13 @@ def parseStdin():
             raise Exception('Duplicate diagnostics arguments')
 
     nodes = stdin.get('Nodes')
-    tasks = stdin.get('Tasks')
-    taskResults = stdin.get('TaskResults')
     windowsNodes = linuxNodes = rdmaNodes = None
     if nodes:
         missingInfoNodes = [node['Node'] for node in nodes if not node['NodeRegistrationInfo'] or not node['Metadata']]
         if missingInfoNodes:
             raise Exception('Missing infomation for node(s): {}'.format(', '.join(missingInfoNodes)))
-
         rdmaVmSizes = set([size.lower() for size in ['Standard_H16r', 'Standard_H16mr', 'Standard_A8', 'Standard_A9']])
         metadataByNode = {node['Node']:json.loads(node['Metadata']) for node in nodes}
-
         windowsNodes = set()
         linuxNodes = set()
         unknownNodes = set()
@@ -91,9 +100,11 @@ def parseStdin():
             vmSize = metadataByNode[node]['compute']['vmSize']
             if vmSize.lower() in rdmaVmSizes:
                 rdmaNodes.add(node)
-            
-        if len(unknownNodes) != 0:
+        if unknownNodes:
             raise Exception('Unknown OS type of node(s): {}'.format(', '.join(unknownNodes)))
+
+    tasks = stdin.get('Tasks')
+    taskResults = stdin.get('TaskResults')
     if tasks and taskResults:
         if len(tasks) != len(taskResults):
             raise Exception('Task count {} is not equal to task result count {}'.format(len(tasks), len(taskResults)))
@@ -113,14 +124,39 @@ def parseArgs(diagArgsIn, diagArgsOut):
                 argType = type(diagArgsOut[key])
                 diagArgsOut[key] = argType(arg['value'])
 
+
 def globalGetMpiDefaultInstallationLocationWindows(mpiVersion):
     return 'C:\Program Files (x86)\IntelSWTools\mpi\{}'.format(INTEL_MPI_URI[mpiVersion.lower()]['Windows'].split('_')[-1][:-len(".exe")])
 
 def globalGetMpiDefaultInstallationLocationLinux(mpiVersion):
     return '/opt/intel/impi/{}'.format(INTEL_MPI_URI[mpiVersion.lower()]['Linux'].split('_')[-1][:-len(".tgz")])
 
+
+SSH_PRIVATE_KEY = '''-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEA06bdmM5tU/InWfakBnAltIA2WEvuZ/3qFwaT4EkmgJuEITxi+3NnXn7JfW+q
+6ezBc4lx6J0EuPggDIcslbczyz65QrB2NoH7De1PiRtWNWIonQDZHTYCbnaU3f/Nzsoj62lgfkSf
+Uj4Osxd0yHCuGsfCtKMDES3d55RMUdVwbrXPL8jUqA9zh4miV9eX0dh/+6pCqPD7/dnOCy/rYtXs
+wgdjKG57O6eaT3XxiuozP00E5tZ7wF0fzzXBuA2Z21Sa2U42sOeeNuOvOuKQkrIzprhHhpDik31m
+HZK47F7eF2i7j/0ImedOFdgA1ETPPKFLSGspvf1xbHgEgGz1kjFq/QIEAAEAAQKCAQABHZ2IW741
+7RKWsq6J3eIBzKRJft4J7G3tvJxW8e3nOpVNuSXEbUssu/HUOoLdVVhuHPN/1TUgf69oXTtiRIVc
+LIPNwcrGRGHwaP0JJKdY4gallLFMCB9i5FkhnJXbaiJvq+ndoqnnAPLf9GfVDqhV5Jqc8nxeDZ2T
+ks037GobtfMuO5WeCyTAMzc7tDIsn0HGyV0pSa7JFHAKorUuBMNnjEM+SBL37AqwcVFkstC4YD3I
+7j4miRE3loxPmBJs5HMTV4jpAGNbNmrPzfrmP4swHNoc9LR7YKpfzVpAzb24QY82fewvOxRZH6Hz
+BVhueJZAGV62JbBeaw9eeujDp+UBAoGBAN6IanPN/wqdqQ0i5dBwPK/0Mcq6bNtQt6n8rHD/C/xL
+FuhuRhLPI6q7sYPeSZu84EjyArLMR1o0GW90Ls4JzIxjxGCBgdUHG8YdmB9jNIjR5notYQcRNxaw
+wLuc5nurPt7QaxvqO3JcaDbw9c6q9c7xNE3Wlak4xxKeiXsWyHQdAoGBAPN7hpqISKIc+8dPc5kg
+uJDDPdFcJ8py0nbysEYtY+hUaDxfw7Cm8zrNj+M9BbQR9yM6EW16P0FQ+/0XBrLMVpRkyJZ0Y3Ij
+5Qol5IxJPyWzfj6e7cd9Rkvqs2sQcBehXCbQHjfpB12yu3excQBPT0Lr5gei7yfc+D21hGWDH1xh
+AoGAM2lm1qxf4O790HggiiB0FN6g5kpdvemPFSm4GT8DYN1kRHy9mbjbb6V/ZIzliqJ/Wrr23qIN
+Vgy1V6eK7LUc2c5u3zDscu/6fbH2pEHCMF32FoIHaZ+Tj510WaPtJ+MvWkDijgd2hnxM42yWDZI3
+ygC16cnKt9bTPzz7XEGuPA0CgYBco2gQTcAM5igpqiIaZeezNIXFrWF6VnubRDUrTkPP9qV+KxWC
+ldK/UczoMaSE4bz9Cy/sTnHYwR5PKj6jMrnSVhI3pGrd16hiVw6BDbFX/9YNr1xa5WAkrFS9bJCp
+fPxZzB9jOGdUEBfhr4KGEqbemHB6AVUq/pj4qaKJGP2KoQKBgFt7cqr8t+0zU5ko+B2pxmMprsUx
+qZ3mBATMD21AshxWxsawpqoPJJ3NTScNrjISERQ6RG3lQNv+30z79k9Fy+5FUH4pvqU4sgmtYSVH
+M4xW+aJnEhzIbE7a4an2eTc0pAxc9GexwtCFwlBouSW6kfOcMgEysoy99wQoGNgRHY/D
+-----END RSA PRIVATE KEY-----'''
+
 def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
-    tasks = None
     mpiVersion = arguments['Intel MPI Version']
     packetSize = arguments['Packet size']
     mode = arguments['Mode'].lower()
@@ -155,7 +191,7 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
 
     sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
     commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpi'.format(mpiLocation) # this way would only add one row in firewall rules
-#    commandSetFirewall = r'netsh advfirewall firewall add rule name="hpc_diagnostics_mpi" dir=in action=allow program="{}\intel64\bin\mpiexec.exe"'.format(mpiLocation) # this way would add multiple rows in firewall rules when it is executed multiple times
+    # commandSetFirewall = r'netsh advfirewall firewall add rule name="hpc_diagnostics_mpi" dir=in action=allow program="{}\intel64\bin\mpiexec.exe"'.format(mpiLocation) # this way would add multiple rows in firewall rules when it is executed multiple times
     commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} IMB-MPI1 pingpong'.format(PASSWORD, rdmaOption)
     commandRunInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts [nodepair] -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(PASSWORD, rdmaOption, sampleOption)
     commandMeasureTime = "$stopwatch = [system.diagnostics.stopwatch]::StartNew(); [command]; if($?) {'Run time: ' + $stopwatch.Elapsed.TotalSeconds}"
@@ -219,14 +255,13 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
     commandGenerateOutput = " && cat data | head -n1 >output && cat data | tail -n1 >>output && cat timeResult >>output && cat raw >>output && cat output | python {}".format(filterScriptPath)
     commandGenerateError = ' || (errorcode=$? && echo "MPI Pingpong task failed!" >error && cat stdout stderr >>error && cat error && exit $errorcode)'
     commandLine = commandDownloadScript + "TIMEFORMAT='%3R' && (time timeout [timeout]s bash -c '[sshcommand] && source {0}/intel64/bin/mpivars.sh && [mpicommand]' >stdout 2>stderr) 2>timeResult".format(mpiLocation) + commandParseResult + commandGenerateOutput + commandGenerateError
-    privateKey = "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA06bdmM5tU/InWfakBnAltIA2WEvuZ/3qFwaT4EkmgJuEITxi+3NnXn7JfW+q\n6ezBc4lx6J0EuPggDIcslbczyz65QrB2NoH7De1PiRtWNWIonQDZHTYCbnaU3f/Nzsoj62lgfkSf\nUj4Osxd0yHCuGsfCtKMDES3d55RMUdVwbrXPL8jUqA9zh4miV9eX0dh/+6pCqPD7/dnOCy/rYtXs\nwgdjKG57O6eaT3XxiuozP00E5tZ7wF0fzzXBuA2Z21Sa2U42sOeeNuOvOuKQkrIzprhHhpDik31m\nHZK47F7eF2i7j/0ImedOFdgA1ETPPKFLSGspvf1xbHgEgGz1kjFq/QIEAAEAAQKCAQABHZ2IW741\n7RKWsq6J3eIBzKRJft4J7G3tvJxW8e3nOpVNuSXEbUssu/HUOoLdVVhuHPN/1TUgf69oXTtiRIVc\nLIPNwcrGRGHwaP0JJKdY4gallLFMCB9i5FkhnJXbaiJvq+ndoqnnAPLf9GfVDqhV5Jqc8nxeDZ2T\nks037GobtfMuO5WeCyTAMzc7tDIsn0HGyV0pSa7JFHAKorUuBMNnjEM+SBL37AqwcVFkstC4YD3I\n7j4miRE3loxPmBJs5HMTV4jpAGNbNmrPzfrmP4swHNoc9LR7YKpfzVpAzb24QY82fewvOxRZH6Hz\nBVhueJZAGV62JbBeaw9eeujDp+UBAoGBAN6IanPN/wqdqQ0i5dBwPK/0Mcq6bNtQt6n8rHD/C/xL\nFuhuRhLPI6q7sYPeSZu84EjyArLMR1o0GW90Ls4JzIxjxGCBgdUHG8YdmB9jNIjR5notYQcRNxaw\nwLuc5nurPt7QaxvqO3JcaDbw9c6q9c7xNE3Wlak4xxKeiXsWyHQdAoGBAPN7hpqISKIc+8dPc5kg\nuJDDPdFcJ8py0nbysEYtY+hUaDxfw7Cm8zrNj+M9BbQR9yM6EW16P0FQ+/0XBrLMVpRkyJZ0Y3Ij\n5Qol5IxJPyWzfj6e7cd9Rkvqs2sQcBehXCbQHjfpB12yu3excQBPT0Lr5gei7yfc+D21hGWDH1xh\nAoGAM2lm1qxf4O790HggiiB0FN6g5kpdvemPFSm4GT8DYN1kRHy9mbjbb6V/ZIzliqJ/Wrr23qIN\nVgy1V6eK7LUc2c5u3zDscu/6fbH2pEHCMF32FoIHaZ+Tj510WaPtJ+MvWkDijgd2hnxM42yWDZI3\nygC16cnKt9bTPzz7XEGuPA0CgYBco2gQTcAM5igpqiIaZeezNIXFrWF6VnubRDUrTkPP9qV+KxWC\nldK/UczoMaSE4bz9Cy/sTnHYwR5PKj6jMrnSVhI3pGrd16hiVw6BDbFX/9YNr1xa5WAkrFS9bJCp\nfPxZzB9jOGdUEBfhr4KGEqbemHB6AVUq/pj4qaKJGP2KoQKBgFt7cqr8t+0zU5ko+B2pxmMprsUx\nqZ3mBATMD21AshxWxsawpqoPJJ3NTScNrjISERQ6RG3lQNv+30z79k9Fy+5FUH4pvqU4sgmtYSVH\nM4xW+aJnEhzIbE7a4an2eTc0pAxc9GexwtCFwlBouSW6kfOcMgEysoy99wQoGNgRHY/D\n-----END RSA PRIVATE KEY-----"
     taskTemplateOrigin = {
         "Id":0,
         "CommandLine":commandLine,
         "Node":None,
         "UserName":"hpc_diagnostics",
         "Password":None,
-        "PrivateKey":privateKey,
+        "PrivateKey":SSH_PRIVATE_KEY,
         "CustomizedData":None,
         "MaximumRuntimeSeconds":1000
     }
@@ -782,6 +817,107 @@ def mpiPingpongGetVariability(data):
         return "Moderate"
     else:
         return "High"
+
+def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
+    mpiVersion = arguments['Intel MPI Version']
+    mpiInstallationLocationWindows = globalGetMpiDefaultInstallationLocationWindows(mpiVersion)
+    mpiInstallationLocationLinux = globalGetMpiDefaultInstallationLocationLinux(mpiVersion)
+
+    if windowsNodes and linuxNodes:
+        raise Exception('Can not run this test among Linux nodes and Windows nodes')
+
+    nodelist = list(windowsNodes) if windowsNodes else list(linuxNodes)
+    if 0 < len(rdmaNodes) < len(nodelist):
+        raise Exception('Can not run this test among RDMA nodes and non-RDMA nodes')
+    
+    taskLabel = '{}{}'.format('[Windows]' if windowsNodes else '[Linux]', '[RDMA]' if rdmaNodes else '')
+
+    commandLine = 'source {0}/intel64/bin/mpivars.sh && [mpicommand] >stdout 2>stderr && cat stdout | tail -n29 | head -n25 || (errorcode=$? && cat stdout stderr && exit $errorcode)'.format(mpiInstallationLocationLinux)
+    rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0' if rdmaNodes else ''
+    taskTemplate = {
+        'UserName':'hpc_diagnostics',
+        'Password':None,
+        'PrivateKey':SSH_PRIVATE_KEY,
+    }
+
+    taskId = 1
+    tasks = []
+
+    # Create task for every node to run Intel MPI Benchmark - Sendrecv among processors which forms a periodic communication chain within each node.
+    # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
+    mpicommand = 'mpirun -env I_MPI_SHM_LMT=shm {} IMB-MPI1 sendrecv'.format(rdmaOption)
+    for node in nodelist:
+        task = copy.deepcopy(taskTemplate)
+        task['Id'] = taskId
+        taskId += 1
+        task['Node'] = node
+        task['CommandLine'] = commandLine.replace('[mpicommand]', mpicommand)
+        task['CustomizedData'] = '{} {}'.format(taskLabel, node)
+        task['MaximumRuntimeSeconds'] = 60
+        tasks.append(task)
+
+    # Create task to run MPI Benchmark - Sendrecv among processors, one processor per node, which forms a periodic communication chain in selected nodes.
+    nodesCount = len(nodelist)
+    if nodesCount > 1:
+        nodes = ','.join(nodelist)
+        mpicommand = 'mpirun -hosts {} {} -ppn 1 IMB-MPI1 -npmin {} sendrecv'.format(nodes, rdmaOption, nodesCount)
+        task = copy.deepcopy(taskTemplate)
+        task['Id'] = taskId
+        taskId += 1
+        task['CommandLine'] = commandLine.replace('[mpicommand]', mpicommand)
+        task['ParentIds'] = list(range(1, nodesCount + 1))
+        task['Node'] = nodelist[0]
+        task['CustomizedData'] = '{} {}'.format(taskLabel, nodes)
+        task['EnvironmentVariables'] = {'CCP_NODES': '{} {}'.format(nodesCount, ' '.join(['{} 1'.format(node) for node in nodelist]))}
+        task['MaximumRuntimeSeconds'] = 60
+        tasks.append(task)
+    
+    print(json.dumps(tasks))
+
+def mpiRingReduce(nodes, tasks, taskResults):
+    output = None
+    try:
+        for taskResult in taskResults:
+            taskId = taskResult['TaskId']
+            if taskId == 1 and len(nodes) == 1 or taskId == len(nodes) + 1:
+                if taskResult['ExitCode'] == 0:
+                    output = taskResult['Message']
+                    break
+    except Exception as e:
+        printErrorAsJson('Failed to parse task result. ' + str(e))
+        return -1
+    
+    rows = []
+    if output:
+        data = output.split('\n')
+        title = '#bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]   Mbytes/sec'
+        if data[0] and title in data[0]:
+            for line in data[1:]:
+                row = line.split()
+                if len(row) != len(title.split()):
+                    break
+                rows.append({
+                    'Message_Size':{
+                        'value':row[0],
+                        'unit':'Bytes'
+                    },
+                    'Latency':{
+                        'value':row[-2],
+                        'unit':'usec'
+                    },
+                    'Throughput':{
+                        'value':row[-1],
+                        'unit':'Mbytes/sec'
+                    }
+                })
+    
+    result = {
+        'Description': 'This data shows the {} communication performance as latencies and throughputs for various MPI message sizes, which are extracted from the result of running Intel MPI-1 Benchmark Sendrecv, more refer to https://software.intel.com/en-us/imb-user-guide-sendrecv'.format('intra-VM' if len(nodes) == 1 else 'inter-VM'),
+        'Result': rows
+        }
+    
+    print(json.dumps(result))
+    return 0
 
 def printErrorAsJson(errormessage):
     print(json.dumps({"Error":errormessage}))
