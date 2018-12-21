@@ -64,7 +64,7 @@ export class NewDiagnosticsComponent implements OnInit, OnDestroy {
     tree.treeModel.expandAll();
   }
 
-  private check() {
+  public check() {
     this.selectedDescription = '';
     this.testInfoLink = '';
     this.selectedDescription = this.selectedTest.description;
