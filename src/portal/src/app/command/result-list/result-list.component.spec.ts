@@ -1,14 +1,16 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Directive, Input, Output, EventEmitter, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { async, ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { Component, Directive, Input, TrackByFunction, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { FormsModule } from '@angular/forms'
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { NoopAnimationsModule, BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MaterialsModule } from '../../materials.module';
 import { ApiService } from '../../services/api.service';
 import { TableSettingsService } from '../../services/table-settings.service';
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { ResultListComponent } from './result-list.component';
 import { TableDataService } from '../../services/table-data/table-data.service';
+import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { animationFrameScheduler } from 'rxjs';
 
 @Directive({
   selector: '[routerLink]',
@@ -23,18 +25,23 @@ class RouterLinkDirectiveStub {
   }
 }
 
-@Directive({
-  selector: '[appWindowScroll]',
-})
-class WindowScrollDirectiveStub {
-  @Input() dataLength: number;
-  @Input() pageSize: number;
-  @Output() scrollEvent = new EventEmitter();
-}
+// @Directive({
+//   selector: '[appWindowScroll]',
+// })
+// class WindowScrollDirectiveStub {
+//   @Input() dataLength: number;
+//   @Input() pageSize: number;
+//   @Output() scrollEvent = new EventEmitter();
+// }
 
 
 class ApiServiceStub {
-  static results = [{ command: 'a command', state: 'Finished' }]
+  static results = [
+    { id: 1, createdAt: '2018-08-01', command: 'a command', state: 'Finished', progress: 100, updatedAt: '2018-08-01' },
+    { id: 2, createdAt: '2018-08-01', command: 'a command', state: 'Finished', progress: 100, updatedAt: '2018-08-01' },
+    { id: 3, createdAt: '2018-08-01', command: 'a command', state: 'Finished', progress: 100, updatedAt: '2018-08-01' },
+    { id: 4, createdAt: '2018-08-01', command: 'a command', state: 'Finished', progress: 100, updatedAt: '2018-08-01' },
+  ]
 
   command = {
     getJobsByPage: () => of(ApiServiceStub.results),
@@ -58,13 +65,29 @@ const tableSettingsStub = {
 
 class TableDataServiceStub {
   updateData(newData, dataSource, propertyName) {
-    return dataSource.data = newData;
+    return newData;
   }
+}
+
+function finishInit(fixture: ComponentFixture<any>) {
+  // On the first cycle we render and measure the viewport.
+  fixture.detectChanges();
+  flush();
+
+  // On the second cycle we render the items.
+  fixture.detectChanges();
+  flush();
+
+  // Flush the initial fake scroll event.
+  animationFrameScheduler.flush(null);
+  flush();
+  fixture.detectChanges();
 }
 
 fdescribe('ClusrunResultListComponent', () => {
   let component: ResultListComponent;
   let fixture: ComponentFixture<ResultListComponent>;
+  let viewport: CdkVirtualScrollViewport;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
@@ -73,9 +96,10 @@ fdescribe('ClusrunResultListComponent', () => {
         ResultListComponent,
       ],
       imports: [
-        NoopAnimationsModule,
+        BrowserAnimationsModule,
         FormsModule,
         MaterialsModule,
+        ScrollingModule
       ],
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
@@ -83,7 +107,7 @@ fdescribe('ClusrunResultListComponent', () => {
         { provide: TableSettingsService, useValue: tableSettingsStub },
         { provide: TableDataService, useClass: TableDataServiceStub }
       ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
+      schemas: [NO_ERRORS_SCHEMA]
     })
       .compileComponents();
   }));
@@ -91,14 +115,36 @@ fdescribe('ClusrunResultListComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(ResultListComponent);
     component = fixture.componentInstance;
+    viewport = component.cdkVirtualScrollViewport;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('should create', fakeAsync(() => {
     expect(component).toBeTruthy();
-    let text = fixture.nativeElement.querySelector('.mat-cell.mat-column-command').textContent;
-    expect(text).toContain(ApiServiceStub.results[0].command);
-    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-state').textContent;
-    expect(text).toContain('Finished');
-  });
+    expect(viewport.getDataLength()).toEqual(4);
+    // finishInit(fixture);
+    // flush();
+    // fixture.detectChanges();
+    // flush();
+    // console.log(viewport.getDataLength());
+
+    // viewport.setRenderedRange({ start: 0, end: 3 });
+    // viewport.checkViewportSize();
+    // fixture.detectChanges();
+    // flush();
+
+    // animationFrameScheduler.flush(null);
+    // flush();
+    // fixture.detectChanges();
+
+    // console.log(viewport.getRenderedRange());
+    // console.log(component.dataSource);
+    // const contentWrapper =
+    //   viewport.elementRef.nativeElement.querySelector('.cdk-virtual-scroll-content-wrapper');
+    // console.log(contentWrapper.children.length);
+
+    // console.log(fixture.nativeElement.querySelectorAll('.list-item'));
+    // let text = fixture.nativeElement.querySelector('.list-item .job-command').textContent;
+    // expect(text).toContain(ApiServiceStub.results[0].command);
+  }));
 });

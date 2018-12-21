@@ -21,6 +21,7 @@ import { OverviewResultComponent } from './result-detail/diags/benchmark/cpu/ove
 import { CpuReportComponent } from './result-detail/diags/benchmark/cpu/cpu-report/cpu-report.component';
 import { FailedReasonsComponent } from './result-detail/diags/mpi/pingpong/failed-reasons/failed-reasons.component';
 import { GoodNodesComponent } from './result-detail/diags/mpi/pingpong/good-nodes/good-nodes.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 @NgModule({
   imports: [
@@ -30,7 +31,8 @@ import { GoodNodesComponent } from './result-detail/diags/mpi/pingpong/good-node
     WidgetsModule,
     ChartModule,
     FormsModule,
-    SharedModule
+    SharedModule,
+    ScrollingModule
   ],
   declarations: [
     DiagnosticsComponent,

@@ -215,9 +215,19 @@ export class CommandApi extends Resource<CommandResult> {
       .pipe(this.errorHandler);
   }
 
-  getTasks(jobId) {
-    let url = `${this.url}/${jobId}/tasks`;
-    return this.httpGet(url);
+  normalizeClusrunTask(tasks) {
+    return tasks.map((e: any) => ({
+      name: e.node,
+      state: e.state,
+      id: e.id,
+    }));
+  }
+
+  getTasksByPage(jobId, lastId, count) {
+    let url = `${this.url}/${jobId}/tasks?lastid=${lastId}&count=${count}`;
+    return this.httpGet(url, null, [
+      map(e => this.normalizeClusrunTask(e))
+    ]);
   }
 
   getTaskResult(jobId, taskId) {

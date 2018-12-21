@@ -9,6 +9,7 @@ import { TableSettingsService } from '../../services/table-settings.service';
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { ResultListComponent } from './result-list.component';
 import { TableDataService } from '../../services/table-data/table-data.service';
+import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
 @Directive({
   selector: '[routerLink]',
@@ -57,13 +58,14 @@ const tableSettingsStub = {
 
 class TableDataServiceStub {
   updateData(newData, dataSource, propertyName) {
-    return dataSource.data = newData;
+    return newData;
   }
 }
 
 fdescribe('DiagResultListComponent', () => {
   let component: ResultListComponent;
   let fixture: ComponentFixture<ResultListComponent>;
+  let viewport: CdkVirtualScrollViewport;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
@@ -75,7 +77,8 @@ fdescribe('DiagResultListComponent', () => {
       imports: [
         NoopAnimationsModule,
         FormsModule,
-        MaterialsModule
+        MaterialsModule,
+        ScrollingModule
       ],
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
@@ -91,14 +94,12 @@ fdescribe('DiagResultListComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(ResultListComponent);
     component = fixture.componentInstance;
+    viewport = component.cdkVirtualScrollViewport;
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
-    let text = fixture.nativeElement.querySelector('.mat-cell.mat-column-diagnostic').textContent;
-    expect(text).toContain(ApiServiceStub.results[0].diagnosticTest.name);
-    text = fixture.nativeElement.querySelector('.mat-cell.mat-column-category').textContent;
-    expect(text).toContain(ApiServiceStub.results[0].diagnosticTest.category);
+    expect(viewport.getDataLength()).toEqual(1);
   });
 });

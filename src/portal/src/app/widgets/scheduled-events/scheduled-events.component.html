@@ -3,8 +3,8 @@
     <div class="event-time">{{event.NotBefore | date: 'yyyy-MM-dd HH:mm:ss'}}</div>
   </div>
   <div class="event-info azure-event" [ngClass]="event.EventType">
-    <div class="event-content">{{event.EventId}}, {{event.ResourceType}}
-      <!-- <span [ngClass]="typeColor(event.EventType)"> {{event.EventType}} </span>, -->
+    <div class="event-content"><span [ngClass]="typeColor(event.EventType)">{{event.EventType}}</span>,{{event.EventId}},
+      {{event.ResourceType}}
       <span [ngClass]="event.EventStatus">{{event.EventStatus}}</span>
     </div>
   </div>

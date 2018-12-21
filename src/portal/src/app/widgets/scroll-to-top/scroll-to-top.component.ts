@@ -12,11 +12,18 @@ export class ScrollToTopComponent implements OnInit {
   @Input()
   scrolled: boolean;
 
+  @Input()
+  targetEle: HTMLInputElement;
+
   ngOnInit() {
   }
 
   private scrollToTop() {
-    window.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
+    if (this.targetEle) {
+      this.targetEle.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    else {
+      window.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
+    }
   }
-
 }

@@ -30,7 +30,8 @@
                     taskMonitor,
                     serverBuilder.Utilities,
                     serverBuilder.GetRequiredService<NodeSynchronizer>(),
-                    serverBuilder.GetRequiredService<ILogger>());
+                    serverBuilder.GetRequiredService<ILogger>(),
+                    serverBuilder.GetRequiredService<NodeRegister>());
 
                 server.Start(serverBuilder.CancelToken);
                 webHost.RunAsync(serverBuilder.CancelToken);
@@ -47,10 +48,13 @@
                     svc.AddSingleton(monitor);
                     svc.Configure<TaskItemSourceOptions>(config.GetSection(nameof(TaskItemSourceOptions)));
                     svc.Configure<NodeCommunicatorOptions>(config.GetSection(nameof(NodeCommunicatorOptions)));
+                    svc.Configure<NodeRegisterWorkerOptions>(config.GetSection(nameof(NodeRegisterWorkerOptions)));
                     svc.AddSingleton<NodeCommunicator>();
                     svc.AddSingleton<NodeSynchronizer>();
                     svc.Configure<MetadataWorkerOptions>(config.GetSection(nameof(MetadataWorkerOptions)));
                     svc.AddSingleton<IWorker, MetadataWorker>();
+                    svc.AddSingleton<NodeRegister>();
+                    svc.AddSingleton<IWorker, NodeRegisterWorker>();
                     svc.Configure<MetricsWorkerOptions>(config.GetSection(nameof(MetricsWorkerOptions)));
                     svc.AddSingleton<IWorker, MetricsWorker>();
                     svc.Configure<JobDispatchWorkerGroupOptions>(config.GetSection(nameof(JobDispatchWorkerGroupOptions)));

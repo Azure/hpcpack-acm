@@ -80,11 +80,11 @@ export class MainComponent {
         //of the gap, and it seems good enough now. The ultimate way may be to
         //replace the Bootstrap Grid system with something else, which involves
         //a lot more work.
-        if (this.isLoggedIn) {
+        // if (this.isLoggedIn) {
             setTimeout(() => {
                 this.sidePane.toggle();
             }, 1000);
-        }
+        // }
     }
 
     private get isLoggedIn(): boolean {

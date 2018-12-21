@@ -27,6 +27,7 @@ import { TableSettingsService } from '../../services/table-settings.service';
 import { TableDataService } from '../../services/table-data/table-data.service';
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 @Directive({
   selector: '[routerLink]',
@@ -82,7 +83,7 @@ const tableSettingsStub = {
 
 class TableDataServiceStub {
   updateData(newData, dataSource, propertyName) {
-    return dataSource.data = newData;
+    return newData;
   }
 }
 
@@ -119,7 +120,7 @@ const routerStub = {
     RouterLinkDirectiveStub
   ],
   imports: [
-    MaterialsModule, ChartModule, CommonModule, FormsModule
+    MaterialsModule, ChartModule, CommonModule, FormsModule, ScrollingModule
   ],
   entryComponents: [
     CpuReportComponent, RingReportComponent, PingPongReportComponent

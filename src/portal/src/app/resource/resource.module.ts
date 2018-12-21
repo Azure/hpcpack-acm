@@ -15,6 +15,7 @@ import { NewCommandComponent } from './new-command/new-command.component';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { SharedModule } from '../shared.module';
 import { CpuComponent } from './node-heatmap/cpu/cpu.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 @NgModule({
   imports: [
@@ -23,10 +24,11 @@ import { CpuComponent } from './node-heatmap/cpu/cpu.component';
     MaterialsModule,
     FormsModule,
     ReactiveFormsModule,
-    TreeModule,
+    TreeModule.forRoot(),
     WidgetsModule,
     ChartModule,
-    SharedModule
+    SharedModule,
+    ScrollingModule
   ],
   declarations: [ResourceComponent, NodeListComponent, NodeDetailComponent, NodeHeatmapComponent, NewDiagnosticsComponent, NewCommandComponent, CpuComponent],
   entryComponents: [NewDiagnosticsComponent, NewCommandComponent],

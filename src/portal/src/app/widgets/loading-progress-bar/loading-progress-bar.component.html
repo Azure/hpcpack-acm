@@ -1,6 +1,9 @@
 <div class="loading">
-  <mat-progress-bar *ngIf="!loadFinished" mode="indeterminate"></mat-progress-bar>
-  <div class="load-finish" *ngIf="loadFinished">
+  <div class="load-info load-area" *ngIf="!loadFinished">
+    <mat-spinner diameter="20"></mat-spinner>
+    <div class="loading-text">Loading...</div>
+  </div>
+  <div class="load-info" *ngIf="loadFinished">
     No more data.
   </div>
 </div>

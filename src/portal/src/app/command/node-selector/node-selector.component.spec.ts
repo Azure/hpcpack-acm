@@ -5,7 +5,9 @@ import { MaterialsModule } from '../../materials.module';
 import { FormsModule } from '@angular/forms';
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { SimpleChange } from '@angular/core';
+import { SimpleChange, NO_ERRORS_SCHEMA } from '@angular/core';
+import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { TableDataService } from '../../services/table-data/table-data.service';
 
 class JobStateServiceStub {
   stateClass(state) {
@@ -16,9 +18,16 @@ class JobStateServiceStub {
   }
 }
 
+class TableDataServiceStub {
+  trackByFn(item, colums) {
+    return false;
+  }
+}
+
 fdescribe('NodeSelectorComponent', () => {
   let component: NodeSelectorComponent;
   let fixture: ComponentFixture<NodeSelectorComponent>;
+  let viewport: CdkVirtualScrollViewport;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
@@ -26,11 +35,14 @@ fdescribe('NodeSelectorComponent', () => {
       imports: [
         MaterialsModule,
         FormsModule,
-        NoopAnimationsModule
+        NoopAnimationsModule,
+        ScrollingModule
       ],
       providers: [
-        { provide: JobStateService, useClass: JobStateServiceStub }
-      ]
+        { provide: JobStateService, useClass: JobStateServiceStub },
+        { provide: TableDataService, useClass: TableDataServiceStub }
+      ],
+      schemas: [NO_ERRORS_SCHEMA]
     })
       .compileComponents();
   }));
@@ -38,6 +50,7 @@ fdescribe('NodeSelectorComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(NodeSelectorComponent);
     component = fixture.componentInstance;
+    viewport = component.cdkVirtualScrollViewport;
     component.nodes = [
       {
         name: "testNode",
@@ -54,9 +67,6 @@ fdescribe('NodeSelectorComponent', () => {
       nodes: new SimpleChange([], component.nodes, false)
     });
     fixture.detectChanges();
-    let name = fixture.nativeElement.querySelector('.mat-column-name .cell-text').textContent;
-    expect(name).toEqual('testNode');
-    let state = fixture.nativeElement.querySelector('.mat-column-state .cell-text').textContent;
-    expect(state).toEqual('Finished');
+    expect(viewport.getDataLength()).toEqual(1);
   })
 });

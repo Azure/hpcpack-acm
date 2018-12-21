@@ -24,8 +24,6 @@ import {
   MatProgressSpinnerModule
 } from '@angular/material';
 
-import { DragulaModule } from 'ng2-dragula';
-
 const modules = [
   MatToolbarModule,
   MatSidenavModule,
@@ -48,7 +46,6 @@ const modules = [
   MatProgressBarModule,
   MatPaginatorModule,
   MatProgressSpinnerModule,
-  DragulaModule
 ];
 
 @NgModule({

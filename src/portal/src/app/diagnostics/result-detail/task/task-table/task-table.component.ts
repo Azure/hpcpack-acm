@@ -1,10 +1,12 @@
-import { Component, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, ViewChild, Input, Output, EventEmitter, SimpleChanges } from '@angular/core';
 import { TableOptionComponent } from '../../../../widgets/table-option/table-option.component';
 import { TableSettingsService } from '../../../../services/table-settings.service';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
-import { MatTableDataSource } from '@angular/material';
+import { MatDialog } from '@angular/material';
 import { TaskDetailComponent } from '../task-detail/task-detail.component';
 import { JobStateService } from '../../../../services/job-state/job-state.service';
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { TableDataService } from '../../../../services/table-data/table-data.service';
+import { VirtualScrollService } from '../../../../services/virtual-scroll/virtual-scroll.service';
 
 @Component({
   selector: 'diag-task-table',
@@ -12,8 +14,10 @@ import { JobStateService } from '../../../../services/job-state/job-state.servic
   styleUrls: ['./task-table.component.scss']
 })
 export class TaskTableComponent implements OnInit {
-  @ViewChild('filter')
-  private filterInput;
+  @ViewChild('content') cdkVirtualScrollViewport: CdkVirtualScrollViewport;
+
+  @Input()
+  public empty: boolean;
 
   @Input()
   tableName: string;
@@ -21,13 +25,10 @@ export class TaskTableComponent implements OnInit {
   @Input()
   customizableColumns: any;
 
-  public displayedColumns: any;
+  public displayedColumns = [];
 
   @Input()
-  dataSource: any;
-
-  @Input()
-  currentData: any;
+  dataSource: Array<any>;
 
   @Input()
   loadFinished: boolean;
@@ -39,28 +40,36 @@ export class TaskTableComponent implements OnInit {
   updateLastIdEvent = new EventEmitter();
 
   public scrolled = false;
-  private direction = 'down';
 
   private availableColumns;
 
   tasks = [];
 
+  private lastId = 0;
+  private reverse = true;
+
+  pivot: number;
+
+  startIndex = 0;
+  lastScrolled = 0;
+
+  public loading = false;
+
+  private endId = -1;
+
+
   constructor(
     private dialog: MatDialog,
     private settings: TableSettingsService,
-    private jobStateService: JobStateService
+    private jobStateService: JobStateService,
+    private tableDataService: TableDataService,
+    private virtualScrollService: VirtualScrollService
   ) { }
 
   ngOnInit() {
     this.loadSettings();
     this.getDisplayedColumns();
-  }
-
-  public onScrollEvent(data) {
-    this.loadFinished = data.loadFinished;
-    this.scrolled = data.scrolled;
-    this.direction = data.direction;
-    this.updateLastIdEvent.emit({ lastId: data.dataIndex == -1 ? 0 : this.dataSource.data[data.dataIndex]['id'], direction: this.direction });
+    this.pivot = Math.round(this.maxPageSize / 2) - 1;
   }
 
   private setIcon(state) {
@@ -107,12 +116,35 @@ export class TaskTableComponent implements OnInit {
     this.availableColumns = this.settings.load(this.tableName, this.customizableColumns);
   }
 
-  applyFilter(text: string): void {
-    this.dataSource.filter = text;
+
+  trackByFn(index, item) {
+    return this.tableDataService.trackByFn(item, this.displayedColumns);
   }
 
-  filterNodes(state): void {
-    this.applyFilter(state);
-    this.filterInput.nativeElement.value = state;
+  getColumnOrder(col) {
+    let index = this.displayedColumns.findIndex(item => {
+      return item == col;
+    });
+
+    let order = index + 1;
+    if (order) {
+      return { 'order': index + 1 };
+    }
+    else {
+      return { 'display': 'none' };
+    }
+  }
+
+
+  indexChanged($event) {
+    let result = this.virtualScrollService.indexChangedCalc(this.maxPageSize, this.pivot, this.cdkVirtualScrollViewport, this.dataSource, this.lastScrolled, this.startIndex);
+    this.pivot = result.pivot;
+    this.lastScrolled = result.lastScrolled;
+    this.lastId = result.lastId == undefined ? this.lastId : result.lastId;
+    this.endId = result.endId == undefined ? this.endId : result.endId;
+    this.loading = result.loading;
+    this.startIndex = result.startIndex;
+    this.scrolled = result.scrolled;
+    this.updateLastIdEvent.emit({ lastId: this.lastId, endId: this.endId });
   }
 }
