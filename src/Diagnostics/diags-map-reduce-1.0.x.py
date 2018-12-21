@@ -1,6 +1,6 @@
 #v1.0.0
 
-import sys, json, copy, numpy, time
+import sys, json, copy, numpy, time, math
 
 INTEL_MPI_URI = {
     '2019 Update 1'.lower(): {
@@ -108,9 +108,11 @@ def parseStdin():
     if tasks and taskResults:
         if len(tasks) != len(taskResults):
             raise Exception('Task count {} is not equal to task result count {}'.format(len(tasks), len(taskResults)))
-        taskIdNodeNameSet = set(['{}:{}'.format(task['Id'], task['Node']) for task in tasks])
-        if not all(['{}:{}'.format(task['TaskId'], task['NodeName']) in taskIdNodeNameSet for task in taskResults]):
-            raise Exception('Task id and node name mismatch in "Tasks" and "TaskResults"')
+        taskIdNodeNameInTasks = set(['{}:{}'.format(task['Id'], task['Node']) for task in tasks])
+        taskIdNodeNameInTaskResults = set(['{}:{}'.format(task['TaskId'], task['NodeName']) for task in taskResults])
+        difference = (taskIdNodeNameInTasks | taskIdNodeNameInTaskResults) - (taskIdNodeNameInTasks & taskIdNodeNameInTaskResults)
+        if difference:
+            raise Exception('Task id and node name mismatch in "Tasks" and "TaskResults": {}'.format(', '.join(difference)))
 
     return diagName, diagArgs, targetNodes, windowsNodes, linuxNodes, rdmaNodes, tasks, taskResults
 
@@ -536,14 +538,16 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
         for pair in messages:
             for node in pair.split(','):
                 messagesByNode.setdefault(node, {})[pair] = messages[pair]
-        histogramSize = min(nodesNumber, 10)
+        histogramSize = 8
 
         statisticsItems = ['Latency', 'Throughput']
         for item in statisticsItems:
             data = [messages[pair][item] for pair in messages]
             globalMin = numpy.amin(data)
             globalMax = numpy.amax(data)
-            histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(globalMin, globalMax))]
+            factor = math.ceil(globalMax / histogramSize)
+            histogramBins = [factor * n for n in range(histogramSize + 1)]
+            histogram = [list(array) for array in numpy.histogram(data, bins=histogramBins)]
 
             if item == 'Latency':
                 unit = 'us'
@@ -579,7 +583,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
             result[item]['ResultByNode'] = {}
             for node in nodesInMessages:
                 data = [messagesByNode[node][pair][item] for pair in messagesByNode[node]]
-                histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(globalMin, globalMax))]
+                histogram = [list(array) for array in numpy.histogram(data, bins=histogramBins)]
                 if item == 'Latency':
                     badPairs = [{'Pair':pair, 'Value':messagesByNode[node][pair][item]} for pair in messagesByNode[node] if messagesByNode[node][pair][item] > latencyThreshold and node in pair.split(',')]
                     badPairs.sort(key=lambda x:x['Value'], reverse=True)
