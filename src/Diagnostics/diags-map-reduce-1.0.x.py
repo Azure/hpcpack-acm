@@ -89,7 +89,7 @@ def parseStdin():
             else:
                 unknownNodes.add(node)
             vmSize = metadataByNode[node]['compute']['vmSize']
-            if vmSize in rdmaVmSizes:
+            if vmSize.lower() in rdmaVmSizes:
                 rdmaNodes.add(node)
             
         if len(unknownNodes) != 0:
@@ -228,7 +228,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
         "Password":None,
         "PrivateKey":privateKey,
         "CustomizedData":None,
-        "MaximumRuntimeSeconds":60
+        "MaximumRuntimeSeconds":1000
     }
 
     headingStartId = startId
@@ -244,7 +244,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
     parseResult = "tail -n29 | head -n25"
     columns = "$3,$4"
     parseValue = "sed -n '1p;$p'"
-    timeout = "3"
+    timeout = "600"
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[sshcommand]", sshcommand)
     taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[mpicommand]", mpicommand)
@@ -396,21 +396,21 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
             taskId = task['Id']
             state = task['State']
             taskLabel = task['CustomizedData']
+            nodeOrPair = taskLabel.split()[-1]
             if '[Windows]' in taskLabel:
                 windowsTaskIds.add(taskId)
             if '[Linux]' in taskLabel:
                 linuxTaskIds.add(taskId)
             if '[RDMA]' in taskLabel and ',' not in taskLabel:
-                rdmaNodes.append(nodePair)
-            nodePair = taskLabel.split()[-1]
-            taskId2nodePair[taskId] = nodePair
-            if ',' in nodePair:
+                rdmaNodes.append(nodeOrPair)
+            taskId2nodePair[taskId] = nodeOrPair
+            if ',' in nodeOrPair:
                 hasInterVmTask = True
                 if state == taskStateFinished:
                     tasksForStatistics.add(taskId)
             if state == taskStateCanceled:
                 canceledTasks.append(taskId)
-                canceledNodePairs.add(nodePair)
+                canceledNodePairs.add(nodeOrPair)
     except Exception as e:
         printErrorAsJson('Failed to parse tasks. ' + str(e))
         return -1
@@ -457,7 +457,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                         }
                     failedTasks.append(failedTask)
             else:
-                raise Exception("No Message")
+                raise Exception('No Message')
     except Exception as e:
         printErrorAsJson('Failed to parse task result. Task id: {}. {}'.format(taskId, e))
         return -1
@@ -471,7 +471,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
         latencyThreshold = 1000000
         throughputThreshold = 0
 
-    goodPairs = [pair for pair in messages if messages[pair]["Throughput"] > throughputThreshold]
+    goodPairs = [pair for pair in messages if messages[pair]['Throughput'] > throughputThreshold]
     goodNodesGroups = mpiPingpongGetGroupsOfFullConnectedNodes(goodPairs)
     goodNodes = set([node for group in goodNodesGroups for node in group])
     if goodNodes != set([node for pair in goodPairs for node in pair.split(',')]):
@@ -503,68 +503,68 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                 messagesByNode.setdefault(node, {})[pair] = messages[pair]
         histogramSize = min(nodesNumber, 10)
 
-        statisticsItems = ["Latency", "Throughput"]
+        statisticsItems = ['Latency', 'Throughput']
         for item in statisticsItems:
             data = [messages[pair][item] for pair in messages]
             globalMin = numpy.amin(data)
             globalMax = numpy.amax(data)
             histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(globalMin, globalMax))]
 
-            if item == "Latency":
-                unit = "us"
+            if item == 'Latency':
+                unit = 'us'
                 threshold = latencyThreshold
-                badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold]
-                badPairs.sort(key=lambda x:x["Value"], reverse=True)
-                bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == globalMin], "Value":globalMin}
-                worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == globalMax], "Value":globalMax}
+                badPairs = [{'Pair':pair, 'Value':messages[pair][item]} for pair in messages if messages[pair][item] > latencyThreshold]
+                badPairs.sort(key=lambda x:x['Value'], reverse=True)
+                bestPairs = {'Pairs':[pair for pair in messages if messages[pair][item] == globalMin], 'Value':globalMin}
+                worstPairs = {'Pairs':[pair for pair in messages if messages[pair][item] == globalMax], 'Value':globalMax}
                 packet_size = 0 if packetSize == 2**-1 else packetSize
             else:
-                unit = "MB/s"
+                unit = 'MB/s'
                 threshold = throughputThreshold
-                badPairs = [{"Pair":pair, "Value":messages[pair][item]} for pair in messages if messages[pair][item] < throughputThreshold]
-                badPairs.sort(key=lambda x:x["Value"])
-                bestPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == globalMax], "Value":globalMax}
-                worstPairs = {"Pairs":[pair for pair in messages if messages[pair][item] == globalMin], "Value":globalMin}
+                badPairs = [{'Pair':pair, 'Value':messages[pair][item]} for pair in messages if messages[pair][item] < throughputThreshold]
+                badPairs.sort(key=lambda x:x['Value'])
+                bestPairs = {'Pairs':[pair for pair in messages if messages[pair][item] == globalMax], 'Value':globalMax}
+                worstPairs = {'Pairs':[pair for pair in messages if messages[pair][item] == globalMin], 'Value':globalMin}
                 packet_size = defaultPacketSize if packetSize == 2**-1 else packetSize
 
-            result[item]["Unit"] = unit
-            result[item]["Threshold"] = threshold
-            result[item]["Packet_size"] = str(packet_size) + ' Bytes'
-            result[item]["Result"] = {}
-            result[item]["Result"]["Passed"] = len(badPairs) == 0
-            result[item]["Result"]["Bad_pairs"] = badPairs
-            result[item]["Result"]["Best_pairs"] = bestPairs
-            result[item]["Result"]["Worst_pairs"] = worstPairs
-            result[item]["Result"]["Histogram"] = mpiPingpongRenderHistogram(histogram)
-            result[item]["Result"]["Average"] = numpy.average(data)
-            result[item]["Result"]["Median"] = numpy.median(data)
-            result[item]["Result"]["Standard_deviation"] = numpy.std(data)
-            result[item]["Result"]["Variability"] = mpiPingpongGetVariability(data)
+            result[item]['Unit'] = unit
+            result[item]['Threshold'] = threshold
+            result[item]['Packet_size'] = str(packet_size) + ' Bytes'
+            result[item]['Result'] = {}
+            result[item]['Result']['Passed'] = len(badPairs) == 0
+            result[item]['Result']['Bad_pairs'] = badPairs
+            result[item]['Result']['Best_pairs'] = bestPairs
+            result[item]['Result']['Worst_pairs'] = worstPairs
+            result[item]['Result']['Histogram'] = mpiPingpongRenderHistogram(histogram)
+            result[item]['Result']['Average'] = numpy.average(data)
+            result[item]['Result']['Median'] = numpy.median(data)
+            result[item]['Result']['Standard_deviation'] = numpy.std(data)
+            result[item]['Result']['Variability'] = mpiPingpongGetVariability(data)
             
-            result[item]["ResultByNode"] = {}
+            result[item]['ResultByNode'] = {}
             for node in nodesInMessages:
                 data = [messagesByNode[node][pair][item] for pair in messagesByNode[node]]
                 histogram = [list(array) for array in numpy.histogram(data, bins=histogramSize, range=(globalMin, globalMax))]
-                if item == "Latency":
-                    badPairs = [{"Pair":pair, "Value":messagesByNode[node][pair][item]} for pair in messagesByNode[node] if messagesByNode[node][pair][item] > latencyThreshold and node in pair.split(',')]
-                    badPairs.sort(key=lambda x:x["Value"], reverse=True)
-                    bestPairs = {"Pairs":[pair for pair in messagesByNode[node] if messagesByNode[node][pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
-                    worstPairs = {"Pairs":[pair for pair in messagesByNode[node] if messagesByNode[node][pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
+                if item == 'Latency':
+                    badPairs = [{'Pair':pair, 'Value':messagesByNode[node][pair][item]} for pair in messagesByNode[node] if messagesByNode[node][pair][item] > latencyThreshold and node in pair.split(',')]
+                    badPairs.sort(key=lambda x:x['Value'], reverse=True)
+                    bestPairs = {'Pairs':[pair for pair in messagesByNode[node] if messagesByNode[node][pair][item] == numpy.amin(data) and node in pair.split(',')], 'Value':numpy.amin(data)}
+                    worstPairs = {'Pairs':[pair for pair in messagesByNode[node] if messagesByNode[node][pair][item] == numpy.amax(data) and node in pair.split(',')], 'Value':numpy.amax(data)}
                 else:
-                    badPairs = [{"Pair":pair, "Value":messagesByNode[node][pair][item]} for pair in messagesByNode[node] if messagesByNode[node][pair][item] < throughputThreshold and node in pair.split(',')]
-                    badPairs.sort(key=lambda x:x["Value"])
-                    bestPairs = {"Pairs":[pair for pair in messagesByNode[node] if messagesByNode[node][pair][item] == numpy.amax(data) and node in pair.split(',')], "Value":numpy.amax(data)}
-                    worstPairs = {"Pairs":[pair for pair in messagesByNode[node] if messagesByNode[node][pair][item] == numpy.amin(data) and node in pair.split(',')], "Value":numpy.amin(data)}
-                result[item]["ResultByNode"][node] = {}
-                result[item]["ResultByNode"][node]["Bad_pairs"] = badPairs
-                result[item]["ResultByNode"][node]["Passed"] = len(badPairs) == 0
-                result[item]["ResultByNode"][node]["Best_pairs"] = bestPairs
-                result[item]["ResultByNode"][node]["Worst_pairs"] = worstPairs
-                result[item]["ResultByNode"][node]["Histogram"] = mpiPingpongRenderHistogram(histogram)
-                result[item]["ResultByNode"][node]["Average"] = numpy.average(data)
-                result[item]["ResultByNode"][node]["Median"] = numpy.median(data)
-                result[item]["ResultByNode"][node]["Standard_deviation"] = numpy.std(data)
-                result[item]["ResultByNode"][node]["Variability"] = mpiPingpongGetVariability(data)
+                    badPairs = [{'Pair':pair, 'Value':messagesByNode[node][pair][item]} for pair in messagesByNode[node] if messagesByNode[node][pair][item] < throughputThreshold and node in pair.split(',')]
+                    badPairs.sort(key=lambda x:x['Value'])
+                    bestPairs = {'Pairs':[pair for pair in messagesByNode[node] if messagesByNode[node][pair][item] == numpy.amax(data) and node in pair.split(',')], 'Value':numpy.amax(data)}
+                    worstPairs = {'Pairs':[pair for pair in messagesByNode[node] if messagesByNode[node][pair][item] == numpy.amin(data) and node in pair.split(',')], 'Value':numpy.amin(data)}
+                result[item]['ResultByNode'][node] = {}
+                result[item]['ResultByNode'][node]['Bad_pairs'] = badPairs
+                result[item]['ResultByNode'][node]['Passed'] = len(badPairs) == 0
+                result[item]['ResultByNode'][node]['Best_pairs'] = bestPairs
+                result[item]['ResultByNode'][node]['Worst_pairs'] = worstPairs
+                result[item]['ResultByNode'][node]['Histogram'] = mpiPingpongRenderHistogram(histogram)
+                result[item]['ResultByNode'][node]['Average'] = numpy.average(data)
+                result[item]['ResultByNode'][node]['Median'] = numpy.median(data)
+                result[item]['ResultByNode'][node]['Standard_deviation'] = numpy.std(data)
+                result[item]['ResultByNode'][node]['Variability'] = mpiPingpongGetVariability(data)
 
     endTime = time.time()
     
@@ -572,7 +572,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
         taskRuntime = {
             'Max': numpy.amax(list(taskRuntime.values())),
             'Ave': numpy.average(list(taskRuntime.values())),
-            'Sorted': sorted([{'runtime':taskRuntime[key], 'taskId':key, 'nodepair':taskId2nodePair[key]} for key in taskRuntime], key=lambda x:x["runtime"], reverse=True)
+            'Sorted': sorted([{'runtime':taskRuntime[key], 'taskId':key, 'nodepair':taskId2nodePair[key]} for key in taskRuntime], key=lambda x:x['runtime'], reverse=True)
             }
         failedTasksByExitcode = {}
         for task in failedTasks:
