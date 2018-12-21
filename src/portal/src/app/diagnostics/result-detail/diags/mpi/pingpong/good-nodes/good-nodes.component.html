@@ -1,8 +1,8 @@
 <mat-accordion multi=true class="groups">
-  <mat-expansion-panel *ngFor="let g of nodeGroups; index as i" expanded=true>
+  <mat-expansion-panel *ngFor="let g of nodeGroups; index as i; trackBy: trackByFn" expanded=true>
     <mat-expansion-panel-header>
       <mat-panel-title>
-        <div>Group {{i+1}} ----<span class="nodes-number"> {{g.length}} </span>nodes </div>
+        <div>Group {{i+1}} <span class="nodes-number">( {{g.length}} nodes )</span></div>
       </mat-panel-title>
     </mat-expansion-panel-header>
     <app-nodes-info [nodes]="g">

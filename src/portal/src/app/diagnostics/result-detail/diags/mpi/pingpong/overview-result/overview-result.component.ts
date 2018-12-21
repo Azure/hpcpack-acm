@@ -16,6 +16,9 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
   @Input()
   nodes: any;
 
+  @Input()
+  category: string;
+
   activeMode = "total";
   overviewData: any = {};
   bestPairs = [];
@@ -36,6 +39,7 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
   nodeData: any;
   selectedNode: string;
   normal = true;
+  overviewOption: any;
 
   constructor(private cd: ChangeDetectorRef) { }
 
@@ -48,7 +52,19 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
     this.cd.detectChanges();
   }
 
+  isEmpty(obj){
+    for(let prop in obj){
+      if(obj.hasOwnProperty(prop)){
+        return false;
+      }
+    }
+    return true;
+  }
+
   showOverview() {
+    if(this.isEmpty(this.result)){
+      return;
+    }
     if (this.result != undefined) {
       this.nodeData = this.result.ResultByNode;
       if (!this.selectedNode) {
@@ -74,47 +90,53 @@ export class PingPongOverviewResultComponent implements OnInit, AfterViewInit {
         this.updateView(this.overviewResult);
         this.chart.canvas.parentNode.style.height = `${this.overviewResult.Histogram[1].length * 40 + 20}px`;
       }
-      this.overviewOption.scales.yAxes = [{
-        display: true,
-        ticks: {
-          callback: (value, index, values) => {
-            return value + ' ' + this.unit;
-          }
-        }
-      }];
-    }
-  }
-
-  overviewOption = {
-    maintainAspectRatio: false,
-    scaleOverride: true,
-    animation: false,
-    legend: {
-      display: false,
-    },
-    scales: {
-      xAxes: [{
-        display: true,
-        ticks: {
-          min: 0,
-          beginAtZero: true,   // minimum value will be 0.
-          callback: function (value, index, values) {
-            if (Math.floor(value) === value) {
-              return value;
+      let maxXAexsValue = Math.max.apply(null, this.result.Result.Histogram[0]);
+      this.overviewOption = {
+        maintainAspectRatio: false,
+        animation: false,
+        responsive: true,
+        legend: {
+          display: false,
+        },
+        scales: {
+          xAxes: [{
+            display: true,
+            ticks: {
+              min: 0,
+              suggestedMax: maxXAexsValue,
+              beginAtZero: true,
+              callback: function (value, index, values) {
+                if (Math.floor(value) === value) {
+                  return value;
+                }
+              }
+            }
+          }],
+          yAxes: [{
+            display: true,
+            ticks: {
+              callback: (value, index, values) => {
+                return value;
+              }
+            },
+            scaleLabel: {
+              display: true,
+              labelString: `${this.category} ( ${this.unit} )`
+            }
+          }]
+        },
+        tooltips: {
+          callbacks: {
+            title: (tooltipItem, data) => {
+              return `${tooltipItem[0].xLabel} ${this.unit}`;
             }
           }
         }
-      }],
-      yAxes: [{
-        display: true,
-        ticks: {
-          callback: (value, index, values) => {
-            return value + ' ' + this.unit;
-          }
-        }
-      }]
+      };
     }
-  };
+  }
+
+
 
   updateView(data) {
     this.overviewData = {

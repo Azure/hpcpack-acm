@@ -10,13 +10,15 @@
         <div class="overview-progress">
           <mat-progress-bar mode="indeterminate" *ngIf="!latencyData"></mat-progress-bar>
         </div>
-        <pingpong-overview-result [result]="latencyData" [nodes]="nodes" class="overview-data" *ngIf="latencyData"></pingpong-overview-result>
+        <pingpong-overview-result [result]="latencyData" [category]="'Latency'" [nodes]="nodes" class="overview-data"
+          *ngIf="latencyData"></pingpong-overview-result>
       </mat-tab>
       <mat-tab label="Throughput" *ngIf="!hasError">
         <div class="overview-progress">
           <mat-progress-bar mode="indeterminate" *ngIf="!throughputData"></mat-progress-bar>
         </div>
-        <pingpong-overview-result [result]="throughputData" [nodes]="nodes" class="overview-data" *ngIf="throughputData"></pingpong-overview-result>
+        <pingpong-overview-result [result]="throughputData" [category]="'Throughput'" [nodes]="nodes" class="overview-data"
+          *ngIf="throughputData"></pingpong-overview-result>
       </mat-tab>
       <mat-tab label="Nodes Diagnostic" *ngIf="!hasError">
         <div class="overview-progress">
@@ -32,6 +34,7 @@
         <pingpong-good-nodes [nodeGroups]="goodGroups" class="overview-data" *ngIf="goodGroups"></pingpong-good-nodes>
       </mat-tab>
       <mat-tab label="Nodes">
+        <div class="total-number">{{nodes.length}} nodes</div>
         <app-nodes-info [nodes]="nodes" [badNodes]="badNodes"></app-nodes-info>
       </mat-tab>
       <mat-tab label="Events">

@@ -1,12 +1,21 @@
 @import "../../../../../../stylesheets/mixin.scss";
 @import "../../../../../../stylesheets/info.scss";
+
 .overview-data {
-    font-size: 16px;
+  font-size: 16px;
 }
 
 .mat-expansion-panel:first-child {
+  margin-top: 1em;
+
+  .mat-expansion-panel-header:first-of-type {
     margin-top: 1em;
-    .mat-expansion-panel-header:first-of-type {
-        margin-top: 1em;
-    }
+  }
+}
+
+.total-number {
+  padding: 1em;
+  padding-bottom: 0;
+  color: $color;
+  font-size: 14px;
 }

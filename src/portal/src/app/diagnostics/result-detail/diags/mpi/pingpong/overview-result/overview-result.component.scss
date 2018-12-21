@@ -40,6 +40,7 @@
 
 .overview-header {
   @include display-flex($align-items: flex-start);
+  padding-bottom: 10px;
 }
 
 .select-node {
@@ -83,7 +84,8 @@
 
 ::ng-deep .result-pair .mat-expansion-panel-body {
   padding: 0 0.8em 0.8em;
-  font-size: 16px; 
+  font-size: 16px;
+
   .pair-area {
     max-height: 400px;
     overflow: auto;

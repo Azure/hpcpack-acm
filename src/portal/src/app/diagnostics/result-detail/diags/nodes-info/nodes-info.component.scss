@@ -2,7 +2,7 @@
 @import "../../../../stylesheets/info.scss";
 
 .nodes-info {
-  padding: 1em;
+  padding: 0 1em;
   font-size: 13px;
   @include display-flex($align-items: center);
   flex-wrap: wrap;

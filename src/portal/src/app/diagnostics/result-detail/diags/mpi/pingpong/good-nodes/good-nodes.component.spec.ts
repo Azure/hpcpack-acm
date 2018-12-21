@@ -54,6 +54,6 @@ fdescribe('GoodNodesComponent', () => {
     expect(panels.length).toEqual(2);
 
     let nodeNum = fixture.nativeElement.querySelectorAll('mat-panel-title .nodes-number')[0].textContent;
-    expect(nodeNum).toEqual(' 3 ');
+    expect(nodeNum).toEqual('( 3 nodes )');
   });
 });

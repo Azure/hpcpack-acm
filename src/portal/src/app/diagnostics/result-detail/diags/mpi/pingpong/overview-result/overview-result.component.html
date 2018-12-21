@@ -1,99 +1,101 @@
-<div class="overview-header">
-  <div class="chart-type">
-    <div class="chart-btn" [class.active]="activeMode == 'total'" (click)="setActiveMode('total')">Overview</div>
-    <div class="chart-btn" [class.active]="activeMode == 'node'" (click)="setActiveMode('node')">By Node</div>
-  </div>
-  <div class="select-node" *ngIf="activeMode == 'node'">
-    <mat-form-field>
-      <mat-select placeholder="Select Node" [(ngModel)]="selectedNode" (selectionChange)="changeNode()">
-        <mat-option *ngFor="let node of nodes" [value]="node" style="font-size: .9em;">
-          {{ node }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
-</div>
-<div class="overview-result">
-  <div class="chart-container" [hidden]="!normal">
-    <chart type="horizontalBar" [data]="overviewData" [options]="overviewOption" #chart>
-    </chart>
-  </div>
-  <div class="overview-content">
-    <div class="result-detail" *ngIf="normal">
-      <div class="overview-info">
-        <div class="overview-title"> Passed </div>
-        <i class="material-icons passed" *ngIf="passed == true">done</i>
-        <i class="material-icons not-passed" *ngIf="passed == false">clear</i>
-      </div>
-      <div class="overview-info">
-        <div class="overview-title"> Packet Size </div>
-        <div class="overview-value">{{packetSize}}</div>
-      </div>
-      <div class="overview-info">
-        <div class="overview-title"> Threshold </div>
-        <div class="overview-value">{{threshold | number: '1.2-2'}} {{unit}}</div>
-      </div>
-      <div class="overview-info">
-        <div class="overview-title"> Average </div>
-        <div class="overview-value">{{average | number: '1.2-2'}} {{unit}}</div>
-      </div>
-      <div class="overview-info">
-        <div class="overview-title"> Median </div>
-        <div class="overview-value">{{median | number: '1.2-2'}} {{unit}}</div>
-      </div>
-      <div class="overview-info">
-        <div class="overview-title"> Standard Deviation </div>
-        <div class="overview-value">{{standardDeviation | number: '1.2-2'}} {{unit}}</div>
-      </div>
-      <div class="overview-info">
-        <div class="overview-title"> Variability </div>
-        <div class="overview-value">{{variability}}</div>
-      </div>
+<div *ngIf="!isEmpty(result)">
+  <div class="overview-header">
+    <div class="chart-type">
+      <div class="chart-btn" [class.active]="activeMode == 'total'" (click)="setActiveMode('total')">Overview</div>
+      <div class="chart-btn" [class.active]="activeMode == 'node'" (click)="setActiveMode('node')">By Node</div>
     </div>
+    <div class="select-node" *ngIf="activeMode == 'node'">
+      <mat-form-field>
+        <mat-select placeholder="Select Node" [(ngModel)]="selectedNode" (selectionChange)="changeNode()">
+          <mat-option *ngFor="let node of nodes" [value]="node" style="font-size: .9em;">
+            {{ node }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="overview-result">
+    <div class="chart-container" [hidden]="!normal">
+      <chart type="horizontalBar" [data]="overviewData" [options]="overviewOption" #chart>
+      </chart>
+    </div>
+    <div class="overview-content">
+      <div class="result-detail" *ngIf="normal">
+        <div class="overview-info">
+          <div class="overview-title"> Passed </div>
+          <i class="material-icons passed" *ngIf="passed == true">done</i>
+          <i class="material-icons not-passed" *ngIf="passed == false">clear</i>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Packet Size </div>
+          <div class="overview-value">{{packetSize}}</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Threshold </div>
+          <div class="overview-value">{{threshold | number: '1.2-2'}} {{unit}}</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Average </div>
+          <div class="overview-value">{{average | number: '1.2-2'}} {{unit}}</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Median </div>
+          <div class="overview-value">{{median | number: '1.2-2'}} {{unit}}</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Standard Deviation </div>
+          <div class="overview-value">{{standardDeviation | number: '1.2-2'}} {{unit}}</div>
+        </div>
+        <div class="overview-info">
+          <div class="overview-title"> Variability </div>
+          <div class="overview-value">{{variability}}</div>
+        </div>
+      </div>
 
-    <mat-accordion multi=true class="result-pair" *ngIf="normal">
-      <mat-expansion-panel expanded=true>
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            Best Pairs
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-        <div class="pair-area">
-          <div class="pair-list" *ngFor="let p of bestPairs">
-            <div class="pair-name">{{p}}</div>
-            <div>{{bestPairsValue | number: '1.2-2'}} {{unit}}</div>
+      <mat-accordion multi=true class="result-pair" *ngIf="normal">
+        <mat-expansion-panel expanded=true>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Best Pairs
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="pair-area">
+            <div class="pair-list" *ngFor="let p of bestPairs">
+              <div class="pair-name">{{p}}</div>
+              <div>{{bestPairsValue | number: '1.2-2'}} {{unit}}</div>
+            </div>
+            <div class="overview-value" *ngIf="!hasData(bestPairs)">No best pairs.</div>
           </div>
-          <div class="overview-value" *ngIf="!hasData(bestPairs)">No best pairs.</div>
-        </div>
-      </mat-expansion-panel>
-      <mat-expansion-panel expanded=true>
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            Worst Pairs
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-        <div class="pair-area">
-          <div class="pair-list" *ngFor="let p of worstPairs">
-            <div class="pair-name">{{p}}</div>
-            <div>{{worstPairsValue | number: '1.2-2'}} {{unit}}</div>
+        </mat-expansion-panel>
+        <mat-expansion-panel expanded=true>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Worst Pairs
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="pair-area">
+            <div class="pair-list" *ngFor="let p of worstPairs">
+              <div class="pair-name">{{p}}</div>
+              <div>{{worstPairsValue | number: '1.2-2'}} {{unit}}</div>
+            </div>
+            <div class="overview-value" *ngIf="!hasData(worstPairs)">No worst pairs.</div>
           </div>
-          <div class="overview-value" *ngIf="!hasData(worstPairs)">No worst pairs.</div>
-        </div>
-      </mat-expansion-panel>
-      <mat-expansion-panel expanded=true>
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            Bad Pairs
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-        <div class="pair-area">
-          <div class="pair-list" *ngFor="let p of badPairs">
-            <div class="pair-name">{{p.Pair}}</div>
-            <div>{{p.Value | number: '1.2-2'}} {{unit}}</div>
+        </mat-expansion-panel>
+        <mat-expansion-panel expanded=true>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Bad Pairs
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="pair-area">
+            <div class="pair-list" *ngFor="let p of badPairs">
+              <div class="pair-name">{{p.Pair}}</div>
+              <div>{{p.Value | number: '1.2-2'}} {{unit}}</div>
+            </div>
+            <div class="overview-value" *ngIf="!hasData(badPairs)">No bad pairs.</div>
           </div>
-          <div class="overview-value" *ngIf="!hasData(badPairs)">No bad pairs.</div>
-        </div>
-      </mat-expansion-panel>
-    </mat-accordion>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </div>
   </div>
 </div>
