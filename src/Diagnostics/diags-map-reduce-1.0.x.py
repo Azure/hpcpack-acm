@@ -835,45 +835,63 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
         raise Exception('Can not run this test among RDMA nodes and non-RDMA nodes')
     
     taskLabel = '{}{}'.format('[Windows]' if windowsNodes else '[Linux]', '[RDMA]' if rdmaNodes else '')
-
-    commandLine = 'source {0}/intel64/bin/mpivars.sh && [mpicommand] >stdout 2>stderr && cat stdout | tail -n29 | head -n25 || (errorcode=$? && cat stdout stderr && exit $errorcode)'.format(mpiInstallationLocationLinux)
     rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0' if rdmaNodes else ''
-    taskTemplate = {
-        'UserName':'hpc_diagnostics',
+    nodes = ','.join(nodelist)
+    nodesCount = len(nodelist)
+
+    USERNAME = 'hpc_diagnostics'
+    PASSWORD = 'p@55word'
+
+    taskTemplateWindows = {
+        'UserName': USERNAME,
+        'Password': PASSWORD,
+        'EnvironmentVariables': {'CCP_ISADMIN': 1}
+    }
+
+    taskTemplateLinux = {
+        'UserName':USERNAME,
         'Password':None,
         'PrivateKey':SSH_PRIVATE_KEY,
     }
 
+    taskTemplate = taskTemplateWindows if windowsNodes else taskTemplateLinux
+
+    mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiInstallationLocationWindows)
+    commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpi'.format(mpiInstallationLocationWindows)
+    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} IMB-MPI1 sendrecv'.format(PASSWORD, rdmaOption)
+    commandRunInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts {} -ppn 1 IMB-MPI1 -npmin {} sendrecv'.format(PASSWORD, rdmaOption, nodes, nodesCount)
+    commandMeasureTime = "$stopwatch = [system.diagnostics.stopwatch]::StartNew(); [command]; if($?) {'Run time: ' + $stopwatch.Elapsed.TotalSeconds}"
+    commandRunWindows = '{} && "{}" && powershell "{}"'.format(commandSetFirewall, mpiEnvFile, commandMeasureTime)
+    commandRunIntraWindows = commandRunWindows.replace('[command]', commandRunIntra)
+    commandRunInterWindows = commandRunWindows.replace('[command]', commandRunInter)
+
+    commandSource = 'source {0}/intel64/bin/mpivars.sh'.format(mpiInstallationLocationLinux)
+    commandRunIntraLinux = '{} && time mpirun -env I_MPI_SHM_LMT=shm {} IMB-MPI1 sendrecv'.format(commandSource, rdmaOption)
+    commandRunInterLinux = '{} && time mpirun -hosts {} {} -ppn 1 IMB-MPI1 -npmin {} sendrecv'.format(commandSource, nodes, rdmaOption, nodesCount)
+
     taskId = 1
     tasks = []
-
-    # Create task for every node to run Intel MPI Benchmark - Sendrecv among processors which forms a periodic communication chain within each node.
-    # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
-    mpicommand = 'mpirun -env I_MPI_SHM_LMT=shm {} IMB-MPI1 sendrecv'.format(rdmaOption)
     for node in nodelist:
         task = copy.deepcopy(taskTemplate)
         task['Id'] = taskId
         taskId += 1
         task['Node'] = node
-        task['CommandLine'] = commandLine.replace('[mpicommand]', mpicommand)
+        task['CommandLine'] = commandRunIntraWindows if windowsNodes else commandRunIntraLinux
         task['CustomizedData'] = '{} {}'.format(taskLabel, node)
         task['MaximumRuntimeSeconds'] = 60
         tasks.append(task)
 
-    # Create task to run MPI Benchmark - Sendrecv among processors, one processor per node, which forms a periodic communication chain in selected nodes.
-    nodesCount = len(nodelist)
     if nodesCount > 1:
-        nodes = ','.join(nodelist)
-        mpicommand = 'mpirun -hosts {} {} -ppn 1 IMB-MPI1 -npmin {} sendrecv'.format(nodes, rdmaOption, nodesCount)
         task = copy.deepcopy(taskTemplate)
         task['Id'] = taskId
         taskId += 1
-        task['CommandLine'] = commandLine.replace('[mpicommand]', mpicommand)
-        task['ParentIds'] = list(range(1, nodesCount + 1))
         task['Node'] = nodelist[0]
+        task['ParentIds'] = list(range(1, nodesCount + 1))
+        task['CommandLine'] = commandRunInterWindows if windowsNodes else commandRunInterLinux
         task['CustomizedData'] = '{} {}'.format(taskLabel, nodes)
-        task['EnvironmentVariables'] = {'CCP_NODES': '{} {}'.format(nodesCount, ' '.join(['{} 1'.format(node) for node in nodelist]))}
-        task['MaximumRuntimeSeconds'] = 60
+        if linuxNodes:
+            task['EnvironmentVariables'] = {'CCP_NODES': '{} {}'.format(nodesCount, ' '.join(['{} 1'.format(node) for node in nodelist]))}
+        task['MaximumRuntimeSeconds'] = 120
         tasks.append(task)
     
     print(json.dumps(tasks))
@@ -893,10 +911,11 @@ def mpiRingReduce(nodes, tasks, taskResults):
     
     rows = []
     if output:
-        data = output.split('\n')
+        data = output.splitlines()
         title = '#bytes #repetitions  t_min[usec]  t_max[usec]  t_avg[usec]   Mbytes/sec'
-        if data[0] and title in data[0]:
-            for line in data[1:]:
+        hasResult = False
+        for line in data:
+            if hasResult:
                 row = line.split()
                 if len(row) != len(title.split()):
                     break
@@ -914,6 +933,8 @@ def mpiRingReduce(nodes, tasks, taskResults):
                         'unit':'Mbytes/sec'
                     }
                 })
+            elif title in line:
+                hasResult = True
     
     result = {
         'Description': 'This data shows the {} communication performance as latencies and throughputs for various MPI message sizes, which are extracted from the result of running Intel MPI-1 Benchmark Sendrecv, more refer to https://software.intel.com/en-us/imb-user-guide-sendrecv'.format('intra-VM' if len(nodes) == 1 else 'inter-VM'),
