@@ -10,7 +10,7 @@
     "description":"Run Intel MPI-1 Benchmark Sendrecv among processors, one processor per node, which forms a periodic communication chain in selected nodes, on which Intel MPI should be installed as prerequisite.",
     "parameters":[
         {
-            "name":"Intel MPI Version",
+            "name":"Intel MPI version",
             "description":"Specify the location of Intel MPI that is installed on the nodes.",
             "type":"string",
             "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4"],

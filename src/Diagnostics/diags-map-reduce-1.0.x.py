@@ -39,7 +39,7 @@ def main():
 
     if diagName.lower() == 'MPI-Pingpong'.lower():
         arguments = {
-            'Intel MPI Version': '2018 Update 4',
+            'Intel MPI version': '2018 Update 4',
             'Packet size': -1,
             'Mode': 'Tournament',
             'Debug': False
@@ -52,13 +52,24 @@ def main():
 
     if diagName.lower() == 'MPI-Ring'.lower():
         arguments = {
-            'Intel MPI Version': '2018 Update 4',
+            'Intel MPI version': '2018 Update 4',
         }
         parseArgs(diagArgs, arguments)
         if isMap:
             return mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes)
         else:
             return mpiRingReduce(targetNodes, tasks, taskResults)
+   
+    if diagName.lower() == 'Prerequisite-Intel MPI Installation'.lower():
+        arguments = {
+            'Version': '2018 Update 4',
+            'Max runtime': 3600
+        }
+        parseArgs(diagArgs, arguments)
+        if isMap:
+            return installationIntelMpiMap(arguments, windowsNodes, linuxNodes)
+        else:
+            return installationIntelMpiReduce(arguments, tasks, taskResults)
    
 def parseStdin():
     stdin = json.load(sys.stdin)
@@ -126,12 +137,19 @@ def parseArgs(diagArgsIn, diagArgsOut):
                 argType = type(diagArgsOut[key])
                 diagArgsOut[key] = argType(arg['value'])
 
+def globalCheckIntelMpiVersion(mpiVersion):
+    if mpiVersion.lower() not in INTEL_MPI_URI:
+        raise Exception('Intel MPI {} is not supported'.format(mpiVersion))
 
 def globalGetMpiDefaultInstallationLocationWindows(mpiVersion):
-    return 'C:\Program Files (x86)\IntelSWTools\mpi\{}'.format(INTEL_MPI_URI[mpiVersion.lower()]['Windows'].split('_')[-1][:-len(".exe")])
+    uri = INTEL_MPI_URI.get(mpiVersion.lower())
+    if uri:
+        return 'C:\Program Files (x86)\IntelSWTools\mpi\{}'.format(uri['Windows'].split('_')[-1][:-len(".exe")])
 
 def globalGetMpiDefaultInstallationLocationLinux(mpiVersion):
-    return '/opt/intel/impi/{}'.format(INTEL_MPI_URI[mpiVersion.lower()]['Linux'].split('_')[-1][:-len(".tgz")])
+    uri = INTEL_MPI_URI.get(mpiVersion.lower())
+    if uri:
+        return '/opt/intel/impi/{}'.format(uri['Linux'].split('_')[-1][:-len(".tgz")])
 
 
 SSH_PRIVATE_KEY = '''-----BEGIN RSA PRIVATE KEY-----
@@ -159,9 +177,10 @@ M4xW+aJnEhzIbE7a4an2eTc0pAxc9GexwtCFwlBouSW6kfOcMgEysoy99wQoGNgRHY/D
 -----END RSA PRIVATE KEY-----'''
 
 def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
-    mpiVersion = arguments['Intel MPI Version']
+    mpiVersion = arguments['Intel MPI version']
     packetSize = arguments['Packet size']
     mode = arguments['Mode'].lower()
+    globalCheckIntelMpiVersion(mpiVersion)
     mpiInstallationLocationWindows = globalGetMpiDefaultInstallationLocationWindows(mpiVersion)
     mpiInstallationLocationLinux = globalGetMpiDefaultInstallationLocationLinux(mpiVersion)
     tasks = mpiPingpongCreateTasksWindows(list(windowsNodes & rdmaNodes), True, 0, mpiInstallationLocationWindows, packetSize)
@@ -409,7 +428,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
         warnings.append('Task count {} is not equal to task result count {}.'.format(len(tasks), len(taskResults)))
 
     defaultPacketSize = 2**22
-    mpiVersion = arguments['Intel MPI Version']    
+    mpiVersion = arguments['Intel MPI version']    
     packetSize = 2**arguments['Packet size']
     mode = arguments['Mode'].lower()
     debug = arguments['Debug']
@@ -823,7 +842,8 @@ def mpiPingpongGetVariability(data):
         return "High"
 
 def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
-    mpiVersion = arguments['Intel MPI Version']
+    mpiVersion = arguments['Intel MPI version']
+    globalCheckIntelMpiVersion(mpiVersion)
     mpiInstallationLocationWindows = globalGetMpiDefaultInstallationLocationWindows(mpiVersion)
     mpiInstallationLocationLinux = globalGetMpiDefaultInstallationLocationLinux(mpiVersion)
 
@@ -941,6 +961,166 @@ def mpiRingReduce(nodes, tasks, taskResults):
         'Result': rows
         }
     
+    print(json.dumps(result))
+    return 0
+
+def installationIntelMpiMap(arguments, windowsNodes, linuxNodes):
+    version = arguments['Version'].lower()
+    timeout = arguments['Max runtime']
+    globalCheckIntelMpiVersion(version)
+
+    timeout -= 179
+    if timeout <= 0:
+        raise Exception("The Max runtime parameter should be equal or larger than 180.")
+            
+    # command to install MPI on Linux node
+    uri = INTEL_MPI_URI[version]["Linux"]
+    packageName = uri[-len("l_mpi_xxxx.x.xxx.tgz"):-len(".tgz")]
+    versionNumber = packageName[-len("xxxx.x.xxx"):]
+    installDirectory = "/opt/intel/impi/{}".format(versionNumber)
+    wgetOutput = "wget.output"
+    commandCheckExist = "[ -d {0} ] && echo 'Already installed in {0}'".format(installDirectory)
+    commandShowOutput = r"cat {} | sed 's/.*\r//'".format(wgetOutput)
+    commandDownload = "timeout {0}s wget --progress=bar:force {1} >{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)".format(timeout, uri, wgetOutput, commandShowOutput)
+    commandInstall = "tar -zxf {0}.tgz && cd {0} && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg".format(packageName)
+    commandLinux = "{} || ({} && {}) ".format(commandCheckExist, commandDownload, commandInstall)
+
+    # command to install MPI on Windows node
+    uri = INTEL_MPI_URI[version]["Windows"]
+    versionNumber = uri.split('_')[-1][:-len(".exe")]
+    installDirectory = "C:\Program Files (x86)\IntelSWTools\mpi\{}".format(versionNumber)
+    commandWindows = """powershell "
+if (Test-Path '[installDirectory]')
+{
+    'Already installed in [installDirectory]';
+    exit
+}
+else
+{
+    date;
+    $stopwatch = [system.diagnostics.stopwatch]::StartNew();
+    'Start downloading';
+    $client = new-object System.Net.WebClient;
+    $client.DownloadFile('[uri]', 'mpi.exe');
+    date;
+    'End downloading';
+    if ($stopwatch.Elapsed.TotalSeconds -gt [timeout])
+    {
+        'Not enough time to install before task timeout. Exit.';
+        exit 124;
+    }
+    else
+    {
+        cmd /C '.\mpi.exe --silent --a install --eula=accept --output=%cd%\mpi.log & type mpi.log'
+    }
+}"
+""".replace('[installDirectory]', installDirectory).replace('[uri]', uri).replace('[timeout]', str(timeout)).replace('\n', '')
+
+    tasks = []
+    id = 1
+    for node in windowsNodes:
+        task = {}
+        task["Id"] = id
+        id += 1
+        task["Node"] = node
+        task["CommandLine"] = commandWindows
+        task["CustomizedData"] = 'Windows'
+        task["MaximumRuntimeSeconds"] = 36000
+        tasks.append(task)
+    for node in linuxNodes:
+        task = {}
+        task["Id"] = id
+        id += 1
+        task["Node"] = node
+        task["CommandLine"] = commandLinux
+        task["CustomizedData"] = 'Linux'
+        task["MaximumRuntimeSeconds"] = 36000
+        tasks.append(task)
+
+    print(json.dumps(tasks))
+
+def installationIntelMpiReduce(arguments, tasks, taskResults):
+    version = arguments['Version']
+
+    taskStateCanceled = 5
+    canceledTasks = set()
+    osTypeByNode = {}
+    try:
+        for task in tasks:
+            osTypeByNode[task['Node']] = task['CustomizedData']
+            if task['State'] == taskStateCanceled:
+                canceledTasks.add(task['Id'])
+    except Exception as e:
+        printErrorAsJson('Failed to parse tasks. ' + str(e))
+        return -1
+
+    results = {}
+    try:
+        for taskResult in taskResults:
+            node = taskResult['NodeName']
+            message = taskResult['Message']
+            result = 'Installation Failed'
+            if taskResult['ExitCode'] == 0:
+                if 'Already installed' in message.split('\n', 1)[0]:
+                    result = 'Already installed'
+                elif osTypeByNode[node].lower() == 'Linux'.lower() or 'installation was completed successfully' in message:
+                    result = 'Installation succeeded'
+            elif taskResult['ExitCode'] == 124 or taskResult['TaskId'] in canceledTasks:
+                result = 'Timeout'
+            results[node] = result
+    except Exception as e:
+        printErrorAsJson('Failed to parse task result. ' + str(e))
+        return -1
+
+    htmlRows = []
+    for node in sorted(results):
+        htmlRows.append(
+            '\n'.join([
+                '  <tr>',
+                '\n'.join(['    <td>{}</td>'.format(column) for column in [node, osTypeByNode[node], results[node]]]),
+                '  </tr>'
+                ])) 
+
+    mpiVersionDescription = 'This is the result of installing Intel MPI {} on each node.'.format(version)
+    mpiLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mpi-library">Intel MPI</a>'
+    html = '''
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+</style>
+</head>
+<body>
+<h2>Intel MPI Installation</h2>
+<table>
+  <tr>
+    <th>Node</th>
+    <th>OS</th>
+    <th>Result</th>
+  </tr>
+''' + '\n'.join(htmlRows) + '''
+</table>
+<p>''' + mpiVersionDescription.replace('Intel MPI', mpiLink) + '''</p>
+</body>
+</html>
+'''
+
+    result = {
+        'Description': mpiVersionDescription,
+        'Results': results,
+        'Html': html
+        }
+
     print(json.dumps(result))
     return 0
 
