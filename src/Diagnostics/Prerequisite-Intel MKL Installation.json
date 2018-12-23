@@ -1,0 +1,36 @@
+﻿{
+    "DispatchScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"diags-map-reduce-1.0.x.py"
+    },
+    "AggregationScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"diags-map-reduce-1.0.x.py"
+    },
+    "description":"Download and install Intel MKL(Math Kernel Library) on selected nodes.",
+    "parameters":[
+	    {
+	        "name":"Version",
+	        "type":"select",
+            "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4", "2019", "2019 Update 1"],
+            "description":{
+                "2018":"Intel MKL 2018 will be installed in /opt/intel/compilers_and_libraries_2018.0.128/linux/mkl on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2018.0.124\\windows\\mkl on Windows nodes.",
+                "2018 Update 1":"Intel MKL 2018 Update 1 will be installed in /opt/intel/compilers_and_libraries_2018.1.163/linux/mkl on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2018.1.156\\windows\\mkl on Windows nodes.",
+                "2018 Update 2":"Intel MKL 2018 Update 2 will be installed in /opt/intel/compilers_and_libraries_2018.2.199/linux/mkl on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2018.2.185\\windows\\mkl on Windows nodes.",
+                "2018 Update 3":"Intel MKL 2018 Update 3 will be installed in /opt/intel/compilers_and_libraries_2018.3.222/linux/mkl on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2018.3.210\\windows\\mkl on Windows nodes.",
+                "2018 Update 4":"Intel MKL 2018 Update 4 will be installed in /opt/intel/compilers_and_libraries_2018.5.274/linux/mkl on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2018.5.274\\windows\\mkl on Windows nodes.",
+                "2019":"Intel MKL 2019 will be installed in /opt/intel/compilers_and_libraries_2019.0.117/linux/mkl on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.0.117\\windows\\mkl on Windows nodes.",
+                "2019 Update 1":"Intel MKL 2019 will be installed in /opt/intel/compilers_and_libraries_2019.1.144/linux/mkl on Linux nodes or C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2019.1.144\\windows\\mkl on Windows nodes.",
+            },
+	        "defaultValue":"2018 Update 4"
+	    },
+        {
+            "name":"Max runtime",
+            "description":"Specify the max time in seconds the test could run.",
+            "type":"number",
+            "min":600,
+            "max":36000,
+            "defaultValue":3600
+        }
+	]
+}

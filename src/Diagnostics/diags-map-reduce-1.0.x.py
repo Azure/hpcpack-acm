@@ -2,34 +2,66 @@
 
 import sys, json, copy, numpy, time, math
 
-INTEL_MPI_URI = {
-    '2019 Update 1'.lower(): {
-        'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14879/l_mpi_2019.1.144.tgz',
-        'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14881/w_mpi_p_2019.1.144.exe'
+INTEL_PRODUCT_URI = {
+    'MPI': {
+        '2019 Update 1'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14879/l_mpi_2019.1.144.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14881/w_mpi_p_2019.1.144.exe'
+            },
+        '2019'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13584/l_mpi_2019.0.117.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13586/w_mpi_p_2019.0.117.exe'
+            },
+        '2018 Update 4'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13741/l_mpi_2018.4.274.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13653/w_mpi_p_2018.4.274.exe'
+            },
+        '2018 Update 3'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13112/l_mpi_2018.3.222.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13065/w_mpi_p_2018.3.210.exe'
+            },
+        '2018 Update 2'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12748/l_mpi_2018.2.199.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12745/w_mpi_p_2018.2.185.exe'
+            },
+        '2018 Update 1'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12414/l_mpi_2018.1.163.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12443/w_mpi_p_2018.1.156.exe'
+            },
+        '2018'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12120/l_mpi_2018.0.128.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12114/w_mpi_p_2018.0.124.exe'
+            }
         },
-    '2019'.lower(): {
-        'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13584/l_mpi_2019.0.117.tgz',
-        'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13586/w_mpi_p_2019.0.117.exe'
-        },
-    '2018 Update 4'.lower(): {
-        'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13741/l_mpi_2018.4.274.tgz',
-        'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13653/w_mpi_p_2018.4.274.exe'
-        },
-    '2018 Update 3'.lower(): {
-        'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13112/l_mpi_2018.3.222.tgz',
-        'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13065/w_mpi_p_2018.3.210.exe'
-        },
-    '2018 Update 2'.lower(): {
-        'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12748/l_mpi_2018.2.199.tgz',
-        'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12745/w_mpi_p_2018.2.185.exe'
-        },
-    '2018 Update 1'.lower(): {
-        'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12414/l_mpi_2018.1.163.tgz',
-        'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12443/w_mpi_p_2018.1.156.exe'
-        },
-    '2018'.lower(): {
-        'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12120/l_mpi_2018.0.128.tgz',
-        'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12114/w_mpi_p_2018.0.124.exe'
+    'MKL': {
+        '2019 Update 1'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14895/l_mkl_2019.1.144.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14893/w_mkl_2019.1.144.exe'
+            },
+        '2019'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13575/l_mkl_2019.0.117.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13558/w_mkl_2019.0.117.exe'
+            },
+        '2018 Update 4'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13725/l_mkl_2018.4.274.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13707/w_mkl_2018.4.274.exe'
+            },
+        '2018 Update 3'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13005/l_mkl_2018.3.222.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13037/w_mkl_2018.3.210.exe'
+            },
+        '2018 Update 2'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12725/l_mkl_2018.2.199.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12692/w_mkl_2018.2.185.exe'
+            },
+        '2018 Update 1'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12414/l_mkl_2018.1.163.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12394/w_mkl_2018.1.156.exe'
+            },
+        '2018'.lower(): {
+            'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12070/l_mkl_2018.0.128.tgz',
+            'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12079/w_mkl_2018.0.124.exe'
+            }
         }
     }
 
@@ -37,7 +69,7 @@ def main():
     diagName, diagArgs, targetNodes, windowsNodes, linuxNodes, rdmaNodes, tasks, taskResults = parseStdin()
     isMap = False if tasks and taskResults else True
 
-    if diagName.lower() == 'MPI-Pingpong'.lower():
+    if diagName == 'MPI-Pingpong':
         arguments = {
             'Intel MPI version': '2018 Update 4',
             'Packet size': -1,
@@ -50,7 +82,7 @@ def main():
         else:
             return mpiPingpongReduce(arguments, targetNodes, tasks, taskResults)
 
-    if diagName.lower() == 'MPI-Ring'.lower():
+    if diagName == 'MPI-Ring':
         arguments = {
             'Intel MPI version': '2018 Update 4',
         }
@@ -60,17 +92,18 @@ def main():
         else:
             return mpiRingReduce(targetNodes, tasks, taskResults)
    
-    if diagName.lower() == 'Prerequisite-Intel MPI Installation'.lower():
+    if diagName.startswith('Prerequisite-Intel'):
         arguments = {
             'Version': '2018 Update 4',
             'Max runtime': 3600
         }
         parseArgs(diagArgs, arguments)
+        product = 'MPI' if 'MPI' in diagName else 'MKL'
         if isMap:
-            return installationIntelMpiMap(arguments, windowsNodes, linuxNodes)
+            return installIntelProductMap(arguments, windowsNodes, linuxNodes, product)
         else:
-            return installationIntelMpiReduce(arguments, tasks, taskResults)
-   
+            return installIntelProductReduce(arguments, tasks, taskResults, product)
+
 def parseStdin():
     stdin = json.load(sys.stdin)
 
@@ -137,21 +170,22 @@ def parseArgs(diagArgsIn, diagArgsOut):
                 argType = type(diagArgsOut[key])
                 diagArgsOut[key] = argType(arg['value'])
 
-def globalCheckIntelMpiVersion(mpiVersion):
-    if mpiVersion.lower() not in INTEL_MPI_URI:
-        raise Exception('Intel MPI {} is not supported'.format(mpiVersion))
+def globalCheckIntelProductVersion(product, version):
+    if product not in INTEL_PRODUCT_URI or version.lower() not in INTEL_PRODUCT_URI[product]:
+        raise Exception('Intel {} {} is not supported'.format(product, version))
 
-def globalGetMpiDefaultInstallationLocationWindows(mpiVersion):
-    uri = INTEL_MPI_URI.get(mpiVersion.lower())
-    if uri:
-        return 'C:\Program Files (x86)\IntelSWTools\mpi\{}'.format(uri['Windows'].split('_')[-1][:-len(".exe")])
+def globalGetDefaultInstallationLocationWindows(product, version):
+    versionNumber = INTEL_PRODUCT_URI[product][version]['Windows'].split('_')[-1][:-len(".exe")]
+    if versionNumber == '2018.4.274':
+        versionNumber = '2018.5.274'        
+    return 'C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_{}\windows\{}'.format(versionNumber, product.lower())
 
-def globalGetMpiDefaultInstallationLocationLinux(mpiVersion):
-    uri = INTEL_MPI_URI.get(mpiVersion.lower())
-    if uri:
-        return '/opt/intel/impi/{}'.format(uri['Linux'].split('_')[-1][:-len(".tgz")])
-
-
+def globalGetDefaultInstallationLocationLinux(product, version):
+    versionNumber = INTEL_PRODUCT_URI[product][version]['Linux'].split('_')[-1][:-len(".tgz")]
+    if versionNumber == '2018.4.274':
+        versionNumber = '2018.5.274'        
+    return '/opt/intel/compilers_and_libraries_{}/linux/{}'.format(versionNumber, product.lower())
+    
 SSH_PRIVATE_KEY = '''-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEA06bdmM5tU/InWfakBnAltIA2WEvuZ/3qFwaT4EkmgJuEITxi+3NnXn7JfW+q
 6ezBc4lx6J0EuPggDIcslbczyz65QrB2NoH7De1PiRtWNWIonQDZHTYCbnaU3f/Nzsoj62lgfkSf
@@ -180,9 +214,9 @@ def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
     packetSize = arguments['Packet size']
     mode = arguments['Mode'].lower()
-    globalCheckIntelMpiVersion(mpiVersion)
-    mpiInstallationLocationWindows = globalGetMpiDefaultInstallationLocationWindows(mpiVersion)
-    mpiInstallationLocationLinux = globalGetMpiDefaultInstallationLocationLinux(mpiVersion)
+    globalCheckIntelProductVersion('MPI', mpiVersion)
+    mpiInstallationLocationWindows = globalGetDefaultInstallationLocationWindows('MPI', mpiVersion)
+    mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
     tasks = mpiPingpongCreateTasksWindows(list(windowsNodes & rdmaNodes), True, 0, mpiInstallationLocationWindows, packetSize)
     tasks += mpiPingpongCreateTasksWindows(list(windowsNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationWindows, packetSize)
     tasks += mpiPingpongCreateTasksLinux(list(linuxNodes & rdmaNodes), True, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize, None)
@@ -843,9 +877,9 @@ def mpiPingpongGetVariability(data):
 
 def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
-    globalCheckIntelMpiVersion(mpiVersion)
-    mpiInstallationLocationWindows = globalGetMpiDefaultInstallationLocationWindows(mpiVersion)
-    mpiInstallationLocationLinux = globalGetMpiDefaultInstallationLocationLinux(mpiVersion)
+    globalCheckIntelProductVersion('MPI', mpiVersion)
+    mpiInstallationLocationWindows = globalGetDefaultInstallationLocationWindows('MPI', mpiVersion)
+    mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
 
     if windowsNodes and linuxNodes:
         raise Exception('Can not run this test among Linux nodes and Windows nodes')
@@ -964,31 +998,29 @@ def mpiRingReduce(nodes, tasks, taskResults):
     print(json.dumps(result))
     return 0
 
-def installationIntelMpiMap(arguments, windowsNodes, linuxNodes):
+def installIntelProductMap(arguments, windowsNodes, linuxNodes, product):
     version = arguments['Version'].lower()
     timeout = arguments['Max runtime']
-    globalCheckIntelMpiVersion(version)
+    globalCheckIntelProductVersion(product, version)
 
-    timeout -= 179
+    leastTime = 180 if product == 'MPI' else 600
+    timeout -= leastTime - 1
     if timeout <= 0:
-        raise Exception("The Max runtime parameter should be equal or larger than 180.")
+        raise Exception("The Max runtime parameter should be equal or larger than {}.".format(leastTime))
             
-    # command to install MPI on Linux node
-    uri = INTEL_MPI_URI[version]["Linux"]
-    packageName = uri[-len("l_mpi_xxxx.x.xxx.tgz"):-len(".tgz")]
-    versionNumber = packageName[-len("xxxx.x.xxx"):]
-    installDirectory = "/opt/intel/impi/{}".format(versionNumber)
+    # command to install MPI/MKL on Linux node
+    uri = INTEL_PRODUCT_URI[product][version]["Linux"]
+    installDirectory = globalGetDefaultInstallationLocationLinux(product, version)
     wgetOutput = "wget.output"
     commandCheckExist = "[ -d {0} ] && echo 'Already installed in {0}'".format(installDirectory)
     commandShowOutput = r"cat {} | sed 's/.*\r//'".format(wgetOutput)
-    commandDownload = "timeout {0}s wget --progress=bar:force {1} >{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)".format(timeout, uri, wgetOutput, commandShowOutput)
-    commandInstall = "tar -zxf {0}.tgz && cd {0} && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg".format(packageName)
+    commandDownload = "timeout {0}s wget --progress=bar:force -O intel.tgz {1} 1>{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)".format(timeout, uri, wgetOutput, commandShowOutput)
+    commandInstall = "tar -zxf intel.tgz && cd l_mpi_* && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg"
     commandLinux = "{} || ({} && {}) ".format(commandCheckExist, commandDownload, commandInstall)
 
-    # command to install MPI on Windows node
-    uri = INTEL_MPI_URI[version]["Windows"]
-    versionNumber = uri.split('_')[-1][:-len(".exe")]
-    installDirectory = "C:\Program Files (x86)\IntelSWTools\mpi\{}".format(versionNumber)
+    # command to install MPI/MKL on Windows node
+    uri = INTEL_PRODUCT_URI[product][version]["Windows"]
+    installDirectory = globalGetDefaultInstallationLocationWindows(product, version)
     commandWindows = """powershell "
 if (Test-Path '[installDirectory]')
 {
@@ -1001,7 +1033,7 @@ else
     $stopwatch = [system.diagnostics.stopwatch]::StartNew();
     'Start downloading';
     $client = new-object System.Net.WebClient;
-    $client.DownloadFile('[uri]', 'mpi.exe');
+    $client.DownloadFile('[uri]', '[product].exe');
     date;
     'End downloading';
     if ($stopwatch.Elapsed.TotalSeconds -gt [timeout])
@@ -1011,10 +1043,10 @@ else
     }
     else
     {
-        cmd /C '.\mpi.exe --silent --a install --eula=accept --output=%cd%\mpi.log & type mpi.log'
+        cmd /C '.\[product].exe --silent --a install --eula=accept --output=%cd%\[product].log & type [product].log'
     }
 }"
-""".replace('[installDirectory]', installDirectory).replace('[uri]', uri).replace('[timeout]', str(timeout)).replace('\n', '')
+""".replace('[installDirectory]', installDirectory).replace('[uri]', uri).replace('[timeout]', str(timeout)).replace('[product]', product).replace('\n', '')
 
     tasks = []
     id = 1
@@ -1039,7 +1071,7 @@ else
 
     print(json.dumps(tasks))
 
-def installationIntelMpiReduce(arguments, tasks, taskResults):
+def installIntelProductReduce(arguments, tasks, taskResults, product):
     version = arguments['Version']
 
     taskStateCanceled = 5
@@ -1081,8 +1113,9 @@ def installationIntelMpiReduce(arguments, tasks, taskResults):
                 '  </tr>'
                 ])) 
 
-    mpiVersionDescription = 'This is the result of installing Intel MPI {} on each node.'.format(version)
+    description = 'This is the result of installing Intel {} {} on each node.'.format(product, version)
     mpiLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mpi-library">Intel MPI</a>'
+    mklLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl">Intel MKL</a>'
     html = '''
 <!DOCTYPE html>
 <html>
@@ -1110,13 +1143,13 @@ td, th {
   </tr>
 ''' + '\n'.join(htmlRows) + '''
 </table>
-<p>''' + mpiVersionDescription.replace('Intel MPI', mpiLink) + '''</p>
+<p>''' + description.replace('Intel MPI', mpiLink).replace('Intel MKL', mklLink) + '''</p>
 </body>
 </html>
 '''
 
     result = {
-        'Description': mpiVersionDescription,
+        'Description': description,
         'Results': results,
         'Html': html
         }
