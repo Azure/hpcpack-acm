@@ -708,7 +708,7 @@ def mpiPingpongParseOutput(output, isDefaultSize):
 
 def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
     reasonMpiNotInstalled = 'Intel MPI is not found.'
-    solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location. Run diagnostics test MPI-Installaion on the nodes if it is not installed on them.'.format(mpiVersion)
+    solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location. Run diagnostics test "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion)
 
     reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
