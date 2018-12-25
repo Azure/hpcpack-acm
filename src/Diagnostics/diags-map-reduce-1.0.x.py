@@ -67,9 +67,32 @@ INTEL_PRODUCT_URI = {
 
 HPC_DIAG_USERNAME = 'hpc_diagnostics'
 HPC_DIAG_PASSWORD = 'p@55word'
+SSH_PRIVATE_KEY = '''-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEA06bdmM5tU/InWfakBnAltIA2WEvuZ/3qFwaT4EkmgJuEITxi+3NnXn7JfW+q
+6ezBc4lx6J0EuPggDIcslbczyz65QrB2NoH7De1PiRtWNWIonQDZHTYCbnaU3f/Nzsoj62lgfkSf
+Uj4Osxd0yHCuGsfCtKMDES3d55RMUdVwbrXPL8jUqA9zh4miV9eX0dh/+6pCqPD7/dnOCy/rYtXs
+wgdjKG57O6eaT3XxiuozP00E5tZ7wF0fzzXBuA2Z21Sa2U42sOeeNuOvOuKQkrIzprhHhpDik31m
+HZK47F7eF2i7j/0ImedOFdgA1ETPPKFLSGspvf1xbHgEgGz1kjFq/QIEAAEAAQKCAQABHZ2IW741
+7RKWsq6J3eIBzKRJft4J7G3tvJxW8e3nOpVNuSXEbUssu/HUOoLdVVhuHPN/1TUgf69oXTtiRIVc
+LIPNwcrGRGHwaP0JJKdY4gallLFMCB9i5FkhnJXbaiJvq+ndoqnnAPLf9GfVDqhV5Jqc8nxeDZ2T
+ks037GobtfMuO5WeCyTAMzc7tDIsn0HGyV0pSa7JFHAKorUuBMNnjEM+SBL37AqwcVFkstC4YD3I
+7j4miRE3loxPmBJs5HMTV4jpAGNbNmrPzfrmP4swHNoc9LR7YKpfzVpAzb24QY82fewvOxRZH6Hz
+BVhueJZAGV62JbBeaw9eeujDp+UBAoGBAN6IanPN/wqdqQ0i5dBwPK/0Mcq6bNtQt6n8rHD/C/xL
+FuhuRhLPI6q7sYPeSZu84EjyArLMR1o0GW90Ls4JzIxjxGCBgdUHG8YdmB9jNIjR5notYQcRNxaw
+wLuc5nurPt7QaxvqO3JcaDbw9c6q9c7xNE3Wlak4xxKeiXsWyHQdAoGBAPN7hpqISKIc+8dPc5kg
+uJDDPdFcJ8py0nbysEYtY+hUaDxfw7Cm8zrNj+M9BbQR9yM6EW16P0FQ+/0XBrLMVpRkyJZ0Y3Ij
+5Qol5IxJPyWzfj6e7cd9Rkvqs2sQcBehXCbQHjfpB12yu3excQBPT0Lr5gei7yfc+D21hGWDH1xh
+AoGAM2lm1qxf4O790HggiiB0FN6g5kpdvemPFSm4GT8DYN1kRHy9mbjbb6V/ZIzliqJ/Wrr23qIN
+Vgy1V6eK7LUc2c5u3zDscu/6fbH2pEHCMF32FoIHaZ+Tj510WaPtJ+MvWkDijgd2hnxM42yWDZI3
+ygC16cnKt9bTPzz7XEGuPA0CgYBco2gQTcAM5igpqiIaZeezNIXFrWF6VnubRDUrTkPP9qV+KxWC
+ldK/UczoMaSE4bz9Cy/sTnHYwR5PKj6jMrnSVhI3pGrd16hiVw6BDbFX/9YNr1xa5WAkrFS9bJCp
+fPxZzB9jOGdUEBfhr4KGEqbemHB6AVUq/pj4qaKJGP2KoQKBgFt7cqr8t+0zU5ko+B2pxmMprsUx
+qZ3mBATMD21AshxWxsawpqoPJJ3NTScNrjISERQ6RG3lQNv+30z79k9Fy+5FUH4pvqU4sgmtYSVH
+M4xW+aJnEhzIbE7a4an2eTc0pAxc9GexwtCFwlBouSW6kfOcMgEysoy99wQoGNgRHY/D
+-----END RSA PRIVATE KEY-----'''
 
 def main():
-    diagName, diagArgs, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, tasks, taskResults = parseStdin()
+    diagName, diagArgs, jobId, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, tasks, taskResults = parseStdin()
     isMap = False if tasks and taskResults else True
 
     if diagName == 'MPI-Pingpong':
@@ -94,7 +117,19 @@ def main():
             return mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes)
         else:
             return mpiRingReduce(targetNodes, tasks, taskResults)
-   
+
+    if diagName == 'MPI-HPL':
+        arguments = {
+            'Intel MPI version': '2018 Update 4',
+            'Intel MKL version': '2018 Update 4',
+            'Memory limit': 50.0
+        }
+        parseArgs(diagArgs, arguments)
+        if isMap:
+            return mpiHplMap(arguments, jobId, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode)
+        else:
+            return mpiHplReduce(arguments, targetNodes, tasks, taskResults)
+
     if diagName.startswith('Prerequisite-Intel'):
         arguments = {
             'Version': '2018 Update 4',
@@ -122,6 +157,7 @@ def parseStdin():
     stdin = json.load(sys.stdin)
 
     job = stdin['Job']
+    jobId = job['Id']
     targetNodes = job['TargetNodes']
     if not targetNodes:
         raise Exception('No node specified for running the job')
@@ -138,12 +174,14 @@ def parseStdin():
     nodes = stdin.get('Nodes')
     windowsNodes = linuxNodes = rdmaNodes = None
     vmSizeByNode = {}
+    nodeInfoByNode = {}
     if nodes:
         missingInfoNodes = [node['Node'] for node in nodes if not node['NodeRegistrationInfo'] or not node['Metadata']]
         if missingInfoNodes:
             raise Exception('Missing infomation for node(s): {}'.format(', '.join(missingInfoNodes)))
         rdmaVmSizes = set([size.lower() for size in ['Standard_H16r', 'Standard_H16mr', 'Standard_A8', 'Standard_A9']])
         metadataByNode = {node['Node']:json.loads(node['Metadata']) for node in nodes}
+        nodeInfoByNode = {node['Node']:node['NodeRegistrationInfo'] for node in nodes}
         windowsNodes = set()
         linuxNodes = set()
         unknownNodes = set()
@@ -178,7 +216,7 @@ def parseStdin():
         if tasksOnUnexpectedNodes:
             raise Exception('Unexpected nodes in tasks: {}'.format(', '.join(tasksOnUnexpectedNodes)))
 
-    return diagName, diagArgs, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, tasks, taskResults
+    return diagName, diagArgs, jobId, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, tasks, taskResults
 
 def parseArgs(diagArgsIn, diagArgsOut):
     if diagArgsIn:
@@ -195,40 +233,17 @@ def globalCheckIntelProductVersion(product, version):
         raise Exception('Intel {} {} is not supported'.format(product, version))
 
 def globalGetDefaultInstallationLocationWindows(product, version):
-    versionNumber = INTEL_PRODUCT_URI[product][version]['Windows'].split('_')[-1][:-len(".exe")]
+    versionNumber = INTEL_PRODUCT_URI[product][version.lower()]['Windows'].split('_')[-1][:-len(".exe")]
     if versionNumber == '2018.4.274':
         versionNumber = '2018.5.274'        
     return 'C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_{}\windows\{}'.format(versionNumber, product.lower())
 
 def globalGetDefaultInstallationLocationLinux(product, version):
-    versionNumber = INTEL_PRODUCT_URI[product][version]['Linux'].split('_')[-1][:-len(".tgz")]
+    versionNumber = INTEL_PRODUCT_URI[product][version.lower()]['Linux'].split('_')[-1][:-len(".tgz")]
     if versionNumber == '2018.4.274':
         versionNumber = '2018.5.274'        
     return '/opt/intel/compilers_and_libraries_{}/linux/{}'.format(versionNumber, product.lower())
     
-SSH_PRIVATE_KEY = '''-----BEGIN RSA PRIVATE KEY-----
-MIIEowIBAAKCAQEA06bdmM5tU/InWfakBnAltIA2WEvuZ/3qFwaT4EkmgJuEITxi+3NnXn7JfW+q
-6ezBc4lx6J0EuPggDIcslbczyz65QrB2NoH7De1PiRtWNWIonQDZHTYCbnaU3f/Nzsoj62lgfkSf
-Uj4Osxd0yHCuGsfCtKMDES3d55RMUdVwbrXPL8jUqA9zh4miV9eX0dh/+6pCqPD7/dnOCy/rYtXs
-wgdjKG57O6eaT3XxiuozP00E5tZ7wF0fzzXBuA2Z21Sa2U42sOeeNuOvOuKQkrIzprhHhpDik31m
-HZK47F7eF2i7j/0ImedOFdgA1ETPPKFLSGspvf1xbHgEgGz1kjFq/QIEAAEAAQKCAQABHZ2IW741
-7RKWsq6J3eIBzKRJft4J7G3tvJxW8e3nOpVNuSXEbUssu/HUOoLdVVhuHPN/1TUgf69oXTtiRIVc
-LIPNwcrGRGHwaP0JJKdY4gallLFMCB9i5FkhnJXbaiJvq+ndoqnnAPLf9GfVDqhV5Jqc8nxeDZ2T
-ks037GobtfMuO5WeCyTAMzc7tDIsn0HGyV0pSa7JFHAKorUuBMNnjEM+SBL37AqwcVFkstC4YD3I
-7j4miRE3loxPmBJs5HMTV4jpAGNbNmrPzfrmP4swHNoc9LR7YKpfzVpAzb24QY82fewvOxRZH6Hz
-BVhueJZAGV62JbBeaw9eeujDp+UBAoGBAN6IanPN/wqdqQ0i5dBwPK/0Mcq6bNtQt6n8rHD/C/xL
-FuhuRhLPI6q7sYPeSZu84EjyArLMR1o0GW90Ls4JzIxjxGCBgdUHG8YdmB9jNIjR5notYQcRNxaw
-wLuc5nurPt7QaxvqO3JcaDbw9c6q9c7xNE3Wlak4xxKeiXsWyHQdAoGBAPN7hpqISKIc+8dPc5kg
-uJDDPdFcJ8py0nbysEYtY+hUaDxfw7Cm8zrNj+M9BbQR9yM6EW16P0FQ+/0XBrLMVpRkyJZ0Y3Ij
-5Qol5IxJPyWzfj6e7cd9Rkvqs2sQcBehXCbQHjfpB12yu3excQBPT0Lr5gei7yfc+D21hGWDH1xh
-AoGAM2lm1qxf4O790HggiiB0FN6g5kpdvemPFSm4GT8DYN1kRHy9mbjbb6V/ZIzliqJ/Wrr23qIN
-Vgy1V6eK7LUc2c5u3zDscu/6fbH2pEHCMF32FoIHaZ+Tj510WaPtJ+MvWkDijgd2hnxM42yWDZI3
-ygC16cnKt9bTPzz7XEGuPA0CgYBco2gQTcAM5igpqiIaZeezNIXFrWF6VnubRDUrTkPP9qV+KxWC
-ldK/UczoMaSE4bz9Cy/sTnHYwR5PKj6jMrnSVhI3pGrd16hiVw6BDbFX/9YNr1xa5WAkrFS9bJCp
-fPxZzB9jOGdUEBfhr4KGEqbemHB6AVUq/pj4qaKJGP2KoQKBgFt7cqr8t+0zU5ko+B2pxmMprsUx
-qZ3mBATMD21AshxWxsawpqoPJJ3NTScNrjISERQ6RG3lQNv+30z79k9Fy+5FUH4pvqU4sgmtYSVH
-M4xW+aJnEhzIbE7a4an2eTc0pAxc9GexwtCFwlBouSW6kfOcMgEysoy99wQoGNgRHY/D
------END RSA PRIVATE KEY-----'''
 
 def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
@@ -1012,6 +1027,416 @@ def mpiRingReduce(nodes, tasks, taskResults):
     print(json.dumps(result))
     return 0
 
+def mpiHplMap(arguments, jobId, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode):
+    if windowsNodes:
+        raise Exception('The test is not supported on Windows nodes currently')
+
+    mpiVersion = arguments['Intel MPI version']
+    mklVersion = arguments['Intel MKL version']
+    memoryPercentage = arguments['Memory limit']
+    globalCheckIntelProductVersion('MPI', mpiVersion)
+    globalCheckIntelProductVersion('MKL', mklVersion)
+    mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
+    mklInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', mklVersion)
+
+    minCoreCount = min([nodeInfoByNode[node]['CoreCount'] for node in linuxNodes])
+    minMemoryMb = min([nodeInfoByNode[node]['MemoryMegabytes'] for node in linuxNodes])
+
+    if 0 < len(rdmaNodes) < len(linuxNodes):
+        raise Exception('Can not run this test among RDMA nodes and non-RDMA nodes')
+
+    rdmaOption = '-env I_MPI_FABRICS=dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0' if rdmaNodes else ''
+    
+    taskTemplateLinux = {
+        'UserName': HPC_DIAG_USERNAME,
+        'Password': None,
+        'PrivateKey': SSH_PRIVATE_KEY
+    }
+    
+    taskId = 1
+    tasks = []
+    masterNode = next(iter(linuxNodes)) # pick a node
+    nodes = ','.join(linuxNodes)
+    hplDateFile = '''HPLinpack benchmark input file
+Innovative Computing Laboratory, University of Tennessee
+HPL.out      output file name (if any)
+6            device out (6=stdout,7=stderr,file)
+1            # of problems sizes (N)
+1000         Ns
+1            # of NBs
+192 256      NBs
+0            PMAP process mapping (0=Row-,1=Column-major)
+1            # of process grids (P x Q)
+1 2          Ps
+1 2          Qs
+16.0         threshold
+1            # of panel fact
+2 1 0        PFACTs (0=left, 1=Crout, 2=Right)
+1            # of recursive stopping criterium
+2            NBMINs (>= 1)
+1            # of panels in recursion
+2            NDIVs
+1            # of recursive panel fact.
+1 0 2        RFACTs (0=left, 1=Crout, 2=Right)
+1            # of broadcast
+0            BCASTs (0=1rg,1=1rM,2=2rg,3=2rM,4=Lng,5=LnM)
+1            # of lookahead depth
+0            DEPTHs (>=0)
+0            SWAP (0=bin-exch,1=long,2=mix)
+1            swapping threshold
+1            L1 in (0=transposed,1=no-transposed) form
+1            U  in (0=transposed,1=no-transposed) form
+0            Equilibration (0=no,1=yes)
+8            memory alignment in double (> 0)'''
+    nodesCount = len(linuxNodes)
+    threadsCount = minCoreCount * nodesCount
+    commandCreateHplDat = 'echo "{}" >HPL.dat'.format(hplDateFile)
+    commandSourceMpiEnv = 'source {}/intel64/bin/mpivars.sh'.format(mpiInstallationLocationLinux)
+    commandRunHpl = 'mpirun -hosts {} {} -np {} -ppn {} {}/benchmarks/mp_linpack/xhpl_intel64_dynamic -n [N] -b [NB] -p [P] -q [Q]'.format(nodes, rdmaOption, threadsCount, minCoreCount, mklInstallationLocationLinux)
+    
+    # Create task to run Intel HPL locally to ensure every node is ready
+    # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
+    commandCheckCpu = "lscpu | egrep '^CPU\(s\)|^Model name|^Thread\(s\) per core'"
+    commandCheckHpl = '{}/benchmarks/mp_linpack/xhpl_intel64_dynamic >/dev/null && echo MKL test succeed.'.format(mklInstallationLocationLinux)
+    commandCheckMpi = 'mpirun IMB-MPI1 pingpong >/dev/null && echo MPI test succeed.'
+    taskTemplate = copy.deepcopy(taskTemplateLinux)
+    taskTemplate['CommandLine'] = '{}; {}; {}; {} && {}'.format(commandCheckCpu, commandCreateHplDat, commandSourceMpiEnv, commandCheckHpl, commandCheckMpi)
+    taskTemplate['MaximumRuntimeSeconds'] = 60
+    for node in linuxNodes:
+        task = copy.deepcopy(taskTemplate)
+        task['Id'] = taskId
+        taskId += 1
+        task['Node'] = node
+        task['CustomizedData'] = vmSizeByNode[node]
+        tasks.append(task)
+
+    hplWorkingDir = '/tmp/hpc_diag_linpack_hpl'
+    flagDir = '{}/{}.{}'.format(hplWorkingDir, jobId, uuid.uuid4())
+
+    # Create task to run Intel HPL with Intel MPI among the nodes to ensure cluster integrity
+    N = 10000
+    NB = 192
+    P = 1
+    Q = threadsCount
+    tmpOutputFile = '{}.failed'.format(flagDir)
+    commandCreateHplWorkingDir = 'mkdir -p {}'.format(hplWorkingDir)
+    commandClearFlagDir = 'rm -f {}'.format(flagDir)
+    commandRun = '{} >{} 2>&1'.format(commandRunHpl.replace('[N]', str(N)).replace('[P]', str(P)).replace('[Q]', str(Q)).replace('[NB]', str(NB)), tmpOutputFile)
+    commadnClearTmp = 'rm -f {}'.format(tmpOutputFile)
+    commandCreateFlagDir = 'mkdir -p {}'.format(flagDir)
+    commandSuccess = 'echo Cluster is ready.'
+    commandFailure = 'echo Cluster is not ready. && cat {} && exit -1'.format(tmpOutputFile)
+    task = copy.deepcopy(taskTemplateLinux)
+    task['Id'] = taskId
+    taskId += 1
+    task['CommandLine'] = '{} && {} && {} && {} && {} && {} && {} && {} || ({})'.format(commandCreateHplWorkingDir,
+                                                                                        commandClearFlagDir,
+                                                                                        commandCreateHplDat,
+                                                                                        commandSourceMpiEnv,
+                                                                                        commandRun,
+                                                                                        commadnClearTmp,
+                                                                                        commandCreateFlagDir,
+                                                                                        commandSuccess,
+                                                                                        commandFailure)
+    task['ParentIds'] = list(range(1, len(linuxNodes)+1))
+    task['Node'] = masterNode
+    task['CustomizedData'] = vmSizeByNode[masterNode]
+    task['EnvironmentVariables'] = {'CCP_NODES': '{} {}'.format(nodesCount, ' '.join('{} 1'.format(node) for node in linuxNodes))} 
+    task['MaximumRuntimeSeconds'] = 60
+    tasks.append(task)
+
+    # Create HPL tunning tasks
+    PQs = [(p, threadsCount//p) for p in range(1, int(math.sqrt(threadsCount)) + 1) if p * (threadsCount//p) == threadsCount]
+    NBs = [192, 256]
+    memoryRange = []
+    while memoryPercentage > 70:
+        memoryRange.append(memoryPercentage)
+        memoryPercentage -= 1
+    while memoryPercentage > 50:
+        memoryRange.append(memoryPercentage)
+        memoryPercentage -= 2
+    while memoryPercentage > 0:
+        memoryRange.append(memoryPercentage)
+        memoryPercentage -= 5
+    Ns = [int(math.sqrt(minMemoryMb * 1024 * 1024 * nodesCount / 8 * percent / 100)) for percent in memoryRange]
+    commandCheckFlag = '[ -d "{}" ]'.format(flagDir)
+    for P, Q in PQs:
+        for NB in NBs:
+            outputPrefix = '{}/{}x{}.{}'.format(flagDir, P, Q, NB)
+            outputResult = '{}.result'.format(outputPrefix)
+            for N in Ns:
+                # N = N // NB * NB # this would decrease perf instead of increases
+                tempOutputFile = '{}.{}'.format(outputPrefix, N)
+                commandCheckFinish = '[ ! -f "{}" ]'.format(outputResult)
+                commandRun = '{} >{} 2>&1'.format(commandRunHpl.replace('[N]', str(N)).replace('[P]', str(P)).replace('[Q]', str(Q)).replace('[NB]', str(NB)), tempOutputFile)
+                commandSuccess = 'mv {} {} && cat {} | tail -n20'.format(tempOutputFile, outputResult, outputResult)
+                commandFailure = 'echo Test skiped. N={} NB={} P={} Q={}'.format(N, NB, P, Q)
+                task = copy.deepcopy(taskTemplateLinux)
+                task['Id'] = taskId
+                taskId += 1
+                task['CommandLine'] = '{} && {} && {} && {} && {} && {} || {}'.format(commandCheckFlag,
+                                                                                      commandCheckFinish,
+                                                                                      commandCreateHplDat,
+                                                                                      commandSourceMpiEnv,
+                                                                                      commandRun,
+                                                                                      commandSuccess,
+                                                                                      commandFailure)
+                task['ParentIds'] = [task['Id'] - 1]
+                task['Node'] = masterNode
+                task['CustomizedData'] = vmSizeByNode[masterNode]
+                task['MaximumRuntimeSeconds'] = N / 10
+                tasks.append(task)
+    
+    # Create result collecting task
+    task = copy.deepcopy(taskTemplateLinux)
+    task['Id'] = taskId
+    taskId += 1
+    task['CommandLine'] = '{} && for file in $(ls {}/*.result); do cat $file | tail -n17 | head -n1; done'.format(commandCheckFlag, flagDir)
+    task['ParentIds'] = [task['Id'] - 1]
+    task['Node'] = masterNode
+    task['CustomizedData'] = vmSizeByNode[masterNode]
+    task['MaximumRuntimeSeconds'] = 60
+    tasks.append(task)
+
+    print(json.dumps(tasks))
+
+def mpiHplReduce(arguments, nodes, tasks, taskResults):
+    mpiVersion = arguments['Intel MPI version']
+    mklVersion = arguments['Intel MKL version']
+    mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
+    mklInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', mklVersion)
+
+    taskDetail = {}
+    try:
+        for taskResult in taskResults:
+            taskId = taskResult['TaskId']
+            node = taskResult['NodeName']
+            output = taskResult['Message']
+            exitcode = taskResult['ExitCode']
+            taskDetail[taskId] = {
+                'Node':node,
+                'Output':output,
+                'ExitCode':exitcode
+            }
+    except Exception as e:
+        printErrorAsJson('Failed to parse task results. ' + str(e))
+        return -1
+
+    nodeCheckingTasks = [taskDetail[taskId] for taskId in range(1, len(nodes) + 1)]
+    flagTask = taskDetail[len(nodes) + 1]
+    intelHpl = 'Intel Distribution for LINPACK Benchmark'
+    description = 'This is the result of running {} in the cluster.'.format(intelHpl)
+    result = None
+    resultCode = -1
+    if flagTask['ExitCode'] == 0:
+        # get CPU info from node checking tasks
+        cpuFreqByNode = {}
+        cpuCoreByNode = {}
+        hyperThreadingNodes = []
+        for task in nodeCheckingTasks:
+            node = task['Node']
+            output = task['Output']
+            try:
+                for line in output.splitlines():
+                    if line.startswith('CPU'):
+                        coreCount = int(line.split()[-1])
+                        cpuCoreByNode[node] = coreCount
+                    elif line.startswith('Model name'):
+                        coreFreq = float([word for word in line.split() if word.endswith('GHz')][0][:-3])
+                        cpuFreqByNode[node] = coreFreq
+                    elif line.startswith('Thread(s) per core'):
+                        threads = int(line.split()[-1])
+                        if threads > 1:
+                            hyperThreadingNodes.append(node)
+            except:
+                pass
+
+        # get VM size info from task CustomizedData which is set in map script
+        sizeByNode = {}
+        cpuCoreBySize = {}
+        cpuFreqBySize = {}
+        try:
+            for task in tasks:
+                node = task['Node']
+                size = task['CustomizedData']
+                if node not in sizeByNode and size:
+                    freq = cpuFreqByNode.get(node)
+                    if freq:
+                        size += "({}GHz)".format(freq)
+                        cpuFreqBySize[size] = freq
+                    coreCount = cpuCoreByNode.get(node)
+                    if coreCount:
+                        cpuCoreBySize[size] = coreCount
+                    sizeByNode[node] = size
+        except Exception as e:
+            printErrorAsJson('Failed to parse tasks. ' + str(e))
+            return -1
+
+        if len(sizeByNode) != len(nodes):
+            printErrorAsJson('VM size info is missing.')
+            return -1
+
+        # get theoretical peak performance of cluster
+        defaultFlopsPerCycle = 16 # Use this default value because currently it seems that the Intel microarchitectures used in Azure VM are in "Intel Haswell/Broadwell/Skylake/Kaby Lake". Consider getting this value from test parameter in case new Azure VM sizes are introduced.
+        theoreticalPerf = None
+        theoreticalPerfExpr = None
+        theoreticalPerfDescription = "The theoretical peak performance of the cluster can not be calculated because CPU info is missing."
+        nodeSizes = set(sizeByNode.values())
+        if len(nodeSizes) > 1:
+            vmSizeDescription = 'The cluster is heterogeneous with VM sizes: {}. Optimal perfermance may not be achieved in this test.'.format(', '.join(nodeSizes))
+            sizes = [sizeByNode[node] for node in nodes]
+            theoreticalPerfExpr = " + ".join(["{} * {} * {} * {}".format(sizes.count(size), cpuCoreBySize.get(size), defaultFlopsPerCycle, cpuFreqBySize.get(size)) for size in nodeSizes])
+            if 'None' not in theoreticalPerfExpr:
+                theoreticalPerf = eval(theoreticalPerfExpr)
+                theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by summing the FLOPs of each node: SUM([core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]) = {}".format(theoreticalPerf, theoreticalPerfExpr)
+        elif len(nodeSizes) == 1:
+            size = list(nodeSizes)[0]
+            vmSizeDescription = 'The cluster is homogeneous with VM size: {}.'.format(size)
+            theoreticalPerfExpr = "{} * {} * {} * {}".format(len(nodes), cpuCoreBySize.get(size), defaultFlopsPerCycle, cpuFreqBySize.get(size))
+            if 'None' not in theoreticalPerfExpr:
+                theoreticalPerf = eval(theoreticalPerfExpr)
+                theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by: [node count] * [core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core] = {}".format(theoreticalPerf, theoreticalPerfExpr)
+        else:
+            vmSizeDescription = 'The VM size in the cluster is unknown.'
+
+        # warning for Hyper-Threading
+        hyperThreadingDescription = 'Optimal perfermance may not be achieved in this test because Hyper-Threading is enabled on the node(s): {}'.format(', '.join(hyperThreadingNodes)) if hyperThreadingNodes else ''
+
+        # get result from result task and generate output
+        resultTask = taskDetail[len(taskDetail)]
+        output = resultTask['Output']
+        if '*.result: No such file or directory' in output:
+            keyWord = '*.result:'
+            logDir = [word for word in output.split() if word.endswith(keyWord)][0][:-(len(keyWord))]
+            node = resultTask['Node']
+            result = 'No result. The cluster may be too busy or has broken node(s). Check log in {} on {}'.format(logDir, node)
+            htmlContent = '<p>{}</p>'.format(result)
+        else:
+            result = []
+            output = [line.split() for line in output.splitlines()]
+            htmlRows = []
+            maxPerf = greenLineNumber = -1
+            lineNumber = 0
+            for row in output:
+                if len(row) == 7:
+                    try:
+                        perf = float(row[6])
+                        efficiency = perf/theoreticalPerf if theoreticalPerf else None
+                        result.append({
+                            "N":int(row[1]),
+                            "NB":int(row[2]),
+                            "P":int(row[3]),
+                            "Q":int(row[4]),
+                            "Time":float(row[5]),
+                            "Perf":perf,
+                            "Efficiency":efficiency
+                        })
+                        if perf > maxPerf:
+                            maxPerf = perf
+                            greenLineNumber = lineNumber
+                        perfInHtml = "{:.2f}".format(perf)
+                        efficiencyInHtml = "{:.2%}".format(efficiency) if efficiency else None
+                        htmlRows.append(
+                            '\n'.join([
+                                '  <tr>',
+                                '\n'.join(['    <td>{}</td>'.format(item) for item in row[1:-1] + [perfInHtml, efficiencyInHtml]]),
+                                '  </tr>'
+                                ]))
+                        lineNumber += 1
+                    except:
+                        pass
+            if greenLineNumber >= 0:
+                htmlRows[greenLineNumber] = htmlRows[greenLineNumber].replace('<tr>', '<tr bgcolor="#d8fcd4">')
+            intelHplWithLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl-linux-developer-guide-overview-of-the-intel-distribution-for-linpack-benchmark">{}</a>'.format(intelHpl)
+            descriptionInHtml = description.replace(intelHpl, intelHplWithLink)
+            htmlContent = '''
+<table>
+  <tr>
+    <th>Problem size(N)</th>
+    <th>Block size(NB)</th>
+    <th>P</th>
+    <th>Q</th>
+    <th>Time(s)</th>
+    <th>Performance(GFlop/s)</th>
+    <th>Efficiency</th>
+  </tr>
+{}
+</table>
+<p>{}</p>
+<p>{}</p>
+<p>{}</p>
+<p>{}</p>
+'''.format('\n'.join(htmlRows), descriptionInHtml, vmSizeDescription, theoreticalPerfDescription, hyperThreadingDescription)
+        resultCode = 0
+    else:
+        result = 'Cluster is not ready to run Intel HPL. Diagnostics test MPI-Pingpong may help to diagnose the cluster.'
+        htmlContent = '<p>{}</p>'.format(result).replace('MPI-Pingpong', '<b>MPI-Pingpong</b>')
+        resultCode = -1
+        if any(task['ExitCode'] != 0 for task in nodeCheckingTasks):
+            htmlRows = []
+            for task in nodeCheckingTasks:
+                taskStates = []
+                output = task['Output']
+                if 'MKL test succeed.' in output and 'MPI test succeed.' in output:
+                    taskStates.append('Ready')
+                if 'mpivars.sh: No such file or directory' in output:
+                    taskStates.append('Intel MPI {} is not found in directory: {}'.format(mpiVersion, mpiInstallationLocationLinux))
+                if 'xhpl_intel64_dynamic: No such file or directory' in output:
+                    taskStates.append('Intel MKL {} is not found in directory: {}'.format(mklVersion, mklInstallationLocationLinux))
+                if 'dapl fabric is not available' in output:
+                    taskStates.append('Error when running MPI test')
+                state = '<br>'.join(taskStates)
+                if not state:
+                    state = 'Unknown'
+                htmlRows.append(
+                    '\n'.join([
+                        '  <tr>',
+                        '\n'.join(['    <td>{}</td>'.format(item) for item in [task['Node'], state]]),
+                        '  </tr>'
+                        ]))
+            htmlContent += '''
+<table>
+  <tr>
+    <th>Node</th>
+    <th>State</th>
+  </tr>
+{}
+</table>
+'''.format('\n'.join(htmlRows))
+
+    html = '''
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+</style>
+</head>
+<body>
+<h2>Linpack HPL</h2>
+''' + htmlContent + '''
+</body>
+</html>
+'''
+
+    result = {
+        'Description': description,
+        'Results': result,
+        'Html': html
+        }
+
+    print(json.dumps(result, indent = 4))
+    return resultCode
+
 def installIntelProductMap(arguments, windowsNodes, linuxNodes, product):
     version = arguments['Version'].lower()
     timeout = arguments['Max runtime']
@@ -1253,7 +1678,7 @@ def benchmarkLinpackReduce(arguments, tasks, taskResults):
             if tasklabel.startswith('[Linux]'):
                 linuxNodes.add(node)
             if node in linuxNodes and taskId % 2 == 0 or node in windowsNodes:
-                size = tasklabel
+                size = tasklabel.split()[-1]
                 taskDetail[taskId] = {
                     'Node': node,
                     'Size': size,
@@ -1334,7 +1759,7 @@ td, th {
 <table>
   <tr>
     <th>Node</th>
-    <th>OS/Node size</th>
+    <th>VM size</th>
     <th>Theoretical peak performance(GFlop/s)</th>
     <th>Best performance(GFlop/s)</th>
     <th>Problem size</th>

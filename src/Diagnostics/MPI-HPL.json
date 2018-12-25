@@ -1,0 +1,55 @@
+﻿{
+    "DispatchScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"diags-map-reduce-1.0.x.py"
+    },
+    "AggregationScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"diags-map-reduce-1.0.x.py"
+    },
+    "description":"Run Intel HPL(High Performance Linpack, Intel Distribution for LINPACK Benchmark) on each selected node, on which Intel MPI and Intel MKL shoule be installed as prerequisites.",
+    "parameters":[
+	    {
+	        "name":"Memory limit",
+	        "description":"Specify the most percentage of memory used in the test.",
+            "type":"number",
+            "min":0.1,
+            "max":85,
+            "defaultValue":"50"
+        },
+        {
+            "name":"Intel MPI version",
+            "type":"string",
+            "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4"],
+            "defaultValue":"2018 Update 4",
+            "description":{
+                "2018":"The Intel MPI 2018, installed in /opt/intel/impi/2018.0.128 will be used to run Intel Distribution for LINPACK Benchmark.",
+                "2018 Update 1":"The Intel MPI 2018 Update 1, installed in /opt/intel/impi/2018.1.163 will be used to run Intel Distribution for LINPACK Benchmark.",
+                "2018 Update 2":"The Intel MPI 2018 Update 2, installed in /opt/intel/impi/2018.2.199 will be used to run Intel Distribution for LINPACK Benchmark.",
+                "2018 Update 3":"The Intel MPI 2018 Update 3, installed in /opt/intel/impi/2018.3.222 will be used to run Intel Distribution for LINPACK Benchmark.",
+                "2018 Update 4":"The Intel MPI 2018 Update 4, installed in /opt/intel/impi/2018.4.274 will be used to run Intel Distribution for LINPACK Benchmark."
+            }
+        },
+        {
+            "name":"Intel MKL version",
+            "type":"string",
+            "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4"],
+            "defaultValue":"2018 Update 4",
+            "description":{
+                "2018":"The Intel MKL 2018, installed in /opt/intel/compilers_and_libraries_2018.0.128/linux/mkl will be used to run Intel Distribution for LINPACK Benchmark.",
+                "2018 Update 1":"The Intel MKL 2018 Update 1, installed in /opt/intel/compilers_and_libraries_2018.1.163/linux/mkl will be used to run Intel Distribution for LINPACK Benchmark.",
+                "2018 Update 2":"The Intel MKL 2018 Update 2, installed in /opt/intel/compilers_and_libraries_2018.2.199/linux/mkl will be used to run Intel Distribution for LINPACK Benchmark.",
+                "2018 Update 3":"The Intel MKL 2018 Update 3, installed in /opt/intel/compilers_and_libraries_2018.3.222/linux/mkl will be used to run Intel Distribution for LINPACK Benchmark.",
+                "2018 Update 4":"The Intel MKL 2018 Update 4, installed in /opt/intel/compilers_and_libraries_2018.5.274/linux/mkl will be used to run Intel Distribution for LINPACK Benchmark."
+            }
+        },
+        {
+            "name":"Max runtime",
+            "description":"Specify the max time in seconds the test could run.",
+            "type":"number",
+            "min":1,
+            "max":10000000,
+            "defaultValue":86400
+        }
+    ]
+}
