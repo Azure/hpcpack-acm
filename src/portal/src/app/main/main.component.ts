@@ -94,9 +94,4 @@ export class MainComponent {
     public get userName(): string {
         return this.authService.username;
     }
-
-    public logout(): void {
-        this.authService.logout();
-        // this.router.navigate(['/login']);
-    }
 }

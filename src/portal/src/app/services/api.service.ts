@@ -561,11 +561,6 @@ export class UserApi extends Resource<any>{
       observe: 'response'
     });
   }
-
-  logout() {
-    let url = `/.auth/logout`;
-    return this.http.get(url);
-  }
 }
 
 @Injectable()

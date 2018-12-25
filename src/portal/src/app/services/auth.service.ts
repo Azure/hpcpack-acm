@@ -28,12 +28,6 @@ export class AuthService {
   //Store the URL so we can redirect after logging in
   redirectUrl: string;
 
-  logout(): void {
-    this.api.user.logout().subscribe((res) => {
-      console.log('User has logged out.');
-    });
-  }
-
   getUserInfo(): void {
     this.api.user.getUserInfo().subscribe(
       (res) => {
