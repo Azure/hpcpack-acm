@@ -1029,7 +1029,7 @@ def installIntelProductMap(arguments, windowsNodes, linuxNodes, product):
     commandCheckExist = "[ -d {0} ] && echo 'Already installed in {0}'".format(installDirectory)
     commandShowOutput = r"cat {} | sed 's/.*\r//'".format(wgetOutput)
     commandDownload = 'timeout {0}s wget --progress=bar:force -O intel.tgz {1} 1>{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)'.format(timeout, uri, wgetOutput, commandShowOutput)
-    commandInstall = "tar -zxf intel.tgz && cd l_mpi_* && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg"
+    commandInstall = "tar -zxf intel.tgz && cd l_{}_* && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg".format(product.lower())
     commandLinux = '{} || ({} && {})'.format(commandCheckExist, commandDownload, commandInstall)
 
     # command to install MPI/MKL on Windows node
