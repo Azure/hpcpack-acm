@@ -2,7 +2,7 @@
 
 import sys, json, copy, numpy, time, math, uuid
 
-INTEL_PRODUCT_URI = {
+INTEL_PRODUCT_URL = {
     'MPI': {
         '2019 Update 1'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14879/l_mpi_2019.1.144.tgz',
@@ -229,21 +229,25 @@ def parseArgs(diagArgsIn, diagArgsOut):
                 diagArgsOut[key] = argType(arg['value'])
 
 def globalCheckIntelProductVersion(product, version):
-    if product not in INTEL_PRODUCT_URI or version.lower() not in INTEL_PRODUCT_URI[product]:
+    if product not in INTEL_PRODUCT_URL or version.lower() not in INTEL_PRODUCT_URL[product]:
         raise Exception('Intel {} {} is not supported'.format(product, version))
 
 def globalGetDefaultInstallationLocationWindows(product, version):
-    versionNumber = INTEL_PRODUCT_URI[product][version.lower()]['Windows'].split('_')[-1][:-len(".exe")]
+    versionNumber = INTEL_PRODUCT_URL[product][version.lower()]['Windows'].split('_')[-1][:-len(".exe")]
     if versionNumber == '2018.4.274':
         versionNumber = '2018.5.274'        
     return 'C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_{}\windows\{}'.format(versionNumber, product.lower())
 
 def globalGetDefaultInstallationLocationLinux(product, version):
-    versionNumber = INTEL_PRODUCT_URI[product][version.lower()]['Linux'].split('_')[-1][:-len(".tgz")]
+    versionNumber = INTEL_PRODUCT_URL[product][version.lower()]['Linux'].split('_')[-1][:-len(".tgz")]
     if versionNumber == '2018.4.274':
         versionNumber = '2018.5.274'        
     return '/opt/intel/compilers_and_libraries_{}/linux/{}'.format(versionNumber, product.lower())
     
+def globalGetIntelProductAzureBlobUrl(originalUrl):
+    fileName = originalUrl.split('/')[-1]
+    return 'https://hpcacm.blob.core.windows.net/intel/{}'.format(fileName)
+
 
 def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
@@ -252,7 +256,7 @@ def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     globalCheckIntelProductVersion('MPI', mpiVersion)
     mpiInstallationLocationWindows = globalGetDefaultInstallationLocationWindows('MPI', mpiVersion)
     mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
-    tasks = mpiPingpongCreateTasksWindows(list(windowsNodes & rdmaNodes), True, 0, mpiInstallationLocationWindows, packetSize)
+    tasks = mpiPingpongCreateTasksWindows(list(windowsNodes & rdmaNodes), True, 1, mpiInstallationLocationWindows, packetSize)
     tasks += mpiPingpongCreateTasksWindows(list(windowsNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationWindows, packetSize)
     tasks += mpiPingpongCreateTasksLinux(list(linuxNodes & rdmaNodes), True, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize, None)
     tasks += mpiPingpongCreateTasksLinux(list(linuxNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize, None)
@@ -740,7 +744,7 @@ def mpiPingpongParseOutput(output, isDefaultSize):
 
 def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
     reasonMpiNotInstalled = 'Intel MPI is not found.'
-    solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location. Run diagnostics test "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion)
+    solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location {} or {}. Run diagnostics test "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion, globalGetDefaultInstallationLocationLinux('MPI', mpiVersion), globalGetDefaultInstallationLocationWindows('MPI', mpiVersion))
 
     reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
@@ -950,7 +954,7 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
 
     commandSource = 'source {0}/intel64/bin/mpivars.sh'.format(mpiInstallationLocationLinux)
     commandRunIntraLinux = '{} && time mpirun -env I_MPI_SHM_LMT=shm {} IMB-MPI1 sendrecv'.format(commandSource, rdmaOption)
-    commandRunInterLinux = '{} && time mpirun -hosts {} {} -ppn 1 IMB-MPI1 -npmin {} sendrecv'.format(commandSource, nodes, rdmaOption, nodesCount)
+    commandRunInterLinux = '{} && time mpirun -hosts {} {} -ppn 1 IMB-MPI1 -npmin {} sendrecv 2>/dev/null'.format(commandSource, nodes, rdmaOption, nodesCount)
 
     taskId = 1
     tasks = []
@@ -1031,6 +1035,9 @@ def mpiHplMap(arguments, jobId, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNod
     if windowsNodes:
         raise Exception('The test is not supported on Windows nodes currently')
 
+    if 0 < len(rdmaNodes) < len(linuxNodes):
+        raise Exception('Can not run this test among RDMA nodes and non-RDMA nodes')
+
     mpiVersion = arguments['Intel MPI version']
     mklVersion = arguments['Intel MKL version']
     memoryPercentage = arguments['Memory limit']
@@ -1040,10 +1047,12 @@ def mpiHplMap(arguments, jobId, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNod
     mklInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', mklVersion)
 
     minCoreCount = min([nodeInfoByNode[node]['CoreCount'] for node in linuxNodes])
-    minMemoryMb = min([nodeInfoByNode[node]['MemoryMegabytes'] for node in linuxNodes])
+    if not minCoreCount:
+        raise Exception('Node core count info is not correct')
 
-    if 0 < len(rdmaNodes) < len(linuxNodes):
-        raise Exception('Can not run this test among RDMA nodes and non-RDMA nodes')
+    minMemoryMb = min([nodeInfoByNode[node]['MemoryMegabytes'] for node in linuxNodes])
+    if not minMemoryMb:
+        raise Exception('Node memory info is not correct')
 
     rdmaOption = '-env I_MPI_FABRICS=dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0' if rdmaNodes else ''
     
@@ -1098,7 +1107,7 @@ HPL.out      output file name (if any)
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
     commandCheckCpu = "lscpu | egrep '^CPU\(s\)|^Model name|^Thread\(s\) per core'"
     commandCheckHpl = '{}/benchmarks/mp_linpack/xhpl_intel64_dynamic >/dev/null && echo MKL test succeed.'.format(mklInstallationLocationLinux)
-    commandCheckMpi = 'mpirun IMB-MPI1 pingpong >/dev/null && echo MPI test succeed.'
+    commandCheckMpi = 'mpirun -env I_MPI_SHM_LMT=shm IMB-MPI1 pingpong >/dev/null && echo MPI test succeed.'
     taskTemplate = copy.deepcopy(taskTemplateLinux)
     taskTemplate['CommandLine'] = '{}; {}; {}; {} && {}'.format(commandCheckCpu, commandCreateHplDat, commandSourceMpiEnv, commandCheckHpl, commandCheckMpi)
     taskTemplate['MaximumRuntimeSeconds'] = 60
@@ -1448,17 +1457,17 @@ def installIntelProductMap(arguments, windowsNodes, linuxNodes, product):
         raise Exception('The Max runtime parameter should be equal or larger than {}'.format(leastTime))
             
     # command to install MPI/MKL on Linux node
-    uri = INTEL_PRODUCT_URI[product][version]['Linux']
+    url = globalGetIntelProductAzureBlobUrl(INTEL_PRODUCT_URL[product][version]['Linux'])
     installDirectory = globalGetDefaultInstallationLocationLinux(product, version)
     wgetOutput = 'wget.output'
     commandCheckExist = "[ -d {0} ] && echo 'Already installed in {0}'".format(installDirectory)
     commandShowOutput = r"cat {} | sed 's/.*\r//'".format(wgetOutput)
-    commandDownload = 'timeout {0}s wget --progress=bar:force -O intel.tgz {1} 1>{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)'.format(timeout, uri, wgetOutput, commandShowOutput)
+    commandDownload = 'timeout {0}s wget --progress=bar:force -O intel.tgz {1} 1>{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)'.format(timeout, url, wgetOutput, commandShowOutput)
     commandInstall = "tar -zxf intel.tgz && cd l_{}_* && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg".format(product.lower())
     commandLinux = '{} || ({} && {})'.format(commandCheckExist, commandDownload, commandInstall)
 
     # command to install MPI/MKL on Windows node
-    uri = INTEL_PRODUCT_URI[product][version]['Windows']
+    url = globalGetIntelProductAzureBlobUrl(INTEL_PRODUCT_URL[product][version]['Windows'])
     installDirectory = globalGetDefaultInstallationLocationWindows(product, version)
     commandWindows = """powershell "
 if (Test-Path '[installDirectory]')
@@ -1468,11 +1477,13 @@ if (Test-Path '[installDirectory]')
 }
 else
 {
+    rm -Force -ErrorAction SilentlyContinue [product].exe;
+    rm -Force -ErrorAction SilentlyContinue [product].log;
     date;
     $stopwatch = [system.diagnostics.stopwatch]::StartNew();
     'Start downloading';
     $client = new-object System.Net.WebClient;
-    $client.DownloadFile('[uri]', '[product].exe');
+    $client.DownloadFile('[url]', '[product].exe');
     date;
     'End downloading';
     if ($stopwatch.Elapsed.TotalSeconds -gt [timeout])
@@ -1485,7 +1496,7 @@ else
         cmd /C '.\[product].exe --silent --a install --eula=accept --output=%cd%\[product].log & type [product].log'
     }
 }"
-""".replace('[installDirectory]', installDirectory).replace('[uri]', uri).replace('[timeout]', str(timeout)).replace('[product]', product).replace('\n', '')
+""".replace('[installDirectory]', installDirectory).replace('[url]', url).replace('[timeout]', str(timeout)).replace('[product]', product).replace('\n', '')
 
     tasks = []
     id = 1
@@ -1707,7 +1718,7 @@ def benchmarkLinpackReduce(arguments, tasks, taskResults):
 
     defaultFlopsPerCycle = 16 # Use this default value because currently it seems that the Intel microarchitectures used in Azure VM are in "Intel Haswell/Broadwell/Skylake/Kaby Lake". Consider getting this value from test parameter in case new Azure VM sizes are introduced.
 
-    results = list(taskDetail.values())
+    results = sorted(list(taskDetail.values()), key = lambda k:k['Node'])
     htmlRows = []
     for task in results:
         perf, N, coreCount, coreFreq = benchmarkLinpackParseTaskOutput(task['Output'])
