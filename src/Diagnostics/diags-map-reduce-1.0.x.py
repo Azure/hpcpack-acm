@@ -1054,8 +1054,8 @@ def mpiHplMap(arguments, jobId, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNod
     if not minMemoryMb:
         raise Exception('Node memory info is not correct')
 
-    rdmaOption = '-env I_MPI_FABRICS=dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0' if rdmaNodes else ''
-    
+    rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0 -env I_MPI_DYNAMIC_CONNECTION=0 -env I_MPI_FALLBACK_DEVICE=0' if rdmaNodes else ''
+
     taskTemplateLinux = {
         'UserName': HPC_DIAG_USERNAME,
         'Password': None,
@@ -1101,7 +1101,7 @@ HPL.out      output file name (if any)
     threadsCount = minCoreCount * nodesCount
     commandCreateHplDat = 'echo "{}" >HPL.dat'.format(hplDateFile)
     commandSourceMpiEnv = 'source {}/intel64/bin/mpivars.sh'.format(mpiInstallationLocationLinux)
-    commandRunHpl = 'mpirun -hosts {} {} -np {} -ppn {} {}/benchmarks/mp_linpack/xhpl_intel64_dynamic -n [N] -b [NB] -p [P] -q [Q]'.format(nodes, rdmaOption, threadsCount, minCoreCount, mklInstallationLocationLinux)
+    commandRunHpl = 'mpirun -env I_MPI_SHM_LMT=shm -hosts {} {} -np {} -ppn {} {}/benchmarks/mp_linpack/xhpl_intel64_dynamic -n [N] -b [NB] -p [P] -q [Q]'.format(nodes, rdmaOption, threadsCount, minCoreCount, mklInstallationLocationLinux)
     
     # Create task to run Intel HPL locally to ensure every node is ready
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
