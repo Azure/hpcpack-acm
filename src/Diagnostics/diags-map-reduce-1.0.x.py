@@ -1,6 +1,6 @@
 #v1.0.0
 
-import sys, json, copy, numpy, time, math
+import sys, json, copy, numpy, time, math, uuid
 
 INTEL_PRODUCT_URI = {
     'MPI': {
@@ -65,8 +65,11 @@ INTEL_PRODUCT_URI = {
         }
     }
 
+HPC_DIAG_USERNAME = 'hpc_diagnostics'
+HPC_DIAG_PASSWORD = 'p@55word'
+
 def main():
-    diagName, diagArgs, targetNodes, windowsNodes, linuxNodes, rdmaNodes, tasks, taskResults = parseStdin()
+    diagName, diagArgs, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, tasks, taskResults = parseStdin()
     isMap = False if tasks and taskResults else True
 
     if diagName == 'MPI-Pingpong':
@@ -95,7 +98,7 @@ def main():
     if diagName.startswith('Prerequisite-Intel'):
         arguments = {
             'Version': '2018 Update 4',
-            'Max runtime': 3600
+            'Max runtime': 1800
         }
         parseArgs(diagArgs, arguments)
         product = 'MPI' if 'MPI' in diagName else 'MKL'
@@ -103,6 +106,17 @@ def main():
             return installIntelProductMap(arguments, windowsNodes, linuxNodes, product)
         else:
             return installIntelProductReduce(arguments, tasks, taskResults, product)
+    
+    if diagName == 'Standalone Benchmark-Linpack':
+        arguments = {
+            'Intel MKL version': '2018 Update 4',
+            'Size level': 10
+        }
+        parseArgs(diagArgs, arguments)
+        if isMap:
+            return benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode)
+        else:
+            return benchmarkLinpackReduce(arguments, tasks, taskResults)
 
 def parseStdin():
     stdin = json.load(sys.stdin)
@@ -123,6 +137,7 @@ def parseStdin():
 
     nodes = stdin.get('Nodes')
     windowsNodes = linuxNodes = rdmaNodes = None
+    vmSizeByNode = {}
     if nodes:
         missingInfoNodes = [node['Node'] for node in nodes if not node['NodeRegistrationInfo'] or not node['Metadata']]
         if missingInfoNodes:
@@ -142,6 +157,7 @@ def parseStdin():
             else:
                 unknownNodes.add(node)
             vmSize = metadataByNode[node]['compute']['vmSize']
+            vmSizeByNode[node] = vmSize
             if vmSize.lower() in rdmaVmSizes:
                 rdmaNodes.add(node)
         if unknownNodes:
@@ -157,8 +173,12 @@ def parseStdin():
         difference = (taskIdNodeNameInTasks | taskIdNodeNameInTaskResults) - (taskIdNodeNameInTasks & taskIdNodeNameInTaskResults)
         if difference:
             raise Exception('Task id and node name mismatch in "Tasks" and "TaskResults": {}'.format(', '.join(difference)))
+        nodesInJob = set(targetNodes)
+        tasksOnUnexpectedNodes = ['{}:{}'.format(task['Id'], task['Node']) for task in tasks if task['Node'] not in nodesInJob]
+        if tasksOnUnexpectedNodes:
+            raise Exception('Unexpected nodes in tasks: {}'.format(', '.join(tasksOnUnexpectedNodes)))
 
-    return diagName, diagArgs, targetNodes, windowsNodes, linuxNodes, rdmaNodes, tasks, taskResults
+    return diagName, diagArgs, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, tasks, taskResults
 
 def parseArgs(diagArgsIn, diagArgsOut):
     if diagArgsIn:
@@ -228,9 +248,6 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
     if len(nodelist) == 0:
         return tasks
 
-    USERNAME = 'hpc_diagnostics'
-    PASSWORD = 'p@55word'
-
     mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiLocation)
     rdmaOption = ''
     taskLabel = '[Windows]'
@@ -239,16 +256,16 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
         taskLabel += '[RDMA]'
 
     taskTemplate = {
-        'UserName': USERNAME,
-        'Password': PASSWORD,
+        'UserName': HPC_DIAG_USERNAME,
+        'Password': HPC_DIAG_PASSWORD,
         'EnvironmentVariables': {'CCP_ISADMIN': 1}
     }
 
     sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
     commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpi'.format(mpiLocation) # this way would only add one row in firewall rules
     # commandSetFirewall = r'netsh advfirewall firewall add rule name="hpc_diagnostics_mpi" dir=in action=allow program="{}\intel64\bin\mpiexec.exe"'.format(mpiLocation) # this way would add multiple rows in firewall rules when it is executed multiple times
-    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} IMB-MPI1 pingpong'.format(PASSWORD, rdmaOption)
-    commandRunInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts [nodepair] -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(PASSWORD, rdmaOption, sampleOption)
+    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} IMB-MPI1 pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption)
+    commandRunInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts [nodepair] -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption, sampleOption)
     commandMeasureTime = "$stopwatch = [system.diagnostics.stopwatch]::StartNew(); [command]; if($?) {'Run time: ' + $stopwatch.Elapsed.TotalSeconds}"
 
     idByNode = {}
@@ -314,7 +331,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
         "Id":0,
         "CommandLine":commandLine,
         "Node":None,
-        "UserName":"hpc_diagnostics",
+        "UserName":HPC_DIAG_USERNAME,
         "Password":None,
         "PrivateKey":SSH_PRIVATE_KEY,
         "CustomizedData":None,
@@ -893,17 +910,14 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     nodes = ','.join(nodelist)
     nodesCount = len(nodelist)
 
-    USERNAME = 'hpc_diagnostics'
-    PASSWORD = 'p@55word'
-
     taskTemplateWindows = {
-        'UserName': USERNAME,
-        'Password': PASSWORD,
+        'UserName': HPC_DIAG_USERNAME,
+        'Password': HPC_DIAG_PASSWORD,
         'EnvironmentVariables': {'CCP_ISADMIN': 1}
     }
 
     taskTemplateLinux = {
-        'UserName':USERNAME,
+        'UserName':HPC_DIAG_USERNAME,
         'Password':None,
         'PrivateKey':SSH_PRIVATE_KEY,
     }
@@ -912,8 +926,8 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
 
     mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiInstallationLocationWindows)
     commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpi'.format(mpiInstallationLocationWindows)
-    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} IMB-MPI1 sendrecv'.format(PASSWORD, rdmaOption)
-    commandRunInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts {} -ppn 1 IMB-MPI1 -npmin {} sendrecv'.format(PASSWORD, rdmaOption, nodes, nodesCount)
+    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} IMB-MPI1 sendrecv'.format(HPC_DIAG_PASSWORD, rdmaOption)
+    commandRunInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts {} -ppn 1 IMB-MPI1 -npmin {} sendrecv'.format(HPC_DIAG_PASSWORD, rdmaOption, nodes, nodesCount)
     commandMeasureTime = "$stopwatch = [system.diagnostics.stopwatch]::StartNew(); [command]; if($?) {'Run time: ' + $stopwatch.Elapsed.TotalSeconds}"
     commandRunWindows = '{} && "{}" && powershell "{}"'.format(commandSetFirewall, mpiEnvFile, commandMeasureTime)
     commandRunIntraWindows = commandRunWindows.replace('[command]', commandRunIntra)
@@ -1006,20 +1020,20 @@ def installIntelProductMap(arguments, windowsNodes, linuxNodes, product):
     leastTime = 180 if product == 'MPI' else 600
     timeout -= leastTime - 1
     if timeout <= 0:
-        raise Exception("The Max runtime parameter should be equal or larger than {}.".format(leastTime))
+        raise Exception('The Max runtime parameter should be equal or larger than {}'.format(leastTime))
             
     # command to install MPI/MKL on Linux node
-    uri = INTEL_PRODUCT_URI[product][version]["Linux"]
+    uri = INTEL_PRODUCT_URI[product][version]['Linux']
     installDirectory = globalGetDefaultInstallationLocationLinux(product, version)
-    wgetOutput = "wget.output"
+    wgetOutput = 'wget.output'
     commandCheckExist = "[ -d {0} ] && echo 'Already installed in {0}'".format(installDirectory)
     commandShowOutput = r"cat {} | sed 's/.*\r//'".format(wgetOutput)
-    commandDownload = "timeout {0}s wget --progress=bar:force -O intel.tgz {1} 1>{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)".format(timeout, uri, wgetOutput, commandShowOutput)
+    commandDownload = 'timeout {0}s wget --progress=bar:force -O intel.tgz {1} 1>{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)'.format(timeout, uri, wgetOutput, commandShowOutput)
     commandInstall = "tar -zxf intel.tgz && cd l_mpi_* && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg"
-    commandLinux = "{} || ({} && {}) ".format(commandCheckExist, commandDownload, commandInstall)
+    commandLinux = '{} || ({} && {})'.format(commandCheckExist, commandDownload, commandInstall)
 
     # command to install MPI/MKL on Windows node
-    uri = INTEL_PRODUCT_URI[product][version]["Windows"]
+    uri = INTEL_PRODUCT_URI[product][version]['Windows']
     installDirectory = globalGetDefaultInstallationLocationWindows(product, version)
     commandWindows = """powershell "
 if (Test-Path '[installDirectory]')
@@ -1156,6 +1170,221 @@ td, th {
 
     print(json.dumps(result))
     return 0
+
+def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
+    intelMklVersion = arguments['Intel MKL version'].lower()
+    sizeLevel = arguments['Size level']
+    globalCheckIntelProductVersion('MKL', intelMklVersion)
+    intelMklLocation = globalGetDefaultInstallationLocationLinux('MKL', intelMklVersion)
+    if not 1 <= sizeLevel <= 15:
+        raise Exception('Parameter "Size level" should be in range 1 - 15')
+
+    commandInstallNumactlOnUbuntu = 'apt install -y numactl'
+    commandInstallNumactlOnSuse = 'zypper install -y numactl'
+    commandInstallNumactlOnOthers = 'yum install -y numactl'
+    commandInstallNumactlQuietOrWarn = "({}) >/dev/null 2>&1 || echo 'Failed to install numactl.'"
+    commandInstallNumactlOnUbuntu = commandInstallNumactlQuietOrWarn.format(commandInstallNumactlOnUbuntu)
+    commandInstallNumactlOnSuse = commandInstallNumactlQuietOrWarn.format(commandInstallNumactlOnSuse)
+    commandInstallNumactlOnOthers = commandInstallNumactlQuietOrWarn.format(commandInstallNumactlOnOthers)
+    commandDetectDistroAndInstall = ("cat /etc/*release > distroInfo && "
+                                 "if cat distroInfo | grep -Fiq 'Ubuntu'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Suse'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'CentOS'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Redhat'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Red Hat'; then {};"
+                                 "fi").format(commandInstallNumactlOnUbuntu, 
+                                              commandInstallNumactlOnSuse,
+                                              commandInstallNumactlOnOthers,
+                                              commandInstallNumactlOnOthers,
+                                              commandInstallNumactlOnOthers)
+
+    commandModify = "sed -i 's/.*# number of tests/{} # number of tests/' lininput_xeon64".format(sizeLevel)
+    commandRunLinpack = 'cd {}/benchmarks/linpack && {} && ./runme_xeon64'.format(intelMklLocation, commandModify)
+    commandCheckCpu = "lscpu | egrep '^CPU\(s\)|Model name'"
+
+    # Bug: the output of task is empty when it runs Linpack with large problem size, thus start another task to collect the output
+    tempOutputDir = '/tmp/hpc_diag_linpack_standalone'
+    commandCreateTempOutputDir = 'mkdir -p {}'.format(tempOutputDir)
+
+    tasks = []
+    id = 1
+    for node in linuxNodes:
+        outputFile = '{}/{}'.format(tempOutputDir, uuid.uuid4())
+        commandClearFile = 'rm -f {}'.format(outputFile)
+        task = {}
+        task['Id'] = id
+        task['Node'] = node
+        task['CustomizedData'] = '[Linux] {}'.format(vmSizeByNode[node])
+        task['CommandLine'] = '{} && {} && ({} && {}) 2>&1 | tee {}'.format(commandClearFile, commandCreateTempOutputDir, commandDetectDistroAndInstall, commandRunLinpack, outputFile)
+        task['MaximumRuntimeSeconds'] = 36000
+        tasks.append(task)
+        task = copy.deepcopy(task)
+        task['ParentIds'] = [id]
+        task['Id'] += 1
+        task['CommandLine'] = '{}; cat {} && {}'.format(commandCheckCpu, outputFile, commandClearFile)
+        tasks.append(task)
+        id += 2
+
+    for node in windowsNodes:
+        task = {}
+        task['Id'] = id
+        id += 1
+        task['Node'] = node
+        task['CustomizedData'] = '[Windows] {}'.format(vmSizeByNode[node])
+        task['CommandLine'] = 'echo This test is not supported yet on Windows node'
+        tasks.append(task)
+
+    print(json.dumps(tasks))
+
+def benchmarkLinpackReduce(arguments, tasks, taskResults):
+    intelMklVersion = arguments['Intel MKL version'].lower()
+    intelMklLocation = globalGetDefaultInstallationLocationLinux('MKL', intelMklVersion)
+        
+    windowsNodes = set()
+    linuxNodes = set()
+    taskDetail = {}
+    try:
+        for task in tasks:
+            taskId = task['Id']
+            node = task['Node']
+            tasklabel = task['CustomizedData']
+            if tasklabel.startswith('[Windows]'):
+                windowsNodes.add(node)
+            if tasklabel.startswith('[Linux]'):
+                linuxNodes.add(node)
+            if node in linuxNodes and taskId % 2 == 0 or node in windowsNodes:
+                size = tasklabel
+                taskDetail[taskId] = {
+                    'Node': node,
+                    'Size': size,
+                    'Output': None
+                    }
+    except Exception as e:
+        printErrorAsJson('Failed to parse tasks. ' + str(e))
+        return -1
+
+    nodesWithoutIntelMklInstalled = []
+    nodesFailedToInstallNumactl = []
+    try:
+        for taskResult in taskResults:
+            taskId = taskResult['TaskId']
+            nodeName = taskResult['NodeName']
+            output = taskResult['Message']
+            if nodeName in linuxNodes and taskId % 2 == 0:
+                taskDetail[taskId]['Output'] = output
+                if 'Failed to install numactl' in output:
+                    nodesFailedToInstallNumactl.append(nodeName)
+                if 'benchmarks/linpack: No such file or directory' in output:
+                    nodesWithoutIntelMklInstalled.append(nodeName)
+    except Exception as e:
+        printErrorAsJson('Failed to parse task results. ' + str(e))
+        return -1
+
+    defaultFlopsPerCycle = 16 # Use this default value because currently it seems that the Intel microarchitectures used in Azure VM are in "Intel Haswell/Broadwell/Skylake/Kaby Lake". Consider getting this value from test parameter in case new Azure VM sizes are introduced.
+
+    results = list(taskDetail.values())
+    htmlRows = []
+    for task in results:
+        perf, N, coreCount, coreFreq = benchmarkLinpackParseTaskOutput(task['Output'])
+        theoreticalPerfExpr = "{} * {} * {}".format(coreCount, defaultFlopsPerCycle, coreFreq) if coreCount and coreFreq else None
+        theoreticalPerf = eval(theoreticalPerfExpr) if theoreticalPerfExpr else None
+        efficiency = perf / theoreticalPerf if perf and theoreticalPerf else None
+        task['TheoreticalPerf'] = theoreticalPerf
+        task['Perf'] = perf
+        task['N'] = N
+        task['Efficiency'] = efficiency
+        theoreticalPerfInHtml = "{} = {}".format(theoreticalPerfExpr, theoreticalPerf) if theoreticalPerfExpr else None
+        perfInHtml = "{:.1f}".format(perf) if perf else None
+        efficiencyInHtml = "{:.1%}".format(efficiency) if efficiency else None
+        htmlRows.append(
+            '\n'.join([
+                '  <tr>',
+                '\n'.join(['    <td>{}</td>'.format(item) for item in [task['Node'], task['Size'], theoreticalPerfInHtml, perfInHtml, N, efficiencyInHtml]]),
+                '  </tr>'
+                ]))
+        del task['Output']
+
+    intelLinpack = 'Intel Optimized LINPACK Benchmark'
+    description = 'This is the result of running {} on each node.'.format(intelLinpack)
+    intelLinpackLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl-linux-developer-guide-intel-optimized-linpack-benchmark-for-linux">{}</a>'.format(intelLinpack)
+    theoreticalPerfDescription = "The theoretical peak performance of each node is calculated by: [core count of node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]" if any([task['TheoreticalPerf'] for task in results]) else ''
+    intelMklNotFound = 'Intel MKL {} is not found in <b>{}</b> on node(s): {}'.format(intelMklVersion, intelMklLocation, ', '.join(nodesWithoutIntelMklInstalled)) if nodesWithoutIntelMklInstalled else ''
+    installIntelMkl = 'Diagnostics test <b>Prerequisite-Intel MKL Installation</b> can be used to install Intel MKL.' if nodesWithoutIntelMklInstalled else ''
+    installNumactl = 'Please install <b>numactl</b> manually, if necessary, on node(s): {}'.format(', '.join(nodesFailedToInstallNumactl)) if nodesFailedToInstallNumactl else ''
+    windowsNotSupport = 'The test is not supported on Windows node currently.' if windowsNodes else ''
+    html = '''
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+</style>
+</head>
+<body>
+<h2>Linpack standalone benchmark</h2>
+<table>
+  <tr>
+    <th>Node</th>
+    <th>OS/Node size</th>
+    <th>Theoretical peak performance(GFlop/s)</th>
+    <th>Best performance(GFlop/s)</th>
+    <th>Problem size</th>
+    <th>Efficiency</th>
+  </tr>
+''' + '\n'.join(htmlRows) + '''
+</table>
+<p>''' + description.replace(intelLinpack, intelLinpackLink) + '''</p>
+<p>''' + theoreticalPerfDescription + '''</p>
+<p>''' + intelMklNotFound + '''</p>
+<p>''' + installIntelMkl + '''</p>
+<p>''' + installNumactl + '''</p>
+<p>''' + windowsNotSupport + '''</p>
+</body>
+</html>
+'''
+
+    result = {
+        'Description': description,
+        'Results': results,
+        'Html': html
+        }
+
+    print(json.dumps(result, indent = 4))
+    return 0
+
+def benchmarkLinpackParseTaskOutput(raw):
+    bestPerf = n = coreCount = coreFreq = None
+    try:
+        start = raw.find('Performance Summary (GFlops)')
+        end = raw.find('Residual checks PASSED')
+        if -1 < start < end:
+            table = [line for line in raw[start:end].splitlines() if line.strip()][2:]
+            bestPerf = 0
+            for line in table:
+                numbers = line.split()
+                perf = float(numbers[3])
+                if perf > bestPerf:
+                    bestPerf = perf
+                    n = int(numbers[0])
+        cpuInfo = raw.split('\n', 2)[:2]
+        if len(cpuInfo) == 2:
+            firstLine = cpuInfo[0]
+            secondLine = cpuInfo[1]
+            if firstLine.startswith('CPU') and secondLine.startswith('Model name'):
+                coreCount = int(firstLine.split()[-1])
+                coreFreq = float([word for word in secondLine.split() if word.endswith('GHz')][0][:-3])
+    except:
+        pass
+    return (bestPerf, n, coreCount, coreFreq)
 
 def printErrorAsJson(errormessage):
     print(json.dumps({"Error":errormessage}))
