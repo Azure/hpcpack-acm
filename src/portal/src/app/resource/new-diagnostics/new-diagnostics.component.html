@@ -18,7 +18,7 @@
     </div>
   </div>
   <mat-vertical-stepper linear="true" #stepper (selectionChange)="selectionChange($event)">
-    <mat-step label="Select test to run">
+    <mat-step label="Select item">
       <div class="select-tests">
         <tree-root #tree [nodes]="tests" (updateData)="onTreeLoad($event)" class="test-tree">
           <mat-radio-group [(ngModel)]="selectedTest" (change)="check()">
@@ -31,7 +31,7 @@
           </mat-radio-group>
         </tree-root>
         <div class="test-description" *ngIf="selectedDescription">
-          <div class="test-description-title">{{selectedTest.name | titlecase}} Introduction</div>
+          <div class="test-description-title">{{selectedTest.name}} Introduction</div>
           <p class="test-description-text">
             {{selectedDescription}}
             <a href="{{testInfoLink}}">{{testInfoLink}}</a>
@@ -42,7 +42,7 @@
         <button mat-button color="primary" matStepperNext>Next</button>
       </div>
     </mat-step>
-    <mat-step label="Set test parameters" optional>
+    <mat-step label="Set parameters" optional>
       <div *ngIf="selectedTest == undefined; else testsWithParameters" class="no-params">
         Please select one test in step 1!
       </div>
@@ -53,7 +53,7 @@
         </div>
         <ng-template #showParameters>
           <div class="name">
-            <span>{{selectedTest.name | titlecase}}</span>
+            <span>{{selectedTest.name}}</span>
           </div>
           <div [formGroup]="paraForm">
             <div *ngFor="let parameter of selectedTest.parameters">
@@ -89,7 +89,7 @@
         <button mat-button color="primary" matStepperNext>Next</button>
       </div>
     </mat-step>
-    <mat-step label="Set test name">
+    <mat-step label="Set name">
       <div>
         <mat-form-field class="diagTestName">
           <input matInput placeholder="Test name" [(ngModel)]='diagTestName' />

@@ -18,9 +18,9 @@ export class ResultListComponent implements OnInit, OnDestroy {
 
   static customizableColumns = [
     { name: 'createdAt', displayed: true, displayName: 'Created' },
-    { name: 'test', displayed: true, displayName: 'Test Name' },
-    { name: 'diagnostic', displayed: true, displayName: 'Diagnostic' },
     { name: 'category', displayed: true, displayName: 'Category' },
+    { name: 'item', displayed: true, displayName: 'Item' },
+    { name: 'name', displayed: true, displayName: 'Test Name' },
     { name: 'state', displayed: true, displayName: 'State' },
     { name: 'progress', displayed: true, displayName: 'Progress' },
     { name: 'updatedAt', displayed: true, displayName: 'Last Changed' }

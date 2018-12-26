@@ -157,7 +157,7 @@ export class NodeListComponent {
 
   runDiagnostics() {
     let dialogRef = this.dialog.open(NewDiagnosticsComponent, {
-      width: '98%',
+      width: '60%',
       data: {}
     });
 

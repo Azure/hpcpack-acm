@@ -15,14 +15,14 @@
     <div class="job-created" [ngStyle]="getColumnOrder('createdAt')">
       Created
     </div>
-    <div class="job-test" [ngStyle]="getColumnOrder('test')">
-      Test Name
-    </div>
-    <div class="job-diagnostic" [ngStyle]="getColumnOrder('diagnostic')">
-      Diagnostic
-    </div>
     <div class="job-category" [ngStyle]="getColumnOrder('category')">
       Category
+    </div>
+    <div class="job-item" [ngStyle]="getColumnOrder('item')">
+      Item
+    </div>
+    <div class="job-name" [ngStyle]="getColumnOrder('name')">
+      Name
     </div>
     <div class="job-state" [ngStyle]="getColumnOrder('state')">
       State
@@ -47,16 +47,16 @@
           <div class="cell-text">{{job.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</div>
         </div>
 
-        <div class="icon-cell job-test" [ngStyle]="getColumnOrder('test')">
-          {{job.name}}
+        <div class="icon-cell job-category" [ngStyle]="getColumnOrder('category')">
+          {{job.diagnosticTest.category}}
         </div>
 
-        <div class="icon-cell job-diagnostic" [ngStyle]="getColumnOrder('diagnostic')">
+        <div class="icon-cell job-item" [ngStyle]="getColumnOrder('item')">
           {{job.diagnosticTest.name}}
         </div>
 
-        <div class="icon-cell job-category" [ngStyle]="getColumnOrder('category')">
-          {{job.diagnosticTest.category}}
+        <div class="icon-cell job-name" [ngStyle]="getColumnOrder('name')">
+          {{job.name}}
         </div>
 
         <div class="icon-cell job-state" [ngStyle]="getColumnOrder('state')">
