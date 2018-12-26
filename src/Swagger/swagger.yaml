@@ -1045,8 +1045,9 @@ schemes:
  - https
 
 securityDefinitions:
-  basic_auth:
-    type: basic
+  aad:
+    type: oauth2
+    flow: application
 
 security:
-  - basic_auth: []
+  - aad: []
