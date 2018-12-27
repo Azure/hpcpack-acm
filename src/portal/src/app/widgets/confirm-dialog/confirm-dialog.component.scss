@@ -1,5 +1,10 @@
 mat-dialog-actions {
   justify-content: flex-end;
+
+  button {
+    margin-right: 10px;
+    font-size: 13px;
+  }
 }
 
 mat-dialog-content {

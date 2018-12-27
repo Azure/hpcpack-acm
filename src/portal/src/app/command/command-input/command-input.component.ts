@@ -3,7 +3,7 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 
 @Component({
   templateUrl: './command-input.component.html',
-  styleUrls: ['./command-input.component.css']
+  styleUrls: ['./command-input.component.scss']
 })
 export class CommandInputComponent implements OnInit {
   public command: string = '';

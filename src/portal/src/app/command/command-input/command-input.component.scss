@@ -4,10 +4,13 @@ mat-vertical-stepper {
 
 mat-dialog-actions {
   justify-content: flex-end;
+
+  button {
+    margin-right: 10px;
+    font-size: 13px;
+  }
 }
 
 .cmd-line {
   width: 100%;
 }
-
-
