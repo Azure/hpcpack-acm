@@ -1644,7 +1644,7 @@ def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
 
     commandModify = "(gc lininput_xeon64) -replace '.*# number of tests', '{} # number of tests' | out-file -encoding ascii lininput_xeon64".format(sizeLevel)
     commandCheckCpu = 'wmic cpu get NumberOfCores,MaxClockSpeed /format:list'
-    commandWindows = r'cd {}\benchmarks\linpack && del win_xeon64.txt 2>nul && powershell "{}" && runme_xeon64 >nul && {} && type win_xeon64.txt'.format(mklInstallationLocationWindows, commandModify, commandCheckCpu)
+    commandWindows = r'{} && cd {}\benchmarks\linpack && del win_xeon64.txt 2>nul && powershell "{}" && runme_xeon64 >nul && type win_xeon64.txt'.format(commandCheckCpu, mklInstallationLocationWindows, commandModify)
     for node in windowsNodes:
         task = {}
         task['Id'] = id
@@ -1764,9 +1764,9 @@ def benchmarkLinpackParseTaskOutput(raw):
         if firstLine.startswith('CPU') and secondLine.startswith('CPU MHz'):
             coreCount = int(firstLine.split()[-1])
             coreFreq = float(secondLine.split()[-1]) / 1000
-        elif firstLine.startswith('MaxClockSpeed') and secondLine.startswith('NumberOfCores'):
+        elif firstLine.startswith('MaxClockSpeed'):
             coreFreq = float(firstLine.split('=')[1]) / 1000
-            coreCount = int(secondLine.split('=')[1])
+            coreCount = sum(int(line.split('=')[1]) for line in lines if line.startswith('NumberOfCores'))
     except:
         pass
     return (bestPerf, n, coreCount, coreFreq)
