@@ -66,10 +66,10 @@ export class ResultLayoutComponent implements OnInit {
 
   rerunDiag() {
     let dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      width: '90%',
+      width: '60%',
       data: {
-        title: 'Copy',
-        message: 'Are you sure to copy the current diagnostic?'
+        title: 'Run Diagnostic',
+        message: 'Are you sure to clone and run the current diagnostic?'
       }
     });
     dialogRef.afterClosed().subscribe(res => {

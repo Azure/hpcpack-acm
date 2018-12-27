@@ -81,6 +81,10 @@ export class ResultDetailComponent implements OnInit {
     });
   }
 
+  get initializing() {
+    return this.result.state == 'unknown';
+  }
+
   get isLoaded(): boolean {
     return this.gotTasks;
   }

@@ -7,10 +7,10 @@
     </div>
 
   </div>
-  <div class="operations">
+  <div class="operations" *ngIf="!initializing">
     <div class="operation" (click)="newCommand()">
       <i class="material-icons rerun">content_copy</i>
-      <div class="operation-name">Copy</div>
+      <div class="operation-name">Clone</div>
     </div>
     <div class="cancel-job">
       <div class="operation" *ngIf="!isOver" (click)="cancelCommand()">
