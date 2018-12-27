@@ -280,6 +280,42 @@ def globalGetIntelProductAzureBlobUrl(originalUrl):
     fileName = originalUrl.split('/')[-1]
     return 'https://hpcacm.blob.core.windows.net/intel/{}'.format(fileName)
 
+def globalGenerateHtmlResult(title, tableHeaders, tableRows, greenRowNumber, descriptions):
+    table = ''
+    if tableHeaders and tableRows:
+        if len(set(map(len, tableRows))) > 1:
+            return None
+        if len(tableRows[0]) != len(tableHeaders):
+            return None
+        headers = '\n'.join(['<tr>', '\n'.join('<th>{}</th>'.format(header) for header in tableHeaders), '</tr>'])
+        rows = ['\n'.join(['<tr>', '\n'.join('<td>{}</td>'.format(item) for item in row), '</tr>']) for row in tableRows]
+        if greenRowNumber in range(len(rows)):
+            rows[greenRowNumber] = rows[greenRowNumber].replace('<tr>', '<tr bgcolor="#d8fcd4">')
+        table = '\n'.join(['<table>', headers, '\n'.join(rows), '</table>'])
+    body = '\n'.join(['<h2>{}</h2>'.format(title), table, '\n'.join('<p>{}</p>'.format(description) for description in descriptions) if descriptions else ''])
+    return '''
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+</style>
+</head>
+<body>
+''' + body + '''
+</body>
+</html>
+'''
+
 
 def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
@@ -1267,7 +1303,7 @@ def mpiHplReduce(arguments, nodes, tasks, taskResults):
     flagTask = taskDetail[len(nodes) + 1]
     intelHpl = 'Intel Distribution for LINPACK Benchmark'
     description = 'This is the result of running {} in the cluster.'.format(intelHpl)
-    result = None
+    result = tableHeaders = tableRows = greenRowNumber = descriptions = None
     resultCode = -1
     if flagTask['ExitCode'] == 0:
         # get CPU info from node checking tasks
@@ -1303,7 +1339,7 @@ def mpiHplReduce(arguments, nodes, tasks, taskResults):
                 if node not in sizeByNode and size:
                     freq = cpuFreqByNode.get(node)
                     if freq:
-                        size += "({}GHz)".format(freq)
+                        size += '({}GHz)'.format(freq)
                         cpuFreqBySize[size] = freq
                     coreCount = cpuCoreByNode.get(node)
                     if coreCount:
@@ -1351,12 +1387,13 @@ def mpiHplReduce(arguments, nodes, tasks, taskResults):
             logDir = [word for word in output.split() if word.endswith(keyWord)][0][:-(len(keyWord))]
             node = resultTask['Node']
             result = 'No result. The cluster may be too busy or has broken node(s). Check log in {} on {}'.format(logDir, node)
-            htmlContent = '<p>{}</p>'.format(result)
+            descriptions = [result]
         else:
             result = []
             output = [line.split() for line in output.splitlines()]
-            htmlRows = []
-            maxPerf = greenLineNumber = -1
+            tableHeaders = ['Problem size(N)', 'Block size(NB)', 'P', 'Q', 'Time(s)', 'Performance(GFlop/s)', 'Efficiency']
+            tableRows = []
+            maxPerf = -1
             lineNumber = 0
             for row in output:
                 if len(row) == 7:
@@ -1374,47 +1411,24 @@ def mpiHplReduce(arguments, nodes, tasks, taskResults):
                         })
                         if perf > maxPerf:
                             maxPerf = perf
-                            greenLineNumber = lineNumber
+                            greenRowNumber = lineNumber
                         perfInHtml = "{:.2f}".format(perf)
                         efficiencyInHtml = "{:.2%}".format(efficiency) if efficiency else None
-                        htmlRows.append(
-                            '\n'.join([
-                                '  <tr>',
-                                '\n'.join(['    <td>{}</td>'.format(item) for item in row[1:-1] + [perfInHtml, efficiencyInHtml]]),
-                                '  </tr>'
-                                ]))
+                        tableRows.append(row[1:-1] + [perfInHtml, efficiencyInHtml])
                         lineNumber += 1
                     except:
                         pass
-            if greenLineNumber >= 0:
-                htmlRows[greenLineNumber] = htmlRows[greenLineNumber].replace('<tr>', '<tr bgcolor="#d8fcd4">')
             intelHplWithLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl-linux-developer-guide-overview-of-the-intel-distribution-for-linpack-benchmark">{}</a>'.format(intelHpl)
             descriptionInHtml = description.replace(intelHpl, intelHplWithLink)
-            htmlContent = '''
-<table>
-  <tr>
-    <th>Problem size(N)</th>
-    <th>Block size(NB)</th>
-    <th>P</th>
-    <th>Q</th>
-    <th>Time(s)</th>
-    <th>Performance(GFlop/s)</th>
-    <th>Efficiency</th>
-  </tr>
-{}
-</table>
-<p>{}</p>
-<p>{}</p>
-<p>{}</p>
-<p>{}</p>
-'''.format('\n'.join(htmlRows), descriptionInHtml, vmSizeDescription, theoreticalPerfDescription, hyperThreadingDescription)
+            descriptions = [descriptionInHtml, vmSizeDescription, theoreticalPerfDescription, hyperThreadingDescription]
         resultCode = 0
     else:
         result = 'Cluster is not ready to run Intel HPL. Diagnostics test MPI-Pingpong may help to diagnose the cluster.'
-        htmlContent = '<p>{}</p>'.format(result).replace('MPI-Pingpong', '<b>MPI-Pingpong</b>')
+        descriptions = [result.replace('MPI-Pingpong', '<b>MPI-Pingpong</b>')]
         resultCode = -1
         if any(task['ExitCode'] != 0 for task in nodeCheckingTasks):
-            htmlRows = []
+            tableHeaders = ['Node', 'State']
+            tableRows = []
             for task in nodeCheckingTasks:
                 taskStates = []
                 output = task['Output']
@@ -1429,45 +1443,10 @@ def mpiHplReduce(arguments, nodes, tasks, taskResults):
                 state = '<br>'.join(taskStates)
                 if not state:
                     state = 'Unknown'
-                htmlRows.append(
-                    '\n'.join([
-                        '  <tr>',
-                        '\n'.join(['    <td>{}</td>'.format(item) for item in [task['Node'], state]]),
-                        '  </tr>'
-                        ]))
-            htmlContent += '''
-<table>
-  <tr>
-    <th>Node</th>
-    <th>State</th>
-  </tr>
-{}
-</table>
-'''.format('\n'.join(htmlRows))
+                tableRows.append([task['Node'], state])
 
-    html = '''
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-table {
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
-}
-td, th {
-    border: 1px solid #dddddd;
-    text-align: left;
-    padding: 8px;
-}
-</style>
-</head>
-<body>
-<h2>Linpack HPL</h2>
-''' + htmlContent + '''
-</body>
-</html>
-'''
+    title = 'High Performance Linpack Benchmark'
+    html = globalGenerateHtmlResult(title, tableHeaders, tableRows, greenRowNumber, descriptions)
 
     result = {
         'Description': description,
@@ -1535,21 +1514,21 @@ else
     id = 1
     for node in windowsNodes:
         task = {}
-        task["Id"] = id
+        task['Id'] = id
         id += 1
-        task["Node"] = node
-        task["CommandLine"] = commandWindows
-        task["CustomizedData"] = 'Windows'
-        task["MaximumRuntimeSeconds"] = 36000
+        task['Node'] = node
+        task['CommandLine'] = commandWindows
+        task['CustomizedData'] = 'Windows'
+        task['MaximumRuntimeSeconds'] = 36000
         tasks.append(task)
     for node in linuxNodes:
         task = {}
-        task["Id"] = id
+        task['Id'] = id
         id += 1
-        task["Node"] = node
-        task["CommandLine"] = commandLinux
-        task["CustomizedData"] = 'Linux'
-        task["MaximumRuntimeSeconds"] = 36000
+        task['Node'] = node
+        task['CommandLine'] = commandLinux
+        task['CustomizedData'] = 'Linux'
+        task['MaximumRuntimeSeconds'] = 36000
         tasks.append(task)
 
     print(json.dumps(tasks))
@@ -1587,49 +1566,15 @@ def installIntelProductReduce(arguments, tasks, taskResults, product):
         printErrorAsJson('Failed to parse task result. ' + str(e))
         return -1
 
-    htmlRows = []
-    for node in sorted(results):
-        htmlRows.append(
-            '\n'.join([
-                '  <tr>',
-                '\n'.join(['    <td>{}</td>'.format(column) for column in [node, osTypeByNode[node], results[node]]]),
-                '  </tr>'
-                ])) 
-
     description = 'This is the result of installing Intel {} {} on each node.'.format(product, version)
     mpiLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mpi-library">Intel MPI</a>'
     mklLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl">Intel MKL</a>'
-    html = '''
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-table {
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
-}
-td, th {
-    border: 1px solid #dddddd;
-    text-align: left;
-    padding: 8px;
-}
-</style>
-</head>
-<body>
-<h2>Intel MPI Installation</h2>
-<table>
-  <tr>
-    <th>Node</th>
-    <th>OS</th>
-    <th>Result</th>
-  </tr>
-''' + '\n'.join(htmlRows) + '''
-</table>
-<p>''' + description.replace('Intel MPI', mpiLink).replace('Intel MKL', mklLink) + '''</p>
-</body>
-</html>
-'''
+
+    title = 'Intel {} Installation'.format(product)
+    tableHeaders = ['Node', 'OS', 'Result']
+    tableRows = [[node, osTypeByNode[node], results[node]] for node in sorted(results)]
+    descriptions = [description.replace('Intel MPI', mpiLink).replace('Intel MKL', mklLink)]
+    html = globalGenerateHtmlResult(title, tableHeaders, tableRows, None, descriptions)
 
     result = {
         'Description': description,
@@ -1760,7 +1705,7 @@ def benchmarkLinpackReduce(arguments, tasks, taskResults):
     defaultFlopsPerCycle = 16 # Use this default value because currently it seems that the Intel microarchitectures used in Azure VM are in "Intel Haswell/Broadwell/Skylake/Kaby Lake". Consider getting this value from test parameter in case new Azure VM sizes are introduced.
 
     results = sorted(list(taskDetail.values()), key = lambda k:k['Node'])
-    htmlRows = []
+    tableRows = []
     for task in results:
         perf, N, coreCount, coreFreq = benchmarkLinpackParseTaskOutput(task['Output'])
         theoreticalPerfExpr = "{} * {} * {:.1f}".format(coreCount, defaultFlopsPerCycle, coreFreq) if coreCount and coreFreq else None
@@ -1773,12 +1718,7 @@ def benchmarkLinpackReduce(arguments, tasks, taskResults):
         theoreticalPerfInHtml = "{} = {}".format(theoreticalPerfExpr, theoreticalPerf) if theoreticalPerfExpr else None
         perfInHtml = "{:.1f}".format(perf) if perf else None
         efficiencyInHtml = "{:.1%}".format(efficiency) if efficiency else None
-        htmlRows.append(
-            '\n'.join([
-                '  <tr>',
-                '\n'.join(['    <td>{}</td>'.format(item) for item in [task['Node'], task['OS'], task['Size'], theoreticalPerfInHtml, perfInHtml, N, efficiencyInHtml]]),
-                '  </tr>'
-                ]))
+        tableRows.append([task['Node'], task['OS'], task['Size'], theoreticalPerfInHtml, perfInHtml, N, efficiencyInHtml])
         del task['Output']
 
     intelLinpack = 'Intel Optimized LINPACK Benchmark'
@@ -1789,46 +1729,11 @@ def benchmarkLinpackReduce(arguments, tasks, taskResults):
     intelMklNotFoundWindows = 'Intel MKL {} is not found in <b>{}</b> on node(s): {}'.format(intelMklVersion, intelMklLocationWindows, ', '.join(nodesWithoutIntelMklInstalledWindows)) if nodesWithoutIntelMklInstalledWindows else ''
     installIntelMkl = '<b>Prerequisite-Intel MKL Installation</b> can be used to install Intel MKL.' if nodesWithoutIntelMklInstalledLinux or nodesWithoutIntelMklInstalledWindows else ''
     installNumactl = 'Please install <b>numactl</b> manually, if necessary, on node(s): {}'.format(', '.join(nodesFailedToInstallNumactl)) if nodesFailedToInstallNumactl else ''
-    html = '''
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-table {
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
-}
-td, th {
-    border: 1px solid #dddddd;
-    text-align: left;
-    padding: 8px;
-}
-</style>
-</head>
-<body>
-<h2>Linpack standalone benchmark</h2>
-<table>
-  <tr>
-    <th>Node</th>
-    <th>OS</th>
-    <th>VM size</th>
-    <th>Theoretical peak performance(GFlop/s)</th>
-    <th>Best performance(GFlop/s)</th>
-    <th>Problem size</th>
-    <th>Efficiency</th>
-  </tr>
-''' + '\n'.join(htmlRows) + '''
-</table>
-<p>''' + description.replace(intelLinpack, intelLinpackLink) + '''</p>
-<p>''' + theoreticalPerfDescription + '''</p>
-<p>''' + intelMklNotFoundLinux + '''</p>
-<p>''' + intelMklNotFoundWindows + '''</p>
-<p>''' + installIntelMkl + '''</p>
-<p>''' + installNumactl + '''</p>
-</body>
-</html>
-'''
+
+    title = 'Standalone Linpack Benchmark'
+    tableHeaders = ['Node', 'OS', 'VM size', 'Theoretical peak performance(GFlop/s)', 'Best performance(GFlop/s)', 'Problem size', 'Efficiency']
+    descriptions = [description.replace(intelLinpack, intelLinpackLink), theoreticalPerfDescription, intelMklNotFoundLinux, intelMklNotFoundWindows, installIntelMkl, installNumactl]
+    html = globalGenerateHtmlResult(title, tableHeaders, tableRows, None, descriptions)
 
     result = {
         'Description': description,
@@ -1954,59 +1859,22 @@ def benchmarkSysbenchCpuReduce(tasks, taskResults):
         return -1
 
     results = sorted(list(taskDetail.values()), key = lambda k:k['Node'])
-    htmlRows = []
     for task in results:
         totalNumber, totalTime, coreNumber, threadNumber, model = benchmarkSysbenchCpuParseTaskOutput(task['Output'])
         task['Result'] = '{:.2f}'.format(totalNumber/totalTime) if totalNumber and totalTime else None
         task['CoreNumber'] = coreNumber
         task['ThreadNumber'] = threadNumber
         task['Model'] = model
-        htmlRows.append(
-            '\n'.join([
-                '  <tr>',
-                '\n'.join(['    <td>{}</td>'.format(task[column]) for column in ['Node', 'Distro', 'Size', 'Model', 'CoreNumber', 'ThreadNumber', 'Result']]),
-                '  </tr>'
-                ]))
         del task['Output']
 
-    description = "This is the result of running sysbench on each node, the value in which is the number of times per second that calculating the prime number less than 10000."
-    notSupportWindows = 'The test is not supported on Windows node' if len(results) < len(tasks) else ''
-    html = '''
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-table {
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
-}
-td, th {
-    border: 1px solid #dddddd;
-    text-align: left;
-    padding: 8px;
-}
-</style>
-</head>
-<body>
-<h2>Benchmark CPU</h2>
-<table>
-  <tr>
-    <th>Node</th>
-    <th>Distro</th>
-    <th>Size</th>
-    <th>Model</th>
-    <th>Cores</th>
-    <th>Threads</th>
-    <th>Result</th>
-  </tr>
-''' + '\n'.join(htmlRows) + '''
-</table>
-<p>''' + description + '''</p>
-<p>''' + notSupportWindows + '''</p>
-</body>
-</html>
-'''
+    description = "This is the result of running sysbench on each node, the value in which is the times of calculating the prime number less than 10000 per second."
+    notSupportWindows = 'The test is not supported on Windows node.' if len(results) < len(tasks) else ''
+
+    title = 'Sysbench CPU Benchmark'
+    tableHeaders = ['Node', 'Distro', 'VM size', 'Model', 'Cores', 'Threads', 'Result']
+    tableRows = [[result[item] for item in ['Node', 'Distro', 'Size', 'Model', 'CoreNumber', 'ThreadNumber', 'Result']] for result in results]
+    descriptions = [description, notSupportWindows]
+    html = globalGenerateHtmlResult(title, tableHeaders, tableRows, None, descriptions)
 
     result = {
         'Description': description,
@@ -2172,54 +2040,18 @@ def benchmarkCifsReduce(arguments, tasks, taskResults):
     htmlRows = []
     for task in results:
         task['Location'], task['Local'], task['ToCifs'], task['FromCifs'] = benchmarkCifsParseTaskOutput(task['Output'])
-        htmlRows.append(
-            '\n'.join([
-                '  <tr>',
-                '\n'.join(['    <td>{}</td>'.format(task[column]) for column in ['Node', 'Distro', 'Size', 'Location', 'Local', 'ToCifs', 'FromCifs']]),
-                '  </tr>'
-                ]))
         del task['Output']
 
     description = 'The benchmark shows the speed of copying file between local disk and CIFS server: {}.'.format(cifsServer)
-    notSupportWindows = 'The test is not supported on Windows node' if len(results) < len(tasks) else ''
-    html = '''
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-table {
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
-}
-td, th {
-    border: 1px solid #dddddd;
-    text-align: left;
-    padding: 8px;
-}
-</style>
-</head>
-<body>
-<h2>Benchmark CIFS</h2>
-<table>
-  <tr>
-    <th>Node</th>
-    <th>Distro</th>
-    <th>Size</th>
-    <th>Location</th>
-    <th>Local Disk</th>
-    <th>To CIFS</th>
-    <th>From CIFS</th>
-  </tr>
-''' + '\n'.join(htmlRows) + '''
-</table>
-<p>''' + description + '''</p>
-<p>If result is None, please check it manually following <a target="_blank" rel="noopener noreferrer" href="https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux#install-cifs-utils">Use Azure Files with Linux</a>.</p>
-<p>''' + notSupportWindows + '''</p>
-</body>
-</html>
-'''
-  
+    checkManually = 'If result is None, please check it manually following <a target="_blank" rel="noopener noreferrer" href="https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux#install-cifs-utils">Use Azure Files with Linux</a>.'
+    notSupportWindows = 'The test is not supported on Windows node.' if len(results) < len(tasks) else ''
+
+    title = 'CIFS Benchmark'
+    tableHeaders = ['Node', 'Distro', 'VM size', 'Location', 'Local Disk', 'To CIFS', 'From CIFS']
+    tableRows = [[result[item] for item in ['Node', 'Distro', 'Size', 'Location', 'Local', 'ToCifs', 'FromCifs']] for result in results]
+    descriptions = [description.replace(cifsServer, '<b>{}</b>'.format(cifsServer)), checkManually, notSupportWindows]
+    html = globalGenerateHtmlResult(title, tableHeaders, tableRows, None, descriptions)
+
     result = {
         'Description': description,
         'Results': results,
@@ -2250,6 +2082,7 @@ def benchmarkCifsParseTaskOutput(raw):
     except:
         pass
     return (location, local, toCifs, fromCifs)
+
 
 def printErrorAsJson(errormessage):
     print(json.dumps({"Error":errormessage}))
