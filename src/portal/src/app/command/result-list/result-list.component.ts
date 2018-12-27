@@ -107,7 +107,7 @@ export class ResultListComponent implements OnInit {
 
   customizeTable(): void {
     let dialogRef = this.dialog.open(TableOptionComponent, {
-      width: '98%',
+      width: '60%',
       data: { columns: this.availableColumns }
     });
     dialogRef.afterClosed().subscribe(res => {
