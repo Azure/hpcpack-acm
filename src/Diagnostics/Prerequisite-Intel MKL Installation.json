@@ -18,7 +18,7 @@
 	    },
         {
             "name":"Max runtime",
-            "description":"Specify the max time in seconds the test could run.",
+            "description":"Specify the max run time in seconds.",
             "type":"number",
             "min":600,
             "max":36000,

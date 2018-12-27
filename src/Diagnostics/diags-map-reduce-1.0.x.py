@@ -92,7 +92,7 @@ M4xW+aJnEhzIbE7a4an2eTc0pAxc9GexwtCFwlBouSW6kfOcMgEysoy99wQoGNgRHY/D
 -----END RSA PRIVATE KEY-----'''
 
 def main():
-    diagName, diagArgs, jobId, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, tasks, taskResults = parseStdin()
+    diagName, diagArgs, jobId, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, distroByNode, tasks, taskResults = parseStdin()
     isMap = False if tasks and taskResults else True
 
     if diagName == 'MPI-Pingpong':
@@ -141,7 +141,7 @@ def main():
             return installIntelProductMap(arguments, windowsNodes, linuxNodes, product)
         else:
             return installIntelProductReduce(arguments, tasks, taskResults, product)
-    
+
     if diagName == 'Standalone Benchmark-Linpack':
         arguments = {
             'Intel MKL version': '2018 Update 4',
@@ -152,6 +152,24 @@ def main():
             return benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode)
         else:
             return benchmarkLinpackReduce(arguments, tasks, taskResults)
+
+    if diagName == 'Standalone Benchmark-Sysbench CPU':
+        if isMap:
+            return benchmarkSysbenchCpuMap(windowsNodes, linuxNodes, vmSizeByNode, distroByNode)
+        else:
+            return benchmarkSysbenchCpuReduce(tasks, taskResults)
+
+    if diagName == 'Standalone Benchmark-CIFS':
+        arguments = {
+            'Connect by': 'Connection string',
+            'CIFS server': '',
+            'Mode': 'Parallel'
+        }
+        parseArgs(diagArgs, arguments)
+        if isMap:
+            return benchmarkCifsMap(arguments, windowsNodes, linuxNodes, vmSizeByNode, distroByNode)
+        else:
+            return benchmarkCifsReduce(arguments, tasks, taskResults)
 
 def parseStdin():
     stdin = json.load(sys.stdin)
@@ -175,6 +193,7 @@ def parseStdin():
     windowsNodes = linuxNodes = rdmaNodes = None
     vmSizeByNode = {}
     nodeInfoByNode = {}
+    distroByNode = {}
     if nodes:
         missingInfoNodes = [node['Node'] for node in nodes if not node['NodeRegistrationInfo'] or not node['Metadata']]
         if missingInfoNodes:
@@ -198,6 +217,19 @@ def parseStdin():
             vmSizeByNode[node] = vmSize
             if vmSize.lower() in rdmaVmSizes:
                 rdmaNodes.add(node)
+            distro = 'Unknown'
+            distroInfo = ' '.join([metadataByNode[node]['compute']['offer'], metadataByNode[node]['compute']['publisher'], nodeInfoByNode[node]['DistroInfo']])
+            if 'Ubuntu'.lower() in distroInfo:
+                distro = 'Ubuntu'
+            elif 'OpenSUSE'.lower() in distroInfo:
+                distro = 'OpenSUSE'
+            elif 'CentOS'.lower() in distroInfo:
+                distro = 'CentOS'
+            elif 'Redhat'.lower() in distroInfo or 'Red Hat'.lower() in distroInfo:
+                distro = 'Redhat'
+            elif 'Windows'.lower() in distroInfo:
+                distro = 'Windows'
+            distroByNode[node] = distro
         if unknownNodes:
             raise Exception('Unknown OS type of node(s): {}'.format(', '.join(unknownNodes)))
 
@@ -216,7 +248,7 @@ def parseStdin():
         if tasksOnUnexpectedNodes:
             raise Exception('Unexpected nodes in tasks: {}'.format(', '.join(tasksOnUnexpectedNodes)))
 
-    return diagName, diagArgs, jobId, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, tasks, taskResults
+    return diagName, diagArgs, jobId, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, distroByNode, tasks, taskResults
 
 def parseArgs(diagArgsIn, diagArgsOut):
     if diagArgsIn:
@@ -744,7 +776,7 @@ def mpiPingpongParseOutput(output, isDefaultSize):
 
 def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
     reasonMpiNotInstalled = 'Intel MPI is not found.'
-    solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location {} or {}. Run diagnostics test "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion, globalGetDefaultInstallationLocationLinux('MPI', mpiVersion), globalGetDefaultInstallationLocationWindows('MPI', mpiVersion))
+    solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location {} or {}. Run "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion, globalGetDefaultInstallationLocationLinux('MPI', mpiVersion), globalGetDefaultInstallationLocationWindows('MPI', mpiVersion))
 
     reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
@@ -1446,6 +1478,7 @@ td, th {
     print(json.dumps(result, indent = 4))
     return resultCode
 
+
 def installIntelProductMap(arguments, windowsNodes, linuxNodes, product):
     version = arguments['Version'].lower()
     timeout = arguments['Max runtime']
@@ -1607,11 +1640,14 @@ td, th {
     print(json.dumps(result))
     return 0
 
+
 def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
     intelMklVersion = arguments['Intel MKL version'].lower()
     sizeLevel = arguments['Size level']
     globalCheckIntelProductVersion('MKL', intelMklVersion)
-    intelMklLocation = globalGetDefaultInstallationLocationLinux('MKL', intelMklVersion)
+    mklInstallationLocationWindows = globalGetDefaultInstallationLocationWindows('MKL', intelMklVersion)
+    mklInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', intelMklVersion)
+
     if not 1 <= sizeLevel <= 15:
         raise Exception('Parameter "Size level" should be in range 1 - 15')
 
@@ -1635,8 +1671,8 @@ def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
                                               commandInstallNumactlOnOthers)
 
     commandModify = "sed -i 's/.*# number of tests/{} # number of tests/' lininput_xeon64".format(sizeLevel)
-    commandRunLinpack = 'cd {}/benchmarks/linpack && {} && ./runme_xeon64'.format(intelMklLocation, commandModify)
-    commandCheckCpu = "lscpu | egrep '^CPU\(s\)|Model name'"
+    commandRunLinpack = 'cd {}/benchmarks/linpack && {} && ./runme_xeon64'.format(mklInstallationLocationLinux, commandModify)
+    commandCheckCpu = "lscpu | egrep '^CPU\(s\)|^CPU MHz'"
 
     # Bug: the output of task is empty when it runs Linpack with large problem size, thus start another task to collect the output
     tempOutputDir = '/tmp/hpc_diag_linpack_standalone'
@@ -1661,57 +1697,62 @@ def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
         tasks.append(task)
         id += 2
 
+    commandModify = "(gc lininput_xeon64) -replace '.*# number of tests', '{} # number of tests' | out-file -encoding ascii lininput_xeon64".format(sizeLevel)
+    commandCheckCpu = 'wmic cpu get NumberOfCores,MaxClockSpeed /format:list'
+    commandWindows = r'cd {}\benchmarks\linpack && del win_xeon64.txt 2>nul && powershell "{}" && runme_xeon64 >nul && {} && type win_xeon64.txt'.format(mklInstallationLocationWindows, commandModify, commandCheckCpu)
     for node in windowsNodes:
         task = {}
         task['Id'] = id
         id += 1
         task['Node'] = node
         task['CustomizedData'] = '[Windows] {}'.format(vmSizeByNode[node])
-        task['CommandLine'] = 'echo This test is not supported yet on Windows node'
+        task['CommandLine'] = commandWindows
+        task['MaximumRuntimeSeconds'] = 36000
         tasks.append(task)
 
     print(json.dumps(tasks))
 
 def benchmarkLinpackReduce(arguments, tasks, taskResults):
     intelMklVersion = arguments['Intel MKL version'].lower()
-    intelMklLocation = globalGetDefaultInstallationLocationLinux('MKL', intelMklVersion)
+    intelMklLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', intelMklVersion)
+    intelMklLocationWindows = globalGetDefaultInstallationLocationWindows('MKL', intelMklVersion)
         
-    windowsNodes = set()
-    linuxNodes = set()
     taskDetail = {}
     try:
         for task in tasks:
             taskId = task['Id']
             node = task['Node']
-            tasklabel = task['CustomizedData']
-            if tasklabel.startswith('[Windows]'):
-                windowsNodes.add(node)
-            if tasklabel.startswith('[Linux]'):
-                linuxNodes.add(node)
-            if node in linuxNodes and taskId % 2 == 0 or node in windowsNodes:
-                size = tasklabel.split()[-1]
+            taskLabels = task['CustomizedData'].split()
+            osType = taskLabels[0][1:-1]
+            vmSize = taskLabels[1]
+            if osType == 'Linux' and taskId % 2 == 0 or osType == 'Windows':
                 taskDetail[taskId] = {
                     'Node': node,
-                    'Size': size,
+                    'OS': osType,
+                    'Size': vmSize,
                     'Output': None
                     }
     except Exception as e:
         printErrorAsJson('Failed to parse tasks. ' + str(e))
         return -1
 
-    nodesWithoutIntelMklInstalled = []
+    nodesWithoutIntelMklInstalledLinux = []
+    nodesWithoutIntelMklInstalledWindows = []
     nodesFailedToInstallNumactl = []
     try:
         for taskResult in taskResults:
             taskId = taskResult['TaskId']
             nodeName = taskResult['NodeName']
             output = taskResult['Message']
-            if nodeName in linuxNodes and taskId % 2 == 0:
-                taskDetail[taskId]['Output'] = output
+            detail = taskDetail.get(taskId)
+            if detail:
+                detail['Output'] = output
                 if 'Failed to install numactl' in output:
                     nodesFailedToInstallNumactl.append(nodeName)
                 if 'benchmarks/linpack: No such file or directory' in output:
-                    nodesWithoutIntelMklInstalled.append(nodeName)
+                    nodesWithoutIntelMklInstalledLinux.append(nodeName)
+                elif 'The system cannot find the path specified' in output:
+                    nodesWithoutIntelMklInstalledWindows.append(nodeName)
     except Exception as e:
         printErrorAsJson('Failed to parse task results. ' + str(e))
         return -1
@@ -1722,7 +1763,7 @@ def benchmarkLinpackReduce(arguments, tasks, taskResults):
     htmlRows = []
     for task in results:
         perf, N, coreCount, coreFreq = benchmarkLinpackParseTaskOutput(task['Output'])
-        theoreticalPerfExpr = "{} * {} * {}".format(coreCount, defaultFlopsPerCycle, coreFreq) if coreCount and coreFreq else None
+        theoreticalPerfExpr = "{} * {} * {:.1f}".format(coreCount, defaultFlopsPerCycle, coreFreq) if coreCount and coreFreq else None
         theoreticalPerf = eval(theoreticalPerfExpr) if theoreticalPerfExpr else None
         efficiency = perf / theoreticalPerf if perf and theoreticalPerf else None
         task['TheoreticalPerf'] = theoreticalPerf
@@ -1735,7 +1776,7 @@ def benchmarkLinpackReduce(arguments, tasks, taskResults):
         htmlRows.append(
             '\n'.join([
                 '  <tr>',
-                '\n'.join(['    <td>{}</td>'.format(item) for item in [task['Node'], task['Size'], theoreticalPerfInHtml, perfInHtml, N, efficiencyInHtml]]),
+                '\n'.join(['    <td>{}</td>'.format(item) for item in [task['Node'], task['OS'], task['Size'], theoreticalPerfInHtml, perfInHtml, N, efficiencyInHtml]]),
                 '  </tr>'
                 ]))
         del task['Output']
@@ -1744,10 +1785,10 @@ def benchmarkLinpackReduce(arguments, tasks, taskResults):
     description = 'This is the result of running {} on each node.'.format(intelLinpack)
     intelLinpackLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl-linux-developer-guide-intel-optimized-linpack-benchmark-for-linux">{}</a>'.format(intelLinpack)
     theoreticalPerfDescription = "The theoretical peak performance of each node is calculated by: [core count of node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]" if any([task['TheoreticalPerf'] for task in results]) else ''
-    intelMklNotFound = 'Intel MKL {} is not found in <b>{}</b> on node(s): {}'.format(intelMklVersion, intelMklLocation, ', '.join(nodesWithoutIntelMklInstalled)) if nodesWithoutIntelMklInstalled else ''
-    installIntelMkl = 'Diagnostics test <b>Prerequisite-Intel MKL Installation</b> can be used to install Intel MKL.' if nodesWithoutIntelMklInstalled else ''
+    intelMklNotFoundLinux = 'Intel MKL {} is not found in <b>{}</b> on node(s): {}'.format(intelMklVersion, intelMklLocationLinux, ', '.join(nodesWithoutIntelMklInstalledLinux)) if nodesWithoutIntelMklInstalledLinux else ''
+    intelMklNotFoundWindows = 'Intel MKL {} is not found in <b>{}</b> on node(s): {}'.format(intelMklVersion, intelMklLocationWindows, ', '.join(nodesWithoutIntelMklInstalledWindows)) if nodesWithoutIntelMklInstalledWindows else ''
+    installIntelMkl = '<b>Prerequisite-Intel MKL Installation</b> can be used to install Intel MKL.' if nodesWithoutIntelMklInstalledLinux or nodesWithoutIntelMklInstalledWindows else ''
     installNumactl = 'Please install <b>numactl</b> manually, if necessary, on node(s): {}'.format(', '.join(nodesFailedToInstallNumactl)) if nodesFailedToInstallNumactl else ''
-    windowsNotSupport = 'The test is not supported on Windows node currently.' if windowsNodes else ''
     html = '''
 <!DOCTYPE html>
 <html>
@@ -1770,6 +1811,7 @@ td, th {
 <table>
   <tr>
     <th>Node</th>
+    <th>OS</th>
     <th>VM size</th>
     <th>Theoretical peak performance(GFlop/s)</th>
     <th>Best performance(GFlop/s)</th>
@@ -1780,10 +1822,10 @@ td, th {
 </table>
 <p>''' + description.replace(intelLinpack, intelLinpackLink) + '''</p>
 <p>''' + theoreticalPerfDescription + '''</p>
-<p>''' + intelMklNotFound + '''</p>
+<p>''' + intelMklNotFoundLinux + '''</p>
+<p>''' + intelMklNotFoundWindows + '''</p>
 <p>''' + installIntelMkl + '''</p>
 <p>''' + installNumactl + '''</p>
-<p>''' + windowsNotSupport + '''</p>
 </body>
 </html>
 '''
@@ -1811,16 +1853,403 @@ def benchmarkLinpackParseTaskOutput(raw):
                 if perf > bestPerf:
                     bestPerf = perf
                     n = int(numbers[0])
-        cpuInfo = raw.split('\n', 2)[:2]
-        if len(cpuInfo) == 2:
-            firstLine = cpuInfo[0]
-            secondLine = cpuInfo[1]
-            if firstLine.startswith('CPU') and secondLine.startswith('Model name'):
-                coreCount = int(firstLine.split()[-1])
-                coreFreq = float([word for word in secondLine.split() if word.endswith('GHz')][0][:-3])
+        lines = [line for line in raw.splitlines() if line]
+        firstLine = lines[0]
+        secondLine = lines[1]
+        if firstLine.startswith('CPU') and secondLine.startswith('CPU MHz'):
+            coreCount = int(firstLine.split()[-1])
+            coreFreq = float(secondLine.split()[-1]) / 1000
+        elif firstLine.startswith('MaxClockSpeed') and secondLine.startswith('NumberOfCores'):
+            coreFreq = float(firstLine.split('=')[1]) / 1000
+            coreCount = int(secondLine.split('=')[1])
     except:
         pass
     return (bestPerf, n, coreCount, coreFreq)
+
+def benchmarkSysbenchCpuMap(windowsNodes, linuxNodes, vmSizeByNode, distroByNode):
+    if windowsNodes and not linuxNodes:
+        raise Exception('The test is not supported on Windows node')
+
+    commandInstallSysbenchOnUbuntu = 'apt install -y sysbench'
+    commandInstallSysbenchOnOpensuse = 'zypper install -y sysbench' # support in openSUSE but not in Suse
+    commandInstallSysbenchOnCentos = 'yum install -y sysbench'
+    commandInstallSysbenchOnRedhat = 'curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | bash && yum install -y sysbench'
+    commandInstallQuiet = '({}) >/dev/null 2>&1'
+    commandInstallSysbenchOnUbuntu = commandInstallQuiet.format(commandInstallSysbenchOnUbuntu)
+    commandInstallSysbenchOnOpensuse = commandInstallQuiet.format(commandInstallSysbenchOnOpensuse)
+    commandInstallSysbenchOnCentos = commandInstallQuiet.format(commandInstallSysbenchOnCentos)
+    commandInstallSysbenchOnRedhat = commandInstallQuiet.format(commandInstallSysbenchOnRedhat)
+    commandDetectDistroAndInstall = ("cat /etc/*release > distroInfo && "
+                                 "if cat distroInfo | grep -Fiq 'Ubuntu'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Opensuse'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'CentOS'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Redhat'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Red Hat'; then {};"
+                                 "fi").format(commandInstallSysbenchOnUbuntu, 
+                                              commandInstallSysbenchOnOpensuse,
+                                              commandInstallSysbenchOnCentos,
+                                              commandInstallSysbenchOnRedhat,
+                                              commandInstallSysbenchOnRedhat)    
+    commandInstallByDistro = {
+        'Ubuntu': commandInstallSysbenchOnUbuntu,
+        'OpenSUSE': commandInstallSysbenchOnOpensuse,
+        'CentOS': commandInstallSysbenchOnCentos,
+        'Redhat': commandInstallSysbenchOnRedhat,
+        'Unknown': commandDetectDistroAndInstall
+    }
+
+    commandRunLscpu = 'lscpu'
+    commandRunSysbench = 'sysbench --test=cpu --num-threads=`grep -c ^processor /proc/cpuinfo` run >output 2>&1 && cat output'
+
+    tasks = []
+    id = 1
+    for node in linuxNodes:
+        task = {}
+        task['Id'] = id
+        id += 1
+        task['Node'] = node
+        task['CustomizedData'] = '[{}] {}'.format(distroByNode[node], vmSizeByNode[node])
+        task['CommandLine'] = '{} && {} && {}'.format(commandRunLscpu, commandInstallByDistro[distroByNode[node]], commandRunSysbench)
+        tasks.append(task)
+
+    for node in windowsNodes:
+        task = {}
+        task['Id'] = id
+        id += 1
+        task['Node'] = node
+        task['CustomizedData'] = '[Windows] {}'.format(vmSizeByNode[node])
+        task['CommandLine'] = 'echo This test is not supported on Windows node'
+        tasks.append(task)
+
+    print(json.dumps(tasks))
+
+def benchmarkSysbenchCpuReduce(tasks, taskResults):
+    taskDetail = {}
+    try:
+        for task in tasks:
+            taskId = task['Id']
+            node = task['Node']
+            taskLabels = task['CustomizedData'].split()
+            osDistro = taskLabels[0][1:-1]
+            vmSize = taskLabels[1]
+            if osDistro != 'Windows':
+                taskDetail[taskId] = {
+                    'Node': node,
+                    'Distro': osDistro,
+                    'Size': vmSize
+                    }
+    except Exception as e:
+        printErrorAsJson('Failed to parse tasks. ' + str(e))
+        return -1
+
+    try:
+        for taskResult in taskResults:
+            taskId = taskResult['TaskId']
+            output = taskResult['Message']
+            detail = taskDetail.get(taskId)
+            if detail:
+                detail['Output'] = output
+    except Exception as e:
+        printErrorAsJson('Failed to parse task results. ' + str(e))
+        return -1
+
+    results = sorted(list(taskDetail.values()), key = lambda k:k['Node'])
+    htmlRows = []
+    for task in results:
+        totalNumber, totalTime, coreNumber, threadNumber, model = benchmarkSysbenchCpuParseTaskOutput(task['Output'])
+        task['Result'] = '{:.2f}'.format(totalNumber/totalTime) if totalNumber and totalTime else None
+        task['CoreNumber'] = coreNumber
+        task['ThreadNumber'] = threadNumber
+        task['Model'] = model
+        htmlRows.append(
+            '\n'.join([
+                '  <tr>',
+                '\n'.join(['    <td>{}</td>'.format(task[column]) for column in ['Node', 'Distro', 'Size', 'Model', 'CoreNumber', 'ThreadNumber', 'Result']]),
+                '  </tr>'
+                ]))
+        del task['Output']
+
+    description = "This is the result of running sysbench on each node, the value in which is the number of times per second that calculating the prime number less than 10000."
+    notSupportWindows = 'The test is not supported on Windows node' if len(results) < len(tasks) else ''
+    html = '''
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+</style>
+</head>
+<body>
+<h2>Benchmark CPU</h2>
+<table>
+  <tr>
+    <th>Node</th>
+    <th>Distro</th>
+    <th>Size</th>
+    <th>Model</th>
+    <th>Cores</th>
+    <th>Threads</th>
+    <th>Result</th>
+  </tr>
+''' + '\n'.join(htmlRows) + '''
+</table>
+<p>''' + description + '''</p>
+<p>''' + notSupportWindows + '''</p>
+</body>
+</html>
+'''
+
+    result = {
+        'Description': description,
+        'Results': results,
+        'Html': html
+        }
+
+    print(json.dumps(result, indent = 4))
+    return 0
+
+def benchmarkSysbenchCpuParseTaskOutput(raw):
+    totalTime = totalNumber = threadNumber = coreNumber = model = None
+    try:
+        lines = raw.splitlines()
+        for line in lines:
+            if line.startswith('CPU(s):'):
+                coreNumber = line.split()[-1]
+                continue
+            if line.startswith('Model name:'):
+                model = line[len('Model name:'):].strip()
+                continue
+            if line.startswith('Number of threads:'):
+                threadNumber = int(line.split()[-1])
+                continue
+            if line.strip().startswith('total time:'):
+                totalTime = float(line.split()[-1][:-1])
+                continue
+            if line.strip().startswith('total number of events:'):
+                totalNumber = int(line.split()[-1])
+                continue
+    except:
+        pass
+    return totalNumber, totalTime, coreNumber, threadNumber, model
+
+def benchmarkCifsMap(arguments, windowsNodes, linuxNodes, vmSizeByNode, distroByNode):
+    if windowsNodes and not linuxNodes:
+        raise Exception('The test is not supported on Windows node')
+
+    connectWay = arguments['Connect by'].lower()
+    cifsServer = arguments['CIFS server']
+    mode = arguments['Mode'].lower()
+
+    mountPoint = None
+    connectionString = None
+    if connectWay == 'Mount point'.lower():
+        mountPoint = cifsServer
+    else:
+        connectionString = cifsServer
+
+    if not mountPoint and not connectionString:
+        raise Exception('Neither mount point nor connection string of CIFS server is specified.')
+
+    commandInstallCifsUtilsOnUbuntu = 'apt install -y cifs-utils'
+    commandInstallCifsUtilsOnSuse = 'zypper install -y cifs-utils'
+    commandInstallCifsUtilsOnOthers = 'yum install -y cifs-utils'
+    commandInstallQuiet = '({}) >/dev/null 2>&1'
+    commandInstallCifsUtilsOnUbuntu = commandInstallQuiet.format(commandInstallCifsUtilsOnUbuntu)
+    commandInstallCifsUtilsOnSuse = commandInstallQuiet.format(commandInstallCifsUtilsOnSuse)
+    commandInstallCifsUtilsOnOthers = commandInstallQuiet.format(commandInstallCifsUtilsOnOthers)
+    commandDetectDistroAndInstall = ("cat /etc/*release >distroInfo && "
+                                 "if cat distroInfo | grep -Fiq 'Ubuntu'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Suse'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'CentOS'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Redhat'; then {};"
+                                 "elif cat distroInfo | grep -Fiq 'Red Hat'; then {};"
+                                 "fi").format(commandInstallCifsUtilsOnUbuntu, 
+                                              commandInstallCifsUtilsOnSuse,
+                                              commandInstallCifsUtilsOnOthers,
+                                              commandInstallCifsUtilsOnOthers,
+                                              commandInstallCifsUtilsOnOthers)
+
+    commandInstallByDistro = {
+        'Ubuntu': commandInstallCifsUtilsOnUbuntu,
+        'OpenSUSE': commandInstallCifsUtilsOnSuse,
+        'CentOS': commandInstallCifsUtilsOnOthers,
+        'Redhat': commandInstallCifsUtilsOnOthers,
+        'Unknown': commandDetectDistroAndInstall
+    }
+
+    tempMountPoint = '/mnt/hpc_diag_benchmark_cifs_share'
+    tempDir = 'hpc_diag_benchmark_cifs_tmp'
+    tempFileName = 'hpc_diag_benchmark_cifs_`hostname`'
+    commandMountShare = 'mkdir -p {} && {}'.format(tempMountPoint, connectionString.replace('[mount point]', tempMountPoint))
+    commandUnmountShare = '(umount -l {} >/dev/null 2>&1 && rm -rf {} || :)'.format(tempMountPoint, tempMountPoint)
+    commandCopyLocal = 'dd if=/dev/zero of=/tmp/{} bs=1M count=100'.format(tempFileName)
+    mountDir = mountPoint if mountPoint else tempMountPoint
+    commandCopyToCifs = 'mkdir -p {0}/{1} && dd if=/tmp/{2} of={0}/{1}/{2}'.format(mountDir, tempDir, tempFileName)
+    commandCopyFromCifs = 'dd if={0}/{1}/{2} of=/tmp/{2}'.format(mountDir, tempDir, tempFileName)
+    commandCleanup = 'rm -f /tmp/{} && rm -f {}/{}/{}'.format(tempFileName, mountDir, tempDir, tempFileName)
+    
+    commandGetLocation = "curl --header 'metadata: true' --connect-timeout 5 http://169.254.169.254/metadata/instance?api-version=2017-08-01 2>/dev/null | tr ',' '\n' | grep location"
+    commandRun = '({} && {} && {} || :) && {}'.format(commandCopyLocal, commandCopyToCifs, commandCopyFromCifs, commandCleanup)
+    if not mountPoint:
+        commandRun = '({} && {} && {} || :) && {}'.format(commandUnmountShare, commandMountShare, commandRun, commandUnmountShare)
+
+    tasks = []
+    id = 1
+    for node in linuxNodes:
+        task = {}
+        task['Id'] = id
+        if mode != 'Parallel'.lower() and id != 1:
+            task['ParentIds'] = [id-1]
+        id += 1
+        task['Node'] = node
+        task['CustomizedData'] = '[{}] {}'.format(distroByNode[node], vmSizeByNode[node])
+        task['CommandLine'] = '{} ; {} && {}'.format(commandGetLocation, commandInstallByDistro[distroByNode[node]], commandRun)
+        tasks.append(task)
+
+    for node in windowsNodes:
+        task = {}
+        task['Id'] = id
+        id += 1
+        task['Node'] = node
+        task['CustomizedData'] = '[Windows] {}'.format(vmSizeByNode[node])
+        task['CommandLine'] = 'echo This test is not supported on Windows node'
+        tasks.append(task)
+
+    print(json.dumps(tasks))
+
+def benchmarkCifsReduce(arguments, tasks, taskResults):
+    connectWay = arguments['Connect by'].lower()
+    cifsServer = arguments['CIFS server']
+
+    if connectWay == 'Connection string'.lower() and cifsServer:
+        connectionString = cifsServer
+        precursor = 'mount -t cifs '
+        successor = ' [mount point]'
+        begin = connectionString.find(precursor) + len(precursor)
+        end = connectionString.find(successor)
+        if 0 < begin < end:
+            cifsServer = connectionString[begin:end]
+
+    taskDetail = {}
+    try:
+        for task in tasks:
+            taskId = task['Id']
+            node = task['Node']
+            taskLabels = task['CustomizedData'].split()
+            osDistro = taskLabels[0][1:-1]
+            vmSize = taskLabels[1]
+            if osDistro != 'Windows':
+                taskDetail[taskId] = {
+                    'Node': node,
+                    'Distro': osDistro,
+                    'Size': vmSize
+                    }
+    except Exception as e:
+        printErrorAsJson('Failed to parse tasks. ' + str(e))
+        return -1
+
+    try:
+        for taskResult in taskResults:
+            taskId = taskResult['TaskId']
+            output = taskResult['Message']
+            detail = taskDetail.get(taskId)
+            if detail:
+                detail['Output'] = output
+    except Exception as e:
+        printErrorAsJson('Failed to parse task results. ' + str(e))
+        return -1
+
+    results = sorted(list(taskDetail.values()), key = lambda k:k['Node'])
+    htmlRows = []
+    for task in results:
+        task['Location'], task['Local'], task['ToCifs'], task['FromCifs'] = benchmarkCifsParseTaskOutput(task['Output'])
+        htmlRows.append(
+            '\n'.join([
+                '  <tr>',
+                '\n'.join(['    <td>{}</td>'.format(task[column]) for column in ['Node', 'Distro', 'Size', 'Location', 'Local', 'ToCifs', 'FromCifs']]),
+                '  </tr>'
+                ]))
+        del task['Output']
+
+    description = 'The benchmark shows the speed of copying file between local disk and CIFS server: {}.'.format(cifsServer)
+    notSupportWindows = 'The test is not supported on Windows node' if len(results) < len(tasks) else ''
+    html = '''
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+</style>
+</head>
+<body>
+<h2>Benchmark CIFS</h2>
+<table>
+  <tr>
+    <th>Node</th>
+    <th>Distro</th>
+    <th>Size</th>
+    <th>Location</th>
+    <th>Local Disk</th>
+    <th>To CIFS</th>
+    <th>From CIFS</th>
+  </tr>
+''' + '\n'.join(htmlRows) + '''
+</table>
+<p>''' + description + '''</p>
+<p>If result is None, please check it manually following <a target="_blank" rel="noopener noreferrer" href="https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux#install-cifs-utils">Use Azure Files with Linux</a>.</p>
+<p>''' + notSupportWindows + '''</p>
+</body>
+</html>
+'''
+  
+    result = {
+        'Description': description,
+        'Results': results,
+        'Html': html
+        }
+
+    print(json.dumps(result, indent = 4))
+    return 0
+
+def benchmarkCifsParseTaskOutput(raw):
+    location = local = toCifs = fromCifs = None
+    try:
+        lines = raw.split('\n')
+        for line in lines:
+            if 'location' in line:
+                location = line.split(':')[-1][1:-1]
+            if 'copied' in line:
+                speed = line.split(',')[-1]
+                if not local:
+                    local = speed
+                    continue
+                if not toCifs:
+                    toCifs = speed
+                    continue
+                if not fromCifs:
+                    fromCifs = speed
+                    continue
+    except:
+        pass
+    return (location, local, toCifs, fromCifs)
 
 def printErrorAsJson(errormessage):
     print(json.dumps({"Error":errormessage}))
