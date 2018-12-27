@@ -9,12 +9,15 @@
 
 .msg-item {
   white-space: pre-wrap;
+  word-wrap: break-word;
   font-family: "Courier New", Courier, monospace;
   background: rgba(0, 0, 0, 0.9);
   color: #FFF;
   padding: 10px;
   font-size: .8em;
   line-height: 1.5em;
+  height: 50vh;
+  overflow-y: auto;
 }
 
 .text-center {
@@ -62,6 +65,7 @@ mat-divider {
 
 .title {
   @include display-flex(center);
+
   .diag-title-icon {
     padding-right: .3em;
   }

@@ -10,7 +10,7 @@ import { ApiService } from '../../../../services/api.service';
 class MatDialogModuleMock { }
 
 class ApiServiceStub {
-  static result = { nodeName: "testNode", message: { Latency: 513.43, Throughput: 337.58, Detail: "test \n test \n", Time: 3.7 }, primaryTask: true };
+  static result = { nodeName: "testNode", message: { Detail: "test \n test \n" }, primaryTask: true };
 
   diag = {
     getDiagTaskResult: (jobId: any, taskId: any) => of(ApiServiceStub.result)
@@ -42,7 +42,7 @@ fdescribe('TaskDetailComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
-    let text = fixture.nativeElement.querySelector(".msg-item").textContent;
+    let text = fixture.nativeElement.querySelector(".msg-item").innerText;
     expect(text).toEqual("test \n test \n");
   });
 });

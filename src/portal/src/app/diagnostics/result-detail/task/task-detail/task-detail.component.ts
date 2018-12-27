@@ -1,6 +1,7 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { ApiService } from '../../../../services/api.service';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-task-detail',
@@ -8,20 +9,15 @@ import { ApiService } from '../../../../services/api.service';
   styleUrls: ['./task-detail.component.scss']
 })
 export class TaskDetailComponent implements OnInit {
-
-  private msg = [];
   public message: any;
-  private result = {};
   public hasResult = true;
-  private taskState = "";
+  public taskState = "";
 
   constructor(
     private api: ApiService,
     public dialogRef: MatDialogRef<TaskDetailComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
-  ) {
-    // this.msg = this.normalizeMessage(data.msg.Detail);
-  }
+  ) { }
 
   ngOnInit() {
     this.taskState = this.data.taskState;
@@ -30,7 +26,6 @@ export class TaskDetailComponent implements OnInit {
     }
     else {
       this.api.diag.getDiagTaskResult(this.data.jobId, this.data.taskId).subscribe(result => {
-        this.result = result;
         this.message = result.message;
       });
     }
