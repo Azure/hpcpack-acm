@@ -1,0 +1,42 @@
+﻿{
+    "DispatchScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"diags-map-reduce-1.0.x.py"
+    },
+    "AggregationScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"diags-map-reduce-1.0.x.py"
+    },
+    "description":"Run Intel Optimized LINPACK Benchmark on each selected node, on which Intel MKL should be installed as prerequisite.",
+    "parameters":[
+        {
+            "name":"Size level",
+            "description":"Specify the number of tests to run with various problem sizes(1000,2000,5000,10000,15000,18000,20000,22000,25000,26000,27000,30000,35000,40000,45000).",
+            "type":"number",
+            "min":1,
+            "max":15,
+            "defaultValue":10
+        },
+        {
+            "name":"Intel MKL version",
+            "type":"string",
+            "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4"],
+            "defaultValue":"2018 Update 4",
+            "description":{
+                "2018":"The Intel MKL 2018, installed in /opt/intel/compilers_and_libraries_2018.0.128/linux/mkl or C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2018.0.124\\windows\\mkl, will be used to run Intel Optimized LINPACK Benchmark.",
+                "2018 Update 1":"The Intel MKL 2018 Update 1, installed in /opt/intel/compilers_and_libraries_2018.1.163/linux/mkl or C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2018.1.156\\windows\\mkl, will be used to run Intel Optimized LINPACK Benchmark.",
+                "2018 Update 2":"The Intel MKL 2018 Update 2, installed in /opt/intel/compilers_and_libraries_2018.2.199/linux/mkl or C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2018.2.185\\windows\\mkl, will be used to run Intel Optimized LINPACK Benchmark.",
+                "2018 Update 3":"The Intel MKL 2018 Update 3, installed in /opt/intel/compilers_and_libraries_2018.3.222/linux/mkl or C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2018.3.210\\windows\\mkl, will be used to run Intel Optimized LINPACK Benchmark.",
+                "2018 Update 4":"The Intel MKL 2018 Update 4, installed in /opt/intel/compilers_and_libraries_2018.5.274/linux/mkl or C:\\Program Files (x86)\\IntelSWTools\\compilers_and_libraries_2018.5.274\\windows\\mkl, will be used to run Intel Optimized LINPACK Benchmark."
+            }
+        },
+        {
+            "name":"Max runtime",
+            "description":"Specify the max time in seconds the test could run.",
+            "type":"number",
+            "min":1,
+            "max":7200,
+            "defaultValue":3600
+        }
+    ]
+}
