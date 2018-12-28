@@ -15,8 +15,8 @@
 
     public class NodeRegisterWorker : ServerObject, IWorker
     {
-        private NodeRegisterWorkerOptions options;
-        private NodeRegister register;
+        private readonly NodeRegisterWorkerOptions options;
+        private readonly NodeRegister register;
 
         public NodeRegisterWorker(IOptions<NodeRegisterWorkerOptions> options, NodeRegister register)
         {
@@ -32,10 +32,41 @@
 
         private ComputeClusterRegistrationInformation GetRegistrationInfo()
         {
-            return new ComputeClusterRegistrationInformation(this.ServerOptions.HostName, Environment.ProcessorCount, 1, 0)
+            return new ComputeClusterRegistrationInformation(this.ServerOptions.HostName, Environment.ProcessorCount, this.GetPhysicalProcessorCount(), this.GetMemoryMB())
             {
                 DistroInfo = Environment.OSVersion.VersionString,
             };
+        }
+
+        private ulong GetMemoryMB()
+        {
+            using (System.Management.ManagementObjectSearcher searcher = new System.Management.ManagementObjectSearcher("select * from Win32_OperatingSystem"))
+            {
+                using(var results = searcher.Get())
+                {
+                    foreach (var os in results)
+                    {
+                        using (os)
+                        {
+                            return (ulong)os["TotalVisibleMemorySize"] / 1024;
+                        }
+
+                    }
+                }
+            }
+
+            return 0;
+        }
+
+        private int GetPhysicalProcessorCount()
+        {
+            using (System.Management.ManagementObjectSearcher searcher = new System.Management.ManagementObjectSearcher("select * from Win32_Processor"))
+            {
+                using(var results = searcher.Get())
+                {
+                    return results.Count;
+                }
+            }
         }
 
         public async T.Task DoWorkAsync(CancellationToken token)
