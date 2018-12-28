@@ -73,19 +73,13 @@
             return true;
         }
 
-        private async T.Task<bool> UploadDiagTestScriptAsync(InternalDiagnosticsTest.BlobName script, GitHubTree diagTestTree, string path, CancellationToken token)
+        private async T.Task<bool> UploadDiagTestScriptAsync(string containerName, GitHubTree.GitHubTreeNode pythonNode, CancellationToken token)
         {
-            if (script?.Name == null || script?.ContainerName == null) return true;
+            if (pythonNode.path == null || containerName == null) return true;
 
-            if (!diagTestTree.tree.Exists(n => n.path == script.Name))
-            {
-                this.Logger.Warning("    Cannot find script file {0} under diag test folder {1}", script.Name, path);
-                return false;
-            }
-
-            this.Logger.Information("    Uploading script {0}", script.Name);
-            var scriptContent = await this.GetAsync<string>($"{this.syncOptions.GitHubContentBase}/src/Diagnostics/{path}/{script.Name}", token);
-            await this.Utilities.UploadToBlockBlobAsync(script.ContainerName, script.Name, scriptContent, token);
+            this.Logger.Information("    Uploading script {0}", pythonNode.path);
+            var scriptContent = await this.GetAsync<string>($"{this.syncOptions.GitHubContentBase}/src/Diagnostics/{pythonNode.path}", token);
+            await this.Utilities.UploadToBlockBlobAsync(containerName, pythonNode.path, scriptContent, token);
             return true;
         }
 
@@ -93,43 +87,29 @@
         {
             this.jobsTable = this.Utilities.GetJobsTable();
             var diagTree = await this.GetAsync<GitHubTree>(this.diagUri, token);
-            foreach (var diagTestNode in diagTree.tree)
+
+            string scriptContainer = "diagtestscripts";
+            foreach (var jsonFileNode in diagTree.tree.Where(t => t.path.EndsWith(".json")))
             {
-                this.Logger.Information("Syncing diag test {0}", diagTestNode.path);
-                var diagTestTree = await this.GetAsync<GitHubTree>(diagTestNode.url, token);
-
-                var jsonFileNode = diagTestTree.tree.FirstOrDefault(n => n.path.EndsWith(".json"));
-                if (jsonFileNode == null)
-                {
-                    this.Logger.Warning("Cannot find json file under diag test folder {0}", diagTestNode.path);
-                    continue;
-                }
-
+                this.Logger.Information("Syncing diag test {0}", jsonFileNode.path);
                 var tokens = jsonFileNode.path.Split('-', '.');
                 if (tokens.Length < 3)
                 {
-                    this.Logger.Warning("Cannot infer the category and test name from the json file name {0}, skip the test {1}", jsonFileNode.path, diagTestNode.path);
+                    this.Logger.Warning("Cannot infer the category and test name from the json file name {0}, skip the test", jsonFileNode.path);
                     continue;
                 }
 
-                var jsonContent = await this.GetAsync<InternalDiagnosticsTest>($"{this.syncOptions.GitHubContentBase}/src/Diagnostics/{diagTestNode.path}/{jsonFileNode.path}", token);
-
-                var scriptsResults = await T.Task.WhenAll(
-                    this.UploadDiagTestScriptAsync(jsonContent.DispatchScript, diagTestTree, diagTestNode.path, token),
-                    this.UploadDiagTestScriptAsync(jsonContent.AggregationScript, diagTestTree, diagTestNode.path, token),
-                    this.UploadDiagTestScriptAsync(jsonContent.TaskResultFilterScript, diagTestTree, diagTestNode.path, token));
-
-                var uploaded = scriptsResults.All(r => r);
-
-                if (!uploaded)
-                {
-                    this.Logger.Warning("At least one of the script uploading error, skip the test {0}", diagTestNode.path);
-                    continue;
-                }
-
+                var jsonContent = await this.GetAsync<InternalDiagnosticsTest>($"{this.syncOptions.GitHubContentBase}/src/Diagnostics/{jsonFileNode.path}", token);
+                scriptContainer = jsonContent.DispatchScript.ContainerName;
                 var diagTestPartitionKey = this.Utilities.GetDiagPartitionKey(tokens[0]);
                 var diagTestRowKey = tokens[1];
                 await this.jobsTable.InsertOrReplaceAsync(diagTestPartitionKey, diagTestRowKey, jsonContent, token);
+            }
+
+            foreach (var pythonFileNode in diagTree.tree.Where(t => t.path.EndsWith(".py")))
+            {
+                this.Logger.Information("Syncing diag test script {0}", pythonFileNode.path);
+                await this.UploadDiagTestScriptAsync(scriptContainer, pythonFileNode, token);
             }
 
             return true;
