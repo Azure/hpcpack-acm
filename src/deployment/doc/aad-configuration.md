@@ -65,4 +65,4 @@ Back to the "Express" mode, and click on the button "Manage Application", a page
 
 ![](AAD2.png)
 
-From there, you have do more management work, or explore more options to the Azure AD app.
+From there, you can do more management work, or explore more options to the Azure AD app.
