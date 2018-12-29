@@ -22,7 +22,7 @@
             "type":"number",
             "min":180,
             "max":36000,
-            "defaultValue":1800
+            "defaultValue":600
         }
 	]
 }
