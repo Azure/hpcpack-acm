@@ -1,11 +1,11 @@
 ﻿{
     "DispatchScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.0.x.py"
+        "Name":"diags-map-reduce-1.1.x.py"
     },
     "AggregationScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.0.x.py"
+        "Name":"diags-map-reduce-1.1.x.py"
     },
     "description":"Get the speed of copying file between local disk and Azure Storage CIFS server.",
     "parameters":[
