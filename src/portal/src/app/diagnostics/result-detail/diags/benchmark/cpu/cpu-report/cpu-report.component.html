@@ -3,8 +3,8 @@
     <mat-tab-group>
       <mat-tab label="Result" *ngIf="!hasError">
         <cpu-overview-result [result]="aggregationResult" *ngIf="aggregationResult"></cpu-overview-result>
-        <div class="overview-progress">
-          <mat-progress-bar mode="indeterminate" *ngIf="!aggregationResult"></mat-progress-bar>
+        <div class="overview-progress" *ngIf="!aggregationResult">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
         </div>
       </mat-tab>
       <mat-tab label="Error" *ngIf="hasError">

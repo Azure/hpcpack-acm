@@ -99,7 +99,7 @@ mat-accordion {
 .failed-pair {
   @include display-flex($align-items: center);
   height: 2.5em;
-  padding: 0 1em;
+  padding: 0 5px;
 
   &:hover {
     background-color: #eeeeee;
