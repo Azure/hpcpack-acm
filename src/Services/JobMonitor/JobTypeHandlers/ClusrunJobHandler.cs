@@ -12,16 +12,16 @@
 
     class ClusrunJobHandler : ServerObject, IJobTypeHandler
     {
-        public T.Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token)
+        public T.Task<DispatchResult> DispatchAsync(Job job, CancellationToken token)
         {
-            return T.Task.FromResult(Enumerable.Range(1, job.TargetNodes.Length).Select(id =>
+            return T.Task.FromResult(new DispatchResult() { ModifiedJob = job, Tasks = Enumerable.Range(1, job.TargetNodes.Length).Select(id =>
             {
                 var t = InternalTask.CreateFrom(job);
                 t.CustomizedData = t.Node = job.TargetNodes[id - 1];
                 t.Id = id;
-                t.MaximumRuntimeSeconds = job.DefaultTaskMaximumRuntimeSeconds;
+                t.MaximumRuntimeSeconds = job.MaximumRuntimeSeconds;
                 return t;
-            }).ToList());
+            }).ToList() });
         }
 
         public T.Task<string> AggregateTasksAsync(Job job, List<Task> tasks, List<ComputeClusterTaskInformation> taskResults, CancellationToken token)

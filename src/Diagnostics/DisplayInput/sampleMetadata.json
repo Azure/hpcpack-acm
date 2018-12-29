@@ -1,0 +1,43 @@
+{
+  "compute": {
+    "location": "southeastasia",
+    "name": "D3v2",
+    "offer": "CentOS",
+    "osType": "Linux",
+    "placementGroupId": "",
+    "platformFaultDomain": "0",
+    "platformUpdateDomain": "0",
+    "publisher": "OpenLogic",
+    "resourceGroupName": "HplVms",
+    "sku": "7.5",
+    "subscriptionId": "52da2124-fb10-42ee-b835-1b8b5b2fa70f",
+    "tags": "",
+    "version": "7.5.20180815",
+    "vmId": "58ebf32c-f7c9-47ce-a7ea-9a95dedfd049",
+    "vmSize": "Standard_D3_v2"
+  },
+  "network": {
+    "interface": [
+      {
+        "ipv4": {
+          "ipAddress": [
+            {
+              "privateIpAddress": "10.1.0.4",
+              "publicIpAddress": "52.163.188.190"
+            }
+          ],
+          "subnet": [
+            {
+              "address": "10.1.0.0",
+              "prefix": "24"
+            }
+          ]
+        },
+        "ipv6": {
+          "ipAddress": []
+        },
+        "macAddress": "000D3AA257AF"
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+﻿{
+    "DispatchScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"diags-map-reduce-1.0.x.py"
+    },
+    "AggregationScript":{
+        "ContainerName":"diagtestscripts",
+        "Name":"diags-map-reduce-1.0.x.py"
+    },
+    "description":"Install and run sysbench on all selected nodes. Get the CPU benchmark of calculating prime number.",
+    "parameters":[
+        {
+            "name":"Max runtime",
+            "description":"Specify the max time in seconds the test could run.",
+            "type":"number",
+            "min":1,
+            "max":3600,
+            "defaultValue":180
+        }
+    ]
+}

@@ -13,45 +13,37 @@ export class AuthService {
   constructor(private api: ApiService) { }
 
   get isLoggedIn() {
-    return this.loggedIn || sessionStorage.getItem('access_token') !== null;
+    return this.loggedIn || sessionStorage.getItem('username') !== null;
   };
 
 
   private user = {
-    name: '',
-    pwd: ''
+    name: ''
   };
+
   get username() {
     return this.user.name || sessionStorage.getItem('username');
-  }
-  get pwd() {
-    return this.user.pwd;
-  }
-
-  set username(name) {
-    this.user.name = name;
-  }
-
-  set pwd(pwd) {
-    this.user.pwd = pwd;
   }
 
   //Store the URL so we can redirect after logging in
   redirectUrl: string;
 
-  login(): Observable<any> {
-    return this.api.user.login().do((val) => {
-      if (val.status == 204) {
-        sessionStorage.setItem('access_token', btoa(`${this.user.name}:${this.user.pwd}`));
-        sessionStorage.setItem('username', this.user.name);
-        this.loggedIn = true;
+  getUserInfo(): void {
+    this.api.user.getUserInfo().subscribe(
+      (res) => {
+        if (res.status == 200) {
+          this.user.name = res.body[0].user_id;
+          this.loggedIn = true;
+          sessionStorage.setItem('username', this.user.name);
+        }
+      },
+      (error) => {
+        if (error.status == 404) {
+          this.user.name = 'Anonymous';
+          this.loggedIn = true;
+          sessionStorage.setItem('username', this.user.name);
+        }
       }
-    });
-  }
-
-  logout(): void {
-    this.loggedIn = false;
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('username');
+    );
   }
 }

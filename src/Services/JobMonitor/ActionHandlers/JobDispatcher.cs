@@ -58,8 +58,8 @@
                 return;
             }
 
-            var tasks = await this.JobTypeHandler.GenerateTasksAsync(job, token);
-            if (tasks == null)
+            var dispatchResult = await this.JobTypeHandler.DispatchAsync(job, token);
+            if (dispatchResult == null)
             {
                 this.Logger.Error("The job {0} script doesn't generate any tasks", job.Id);
                 await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
@@ -78,6 +78,7 @@
                 return;
             }
 
+            var tasks = dispatchResult.Tasks;
             var allParentIds = new HashSet<int>(tasks.SelectMany(t => t.ParentIds ?? new List<int>()));
             var endingIds = tasks.Where(t => !allParentIds.Contains(t.Id)).Select(t => t.Id).ToList();
 
@@ -214,6 +215,7 @@
             {
                 state = j.State = (j.State == JobState.Queued ? JobState.Running : j.State);
                 j.TaskCount = taskInstances.Count - 2;
+                j.MaximumRuntimeSeconds = dispatchResult.ModifiedJob.MaximumRuntimeSeconds;
             }, token, this.Logger);
 
             if (state == JobState.Running)

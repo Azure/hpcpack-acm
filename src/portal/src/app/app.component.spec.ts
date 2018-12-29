@@ -16,6 +16,7 @@ const authServiceStub = {
   isLoggedIn: true,
   user: { name: 'Test User' },
   logout: () => { },
+  getUserInfo:() => {}
 }
 
 const apiServiceStub = {}

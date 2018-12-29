@@ -1,9 +1,5 @@
-import { Component, ViewChild } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Component } from '@angular/core';
 import { AuthService } from './services/auth.service';
-import { ApiService } from './services/api.service';
-
-const now = (new Date()).getTime();
 
 @Component({
   selector: 'app-root',
@@ -11,5 +7,8 @@ const now = (new Date()).getTime();
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
- 
+  constructor(public authService: AuthService) {
+    this.authService.getUserInfo();
+  }
+
 }
