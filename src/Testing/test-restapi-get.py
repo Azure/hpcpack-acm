@@ -1,3 +1,6 @@
+# python2, python3
+# utf-8
+
 import sys, requests, argparse, time, base64
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -7,7 +10,7 @@ REQUEST_HEADER = {'Authorization':'Basic cm9vdDpQYXNzMXdvcmQ='}
 def main(uri):
     while uri[-1] == '/':
         uri = uri[:-1]
-    print "Target Uri: {0}\n".format(uri)
+    print("Target Uri: {0}\n".format(uri))
     
     result = [0, 0, 0]
 
@@ -15,8 +18,8 @@ def main(uri):
         api = "{0}/v1/dashboard/nodes".format(uri)
         testAPI(api, result).json()
     except Exception as e:
-        print "Cluster is not available."
-        print str(e)
+        print("Cluster is not available.")
+        print(str(e))
         time.sleep(60)
         return [0, 1]
 
@@ -46,7 +49,7 @@ def main(uri):
         api = "{0}/v1/nodes/{1}/metadata".format(uri, nodes[0])
         testAPI(api, result)
     else:
-        print "No available nodes, skip 5 APIs."
+        print("No available nodes, skip 5 APIs.")
 
     api = "{0}/v1/metrics/categories".format(uri)
     metrics = testAPI(api, result).json()
@@ -55,7 +58,7 @@ def main(uri):
         api = "{0}/v1/metrics/{1}".format(uri, metrics[0])
         testAPI(api, result)
     else:
-        print "No available metrics, skip 1 API."
+        print("No available metrics, skip 1 API.")
 
     api = "{0}/v1/diagnostics/tests".format(uri)
     testAPI(api, result)
@@ -95,22 +98,22 @@ def testJobs(category, uri, result):
             api = "{0}/v1/output/{1}/{2}/page".format(uri, category, resultKey)
             testAPI(api, result)
         else:
-            print "No finished {0} jobs, skip {1} APIs.".format(category, 4)
+            print("No finished {0} jobs, skip {1} APIs.".format(category, 4))
     else:
-        print "No {0} jobs, skip {1} APIs.".format(category, 6)
+        print("No {0} jobs, skip {1} APIs.".format(category, 6))
     
 def testAPI(api, result):
     result[1] += 1
-    print "Test API: {0}".format(api)
+    print("Test API: {0}".format(api))
     try:
         response = requests.get(api, timeout = REQUEST_TIMEOUT, headers = REQUEST_HEADER, verify = False)
         if response:
             result[0] += 1
-        print "Result: {0}\n".format(response)
+        print("Result: {0}\n".format(response))
         return response
     except Exception as e:
         result[2] += 1
-        print 'Exception: {}\n'.format(e)
+        print('Exception: {}\n'.format(e))
     
 if __name__ == '__main__':
     def check_positive(value):
@@ -126,7 +129,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--password', default='Pass1word', help='Specify the password of cluster admin')
     args = parser.parse_args()
     
-    REQUEST_HEADER = {'Authorization':'Basic {}'.format(base64.b64encode('{}:{}'.format(args.username, args.password)))}
+    REQUEST_HEADER = {'Authorization':'Basic {}'.format(base64.b64encode('{}:{}'.format(args.username, args.password).encode()).decode())}
 
     if args.continuous:
         startTime = time.time()
@@ -134,8 +137,8 @@ if __name__ == '__main__':
         count = 0
         testResult = [0, 0, 0]
         while endTime > time.time():
-            print "[Time]: {0}".format(time.ctime())
-            print "[Test Number]: {0}".format(count)
+            print("[Time]: {0}".format(time.ctime()))
+            print("[Test Number]: {0}".format(count))
             try:
                 result = main(args.cluster_uri)
                 testResult[0] += result[0]
@@ -145,8 +148,8 @@ if __name__ == '__main__':
                 testResult[2] += 1
                 print(sys.exc_info()[0])
                 time.sleep(60)
-            print '-'*60
+            print('-'*60)
             count += 1
-        print '{}/{} Exceptions: {}'.format(*testResult)
+        print('{}/{} Exceptions: {}'.format(*testResult))
     else:
         main(args.cluster_uri)
