@@ -351,7 +351,7 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
     sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
     commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpi'.format(mpiLocation) # this way would only add one row in firewall rules
     # commandSetFirewall = r'netsh advfirewall firewall add rule name="hpc_diagnostics_mpi" dir=in action=allow program="{}\intel64\bin\mpiexec.exe"'.format(mpiLocation) # this way would add multiple rows in firewall rules when it is executed multiple times
-    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} IMB-MPI1 pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption)
+    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -n 2 IMB-MPI1 pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption)
     commandRunInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts [nodepair] -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption, sampleOption)
     commandMeasureTime = "$stopwatch = [system.diagnostics.stopwatch]::StartNew(); [command]; if($?) {'Run time: ' + $stopwatch.Elapsed.TotalSeconds}"
 
@@ -434,7 +434,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
 
     sshcommand = "rm -f ~/.ssh/known_hosts" # Clear ssh knownhosts
     checkcore = 'bash -c "if [ `grep -c ^processor /proc/cpuinfo` -eq 1 ]; then exit -10; fi"' # MPI Ping Pong can not get result but return 0 if core number is less than 2, so check core number and fail mpicommand if there is no result
-    mpicommand = "mpirun -env I_MPI_SHM_LMT=shm {} IMB-MPI1 pingpong && {}".format(rdmaOption, checkcore)
+    mpicommand = "mpirun -env I_MPI_SHM_LMT=shm {} -n 2 IMB-MPI1 pingpong && {}".format(rdmaOption, checkcore)
     parseResult = "tail -n29 | head -n25"
     columns = "$3,$4"
     parseValue = "sed -n '1p;$p'"
@@ -1013,7 +1013,7 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
 
     mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiInstallationLocationWindows)
     commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpi'.format(mpiInstallationLocationWindows)
-    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} IMB-MPI1 sendrecv'.format(HPC_DIAG_PASSWORD, rdmaOption)
+    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -n %NUMBER_OF_PROCESSORS% IMB-MPI1 sendrecv'.format(HPC_DIAG_PASSWORD, rdmaOption)
     commandRunInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts {} -ppn 1 IMB-MPI1 -npmin {} sendrecv'.format(HPC_DIAG_PASSWORD, rdmaOption, nodes, nodesCount)
     commandMeasureTime = "$stopwatch = [system.diagnostics.stopwatch]::StartNew(); [command]; if($?) {'Run time: ' + $stopwatch.Elapsed.TotalSeconds}"
     commandRunWindows = '{} && "{}" && powershell "{}"'.format(commandSetFirewall, mpiEnvFile, commandMeasureTime)
@@ -1021,7 +1021,7 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     commandRunInterWindows = commandRunWindows.replace('[command]', commandRunInter)
 
     commandSource = 'source {0}/intel64/bin/mpivars.sh'.format(mpiInstallationLocationLinux)
-    commandRunIntraLinux = '{} && time mpirun -env I_MPI_SHM_LMT=shm {} IMB-MPI1 sendrecv'.format(commandSource, rdmaOption)
+    commandRunIntraLinux = '{} && time mpirun -env I_MPI_SHM_LMT=shm {} -n `grep -c ^processor /proc/cpuinfo` IMB-MPI1 sendrecv'.format(commandSource, rdmaOption)
     commandRunInterLinux = '{} && time mpirun -hosts {} {} -ppn 1 IMB-MPI1 -npmin {} sendrecv 2>/dev/null'.format(commandSource, nodes, rdmaOption, nodesCount)
 
     taskId = 1
@@ -1175,7 +1175,7 @@ HPL.out      output file name (if any)
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
     commandCheckCpu = "lscpu | egrep '^CPU\(s\)|^Model name|^Thread\(s\) per core'"
     commandCheckHpl = '{}/benchmarks/mp_linpack/xhpl_intel64_dynamic >/dev/null && echo MKL test succeed.'.format(mklInstallationLocationLinux)
-    commandCheckMpi = 'mpirun -env I_MPI_SHM_LMT=shm IMB-MPI1 pingpong >/dev/null && echo MPI test succeed.'
+    commandCheckMpi = 'mpirun -env I_MPI_SHM_LMT=shm -n 1 IMB-MPI1 sendrecv >/dev/null && echo MPI test succeed.'
     taskTemplate = copy.deepcopy(taskTemplateLinux)
     taskTemplate['CommandLine'] = '{}; {}; {}; {} && {}'.format(commandCheckCpu, commandCreateHplDat, commandSourceMpiEnv, commandCheckHpl, commandCheckMpi)
     taskTemplate['MaximumRuntimeSeconds'] = 60
