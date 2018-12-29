@@ -414,15 +414,11 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
     commandGenerateOutput = " && cat data | head -n1 >output && cat data | tail -n1 >>output && cat timeResult >>output && cat raw >>output && cat output | python {}".format(filterScriptPath)
     commandGenerateError = ' || (errorcode=$? && echo "MPI Pingpong task failed!" >error && cat stdout stderr >>error && cat error && exit $errorcode)'
     commandLine = commandDownloadScript + "TIMEFORMAT='%3R' && (time timeout [timeout]s bash -c '[sshcommand] && source {0}/intel64/bin/mpivars.sh && [mpicommand]' >stdout 2>stderr) 2>timeResult".format(mpiLocation) + commandParseResult + commandGenerateOutput + commandGenerateError
+    
     taskTemplateOrigin = {
-        "Id":0,
-        "CommandLine":commandLine,
-        "Node":None,
         "UserName":HPC_DIAG_USERNAME,
         "Password":None,
         "PrivateKey":SSH_PRIVATE_KEY,
-        "CustomizedData":None,
-        "MaximumRuntimeSeconds":1000
     }
 
     headingStartId = startId
@@ -440,12 +436,8 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
     parseValue = "sed -n '1p;$p'"
     timeout = "600"
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[sshcommand]", sshcommand)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[mpicommand]", mpicommand)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[columns]", columns)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseResult]", parseResult)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseValue]", parseValue)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[timeout]", timeout)
+    taskTemplate["CommandLine"] = commandLine.replace("[sshcommand]", sshcommand).replace("[mpicommand]", mpicommand).replace("[columns]", columns).replace("[parseResult]", parseResult).replace("[parseValue]", parseValue).replace("[timeout]", timeout)
+    taskTemplate["MaximumRuntimeSeconds"] = 650
     if debugCommand:
         taskTemplate["CommandLine"] = debugCommand
 
@@ -480,11 +472,8 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
     columns = "$3,$4"
 
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[sshcommand]", sshcommand)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[mpicommand]", mpicommand)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[columns]", columns)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseResult]", parseResult)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseValue]", parseValue)
+    taskTemplate["CommandLine"] = commandLine.replace("[sshcommand]", sshcommand).replace("[mpicommand]", mpicommand).replace("[columns]", columns).replace("[parseResult]", parseResult).replace("[parseValue]", parseValue)
+    taskTemplate["MaximumRuntimeSeconds"] = 30
 
     if mode == "Parallel".lower():
         timeout *= 10
