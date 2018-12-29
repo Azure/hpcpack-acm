@@ -1,45 +1,45 @@
 <mat-toolbar color="primary" class="toolbar">
-    <div class="left">
-        <button mat-icon-button (click)="side.toggle()">
-            <i class="material-icons">menu</i>
-        </button>
-        <a class="home" routerLink="/">
-            <i class="material-icons">home</i>
-            <h1>Microsoft HPC</h1>
-        </a>
-        <app-breadcrumb></app-breadcrumb>
-    </div>
-    <div class="right">
-        <!-- <a mat-icon-button matTooltip="Open Notifications" (click)="right.toggle()">
+  <div class="left">
+    <button mat-icon-button (click)="side.toggle()">
+      <i class="material-icons">menu</i>
+    </button>
+    <a class="home" routerLink="/">
+      <i class="material-icons">home</i>
+      <h1>Microsoft HPC</h1>
+    </a>
+    <app-breadcrumb></app-breadcrumb>
+  </div>
+  <div class="right">
+    <!-- <a mat-icon-button matTooltip="Open Notifications" (click)="right.toggle()">
               <span class="notification-num" [ngClass]="{hidden: notifications.length == 0}">{{notifications.length}}</span>
               <i class="material-icons">event_note</i>
             </a> -->
-        <button mat-icon-button [matMenuTriggerFor]="menu" class="account">
-            <mat-icon>person</mat-icon>
-            {{userName}}
-        </button>
-        <mat-menu #menu="matMenu">
-            <button mat-menu-item class="menu-item" (click)="logout()">
-                <span class="sign-out">Log out</span>
-            </button>
-        </mat-menu>
-        <app-back-button></app-back-button>
-    </div>
+    <button mat-icon-button [matMenuTriggerFor]="menu" class="account">
+      <mat-icon>person</mat-icon>
+      {{userName}}
+    </button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item class="menu-item">
+        <a href="/.auth/logout" class="sign-out">Log out</a>
+      </button>
+    </mat-menu>
+    <app-back-button></app-back-button>
+  </div>
 </mat-toolbar>
 
 <mat-sidenav-container class="app-container">
-    <mat-sidenav #side mode="side" opened="false" class="sidenav">
-        <mat-nav-list>
-            <a *ngFor="let item of items" class="nav-list" mat-list-item routerLinkActive="active" [routerLink]="item.link">
-                <i class="material-icons nav-icon">{{item.icon}}</i>
-                <span class="title">{{item.title}}</span>
-            </a>
-        </mat-nav-list>
-    </mat-sidenav>
-    <!-- <mat-sidenav #right position="end" mode="over">
+  <mat-sidenav #side mode="side" opened="false" class="sidenav">
+    <mat-nav-list>
+      <a *ngFor="let item of items" class="nav-list" mat-list-item routerLinkActive="active" [routerLink]="item.link">
+        <i class="material-icons nav-icon">{{item.icon}}</i>
+        <span class="title">{{item.title}}</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+  <!-- <mat-sidenav #right position="end" mode="over">
             <app-notification [items]="notifications"></app-notification>
           </mat-sidenav> -->
-    <mat-sidenav-content class="main-container">
-        <router-outlet></router-outlet>
-    </mat-sidenav-content>
+  <mat-sidenav-content class="main-container">
+    <router-outlet></router-outlet>
+  </mat-sidenav-content>
 </mat-sidenav-container>

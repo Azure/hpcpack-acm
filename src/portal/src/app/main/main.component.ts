@@ -88,15 +88,10 @@ export class MainComponent {
     }
 
     private get isLoggedIn(): boolean {
-        return (this.authService.isLoggedIn || localStorage.getItem('isLoggedIn') == 'true') && this.router.url !== '/login';
+        return this.authService.isLoggedIn;
     }
 
     public get userName(): string {
         return this.authService.username;
-    }
-
-    public logout(): void {
-        this.authService.logout();
-        this.router.navigate(['/login']);
     }
 }

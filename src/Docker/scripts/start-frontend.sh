@@ -6,10 +6,9 @@ cd $app_root
 
 src_root="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
-cert_path=$app_root/cert.pfx
-
 msg='required but missing'
 
-apibase=${apibase:?$msg} app_root=$app_root/wwwroot $src_root/config-portal.sh && \
-  fqdn=${fqdn:?$msg} pfx_file=$cert_path $src_root/generate-cert.sh && \
-  ServerOptions__CertPath=$cert_path dotnet Frontend.dll
+app_root=$app_root/wwwroot $src_root/config-portal.sh && \
+  CloudOptions__Storage__AccountName=${APPSETTING_CloudOptions__Storage__AccountName:?$msg} \
+  CloudOptions__Storage__KeyValue=${CUSTOMCONNSTR_CloudOptions__Storage__KeyValue:?$msg} \
+  dotnet Frontend.dll

@@ -38,5 +38,4 @@ COPY Docker/scripts/* ./
 WORKDIR /app
 COPY --from=allbuild /app .
 COPY --from=portalbuild /src/portal/dist /app/Frontend/wwwroot
-RUN echo "\ndaemon off;" >> /etc/nginx/nginx.conf
 ENTRYPOINT ["dotnet", "Bootstrap/Bootstrap.dll"]
