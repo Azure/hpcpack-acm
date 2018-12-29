@@ -7,29 +7,22 @@
   </div>
 </div>
 
-<mat-dialog-content>
-  <div *ngIf="errorMessage" class="error-message">
-    <!-- <i class="material-icons">error_outline</i> -->
-    <button mat-icon-button (click)="clearErrorMsg()">
-      <mat-icon color="warn">clear</mat-icon>
-    </button>
-    <div class="error-text">
-      {{errorMessage}}
-    </div>
-  </div>
+<mat-dialog-content class="dialog-content">
   <mat-vertical-stepper linear="true" #stepper (selectionChange)="selectionChange($event)">
     <mat-step label="Select item">
       <div class="select-tests">
-        <tree-root #tree [nodes]="tests" (updateData)="onTreeLoad($event)" class="test-tree">
-          <mat-radio-group [(ngModel)]="selectedTest" (change)="check()">
-            <ng-template #treeNodeTemplate let-node let-index="index">
-              <mat-radio-button *ngIf="node.children == undefined" [value]="node.data" color="primary">
-                <span>{{node.data.name}}</span>
-              </mat-radio-button>
-              <span *ngIf="node.children != undefined && node.children.length > 0">{{node.data.name}}</span>
-            </ng-template>
-          </mat-radio-group>
-        </tree-root>
+        <div class="test-tree">
+          <tree-root #tree [nodes]="tests" (updateData)="onTreeLoad($event)">
+            <mat-radio-group [(ngModel)]="selectedTest" (change)="check()">
+              <ng-template #treeNodeTemplate let-node let-index="index">
+                <mat-radio-button *ngIf="node.children == undefined" [value]="node.data" color="primary">
+                  <span>{{node.data.name}}</span>
+                </mat-radio-button>
+                <span *ngIf="node.children != undefined && node.children.length > 0">{{node.data.name}}</span>
+              </ng-template>
+            </mat-radio-group>
+          </tree-root>
+        </div>
         <div class="test-description" *ngIf="selectedDescription">
           <div class="test-description-title">{{selectedTest.name}} Introduction</div>
           <p class="test-description-text">
@@ -38,7 +31,7 @@
           </p>
         </div>
       </div>
-      <div class="step-btn diag-btns">
+      <div class="step-btn">
         <button mat-button color="primary" matStepperNext>Next</button>
       </div>
     </mat-step>
@@ -84,9 +77,9 @@
           </div>
         </ng-template>
       </ng-template>
-      <div class="step-btn diag-btns">
-        <button mat-button color="primary" matStepperPrevious>Back</button>
+      <div class="step-btn">
         <button mat-button color="primary" matStepperNext>Next</button>
+        <button mat-button color="primary" matStepperPrevious>Back</button>
       </div>
     </mat-step>
     <mat-step label="Set name">
@@ -95,13 +88,23 @@
           <input matInput placeholder="Test name" [(ngModel)]='diagTestName' />
         </mat-form-field>
       </div>
-      <div class="step-btn last-step diag-btns">
+      <div class="step-btn">
         <button mat-button color="primary" matStepperPrevious>Back</button>
       </div>
     </mat-step>
   </mat-vertical-stepper>
-  <div class="diag-btns diag-action">
-    <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
-    <button mat-raised-button color="primary" (click)="getTest()" (keyup.enter)="getTest()" class="diag-run-btn">Run</button>
-  </div>
 </mat-dialog-content>
+<mat-dialog-actions class="actions">
+  <div class="dialog-btns dialog-action">
+    <button mat-stroked-button [mat-dialog-close]="false">Cancel</button>
+    <button mat-flat-button color="primary" (click)="getTest()" (keyup.enter)="getTest()" class="dialog-run-btn">Run</button>
+  </div>
+  <div *ngIf="errorMessage" class="error-message">
+    <button mat-icon-button (click)="clearErrorMsg()">
+      <mat-icon color="warn">clear</mat-icon>
+    </button>
+    <div class="error-text">
+      {{errorMessage}}
+    </div>
+  </div>
+</mat-dialog-actions>

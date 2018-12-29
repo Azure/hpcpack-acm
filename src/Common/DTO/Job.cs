@@ -36,7 +36,6 @@ namespace Microsoft.HpcAcm.Common.Dto
         public string Name { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public int MaximumRuntimeSeconds { get; set; } = 1800;
-        public int DefaultTaskMaximumRuntimeSeconds { get; set; } = 1800;
         public DateTimeOffset UpdatedAt { get; set; }
         public JobState State { get; set; }
         public JobType Type { get; set; }

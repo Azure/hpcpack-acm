@@ -4,16 +4,14 @@
     using Microsoft.HpcAcm.Common.Utilities;
     using Microsoft.HpcAcm.Services.Common;
     using Newtonsoft.Json;
-    using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Text;
     using System.Threading;
     using T = System.Threading.Tasks;
 
     class DiagnosticsJobHandler : ServerObject, IJobTypeHandler
     {
-        public async T.Task<List<InternalTask>> GenerateTasksAsync(Job job, CancellationToken token)
+        public async T.Task<DispatchResult> DispatchAsync(Job job, CancellationToken token)
         {
             // TODO: github integration
             var jobTable = this.Utilities.GetJobsTable();
@@ -56,7 +54,7 @@
                 }
                 else
                 {
-                    return JsonConvert.DeserializeObject<List<InternalTask>>(dispatchTasks.Output);
+                    return JsonConvert.DeserializeObject<DispatchResult>(dispatchTasks.Output);
                 }
             }
             else

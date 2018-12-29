@@ -61,7 +61,7 @@ export class ActivatedRouteStub {
 }
 
 class ApiServiceStub {
-  results = { id: 5563, diagnosticTest: { name: 'test', category: 'test' }, progress: 0, state: 'Finished', name: 'test', createdAt: '2018-06-20T10:39:26.0930804+00:00', lastChangedAtAt: '2018-06-20T10:40:24.4964341+00:00' };
+  results = { id: 5563, diagnosticTest: { name: 'test', category: 'test' }, progress: 0, state: 'Finished', name: 'test', createdAt: '2018-06-20T10:39:26.0930804+00:00', lastChangedAtAt: '2018-06-20T10:40:24.4964341+00:00', targetNodes: ["testNode1", "testNode2"] };
   taskResult = [{
     customizedData: "Standard_H16r",
     jobId: 301,

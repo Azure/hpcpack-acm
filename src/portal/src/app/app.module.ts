@@ -14,23 +14,19 @@ import { UserSettingsService } from './services/user-settings.service';
 import { LocalStorageService } from './services/local-storage.service';
 import { InMemoryDataService } from './services/in-memory-data.service';
 import { AppComponent } from './app.component';
-import { LoginComponent } from './login/login.component';
 import { WidgetsModule } from './widgets/widgets.module';
 import { JobStateService } from './services/job-state/job-state.service';
 import { TableDataService } from './services/table-data/table-data.service';
 import { VirtualScrollService } from './services/virtual-scroll/virtual-scroll.service';
 import { DateFormatterService } from './services/date-formatter/date-formatter.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { BasicInterceptor } from './helpers/basic.interceptor';
-import { ErrorInterceptor } from './helpers/error.interceptor';
 import { DiagReportService } from './services/diag-report/diag-report.service';
 import { DragulaModule } from 'ng2-dragula';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 
 @NgModule({
   declarations: [
-    AppComponent,
-    LoginComponent
+    AppComponent
   ],
   imports: [
     BrowserModule,
@@ -56,9 +52,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
     TableSettingsService,
     UserSettingsService,
     LocalStorageService,
-    DiagReportService,
-    { provide: HTTP_INTERCEPTORS, useClass: BasicInterceptor, multi: true },
-    // { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
+    DiagReportService
   ],
   bootstrap: [AppComponent]
 })

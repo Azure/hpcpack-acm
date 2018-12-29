@@ -102,8 +102,9 @@ app-breadcrumb {
 }
 
 .sign-out {
-    color: $color;
+    color: #000;
     text-align: center;
     display: inline-block;
     width: 100%;
+    text-decoration: none;
 }

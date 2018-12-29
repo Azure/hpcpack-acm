@@ -20,13 +20,12 @@
   font-size: 18px;
 }
 
+:host ::ng-deep .total-number {
+  padding-top: 0 !important;
+}
+
 .solution {
   font-size: 0.85em;
   color: $color;
   padding-bottom: 1em;
-}
-
-.nodes-number {
-  color: $color;
-  padding-left: 10px;
 }

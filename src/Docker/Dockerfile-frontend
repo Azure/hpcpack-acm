@@ -1,5 +1,5 @@
 FROM evancui/hpcacm:latest as final
-EXPOSE 443
+EXPOSE 5000
 WORKDIR /app/Frontend
 ENTRYPOINT ["/bin/bash", "/app/scripts/start-frontend.sh"]
 

@@ -9,7 +9,9 @@ mat-vertical-stepper {
 }
 
 .step-btn {
-  margin-bottom: -24px
+  margin-bottom: -24px;
+  display: flex;
+  flex-direction: row-reverse;
 }
 
 mat-radio-group {
@@ -42,6 +44,7 @@ mat-radio-button {
 
 .select-tests {
   display: flex;
+  width: 100%;
 }
 
 .diagTestName {
@@ -49,12 +52,18 @@ mat-radio-button {
 }
 
 .test-tree {
-  margin-right: 1.5em;
-  flex: 2;
+  display: grid;
+  height: 50vh;
+  overflow: auto;
+  border: 1px solid #eee;
+  padding: 5px 15px;
+  width: 40%;
 }
 
 .test-description {
-  flex: 3;
+  padding-left: 1.5em;
+  width: 60%;
+  // flex: 2;
 }
 
 .test-description-title {
@@ -68,11 +77,6 @@ mat-radio-button {
   line-height: 1.8em;
 }
 
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
 .error-message {
   color: #f44336;
   line-height: 2em;
@@ -83,8 +87,9 @@ mat-radio-button {
   font-size: 1em;
 }
 
-.last-step {
+.actions {
   display: flex;
+  flex-direction: row-reverse;
   justify-content: space-between;
 }
 
@@ -102,17 +107,7 @@ mat-radio-button {
   cursor: pointer;
 }
 
-.diag-btns {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.diag-action {
-  margin-top: 1.2em;
-  margin-bottom: .1em;
-}
-
-.diag-run-btn {
+.dialog-run-btn {
   margin-left: 1.2em;
 }
 

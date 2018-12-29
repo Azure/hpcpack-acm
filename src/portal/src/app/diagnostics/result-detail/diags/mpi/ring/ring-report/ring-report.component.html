@@ -4,8 +4,8 @@
       <mat-tab label="Performance" *ngIf="!hasError">
         <!-- <ring-overview-result [result]="aggregationResult" *ngIf="aggregationResult"></ring-overview-result> -->
         <mpi-performance [result]="aggregationResult" *ngIf="aggregationResult"></mpi-performance>
-        <div class="overview-progress">
-          <mat-progress-bar mode="indeterminate" *ngIf="!aggregationResult"></mat-progress-bar>
+        <div class="overview-progress" *ngIf="!aggregationResult">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
         </div>
       </mat-tab>
       <mat-tab label="Error" *ngIf="hasError">

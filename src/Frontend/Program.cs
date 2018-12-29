@@ -53,7 +53,7 @@
                     services.AddSingleton<ServerObject>();
                     services.AddSingleton<DataProvider>();
                 })
-                .UseKestrel(options => options.UseHttps())
+                .UseUrls("http://*:5000")
                 .UseStartup<Startup>()
                 .Build();
     }
