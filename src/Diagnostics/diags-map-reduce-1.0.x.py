@@ -988,14 +988,14 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     if windowsNodes and linuxNodes:
         raise Exception('Can not run this test among Linux nodes and Windows nodes')
 
-    nodelist = list(windowsNodes) if windowsNodes else list(linuxNodes)
-    if 0 < len(rdmaNodes) < len(nodelist):
+    nodeset = windowsNodes if windowsNodes else linuxNodes
+    if 0 < len(rdmaNodes) < len(nodeset):
         raise Exception('Can not run this test among RDMA nodes and non-RDMA nodes')
     
     taskLabel = '{}{}'.format('[Windows]' if windowsNodes else '[Linux]', '[RDMA]' if rdmaNodes else '')
     rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0' if rdmaNodes else ''
-    nodes = ','.join(nodelist)
-    nodesCount = len(nodelist)
+    nodes = ','.join(nodeset)
+    nodesCount = len(nodeset)
 
     taskTemplateWindows = {
         'UserName': HPC_DIAG_USERNAME,
@@ -1026,7 +1026,7 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
 
     taskId = 1
     tasks = []
-    for node in nodelist:
+    for node in sorted(nodeset):
         task = copy.deepcopy(taskTemplate)
         task['Id'] = taskId
         taskId += 1
@@ -1036,16 +1036,17 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
         task['MaximumRuntimeSeconds'] = 60
         tasks.append(task)
 
+    masterNode = next(iter(nodeset)) # pick a node
     if nodesCount > 1:
         task = copy.deepcopy(taskTemplate)
         task['Id'] = taskId
         taskId += 1
-        task['Node'] = nodelist[0]
+        task['Node'] = masterNode
         task['ParentIds'] = list(range(1, nodesCount + 1))
         task['CommandLine'] = commandRunInterWindows if windowsNodes else commandRunInterLinux
         task['CustomizedData'] = '{} {}'.format(taskLabel, nodes)
         if linuxNodes:
-            task['EnvironmentVariables'] = {'CCP_NODES': '{} {}'.format(nodesCount, ' '.join(['{} 1'.format(node) for node in nodelist]))}
+            task['EnvironmentVariables'] = {'CCP_NODES': '{} {}'.format(nodesCount, ' '.join(['{} 1'.format(node) for node in nodeset]))}
         task['MaximumRuntimeSeconds'] = 120
         tasks.append(task)
     
@@ -1179,7 +1180,7 @@ HPL.out      output file name (if any)
     taskTemplate = copy.deepcopy(taskTemplateLinux)
     taskTemplate['CommandLine'] = '{}; {}; {}; {} && {}'.format(commandCheckCpu, commandCreateHplDat, commandSourceMpiEnv, commandCheckHpl, commandCheckMpi)
     taskTemplate['MaximumRuntimeSeconds'] = 60
-    for node in linuxNodes:
+    for node in sorted(linuxNodes):
         task = copy.deepcopy(taskTemplate)
         task['Id'] = taskId
         taskId += 1
@@ -1512,7 +1513,7 @@ else
 
     tasks = []
     id = 1
-    for node in windowsNodes:
+    for node in sorted(windowsNodes):
         task = {}
         task['Id'] = id
         id += 1
@@ -1521,7 +1522,7 @@ else
         task['CustomizedData'] = 'Windows'
         task['MaximumRuntimeSeconds'] = 36000
         tasks.append(task)
-    for node in linuxNodes:
+    for node in sorted(linuxNodes):
         task = {}
         task['Id'] = id
         id += 1
@@ -1625,7 +1626,7 @@ def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
 
     tasks = []
     id = 1
-    for node in linuxNodes:
+    for node in sorted(linuxNodes):
         outputFile = '{}/{}'.format(tempOutputDir, uuid.uuid4())
         commandClearFile = 'rm -f {}'.format(outputFile)
         task = {}
@@ -1645,7 +1646,7 @@ def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
     commandModify = "(gc lininput_xeon64) -replace '.*# number of tests', '{} # number of tests' | out-file -encoding ascii lininput_xeon64".format(sizeLevel)
     commandCheckCpu = 'wmic cpu get NumberOfCores,MaxClockSpeed /format:list'
     commandWindows = r'{} && cd {}\benchmarks\linpack && del win_xeon64.txt 2>nul && powershell "{}" && runme_xeon64 >nul && type win_xeon64.txt'.format(commandCheckCpu, mklInstallationLocationWindows, commandModify)
-    for node in windowsNodes:
+    for node in sorted(windowsNodes):
         task = {}
         task['Id'] = id
         id += 1
@@ -1808,7 +1809,7 @@ def benchmarkSysbenchCpuMap(windowsNodes, linuxNodes, vmSizeByNode, distroByNode
 
     tasks = []
     id = 1
-    for node in linuxNodes:
+    for node in sorted(linuxNodes):
         task = {}
         task['Id'] = id
         id += 1
@@ -1817,7 +1818,7 @@ def benchmarkSysbenchCpuMap(windowsNodes, linuxNodes, vmSizeByNode, distroByNode
         task['CommandLine'] = '{} && {} && {}'.format(commandRunLscpu, commandInstallByDistro[distroByNode[node]], commandRunSysbench)
         tasks.append(task)
 
-    for node in windowsNodes:
+    for node in sorted(windowsNodes):
         task = {}
         task['Id'] = id
         id += 1
@@ -1972,7 +1973,7 @@ def benchmarkCifsMap(arguments, windowsNodes, linuxNodes, vmSizeByNode, distroBy
 
     tasks = []
     id = 1
-    for node in linuxNodes:
+    for node in sorted(linuxNodes):
         task = {}
         task['Id'] = id
         if mode != 'Parallel'.lower() and id != 1:
@@ -1983,7 +1984,7 @@ def benchmarkCifsMap(arguments, windowsNodes, linuxNodes, vmSizeByNode, distroBy
         task['CommandLine'] = '{} ; {} && {}'.format(commandGetLocation, commandInstallByDistro[distroByNode[node]], commandRun)
         tasks.append(task)
 
-    for node in windowsNodes:
+    for node in sorted(windowsNodes):
         task = {}
         task['Id'] = id
         id += 1
