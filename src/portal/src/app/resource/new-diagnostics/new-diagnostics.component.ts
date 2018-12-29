@@ -39,7 +39,7 @@ export class NewDiagnosticsComponent implements OnInit, OnDestroy {
       this.tests = tests.treeData;
       tests['rawData'].forEach(t => {
         if (t.parameters) {
-          this.ctlConfig[t.name] = {};
+          this.ctlConfig[t.category + t.name] = {};
           t.parameters.forEach(p => {
             let validators = [];
             if (p.required) {
@@ -49,11 +49,12 @@ export class NewDiagnosticsComponent implements OnInit, OnDestroy {
               validators.push(Validators.min(p.min));
               validators.push(Validators.max(p.max));
             }
-            this.ctlConfig[t.name][p.name] = [p.defaultValue, validators];
+            this.ctlConfig[t.category + t.name][p.name] = [p.defaultValue, validators];
           });
         }
       });
     });
+    console.log(this.selectedDescription);
   }
 
   ngAfterViewChecked() {
@@ -101,7 +102,7 @@ export class NewDiagnosticsComponent implements OnInit, OnDestroy {
     this._sub = new Array<Subscription>();
     let paras = this.selectedTest.parameters;
     if (paras) {
-      this.paraForm = this.fb.group(this.ctlConfig[this.selectedTest.name]);
+      this.paraForm = this.fb.group(this.ctlConfig[this.selectedTest.category + this.selectedTest.name]);
       for (let i = 0; i < paras.length; i++) {
         let sub = this.paraForm.controls[paras[i].name].valueChanges.subscribe(data => {
           if (paras[i].whenChanged != undefined) {
