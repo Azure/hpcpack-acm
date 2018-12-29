@@ -92,9 +92,10 @@ M4xW+aJnEhzIbE7a4an2eTc0pAxc9GexwtCFwlBouSW6kfOcMgEysoy99wQoGNgRHY/D
 -----END RSA PRIVATE KEY-----'''
 
 def main():
-    diagName, diagArgs, jobId, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, distroByNode, tasks, taskResults = parseStdin()
+    diagName, diagArgs, jobId, jobMaxRuntime, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, distroByNode, tasks, taskResults = parseStdin()
     isMap = False if tasks and taskResults else True
 
+    generatedTasks = []
     if diagName == 'MPI-Pingpong':
         arguments = {
             'Intel MPI version': '2018 Update 4',
@@ -104,7 +105,7 @@ def main():
         }
         parseArgs(diagArgs, arguments)
         if isMap:
-            return mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes)
+            generatedTasks = mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes)
         else:
             return mpiPingpongReduce(arguments, targetNodes, tasks, taskResults)
 
@@ -114,7 +115,7 @@ def main():
         }
         parseArgs(diagArgs, arguments)
         if isMap:
-            return mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes)
+            generatedTasks = mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes)
         else:
             return mpiRingReduce(targetNodes, tasks, taskResults)
 
@@ -126,7 +127,7 @@ def main():
         }
         parseArgs(diagArgs, arguments)
         if isMap:
-            return mpiHplMap(arguments, jobId, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode)
+            generatedTasks = mpiHplMap(arguments, jobId, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode)
         else:
             return mpiHplReduce(arguments, targetNodes, tasks, taskResults)
 
@@ -138,7 +139,7 @@ def main():
         parseArgs(diagArgs, arguments)
         product = 'MPI' if 'MPI' in diagName else 'MKL'
         if isMap:
-            return installIntelProductMap(arguments, windowsNodes, linuxNodes, product)
+            generatedTasks = installIntelProductMap(arguments, windowsNodes, linuxNodes, product)
         else:
             return installIntelProductReduce(arguments, tasks, taskResults, product)
 
@@ -149,13 +150,13 @@ def main():
         }
         parseArgs(diagArgs, arguments)
         if isMap:
-            return benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode)
+            generatedTasks = benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode)
         else:
             return benchmarkLinpackReduce(arguments, tasks, taskResults)
 
     if diagName == 'Standalone Benchmark-Sysbench CPU':
         if isMap:
-            return benchmarkSysbenchCpuMap(windowsNodes, linuxNodes, vmSizeByNode, distroByNode)
+            generatedTasks = benchmarkSysbenchCpuMap(windowsNodes, linuxNodes, vmSizeByNode, distroByNode)
         else:
             return benchmarkSysbenchCpuReduce(tasks, taskResults)
 
@@ -167,15 +168,29 @@ def main():
         }
         parseArgs(diagArgs, arguments)
         if isMap:
-            return benchmarkCifsMap(arguments, windowsNodes, linuxNodes, vmSizeByNode, distroByNode)
+            generatedTasks = benchmarkCifsMap(arguments, windowsNodes, linuxNodes, vmSizeByNode, distroByNode)
         else:
             return benchmarkCifsReduce(arguments, tasks, taskResults)
+
+    arguments = {
+        'Max runtime': jobMaxRuntime
+    }
+    parseArgs(diagArgs, arguments)
+    job = {
+        'MaximumRuntimeSeconds': arguments['Max runtime']
+    }
+
+    return json.dumps({
+        'ModifiedJob': job,
+        'Tasks': generatedTasks
+    })
 
 def parseStdin():
     stdin = json.load(sys.stdin)
 
     job = stdin['Job']
     jobId = job['Id']
+    jobMaxRuntime = job['MaximumRuntimeSeconds']
     targetNodes = job['TargetNodes']
     if not targetNodes:
         raise Exception('No node specified for running the job')
@@ -248,7 +263,7 @@ def parseStdin():
         if tasksOnUnexpectedNodes:
             raise Exception('Unexpected nodes in tasks: {}'.format(', '.join(tasksOnUnexpectedNodes)))
 
-    return diagName, diagArgs, jobId, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, distroByNode, tasks, taskResults
+    return diagName, diagArgs, jobId, jobMaxRuntime, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, distroByNode, tasks, taskResults
 
 def parseArgs(diagArgsIn, diagArgsOut):
     if diagArgsIn:
@@ -328,7 +343,7 @@ def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     tasks += mpiPingpongCreateTasksWindows(list(windowsNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationWindows, packetSize)
     tasks += mpiPingpongCreateTasksLinux(list(linuxNodes & rdmaNodes), True, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize, None)
     tasks += mpiPingpongCreateTasksLinux(list(linuxNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize, None)
-    print(json.dumps(tasks))
+    return tasks
 
 def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
     tasks = []
@@ -1039,7 +1054,7 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
         task['MaximumRuntimeSeconds'] = 120
         tasks.append(task)
     
-    print(json.dumps(tasks))
+    return tasks
 
 def mpiRingReduce(nodes, tasks, taskResults):
     output = None
@@ -1265,7 +1280,7 @@ HPL.out      output file name (if any)
     task['MaximumRuntimeSeconds'] = 60
     tasks.append(task)
 
-    print(json.dumps(tasks))
+    return tasks
 
 def mpiHplReduce(arguments, nodes, tasks, taskResults):
     mpiVersion = arguments['Intel MPI version']
@@ -1521,7 +1536,7 @@ else
         task['MaximumRuntimeSeconds'] = 36000
         tasks.append(task)
 
-    print(json.dumps(tasks))
+    return tasks
 
 def installIntelProductReduce(arguments, tasks, taskResults, product):
     version = arguments['Version']
@@ -1645,7 +1660,7 @@ def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
         task['MaximumRuntimeSeconds'] = 36000
         tasks.append(task)
 
-    print(json.dumps(tasks))
+    return tasks
 
 def benchmarkLinpackReduce(arguments, tasks, taskResults):
     intelMklVersion = arguments['Intel MKL version'].lower()
@@ -1816,7 +1831,7 @@ def benchmarkSysbenchCpuMap(windowsNodes, linuxNodes, vmSizeByNode, distroByNode
         task['CommandLine'] = 'echo This test is not supported on Windows node'
         tasks.append(task)
 
-    print(json.dumps(tasks))
+    return tasks
 
 def benchmarkSysbenchCpuReduce(tasks, taskResults):
     taskDetail = {}
@@ -1982,7 +1997,7 @@ def benchmarkCifsMap(arguments, windowsNodes, linuxNodes, vmSizeByNode, distroBy
         task['CommandLine'] = 'echo This test is not supported on Windows node'
         tasks.append(task)
 
-    print(json.dumps(tasks))
+    return tasks
 
 def benchmarkCifsReduce(arguments, tasks, taskResults):
     connectWay = arguments['Connect by'].lower()
