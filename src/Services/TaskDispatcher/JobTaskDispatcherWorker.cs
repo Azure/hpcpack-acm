@@ -30,6 +30,7 @@
         private Dictionary<int, Task> tasksDict;
         private readonly ConcurrentDictionary<int, CloudQueueMessage> taskTimeoutMessages = new ConcurrentDictionary<int, CloudQueueMessage>();
         private readonly ConcurrentDictionary<int, CloudQueueMessage> taskNodeTimeoutMessages = new ConcurrentDictionary<int, CloudQueueMessage>();
+        private DateTimeOffset lastProgressUpdateTime = DateTimeOffset.MinValue;
         private int batchId = 0;
 
         public JobTaskDispatcherWorker(IOptions<TaskItemSourceOptions> options) : base(options.Value)
@@ -274,9 +275,11 @@
                 this.Logger.Information("    Updated {0}, task {1} state to {2}", job.Id, t.Id, state);
             }));
 
-            if (this.batchId % 10 == 0)
+
+            if (this.batchId % 10 == 0 || (DateTimeOffset.UtcNow - this.lastProgressUpdateTime) > TimeSpan.FromSeconds(10.0))
             {
                 await this.UpdateJobProgress(token);
+                this.lastProgressUpdateTime = DateTimeOffset.UtcNow;
             }
 
             if (job?.State != JobState.Running)
