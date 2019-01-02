@@ -27,11 +27,19 @@
                 var metadataKey = this.Utilities.GetMetadataKey();
 
                 this.Logger.Information("GenerateTasks, Querying node info for job {0}", job.Id);
-                var metadata = await T.Task.WhenAll(job.TargetNodes.Select(async n => new
+                var metadata = await T.Task.WhenAll(job.TargetNodes.Select(async n =>
                 {
-                    Node = n,
-                    Metadata = await nodesTable.RetrieveAsync<object>(this.Utilities.GetNodePartitionKey(n), metadataKey, token),
-                    NodeRegistrationInfo = await nodesTable.RetrieveAsync<ComputeClusterRegistrationInformation>(this.Utilities.NodesPartitionKey, this.Utilities.GetRegistrationKey(n), token),
+                    var heartbeatKey = this.Utilities.GetHeartbeatKey(n);
+                    var nodeInfo = await nodesTable.RetrieveJsonTableEntityAsync(this.Utilities.NodesPartitionKey, heartbeatKey, token);
+
+                    return new
+                    {
+                        Node = n,
+                        Metadata = await nodesTable.RetrieveAsync<object>(this.Utilities.GetNodePartitionKey(n), metadataKey, token),
+                        Heartbeat = nodeInfo?.GetObject<ComputeClusterNodeInformation>(),
+                        LastHeartbeatTime = nodeInfo?.Timestamp,
+                        NodeRegistrationInfo = await nodesTable.RetrieveAsync<ComputeClusterRegistrationInformation>(this.Utilities.NodesPartitionKey, this.Utilities.GetRegistrationKey(n), token),
+                    };
                 }));
 
                 var dispatchTasks = await PythonExecutor.ExecuteAsync(scriptBlob, new { Job = job, Nodes = metadata }, token);
