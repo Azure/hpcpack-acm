@@ -457,7 +457,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
         taskTemplate["CommandLine"] = debugCommand
 
     id = headingStartId
-    for node in nodelist:
+    for node in sorted(nodelist):
         task = copy.deepcopy(taskTemplate)
         task["Id"] = id
         task["Node"] = node
