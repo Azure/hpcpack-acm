@@ -218,6 +218,11 @@
                 j.MaximumRuntimeSeconds = dispatchResult.ModifiedJob.MaximumRuntimeSeconds;
             }, token, this.Logger);
 
+            var jobCancel = new JobEventMessage() { Id = job.Id, Type = job.Type, EventVerb = "cancel" };
+            var jobEventQueue = this.Utilities.GetJobEventQueue();
+            await jobEventQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(jobCancel)), null, TimeSpan.FromSeconds(dispatchResult.ModifiedJob.MaximumRuntimeSeconds), null, null, token);
+            this.Logger.Information("Create job timeout cancel message success.");
+
             if (state == JobState.Running)
             {
                 this.Logger.Information("Job {0} Starting the job", job.Id);
