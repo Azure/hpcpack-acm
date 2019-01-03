@@ -146,6 +146,7 @@ if __name__ == '__main__':
                 testResult[2] += result[2]
             except:
                 testResult[2] += 1
+                print('Exception:')
                 print(sys.exc_info()[0])
                 time.sleep(60)
             print('-'*60)

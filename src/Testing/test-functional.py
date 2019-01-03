@@ -129,7 +129,7 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
                             print('{}: Tasks states are {}'.format(time.ctime(), {state:taskStates.count(state) for state in taskStates}))
                         
                     # cancel the job
-                    if cancel and not jobCanceled and startTime+cancel < time.time():
+                    if cancel and not jobCanceled and startTime + cancel < time.time():
                         jobCanceled = cancelJob(jobUri)
                         api = jobUri
                         response = restGet(api)
@@ -175,6 +175,12 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
             try:
                 print('{}: Try to cancel job {}'.format(time.ctime(), jobUri))
                 jobCanceled = cancelJob(jobUri)
+                response = restGet(jobUri)
+                if response:
+                    jobState = response.json()['state']
+                    if jobState != 'Running':
+                        jobCanceled = True
+                        break
             except Exception as ex:
                 print('[Exception]: {0}'.format(ex))
             time.sleep(5)
@@ -356,7 +362,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--timeout', type=check_positive, default=60*60*24*365, help='Specify the max time(seconds) to wait for the job until canceling it in one test')
     parser.add_argument('-u', '--username', default='root', help='Specify the username of cluster admin')
     parser.add_argument('-p', '--password', default='Pass1word', help='Specify the password of cluster admin')
-    parser.add_argument('-d', '--random', default=False , help='Specify if pick random nodes to run the test')
+    parser.add_argument('-d', '--random', action="store_true", help='Specify if pick random nodes to run the test')
     args = parser.parse_args()
     
     credential = '{}:{}'.format(args.username, args.password)
