@@ -1,4 +1,4 @@
-#v1.1.0
+#v1.1.1
 
 import sys, json, copy, numpy, time, math, uuid
 
@@ -180,10 +180,10 @@ def main():
         'MaximumRuntimeSeconds': arguments['Max runtime']
     }
 
-    return json.dumps({
+    print(json.dumps({
         'ModifiedJob': job,
         'Tasks': generatedTasks
-    })
+    }))
 
 def parseStdin():
     stdin = json.load(sys.stdin)
