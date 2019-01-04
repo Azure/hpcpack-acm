@@ -27,11 +27,9 @@ export class NodeListComponent {
   public dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
   static customizableColumns = [
-    // { name: 'health', displayed: true, displayName: 'Health' },
     { name: 'state', displayed: true, displayName: 'State' },
     { name: 'os', displayed: true, displayName: 'OS' },
     { name: 'runningJobCount', displayed: true, displayName: 'Jobs' },
-    { name: 'eventCount', displayed: true, displayName: 'Events' },
     { name: 'memory', displayed: true, displayName: 'Memory(MB)' },
   ];
 

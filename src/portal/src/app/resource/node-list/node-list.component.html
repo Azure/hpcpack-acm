@@ -50,9 +50,6 @@
     <div class="header node-runningJobCount" [ngStyle]="getColumnOrder('runningJobCount')">
       Jobs
     </div>
-    <div class="header node-eventCount" [ngStyle]="getColumnOrder('eventCount')">
-      Events
-    </div>
     <div class="header node-memory" [ngStyle]="getColumnOrder('memory')">
       Memory( MB )
     </div>
@@ -85,10 +82,6 @@
 
         <div class="icon-cell node-runningJobCount" [ngStyle]="getColumnOrder('runningJobCount')">
           <div class="cell-text">{{node.runningJobCount}}</div>
-        </div>
-
-        <div class="icon-cell node-eventCount" [ngStyle]="getColumnOrder('eventCount')">
-          <div class="cell-text">{{node.eventCount}}</div>
         </div>
 
         <div class="icon-cell node-memory" [ngStyle]="getColumnOrder('memory')">
