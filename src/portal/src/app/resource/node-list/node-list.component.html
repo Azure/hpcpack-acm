@@ -41,9 +41,6 @@
     <div class="header node-name" [ngStyle]="getColumnOrder('name')">
       Name
     </div>
-    <div class="header node-health" [ngStyle]="getColumnOrder('health')">
-      Health
-    </div>
     <div class="header node-state" [ngStyle]="getColumnOrder('state')">
       State
     </div>
@@ -63,7 +60,7 @@
 
   <div class="list-content">
     <cdk-virtual-scroll-viewport itemSize="40" #content class="list-content" (scrolledIndexChange)="indexChanged($event)">
-      <div *cdkVirtualFor="let node of dataSource; templateCacheSize: 0; trackBy: trackByFn.bind(this)" class="list-item">
+      <div *cdkVirtualFor="let node of dataSource; templateCacheSize: 0; trackBy: trackByFn.bind(this)" class="list-item" (click)="updateSelectedNodes(node)">
         <div class="icon-cell node-checkbox">
           <mat-checkbox color="primary" (click)="$event.stopPropagation();" (change)="$event? updateSelectedNodes(node) : null"
             [checked]="isSelected(node)">
@@ -75,16 +72,10 @@
           <a [routerLink]="['..',node.id]" class="cell-text">{{node.id}}</a>
         </div>
 
-        <div class="icon-cell node-health" [ngStyle]="getColumnOrder('health')">
+        <div class="icon-cell node-health" [ngStyle]="getColumnOrder('state')">
           <i class="material-icons cell-icon healthy" *ngIf="node.health == 'OK'">check</i>
           <i class="material-icons cell-icon error" *ngIf="!(node.health == 'OK')">error_outline</i>
           <div class="cell-text">{{node.health | titlecase}}</div>
-        </div>
-
-        <div class="icon-cell node-state" [ngStyle]="getColumnOrder('state')">
-          <i class="material-icons cell-icon online" *ngIf="node.state == 'Online'">settings_power</i>
-          <i class="material-icons cell-icon offline" *ngIf="!(node.state == 'Online')">power_settings_new</i>
-          <div class="cell-text">{{node.state | titlecase}}</div>
         </div>
 
         <div class="icon-cell node-os" [ngStyle]="getColumnOrder('os')">
