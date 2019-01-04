@@ -1,6 +1,7 @@
-#v1.0.0
+#v1.2.0
 
 import sys, json, copy, numpy, time, math, uuid
+from datetime import datetime, timedelta
 
 INTEL_PRODUCT_URL = {
     'MPI': {
@@ -92,9 +93,10 @@ M4xW+aJnEhzIbE7a4an2eTc0pAxc9GexwtCFwlBouSW6kfOcMgEysoy99wQoGNgRHY/D
 -----END RSA PRIVATE KEY-----'''
 
 def main():
-    diagName, diagArgs, jobId, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, distroByNode, tasks, taskResults = parseStdin()
+    diagName, diagArgs, jobId, jobMaxRuntime, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, distroByNode, tasks, taskResults = parseStdin()
     isMap = False if tasks and taskResults else True
 
+    generatedTasks = []
     if diagName == 'MPI-Pingpong':
         arguments = {
             'Intel MPI version': '2018 Update 4',
@@ -104,7 +106,7 @@ def main():
         }
         parseArgs(diagArgs, arguments)
         if isMap:
-            return mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes)
+            generatedTasks = mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes)
         else:
             return mpiPingpongReduce(arguments, targetNodes, tasks, taskResults)
 
@@ -114,7 +116,7 @@ def main():
         }
         parseArgs(diagArgs, arguments)
         if isMap:
-            return mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes)
+            generatedTasks = mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes)
         else:
             return mpiRingReduce(targetNodes, tasks, taskResults)
 
@@ -126,7 +128,7 @@ def main():
         }
         parseArgs(diagArgs, arguments)
         if isMap:
-            return mpiHplMap(arguments, jobId, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode)
+            generatedTasks = mpiHplMap(arguments, jobId, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode)
         else:
             return mpiHplReduce(arguments, targetNodes, tasks, taskResults)
 
@@ -138,7 +140,7 @@ def main():
         parseArgs(diagArgs, arguments)
         product = 'MPI' if 'MPI' in diagName else 'MKL'
         if isMap:
-            return installIntelProductMap(arguments, windowsNodes, linuxNodes, product)
+            generatedTasks = installIntelProductMap(arguments, windowsNodes, linuxNodes, product)
         else:
             return installIntelProductReduce(arguments, tasks, taskResults, product)
 
@@ -149,13 +151,13 @@ def main():
         }
         parseArgs(diagArgs, arguments)
         if isMap:
-            return benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode)
+            generatedTasks = benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode)
         else:
             return benchmarkLinpackReduce(arguments, tasks, taskResults)
 
     if diagName == 'Standalone Benchmark-Sysbench CPU':
         if isMap:
-            return benchmarkSysbenchCpuMap(windowsNodes, linuxNodes, vmSizeByNode, distroByNode)
+            generatedTasks = benchmarkSysbenchCpuMap(windowsNodes, linuxNodes, vmSizeByNode, distroByNode)
         else:
             return benchmarkSysbenchCpuReduce(tasks, taskResults)
 
@@ -167,15 +169,29 @@ def main():
         }
         parseArgs(diagArgs, arguments)
         if isMap:
-            return benchmarkCifsMap(arguments, windowsNodes, linuxNodes, vmSizeByNode, distroByNode)
+            generatedTasks = benchmarkCifsMap(arguments, windowsNodes, linuxNodes, vmSizeByNode, distroByNode)
         else:
             return benchmarkCifsReduce(arguments, tasks, taskResults)
+
+    arguments = {
+        'Max runtime': jobMaxRuntime
+    }
+    parseArgs(diagArgs, arguments)
+    job = {
+        'MaximumRuntimeSeconds': arguments['Max runtime']
+    }
+
+    print(json.dumps({
+        'ModifiedJob': job,
+        'Tasks': generatedTasks
+    }))
 
 def parseStdin():
     stdin = json.load(sys.stdin)
 
     job = stdin['Job']
     jobId = job['Id']
+    jobMaxRuntime = job['MaximumRuntimeSeconds']
     targetNodes = job['TargetNodes']
     if not targetNodes:
         raise Exception('No node specified for running the job')
@@ -195,6 +211,9 @@ def parseStdin():
     nodeInfoByNode = {}
     distroByNode = {}
     if nodes:
+        errorNodes = [node['Node'] for node in nodes if not node['LastHeartbeatTime'] or datetime.utcnow() - datetime.strptime(node['LastHeartbeatTime'].split('.')[0], '%Y-%m-%dT%H:%M:%S') > timedelta(minutes=10)] # nodes that lost heart beat for 10 minutes
+        if errorNodes:
+            raise Exception('Error node(s): {}'.format(', '.join(errorNodes)))
         missingInfoNodes = [node['Node'] for node in nodes if not node['NodeRegistrationInfo'] or not node['Metadata']]
         if missingInfoNodes:
             raise Exception('Missing infomation for node(s): {}'.format(', '.join(missingInfoNodes)))
@@ -248,7 +267,7 @@ def parseStdin():
         if tasksOnUnexpectedNodes:
             raise Exception('Unexpected nodes in tasks: {}'.format(', '.join(tasksOnUnexpectedNodes)))
 
-    return diagName, diagArgs, jobId, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, distroByNode, tasks, taskResults
+    return diagName, diagArgs, jobId, jobMaxRuntime, targetNodes, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNode, nodeInfoByNode, distroByNode, tasks, taskResults
 
 def parseArgs(diagArgsIn, diagArgsOut):
     if diagArgsIn:
@@ -328,7 +347,7 @@ def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     tasks += mpiPingpongCreateTasksWindows(list(windowsNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationWindows, packetSize)
     tasks += mpiPingpongCreateTasksLinux(list(linuxNodes & rdmaNodes), True, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize, None)
     tasks += mpiPingpongCreateTasksLinux(list(linuxNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize, None)
-    print(json.dumps(tasks))
+    return tasks
 
 def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
     tasks = []
@@ -351,7 +370,7 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
     sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
     commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpi'.format(mpiLocation) # this way would only add one row in firewall rules
     # commandSetFirewall = r'netsh advfirewall firewall add rule name="hpc_diagnostics_mpi" dir=in action=allow program="{}\intel64\bin\mpiexec.exe"'.format(mpiLocation) # this way would add multiple rows in firewall rules when it is executed multiple times
-    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} IMB-MPI1 pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption)
+    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -n 2 IMB-MPI1 pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption)
     commandRunInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts [nodepair] -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption, sampleOption)
     commandMeasureTime = "$stopwatch = [system.diagnostics.stopwatch]::StartNew(); [command]; if($?) {'Run time: ' + $stopwatch.Elapsed.TotalSeconds}"
 
@@ -414,15 +433,11 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
     commandGenerateOutput = " && cat data | head -n1 >output && cat data | tail -n1 >>output && cat timeResult >>output && cat raw >>output && cat output | python {}".format(filterScriptPath)
     commandGenerateError = ' || (errorcode=$? && echo "MPI Pingpong task failed!" >error && cat stdout stderr >>error && cat error && exit $errorcode)'
     commandLine = commandDownloadScript + "TIMEFORMAT='%3R' && (time timeout [timeout]s bash -c '[sshcommand] && source {0}/intel64/bin/mpivars.sh && [mpicommand]' >stdout 2>stderr) 2>timeResult".format(mpiLocation) + commandParseResult + commandGenerateOutput + commandGenerateError
+    
     taskTemplateOrigin = {
-        "Id":0,
-        "CommandLine":commandLine,
-        "Node":None,
         "UserName":HPC_DIAG_USERNAME,
         "Password":None,
         "PrivateKey":SSH_PRIVATE_KEY,
-        "CustomizedData":None,
-        "MaximumRuntimeSeconds":1000
     }
 
     headingStartId = startId
@@ -434,23 +449,19 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
 
     sshcommand = "rm -f ~/.ssh/known_hosts" # Clear ssh knownhosts
     checkcore = 'bash -c "if [ `grep -c ^processor /proc/cpuinfo` -eq 1 ]; then exit -10; fi"' # MPI Ping Pong can not get result but return 0 if core number is less than 2, so check core number and fail mpicommand if there is no result
-    mpicommand = "mpirun -env I_MPI_SHM_LMT=shm {} IMB-MPI1 pingpong && {}".format(rdmaOption, checkcore)
+    mpicommand = "mpirun -env I_MPI_SHM_LMT=shm {} -n 2 IMB-MPI1 pingpong && {}".format(rdmaOption, checkcore)
     parseResult = "tail -n29 | head -n25"
     columns = "$3,$4"
     parseValue = "sed -n '1p;$p'"
     timeout = "600"
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[sshcommand]", sshcommand)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[mpicommand]", mpicommand)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[columns]", columns)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseResult]", parseResult)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseValue]", parseValue)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[timeout]", timeout)
+    taskTemplate["CommandLine"] = commandLine.replace("[sshcommand]", sshcommand).replace("[mpicommand]", mpicommand).replace("[columns]", columns).replace("[parseResult]", parseResult).replace("[parseValue]", parseValue).replace("[timeout]", timeout)
+    taskTemplate["MaximumRuntimeSeconds"] = 650
     if debugCommand:
         taskTemplate["CommandLine"] = debugCommand
 
     id = headingStartId
-    for node in nodelist:
+    for node in sorted(nodelist):
         task = copy.deepcopy(taskTemplate)
         task["Id"] = id
         task["Node"] = node
@@ -480,11 +491,8 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
     columns = "$3,$4"
 
     taskTemplate = copy.deepcopy(taskTemplateOrigin)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[sshcommand]", sshcommand)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[mpicommand]", mpicommand)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[columns]", columns)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseResult]", parseResult)
-    taskTemplate["CommandLine"] = taskTemplate["CommandLine"].replace("[parseValue]", parseValue)
+    taskTemplate["CommandLine"] = commandLine.replace("[sshcommand]", sshcommand).replace("[mpicommand]", mpicommand).replace("[columns]", columns).replace("[parseResult]", parseResult).replace("[parseValue]", parseValue)
+    taskTemplate["MaximumRuntimeSeconds"] = 30
 
     if mode == "Parallel".lower():
         timeout *= 10
@@ -988,14 +996,14 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     if windowsNodes and linuxNodes:
         raise Exception('Can not run this test among Linux nodes and Windows nodes')
 
-    nodelist = list(windowsNodes) if windowsNodes else list(linuxNodes)
-    if 0 < len(rdmaNodes) < len(nodelist):
+    nodeset = windowsNodes if windowsNodes else linuxNodes
+    if 0 < len(rdmaNodes) < len(nodeset):
         raise Exception('Can not run this test among RDMA nodes and non-RDMA nodes')
     
     taskLabel = '{}{}'.format('[Windows]' if windowsNodes else '[Linux]', '[RDMA]' if rdmaNodes else '')
     rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0' if rdmaNodes else ''
-    nodes = ','.join(nodelist)
-    nodesCount = len(nodelist)
+    nodes = ','.join(nodeset)
+    nodesCount = len(nodeset)
 
     taskTemplateWindows = {
         'UserName': HPC_DIAG_USERNAME,
@@ -1013,7 +1021,7 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
 
     mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiInstallationLocationWindows)
     commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpi'.format(mpiInstallationLocationWindows)
-    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} IMB-MPI1 sendrecv'.format(HPC_DIAG_PASSWORD, rdmaOption)
+    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -n %NUMBER_OF_PROCESSORS% IMB-MPI1 sendrecv'.format(HPC_DIAG_PASSWORD, rdmaOption)
     commandRunInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts {} -ppn 1 IMB-MPI1 -npmin {} sendrecv'.format(HPC_DIAG_PASSWORD, rdmaOption, nodes, nodesCount)
     commandMeasureTime = "$stopwatch = [system.diagnostics.stopwatch]::StartNew(); [command]; if($?) {'Run time: ' + $stopwatch.Elapsed.TotalSeconds}"
     commandRunWindows = '{} && "{}" && powershell "{}"'.format(commandSetFirewall, mpiEnvFile, commandMeasureTime)
@@ -1021,12 +1029,12 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     commandRunInterWindows = commandRunWindows.replace('[command]', commandRunInter)
 
     commandSource = 'source {0}/intel64/bin/mpivars.sh'.format(mpiInstallationLocationLinux)
-    commandRunIntraLinux = '{} && time mpirun -env I_MPI_SHM_LMT=shm {} IMB-MPI1 sendrecv'.format(commandSource, rdmaOption)
+    commandRunIntraLinux = '{} && time mpirun -env I_MPI_SHM_LMT=shm {} -n `grep -c ^processor /proc/cpuinfo` IMB-MPI1 sendrecv'.format(commandSource, rdmaOption)
     commandRunInterLinux = '{} && time mpirun -hosts {} {} -ppn 1 IMB-MPI1 -npmin {} sendrecv 2>/dev/null'.format(commandSource, nodes, rdmaOption, nodesCount)
 
     taskId = 1
     tasks = []
-    for node in nodelist:
+    for node in sorted(nodeset):
         task = copy.deepcopy(taskTemplate)
         task['Id'] = taskId
         taskId += 1
@@ -1036,20 +1044,21 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
         task['MaximumRuntimeSeconds'] = 60
         tasks.append(task)
 
+    masterNode = next(iter(nodeset)) # pick a node
     if nodesCount > 1:
         task = copy.deepcopy(taskTemplate)
         task['Id'] = taskId
         taskId += 1
-        task['Node'] = nodelist[0]
+        task['Node'] = masterNode
         task['ParentIds'] = list(range(1, nodesCount + 1))
         task['CommandLine'] = commandRunInterWindows if windowsNodes else commandRunInterLinux
         task['CustomizedData'] = '{} {}'.format(taskLabel, nodes)
         if linuxNodes:
-            task['EnvironmentVariables'] = {'CCP_NODES': '{} {}'.format(nodesCount, ' '.join(['{} 1'.format(node) for node in nodelist]))}
+            task['EnvironmentVariables'] = {'CCP_NODES': '{} {}'.format(nodesCount, ' '.join(['{} 1'.format(node) for node in nodeset]))}
         task['MaximumRuntimeSeconds'] = 120
         tasks.append(task)
     
-    print(json.dumps(tasks))
+    return tasks
 
 def mpiRingReduce(nodes, tasks, taskResults):
     output = None
@@ -1175,11 +1184,11 @@ HPL.out      output file name (if any)
     # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
     commandCheckCpu = "lscpu | egrep '^CPU\(s\)|^Model name|^Thread\(s\) per core'"
     commandCheckHpl = '{}/benchmarks/mp_linpack/xhpl_intel64_dynamic >/dev/null && echo MKL test succeed.'.format(mklInstallationLocationLinux)
-    commandCheckMpi = 'mpirun -env I_MPI_SHM_LMT=shm IMB-MPI1 pingpong >/dev/null && echo MPI test succeed.'
+    commandCheckMpi = 'mpirun -env I_MPI_SHM_LMT=shm -n 1 IMB-MPI1 sendrecv >/dev/null && echo MPI test succeed.'
     taskTemplate = copy.deepcopy(taskTemplateLinux)
     taskTemplate['CommandLine'] = '{}; {}; {}; {} && {}'.format(commandCheckCpu, commandCreateHplDat, commandSourceMpiEnv, commandCheckHpl, commandCheckMpi)
     taskTemplate['MaximumRuntimeSeconds'] = 60
-    for node in linuxNodes:
+    for node in sorted(linuxNodes):
         task = copy.deepcopy(taskTemplate)
         task['Id'] = taskId
         taskId += 1
@@ -1275,7 +1284,7 @@ HPL.out      output file name (if any)
     task['MaximumRuntimeSeconds'] = 60
     tasks.append(task)
 
-    print(json.dumps(tasks))
+    return tasks
 
 def mpiHplReduce(arguments, nodes, tasks, taskResults):
     mpiVersion = arguments['Intel MPI version']
@@ -1474,7 +1483,7 @@ def installIntelProductMap(arguments, windowsNodes, linuxNodes, product):
     wgetOutput = 'wget.output'
     commandCheckExist = "[ -d {0} ] && echo 'Already installed in {0}'".format(installDirectory)
     commandShowOutput = r"cat {} | sed 's/.*\r//'".format(wgetOutput)
-    commandDownload = 'timeout {0}s wget --progress=bar:force -O intel.tgz {1} 1>{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)'.format(timeout, url, wgetOutput, commandShowOutput)
+    commandDownload = 'timeout {0}s wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 0 --progress=bar:force -O intel.tgz {1} 1>{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)'.format(timeout, url, wgetOutput, commandShowOutput)
     commandInstall = "tar -zxf intel.tgz && cd l_{}_* && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg".format(product.lower())
     commandLinux = '{} || ({} && {})'.format(commandCheckExist, commandDownload, commandInstall)
 
@@ -1512,7 +1521,7 @@ else
 
     tasks = []
     id = 1
-    for node in windowsNodes:
+    for node in sorted(windowsNodes):
         task = {}
         task['Id'] = id
         id += 1
@@ -1521,7 +1530,7 @@ else
         task['CustomizedData'] = 'Windows'
         task['MaximumRuntimeSeconds'] = 36000
         tasks.append(task)
-    for node in linuxNodes:
+    for node in sorted(linuxNodes):
         task = {}
         task['Id'] = id
         id += 1
@@ -1531,7 +1540,7 @@ else
         task['MaximumRuntimeSeconds'] = 36000
         tasks.append(task)
 
-    print(json.dumps(tasks))
+    return tasks
 
 def installIntelProductReduce(arguments, tasks, taskResults, product):
     version = arguments['Version']
@@ -1625,7 +1634,7 @@ def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
 
     tasks = []
     id = 1
-    for node in linuxNodes:
+    for node in sorted(linuxNodes):
         outputFile = '{}/{}'.format(tempOutputDir, uuid.uuid4())
         commandClearFile = 'rm -f {}'.format(outputFile)
         task = {}
@@ -1645,7 +1654,7 @@ def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
     commandModify = "(gc lininput_xeon64) -replace '.*# number of tests', '{} # number of tests' | out-file -encoding ascii lininput_xeon64".format(sizeLevel)
     commandCheckCpu = 'wmic cpu get NumberOfCores,MaxClockSpeed /format:list'
     commandWindows = r'{} && cd {}\benchmarks\linpack && del win_xeon64.txt 2>nul && powershell "{}" && runme_xeon64 >nul && type win_xeon64.txt'.format(commandCheckCpu, mklInstallationLocationWindows, commandModify)
-    for node in windowsNodes:
+    for node in sorted(windowsNodes):
         task = {}
         task['Id'] = id
         id += 1
@@ -1655,7 +1664,7 @@ def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
         task['MaximumRuntimeSeconds'] = 36000
         tasks.append(task)
 
-    print(json.dumps(tasks))
+    return tasks
 
 def benchmarkLinpackReduce(arguments, tasks, taskResults):
     intelMklVersion = arguments['Intel MKL version'].lower()
@@ -1808,7 +1817,7 @@ def benchmarkSysbenchCpuMap(windowsNodes, linuxNodes, vmSizeByNode, distroByNode
 
     tasks = []
     id = 1
-    for node in linuxNodes:
+    for node in sorted(linuxNodes):
         task = {}
         task['Id'] = id
         id += 1
@@ -1817,7 +1826,7 @@ def benchmarkSysbenchCpuMap(windowsNodes, linuxNodes, vmSizeByNode, distroByNode
         task['CommandLine'] = '{} && {} && {}'.format(commandRunLscpu, commandInstallByDistro[distroByNode[node]], commandRunSysbench)
         tasks.append(task)
 
-    for node in windowsNodes:
+    for node in sorted(windowsNodes):
         task = {}
         task['Id'] = id
         id += 1
@@ -1826,7 +1835,7 @@ def benchmarkSysbenchCpuMap(windowsNodes, linuxNodes, vmSizeByNode, distroByNode
         task['CommandLine'] = 'echo This test is not supported on Windows node'
         tasks.append(task)
 
-    print(json.dumps(tasks))
+    return tasks
 
 def benchmarkSysbenchCpuReduce(tasks, taskResults):
     taskDetail = {}
@@ -1972,7 +1981,7 @@ def benchmarkCifsMap(arguments, windowsNodes, linuxNodes, vmSizeByNode, distroBy
 
     tasks = []
     id = 1
-    for node in linuxNodes:
+    for node in sorted(linuxNodes):
         task = {}
         task['Id'] = id
         if mode != 'Parallel'.lower() and id != 1:
@@ -1983,7 +1992,7 @@ def benchmarkCifsMap(arguments, windowsNodes, linuxNodes, vmSizeByNode, distroBy
         task['CommandLine'] = '{} ; {} && {}'.format(commandGetLocation, commandInstallByDistro[distroByNode[node]], commandRun)
         tasks.append(task)
 
-    for node in windowsNodes:
+    for node in sorted(windowsNodes):
         task = {}
         task['Id'] = id
         id += 1
@@ -1992,7 +2001,7 @@ def benchmarkCifsMap(arguments, windowsNodes, linuxNodes, vmSizeByNode, distroBy
         task['CommandLine'] = 'echo This test is not supported on Windows node'
         tasks.append(task)
 
-    print(json.dumps(tasks))
+    return tasks
 
 def benchmarkCifsReduce(arguments, tasks, taskResults):
     connectWay = arguments['Connect by'].lower()

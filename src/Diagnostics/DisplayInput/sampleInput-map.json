@@ -1,67 +1,92 @@
 {
   "Job": {
-    "Events": null,
-    "Name": "displayInput created by root",
-    "TargetNodes": [
-      "d3v2"
-    ],
-    "CommandLine": null,
-    "DiagnosticTest": {
-      "Category": "test",
-      "Description": null,
-      "Name": "displayInput",
-      "Parameters": null,
-      "Arguments": null
-    },
-    "Request": null,
-    "DefaultTaskMaximumRuntimeSeconds": 1800,
-    "FailJobOnTaskFailure": false,
-    "State": 0,
-    "MaximumRuntimeSeconds": 1800,
-    "RequeueCount": 0,
-    "UpdatedAt": "0001-01-01T00:00:00+00:00",
-    "Progress": 0,
-    "TaskCount": 0,
-    "Type": 1,
-    "Id": 80,
-    "CreatedAt": "2018-12-13T07:20:03.3199634+00:00",
-    "CompletedTaskCount": 0
+      "Events": null,
+      "Name": "displayInput created by Anonymous",
+      "TargetNodes": [
+          "master"
+      ],
+      "CommandLine": null,
+      "DiagnosticTest": {
+          "Category": "test",
+          "Description": null,
+          "Name": "displayInput",
+          "Parameters": null,
+          "Arguments": null
+      },
+      "Request": null,
+      "FailJobOnTaskFailure": false,
+      "State": 0,
+      "MaximumRuntimeSeconds": 1800,
+      "RequeueCount": 0,
+      "UpdatedAt": "0001-01-01T00:00:00+00:00",
+      "Progress": 0,
+      "TaskCount": 0,
+      "Type": 1,
+      "Id": 12,
+      "CreatedAt": "2019-01-03T12:00:19.2239493+00:00",
+      "CompletedTaskCount": 0
   },
   "Nodes": [
-    {
-      "Node": "d3v2",
-      "NodeRegistrationInfo": {
-        "CoreCount": 4,
-        "NetworksInfo": [
-          {
-            "MacAddress": "00:00:00:00:00:00",
-            "IpV6": "::1/128",
-            "Name": "lo:",
-            "IsIB": false,
-            "IpV4": "127.0.0.1/8"
+      {
+          "Node": "master",
+          "Heartbeat": {
+              "MacAddress": "",
+              "Jobs": [
+                  {
+                      "Tasks": [
+                          {
+                              "ProcessIds": "",
+                              "EndTime": "0001-01-01T00:00:00+00:00",
+                              "NodeName": null,
+                              "NumberOfProcesses": 0,
+                              "WorkingSet": 0,
+                              "ResultKey": null,
+                              "CommandLine": null,
+                              "UserProcessorTime": 0,
+                              "JobId": 0,
+                              "KernelProcessorTime": 0,
+                              "TaskRequeueCount": 0,
+                              "Exited": false,
+                              "TaskId": 1,
+                              "Message": "",
+                              "StartTime": "0001-01-01T00:00:00+00:00",
+                              "PrimaryTask": true,
+                              "ExitCode": 0
+                          }
+                      ],
+                      "JobId": 8
+                  }
+              ],
+              "Name": "MASTER",
+              "JustStarted": false,
+              "Availability": 0
           },
-          {
-            "MacAddress": "00:0d:3a:a2:57:af",
-            "IpV6": "fe80::20d:3aff:fea2:57af/64",
-            "Name": "eth0:",
-            "IsIB": false,
-            "IpV4": "10.1.0.4/24"
+          "LastHeartbeatTime": "2019-01-03T12:00:11.6063295+00:00",
+          "NodeRegistrationInfo": {
+              "CoreCount": 8,
+              "NetworksInfo": [
+                  {
+                      "MacAddress": "00:00:00:00:00:00",
+                      "IpV6": "::1/128",
+                      "Name": "lo:",
+                      "IsIB": false,
+                      "IpV4": "127.0.0.1/8"
+                  },
+                  {
+                      "MacAddress": "00:0d:3a:a3:99:6f",
+                      "IpV6": "fe80::20d:3aff:fea3:996f/64",
+                      "Name": "eth0:",
+                      "IsIB": false,
+                      "IpV4": "10.0.0.254/24"
+                  }
+              ],
+              "MemoryMegabytes": 32160,
+              "SocketCount": 1,
+              "GpuInfo": [],
+              "DistroInfo": "Linux version 3.10.0-514.26.2.el7.x86_64 (builder@kbuilder.dev.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-11) (GCC) ) #1 SMP Tue Jul 4 15:04:05 UTC 2017\n",
+              "NodeName": "MASTER"
           },
-          {
-            "MacAddress": "00:0d:3a:a2:57:af",
-            "IpV6": "",
-            "Name": "eth1:",
-            "IsIB": true,
-            "IpV4": ""
-          }
-        ],
-        "MemoryMegabytes": 14014,
-        "SocketCount": 1,
-        "GpuInfo": [],
-        "DistroInfo": "Linux version 3.10.0-862.11.6.el7.x86_64 (builder@kbuilder.dev.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-28) (GCC) ) #1 SMP Tue Aug 14 21:49:04 UTC 2018\n",
-        "NodeName": "D3V2"
-      },
-      "Metadata": "{\"compute\":{\"location\":\"southeastasia\",\"name\":\"D3v2\",\"offer\":\"CentOS\",\"osType\":\"Linux\",\"placementGroupId\":\"\",\"platformFaultDomain\":\"0\",\"platformUpdateDomain\":\"0\",\"publisher\":\"OpenLogic\",\"resourceGroupName\":\"HplVms\",\"sku\":\"7.5\",\"subscriptionId\":\"52da2124-fb10-42ee-b835-1b8b5b2fa70f\",\"tags\":\"\",\"version\":\"7.5.20180815\",\"vmId\":\"58ebf32c-f7c9-47ce-a7ea-9a95dedfd049\",\"vmSize\":\"Standard_D3_v2\"},\"network\":{\"interface\":[{\"ipv4\":{\"ipAddress\":[{\"privateIpAddress\":\"10.1.0.4\",\"publicIpAddress\":\"52.163.188.190\"}],\"subnet\":[{\"address\":\"10.1.0.0\",\"prefix\":\"24\"}]},\"ipv6\":{\"ipAddress\":[]},\"macAddress\":\"000D3AA257AF\"}]}}"
-    }
+          "Metadata": "{\"compute\":{\"location\":\"southeastasia\",\"name\":\"master\",\"offer\":\"CentOS\",\"osType\":\"Linux\",\"placementGroupId\":\"\",\"platformFaultDomain\":\"1\",\"platformUpdateDomain\":\"1\",\"publisher\":\"OpenLogic\",\"resourceGroupName\":\"acm3\",\"sku\":\"7.3\",\"subscriptionId\":\"52da2124-fb10-42ee-b835-1b8b5b2fa70f\",\"tags\":\"StorageConfiguration:{\\\"AccountName\\\":\\\"hpcacmstg6438829\\\" }\",\"version\":\"7.3.20170925\",\"vmId\":\"98ef3cac-b5a0-460e-ba49-f8ea3fcdb1d2\",\"vmSize\":\"Standard_D8s_v3\"},\"network\":{\"interface\":[{\"ipv4\":{\"ipAddress\":[{\"privateIpAddress\":\"10.0.0.254\",\"publicIpAddress\":\"13.76.192.243\"}],\"subnet\":[{\"address\":\"10.0.0.0\",\"prefix\":\"24\"}]},\"ipv6\":{\"ipAddress\":[]},\"macAddress\":\"000D3AA3996F\"}]}}"
+      }
   ]
 }

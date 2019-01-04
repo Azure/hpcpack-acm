@@ -21,9 +21,6 @@ def main(cluster, runtime, mail, username, password):
             'python test-functional.py {} --category diag-pingpong-tournament --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
         ],
         [
-            'python test-functional.py {} --category diag-pingpong-parallel --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
-        ],
-        [
             'python test-functional.py {} --category clusrun --command "pkill -f \'ping localhost\' ; echo -n Clear" --result "Clear" --timeout 20 --username {} --password {}'.format(cluster, username, password),
         ],
         [
@@ -39,16 +36,16 @@ def main(cluster, runtime, mail, username, password):
             'python test-functional.py {} --category clusrun --command "sleep 30 && echo -n 30" --result "30" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
             'python test-functional.py {} --category clusrun --command "sleep 60 && echo -n 60" --result "60" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
             'python test-functional.py {} --category clusrun --command "echo -n test" --result "test" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'python test-restapi-get.py {} --continuous {}'.format(cluster, runtime, username, password),
         ],
-        [
-            'python test-functional.py {} --category clusrun --command "whoami" --result "root\\n" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
-            'python test-functional.py {} --category clusrun --command "hostname" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
-            'python test-functional.py {} --category diag-pingpong-tournament --timeout 2000 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
-            'python test-functional.py {} --category diag-pingpong-parallel --timeout 2000 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
-            'python test-functional.py {} --category diag-pingpong-tournament --cancel 10 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
-            'python test-functional.py {} --category diag-pingpong-parallel --cancel 30 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
-            'python test-restapi-get.py {} --continuous {}'.format(cluster, runtime, username, password)
-        ],
+        # [
+        #     'python test-functional.py {} --category clusrun --command "whoami" --result "root\\n" --timeout 200 --random --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+        #     'python test-functional.py {} --category clusrun --command "hostname" --timeout 200 --random --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+        #     'python test-functional.py {} --category diag-pingpong-tournament --timeout 2000 --random --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+        #     'python test-functional.py {} --category diag-pingpong-parallel --timeout 2000 --random --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+        #     'python test-functional.py {} --category diag-pingpong-tournament --cancel 10 --timeout 200 --random --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+        #     'python test-functional.py {} --category diag-pingpong-parallel --cancel 30 --timeout 200 --random --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+        # ],
     ]
 
     startTime = formatdate(localtime=True)

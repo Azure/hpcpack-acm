@@ -1,11 +1,11 @@
 ﻿{
     "DispatchScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.0.x.py"
+        "Name":"diags-map-reduce-1.2.x.py"
     },
     "AggregationScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.0.x.py"
+        "Name":"diags-map-reduce-1.2.x.py"
     },
     "description":"Run Intel HPL(High Performance Linpack, Intel Distribution for LINPACK Benchmark) on each selected node, on which Intel MPI and Intel MKL shoule be installed as prerequisites.",
     "parameters":[
