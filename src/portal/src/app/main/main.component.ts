@@ -81,9 +81,9 @@ export class MainComponent {
         //replace the Bootstrap Grid system with something else, which involves
         //a lot more work.
         // if (this.isLoggedIn) {
-            setTimeout(() => {
-                this.sidePane.toggle();
-            }, 1000);
+        setTimeout(() => {
+            this.sidePane.toggle();
+        }, 1000);
         // }
     }
 
@@ -93,5 +93,9 @@ export class MainComponent {
 
     public get userName(): string {
         return this.authService.username;
+    }
+
+    public get auth(): boolean {
+        return this.authService.hasAuth;
     }
 }

@@ -14,15 +14,21 @@
               <span class="notification-num" [ngClass]="{hidden: notifications.length == 0}">{{notifications.length}}</span>
               <i class="material-icons">event_note</i>
             </a> -->
-    <button mat-icon-button [matMenuTriggerFor]="menu" class="account">
-      <mat-icon>person</mat-icon>
-      {{userName}}
-    </button>
-    <mat-menu #menu="matMenu">
-      <button mat-menu-item class="menu-item">
-        <a href="/.auth/logout" class="sign-out">Log out</a>
+    <div *ngIf="auth" class="account">
+      <button mat-icon-button [matMenuTriggerFor]="menu">
+        <mat-icon>person</mat-icon>
+        {{userName}}
       </button>
-    </mat-menu>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item class="menu-item">
+          <a href="/.auth/logout" class="sign-out">Log out</a>
+        </button>
+      </mat-menu>
+    </div>
+    <div *ngIf="!auth" class="account">
+      <mat-icon class="vertical-middle">person</mat-icon>
+      {{userName}}
+    </div>
     <app-back-button></app-back-button>
   </div>
 </mat-toolbar>
