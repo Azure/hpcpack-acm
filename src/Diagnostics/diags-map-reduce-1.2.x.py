@@ -1,6 +1,7 @@
-#v1.1.1
+#v1.2.0
 
 import sys, json, copy, numpy, time, math, uuid
+from datetime import datetime, timedelta
 
 INTEL_PRODUCT_URL = {
     'MPI': {
@@ -210,6 +211,9 @@ def parseStdin():
     nodeInfoByNode = {}
     distroByNode = {}
     if nodes:
+        errorNodes = [node['Node'] for node in nodes if not node['LastHeartbeatTime'] or datetime.utcnow() - datetime.strptime(node['LastHeartbeatTime'].split('.')[0], '%Y-%m-%dT%H:%M:%S') > timedelta(minutes=10)] # nodes that lost heart beat for 10 minutes
+        if errorNodes:
+            raise Exception('Error node(s): {}'.format(', '.join(errorNodes)))
         missingInfoNodes = [node['Node'] for node in nodes if not node['NodeRegistrationInfo'] or not node['Metadata']]
         if missingInfoNodes:
             raise Exception('Missing infomation for node(s): {}'.format(', '.join(missingInfoNodes)))
@@ -457,7 +461,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
         taskTemplate["CommandLine"] = debugCommand
 
     id = headingStartId
-    for node in nodelist:
+    for node in sorted(nodelist):
         task = copy.deepcopy(taskTemplate)
         task["Id"] = id
         task["Node"] = node

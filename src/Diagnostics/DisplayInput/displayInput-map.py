@@ -30,7 +30,14 @@ def main():
         task["CustomizedData"] = node
         tasks.append(task)
 
-    print(json.dumps(tasks))
+    job = {
+        'MaximumRuntimeSeconds': 60
+    }
+
+    print(json.dumps({
+        'ModifiedJob': job,
+        'Tasks': tasks
+    }))
 
 if __name__ == '__main__':
     main()

@@ -1,11 +1,11 @@
 ﻿{
     "DispatchScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.1.x.py"
+        "Name":"diags-map-reduce-1.2.x.py"
     },
     "AggregationScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.1.x.py"
+        "Name":"diags-map-reduce-1.2.x.py"
     },
     "description":"Run Intel MPI-1 Benchmark Sendrecv among processors, one processor per node, which forms a periodic communication chain in selected nodes, on which Intel MPI should be installed as prerequisite.",
     "parameters":[

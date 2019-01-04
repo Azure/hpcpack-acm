@@ -1,11 +1,11 @@
 ﻿{
     "DispatchScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.1.x.py"
+        "Name":"diags-map-reduce-1.2.x.py"
     },
     "AggregationScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.1.x.py"
+        "Name":"diags-map-reduce-1.2.x.py"
     },
     "description":"Run Intel Optimized LINPACK Benchmark on each selected node, on which Intel MKL should be installed as prerequisite.",
     "parameters":[
