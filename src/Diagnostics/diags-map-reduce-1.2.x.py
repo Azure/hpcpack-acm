@@ -1,4 +1,4 @@
-#v1.1.1
+#v1.2.0
 
 import sys, json, copy, numpy, time, math, uuid
 from datetime import datetime, timedelta
