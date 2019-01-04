@@ -222,7 +222,6 @@
                         node.State = NodeState.Online;
                         node.RunningJobCount = n.Item1.Jobs.Count;
                         // TODO: adding events
-                        node.EventCount = 2;
                     }
                     else
                     {
