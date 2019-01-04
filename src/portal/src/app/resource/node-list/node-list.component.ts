@@ -27,7 +27,7 @@ export class NodeListComponent {
   public dataSource: MatTableDataSource<any> = new MatTableDataSource();
 
   static customizableColumns = [
-    { name: 'health', displayed: true, displayName: 'Health' },
+    // { name: 'health', displayed: true, displayName: 'Health' },
     { name: 'state', displayed: true, displayName: 'State' },
     { name: 'os', displayed: true, displayName: 'OS' },
     { name: 'runningJobCount', displayed: true, displayName: 'Jobs' },
@@ -78,14 +78,14 @@ export class NodeListComponent {
       {
         next: (result) => {
           this.empty = false;
-          if (this.endId != -1 && result[result.length - 1].id != this.endId) {
-            this.loading = false;
+          if (result.length > 0) {
+            this.tableDataService.updateDatasource(result, this.dataSource, 'id');
+            if (this.endId != -1 && result[result.length - 1].id != this.endId) {
+              this.loading = false;
+            }
           }
           if (this.reverse && result.length < this.maxPageSize) {
             this.loadFinished = true;
-          }
-          if (result.length > 0) {
-            this.tableDataService.updateDatasource(result, this.dataSource, 'id');
           }
           return this.getNodesRequest();
         }
@@ -183,7 +183,7 @@ export class NodeListComponent {
     });
 
     dialogRef.afterClosed().subscribe(params => {
-      if (params.command) {
+      if (params && params.command) {
         let names = this.selectedNodes.map(e => e.name);
         this.api.command.create(params.command, names, params.timeout).subscribe(obj => {
           if (params.multiCmds) {
@@ -208,7 +208,7 @@ export class NodeListComponent {
 
   customizeTable(): void {
     let dialogRef = this.dialog.open(TableOptionComponent, {
-      width: '98%',
+      width: '60%',
       data: { columns: this.availableColumns }
     });
     dialogRef.afterClosed().subscribe(res => {
