@@ -12,11 +12,13 @@
 
   .title {
     color: $color;
-    font-size: 1em;
+    font-size: 1.1em;
+    padding-bottom: 10px;
   }
 
   .content {
     white-space: pre-line;
+    line-height: 25px;
   }
 }
 
