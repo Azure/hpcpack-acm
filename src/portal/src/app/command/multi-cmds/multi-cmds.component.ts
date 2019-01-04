@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewChildren, QueryList, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
@@ -9,6 +9,8 @@ import { ConfirmDialogComponent } from '../../widgets/confirm-dialog/confirm-dia
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { FormControl } from '@angular/forms';
 import { TableDataService } from '../../services/table-data/table-data.service';
+import { CdkTextareaAutosize } from '@angular/cdk/text-field';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'multi-cmds',
@@ -18,6 +20,8 @@ import { TableDataService } from '../../services/table-data/table-data.service';
 export class MultiCmdsComponent implements OnInit {
   @ViewChildren(CommandOutputComponent)
   private outputs: QueryList<CommandOutputComponent>;
+
+  @ViewChild('autosize') autosize: CdkTextareaAutosize;
 
   public id: string;
 
@@ -47,7 +51,9 @@ export class MultiCmdsComponent implements OnInit {
 
   public newCmd = '';
 
-  private commandIndex = -1;
+  private commandIndex = 0;
+
+  private scriptIndex = 0;
 
   public cmds = [];
 
@@ -76,7 +82,8 @@ export class MultiCmdsComponent implements OnInit {
     private api: ApiService,
     private jobStateService: JobStateService,
     private dialog: MatDialog,
-    private tableDataService: TableDataService
+    private tableDataService: TableDataService,
+    private ngZone: NgZone,
   ) { }
 
   ngOnInit() {
@@ -85,7 +92,6 @@ export class MultiCmdsComponent implements OnInit {
       this.id = map.firstJobId;
       this.tabs = [];
       this.tabs.push({ id: this.id, outputs: {}, command: '', state: '' });
-      this.commandIndex = this.tabs.length;
       this.updateJob(this.id);
       this.updateNodes(this.id);
     });
@@ -97,6 +103,11 @@ export class MultiCmdsComponent implements OnInit {
 
   public stateClass(state) {
     return this.jobStateService.stateClass(state);
+  }
+
+  private isSingleCmd(cmd) {
+    let match = /\r|\n/.exec(cmd);
+    return match ? false : true;
   }
 
   updateJob(id) {
@@ -114,8 +125,8 @@ export class MultiCmdsComponent implements OnInit {
           this.tabs[this.selected.value].state = job.state;
           if (!this.tabs[this.selected.value].command) {
             this.tabs[this.selected.value].command = job.commandLine;
-            this.cmds.push(job.commandLine);
             this.timeout = job.defaultTaskMaximumRuntimeSeconds;
+            this.cmds.push({ mode: this.isSingleCmd(job.commandLine) ? 'single' : 'multiple', cmd: job.commandLine });
           }
           return true;
         },
@@ -143,12 +154,10 @@ export class MultiCmdsComponent implements OnInit {
           this.empty = false;
           if (tasks.length > 0) {
             this.gotTasks = true;
-            // this.result.nodes = tasks;
             this.result.nodes = this.tableDataService.updateData(tasks, this.result.nodes, 'id');
-          }
-
-          if (this.endId != -1 && tasks[tasks.length - 1].id != this.endId) {
-            this.listLoading = false;
+            if (this.endId != -1 && tasks[tasks.length - 1].id != this.endId) {
+              this.listLoading = false;
+            }
           }
           if (this.reverse && tasks.length < this.maxPageSize) {
             this.loadFinished = true;
@@ -600,13 +609,14 @@ export class MultiCmdsComponent implements OnInit {
       let names = this.result.nodes.map(node => node.name);
       this.api.command.create(this.newCmd, names, this.timeout).subscribe(obj => {
         this.id = obj.id;
-        this.tabs.push({ id: this.id, outputs: {}, command: this.newCmd, state: '' });
-        this.cmds.push(this.newCmd);
+        this.tabs.push({ id: this.id, outputs: {}, command: this.newCmd['cmd'], state: '' });
+        // this.cmds.push({ mode: this.commandLine, cmd: this.newCmd });
         this.selected.setValue(this.tabs.length - 1);
         this.updateJob(this.id);
         this.updateNodes(this.id);
         this.newCmd = '';
-        this.commandIndex = this.tabs.length;
+        this.commandIndex = this.cmds.length;
+        this.scriptIndex = this.cmds.length;
       });
     }
   }
@@ -641,22 +651,73 @@ export class MultiCmdsComponent implements OnInit {
 
 
   getPreviousCmd() {
-    if (this.commandIndex > 0) {
-      this.newCmd = this.cmds[--this.commandIndex];
+    let index = this.commandLine == 'single' ? this.commandIndex : this.scriptIndex;
+    let previousCmd = this.cmds[index];
+    let tempMode;
+    let targetCmd;
+    while (index >= 0) {
+      let tempCmd = this.cmds[index--];
+      tempMode = tempCmd['mode'];
+      targetCmd = tempCmd['cmd'];
+      if (tempMode == this.commandLine)
+        break;
+    }
+    if (tempMode != this.commandLine) {
+      if (previousCmd['mode'] == this.commandLine) {
+        this.newCmd = previousCmd['cmd'];
+      }
+      // else {
+      //   this.newCmd = '';
+      // }
     }
     else {
-      this.newCmd = this.cmds[this.commandIndex];
+      this.newCmd = targetCmd;
+      if (this.commandLine == 'single') {
+        this.commandIndex = index < 0 ? 0 : index;
+      }
+      else {
+        this.scriptIndex = index < 0 ? 0 : index;
+      }
     }
   }
 
   getNextCmd() {
-    if (this.commandIndex + 1 < this.cmds.length) {
-      this.newCmd = this.cmds[++this.commandIndex];
+    let index = this.commandLine == 'single' ? this.commandIndex : this.scriptIndex;
+    if (index + 1 == this.cmds.length) {
+      this.newCmd = '';
+      return;
+    }
+    let tempMode;
+    while (index + 1 < this.cmds.length) {
+      let tempCmd = this.cmds[++index];
+      tempMode = tempCmd['mode'];
+      this.newCmd = tempCmd['cmd'];
+      if (tempMode == this.commandLine)
+        break;
+    }
+    if (tempMode != this.commandLine) {
+      this.newCmd = '';
     }
     else {
-      this.newCmd = '';
-      this.commandIndex = this.cmds.length;
+      if (this.commandLine == 'single') {
+        this.commandIndex = index;
+      }
+      else {
+        this.scriptIndex = index;
+      }
     }
 
+  }
+
+  changeMode() {
+    this.commandIndex = (this.cmds.length - 1) > 0 ? this.cmds.length - 1 : 0;
+    this.scriptIndex = (this.cmds.length - 1) > 0 ? this.cmds.length - 1 : 0;
+    this.newCmd = '';
+  }
+
+  triggerResize() {
+    // Wait for changes to be applied, then trigger textarea resize.
+    this.ngZone.onStable.pipe(take(1))
+      .subscribe(() => this.autosize.resizeToFitContent(true));
   }
 }

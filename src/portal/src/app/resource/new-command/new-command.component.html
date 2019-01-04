@@ -6,7 +6,7 @@
         Single Line Command
       </mat-radio-button>
       <mat-radio-button value="multiple" color="primary" class="radio-btn">
-        Multi-line Command
+        Script Block ( Linux )
       </mat-radio-button>
     </mat-radio-group>
   </div>
@@ -24,8 +24,9 @@
         (keyup.ArrowUp)="getPreviousCmd()" (keyup.ArrowDown)="getNextCmd()" (keyup.Enter)="close()">
     </mat-form-field>
     <mat-form-field class="col-md-12" *ngIf="commandLine == 'multiple'">
-      <textarea matInput placeholder="New multiple line command here, press ctrl+enter to excute" [(ngModel)]='command'
-        (keyup.ArrowUp)="getPreviousCmd()" (keyup.ArrowDown)="getNextCmd()" (keyup.control.Enter)="close()"></textarea>
+      <textarea matInput cdkTextareaAutosize #autosize="cdkTextareaAutosize" cdkAutosizeMinRows="2" cdkAutosizeMaxRows="15"
+        placeholder="New script block here, press ctrl+enter to excute" [(ngModel)]='command' (keyup.ArrowUp)="getPreviousCmd()"
+        (keyup.ArrowDown)="getNextCmd()" (keyup.control.Enter)="close()"></textarea>
     </mat-form-field>
   </div>
 
@@ -34,6 +35,6 @@
   </section>
 </mat-dialog-content>
 <mat-dialog-actions>
-  <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
-  <button mat-raised-button (click)="close()">Run</button>
+  <button mat-stroked-button [mat-dialog-close]="false">Cancel</button>
+  <button mat-flat-button color="primary" (click)="close()">Run</button>
 </mat-dialog-actions>

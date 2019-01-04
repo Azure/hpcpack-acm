@@ -54,7 +54,6 @@ export class NewDiagnosticsComponent implements OnInit, OnDestroy {
         }
       });
     });
-    console.log(this.selectedDescription);
   }
 
   ngAfterViewChecked() {

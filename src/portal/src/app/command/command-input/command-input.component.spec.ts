@@ -18,7 +18,7 @@ fdescribe('CommandInputComponent', () => {
       imports: [MaterialsModule, MatDialogModule, NoopAnimationsModule, FormsModule],
       providers: [
         { provide: MatDialogRef, useClass: MatDialogModuleMock },
-        { provide: MAT_DIALOG_DATA, useValue: { command: 'test command' } }
+        { provide: MAT_DIALOG_DATA, useValue: { command: 'test command', isSingleCmd: true } }
       ]
     })
       .compileComponents();
