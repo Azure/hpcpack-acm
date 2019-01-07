@@ -59,7 +59,6 @@ mat-divider {
 
 .overview {
   @include display-flex($justify-content: space-around);
-  font-family: Roboto, "Helvetica Neue", sans-serif;
   margin: 0;
 }
 

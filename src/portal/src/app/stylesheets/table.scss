@@ -136,8 +136,12 @@ mat-header-cell {
 .list-container {
   width: 100%;
   overflow-x: hidden;
-  font-family: $font-stack;
   font-size: .8em;
+
+  ::ng-deep .mat-checkbox-inner-container {
+    width: 19px !important;
+    height: 19px !important;
+  }
 }
 
 .list-content {
@@ -164,6 +168,7 @@ mat-header-cell {
 
 .list-header {
   align-items: center;
+  padding-right: 20px;
 }
 
 @mixin none-animation {
@@ -200,4 +205,10 @@ mat-header-cell {
 
 .list-header .header {
   display: flex;
+}
+
+
+.list-item:hover {
+  background-color: #eeeeee;
+  cursor: pointer;
 }

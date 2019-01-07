@@ -1,110 +1,120 @@
 @import "../stylesheets/mixin.scss";
+
 .app-container {
-    min-height: 900px;
-    margin-top: 64px;
+  min-height: 900px;
+  margin-top: 64px;
 }
 
 .main-container {
-    padding: 1em;
+  padding: 1em;
 }
 
 mat-sidenav.sidenav {
-    position: fixed;
-    top: 64px;
-    left: 0;
+  position: fixed;
+  top: 64px;
+  left: 0;
 }
 
 mat-toolbar {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 
 .left {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .home {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    color: inherit;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
 }
 
 .home:visited {
-    color: inherit;
+  color: inherit;
 }
 
 .home h1 {
-    display: inline-block;
-    margin-left: 4px;
+  display: inline-block;
+  margin-left: 4px;
 }
 
 .active {
-    background-color: #fafafa;
-    color: #3f51b5;
-    /* border-left: 3px solid #3f51b5; */
+  background-color: #fafafa;
+  color: #3f51b5;
+  /* border-left: 3px solid #3f51b5; */
 }
 
 .title {
-    margin-left: 10px;
+  margin-left: 10px;
 }
 
 app-breadcrumb {
-    margin-left: 1.5em;
-    font-size: 72%;
+  margin-left: 1.5em;
+  font-size: 72%;
 }
 
 .notification-num {
-    position: absolute;
-    display: block;
-    width: 16px;
-    height: 16px;
-    line-height: 16px;
-    top: 2px;
-    right: 2px;
-    border-radius: 50%;
-    background-color: #ff0833;
+  position: absolute;
+  display: block;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  top: 2px;
+  right: 2px;
+  border-radius: 50%;
+  background-color: #ff0833;
 }
 
 .notification-num.hidden {
-    display: none;
+  display: none;
 }
 
 .mat-menu-item {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .menu-item-text {
-    margin-left: 0.5em;
+  margin-left: 0.5em;
 }
 
 .nav-icon {
-    font-size: 1.1em;
+  font-size: 1.1em;
 }
 
 .toolbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 100;
-}
-
-.account {
-    width: auto;
-    margin-right: 5px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
 }
 
 .menu-item {
-    color: #000;
-    font-size: .9em;
+  color: #000;
+  font-size: .9em;
 }
 
 .sign-out {
-    color: #000;
-    text-align: center;
-    display: inline-block;
-    width: 100%;
-    text-decoration: none;
+  color: #000;
+  text-align: center;
+  display: inline-block;
+  width: 100%;
+  text-decoration: none;
+}
+
+.account {
+  display: inline-block;
+  font-size: 15px;
+  margin-right: 5px;
+}
+
+.vertical-middle {
+  vertical-align: middle;
+}
+
+.mat-icon-button {
+  width: auto;
 }

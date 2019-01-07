@@ -39,12 +39,12 @@
       <div class="col-md-3">
       </div>
       <div class="col-md-6">
-        <mat-radio-group [(ngModel)]="commandLine">
+        <mat-radio-group [(ngModel)]="commandLine" (change)="changeMode(commandLine)">
           <mat-radio-button value="single" color="primary" class="radio-btn">
             Single Line Command
           </mat-radio-button>
           <mat-radio-button value="multiple" color="primary" class="radio-btn">
-            Multi-line Command
+            Script Block ( Linux )
           </mat-radio-button>
         </mat-radio-group>
       </div>
@@ -63,7 +63,8 @@
           (keyup.ArrowUp)="getPreviousCmd()" (keyup.ArrowDown)="getNextCmd()" (keyup.Enter)="excuteCmd()">
       </mat-form-field>
       <mat-form-field class="col-md-7" *ngIf="commandLine == 'multiple'">
-        <textarea matInput placeholder="New multiple line command here, press ctrl+enter to excute" [(ngModel)]='newCmd'
+        <textarea matInput cdkTextareaAutosize #autosize="cdkTextareaAutosize" cdkAutosizeMinRows="2"
+          cdkAutosizeMaxRows="15" placeholder="New script block here, press ctrl+enter to excute" [(ngModel)]='newCmd'
           (keyup.ArrowUp)="getPreviousCmd()" (keyup.ArrowDown)="getNextCmd()" (keyup.control.Enter)="excuteCmd()"></textarea>
       </mat-form-field>
       <div class="col-md-2 excute-btn">
