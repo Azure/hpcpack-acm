@@ -215,12 +215,12 @@
                 if (heartbeats.TryGetValue(nodeName, out (ComputeClusterNodeInformation, DateTimeOffset) n))
                 {
                     node.LastHeartbeatTime = n.Item2;
+                    node.RunningJobCount = n.Item1.Jobs.Count;
 
                     if (n.Item2.AddSeconds(u.Option.MaxMissedHeartbeats * u.Option.HeartbeatIntervalSeconds) > DateTimeOffset.UtcNow)
                     {
                         node.Health = NodeHealth.OK;
                         node.State = NodeState.Online;
-                        node.RunningJobCount = n.Item1.Jobs.Count;
                         // TODO: adding events
                     }
                     else
