@@ -939,7 +939,7 @@ def mpiPingpongGetLargestNonoverlappingGroups(groups):
     while len(groups):
         maxLen = max([len(group) for group in groups])
         largestGroup = [group for group in groups if len(group) == maxLen][0]
-        largestGroups.append(largestGroup)
+        largestGroups.append(sorted(largestGroup))
         visitedNodes.update(largestGroup)
         groupsToRemove = []
         for group in groups:
