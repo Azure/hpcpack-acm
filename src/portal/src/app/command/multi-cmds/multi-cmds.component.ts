@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { Observable } from 'rxjs/Observable';
 import { ApiService, Loop } from '../../services/api.service';
 import { CommandOutputComponent } from '../command-output/command-output.component';
+import { CommandInputComponent } from '../command-input/command-input.component';
 import { ConfirmDialogComponent } from '../../widgets/confirm-dialog/confirm-dialog.component';
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { FormControl } from '@angular/forms';
@@ -77,6 +78,8 @@ export class MultiCmdsComponent implements OnInit {
   public empty = true;
   private endId = -1;
 
+  public scriptBlock: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private api: ApiService,
@@ -97,17 +100,25 @@ export class MultiCmdsComponent implements OnInit {
     });
   }
 
+  get initializing() {
+    return this.result.state == 'unknown' || this.result.state == '';
+  }
+
+  isSingleCmd(cmd) {
+    let match = /\r|\n/.exec(cmd);
+    return match ? false : true;
+  }
+
+  public toggleScriptBlock() {
+    this.scriptBlock = !this.scriptBlock;
+  }
+
   get isLoaded(): boolean {
     return this.gotTasks;
   }
 
   public stateClass(state) {
     return this.jobStateService.stateClass(state);
-  }
-
-  private isSingleCmd(cmd) {
-    let match = /\r|\n/.exec(cmd);
-    return match ? false : true;
   }
 
   updateJob(id) {
@@ -125,7 +136,7 @@ export class MultiCmdsComponent implements OnInit {
           this.tabs[this.selected.value].state = job.state;
           if (!this.tabs[this.selected.value].command) {
             this.tabs[this.selected.value].command = job.commandLine;
-            this.timeout = job.defaultTaskMaximumRuntimeSeconds;
+            this.timeout = job.maximumRuntimeSeconds;
             this.cmds.push({ mode: this.isSingleCmd(job.commandLine) ? 'single' : 'multiple', cmd: job.commandLine });
           }
           return true;
@@ -180,6 +191,10 @@ export class MultiCmdsComponent implements OnInit {
     if (this.subcription) {
       this.subcription.unsubscribe();
     }
+    this.stopCurrentLoop();
+  }
+
+  stopCurrentLoop() {
     if (this.jobLoop) {
       Loop.stop(this.jobLoop);
     }
@@ -193,12 +208,12 @@ export class MultiCmdsComponent implements OnInit {
     this.tabs.forEach(tab => {
       for (let node in tab.outputs) {
         let loop = tab.outputs[node].keyLoop;
+        tab.outputs[node].loading = false;
         if (loop) {
           Loop.stop(loop);
         }
       }
     });
-
   }
 
   //This should work but not in fact! Because this.selector is set later than
@@ -286,7 +301,7 @@ export class MultiCmdsComponent implements OnInit {
       output = selectedJobOutputs[node.name];
     }
     if (!output) {
-      output = selectedJobOutputs[node.name] = {
+      selectedJobOutputs[node.name] = {
         content: '',
         next: this.outputInitOffset,
         start: undefined,
@@ -295,6 +310,7 @@ export class MultiCmdsComponent implements OnInit {
         key: null,
         error: ''
       };
+      output = selectedJobOutputs[node.name];
       let onKeyReady = (callback) => {
         if (output.key === null) {
           if (!output.keyLoop) {
@@ -609,29 +625,54 @@ export class MultiCmdsComponent implements OnInit {
       let names = this.result.nodes.map(node => node.name);
       this.api.command.create(this.newCmd, names, this.timeout).subscribe(obj => {
         this.id = obj.id;
-        this.tabs.push({ id: this.id, outputs: {}, command: this.newCmd['cmd'], state: '' });
-        // this.cmds.push({ mode: this.commandLine, cmd: this.newCmd });
+        this.tabs.push({ id: this.id, outputs: {}, command: this.newCmd, state: '' });
+        this.cmds.push({ mode: this.isSingleCmd(this.newCmd) ? 'single' : 'multiple', cmd: this.newCmd });
         this.selected.setValue(this.tabs.length - 1);
-        this.updateJob(this.id);
-        this.updateNodes(this.id);
         this.newCmd = '';
-        this.commandIndex = this.cmds.length;
-        this.scriptIndex = this.cmds.length;
+        this.commandIndex = this.cmds.length - 1;
+        this.scriptIndex = this.cmds.length - 1;
       });
     }
+  }
+
+  newCommand() {
+    let dialogRef = this.dialog.open(CommandInputComponent, {
+      width: '98%',
+      data: { command: this.result.command, timeout: this.timeout, isSingleCmd: this.isSingleCmd(this.result.command) }
+    });
+    dialogRef.afterClosed().subscribe(params => {
+      if (params && params.command) {
+        let names = this.result.nodes.map(node => node.name);
+        this.api.command.create(params.command, names, params.timeout).subscribe(obj => {
+          this.id = obj.id;
+          this.tabs.push({ id: this.id, outputs: {}, command: params.command, state: '' });
+          this.cmds.push({ mode: this.isSingleCmd(params.command) ? 'single' : 'multiple', cmd: params.command });
+          this.selected.setValue(this.tabs.length - 1);
+          this.newCmd = '';
+          this.commandIndex = this.cmds.length - 1;
+          this.scriptIndex = this.cmds.length - 1;
+        });
+      }
+    });
   }
 
   changeTab(e) {
     this.id = this.tabs[e].id;
     this.selected.setValue(e);
+    this.stopCurrentLoop();
     this.updateJob(this.id);
     this.updateNodes(this.id);
-    this.startAutoload(this.selectedNode);
+    if (this.autoload) {
+      this.startAutoload(this.selectedNode);
+    }
+    else {
+      this.loadOnce(this.selectedNode);
+    }
   }
 
   cancelCommand() {
     let dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      width: '90%',
+      width: '45%',
       data: {
         title: 'Cancel',
         message: 'Are you sure to cancel the current run of command?'
@@ -640,7 +681,9 @@ export class MultiCmdsComponent implements OnInit {
     dialogRef.afterClosed().subscribe(res => {
       if (res) {
         this.canceling = true;
-        this.api.command.cancel(this.id).subscribe();
+        this.api.command.cancel(this.id).subscribe(res => {
+          this.canceling = false;
+        });
       }
     });
   }
@@ -666,9 +709,6 @@ export class MultiCmdsComponent implements OnInit {
       if (previousCmd['mode'] == this.commandLine) {
         this.newCmd = previousCmd['cmd'];
       }
-      // else {
-      //   this.newCmd = '';
-      // }
     }
     else {
       this.newCmd = targetCmd;

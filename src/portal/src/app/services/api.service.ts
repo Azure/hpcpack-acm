@@ -1,14 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { of } from 'rxjs/observable/of';
 import { catchError, map, first } from 'rxjs/operators';
 import 'rxjs/add/operator/first';
 import { environment as env } from '../../environments/environment';
 import { Node } from '../models/resource/node';
 import { CommandResult } from '../models/command/command-result';
 import { TestResult } from '../models/test-result';
-import { HeatmapNode } from '../models/resource/heatmap-node';
 import 'rxjs/add/operator/concatMap';
 import { ListNode } from '../models/resource/node-list';
 import { ListJob } from '../models/diagnostics/list-job';
@@ -171,7 +169,7 @@ export class CommandApi extends Resource<CommandResult> {
       commandLine: result.commandLine,
       state: result.state,
       targetNodes: result.targetNodes,
-      defaultTaskMaximumRuntimeSeconds: result.defaultTaskMaximumRuntimeSeconds
+      maximumRuntimeSeconds: result.maximumRuntimeSeconds
     } as CommandResult;
   }
 
@@ -211,7 +209,7 @@ export class CommandApi extends Resource<CommandResult> {
 
   cancel(jobId) {
     let url = `${this.url}/${jobId}`;
-    return this.http.patch<any>(url, { request: 'cancel' })
+    return this.http.patch(url, { request: 'cancel' }, { observe: 'body', responseType: 'text' })
       .pipe(this.errorHandler);
   }
 

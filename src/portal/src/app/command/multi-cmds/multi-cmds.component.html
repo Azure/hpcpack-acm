@@ -1,3 +1,34 @@
+<div class="title main">
+  <div class="job-state">
+    <mat-spinner *ngIf="!isOver" [diameter]="20"></mat-spinner>
+    <div class="name cmd-name">
+      <div class="state-text" [ngClass]="stateClass(result.state)">{{result.state}}</div>
+      <div *ngIf="isSingleCmd(result.command)"> {{id}} - {{result.command}} </div>
+      <div *ngIf="!isSingleCmd(result.command)"> {{id}} - <div class="block-script-title" (click)="toggleScriptBlock()">Scipt
+          Block</div>
+      </div>
+    </div>
+
+  </div>
+  <div class="operations" *ngIf="!initializing">
+    <div class="operation" (click)="newCommand()">
+      <i class="material-icons rerun">content_copy</i>
+      <div class="operation-name">Clone</div>
+    </div>
+    <div class="cancel-job">
+      <div class="operation" *ngIf="!isOver" (click)="cancelCommand()">
+        <i class="material-icons operation-icon cancel">clear</i>
+        <div class="operation-name">Cancel</div>
+      </div>
+      <div class="operation-text" *ngIf="!isOver && canceling">
+        <div class="operation-name">Waiting for cancel request finish...</div>
+      </div>
+    </div>
+  </div>
+</div>
+<pre class="block-script-content" *ngIf="scriptBlock">{{result.command}}</pre>
+
+
 <ng-container *ngIf="isLoaded; else waiting">
   <div class="container-fluid">
     <div class="row">

@@ -79,3 +79,24 @@
   @include display-flex(start, center);
   font-size: 13px;
 }
+
+.cmd-name {
+  @include display-flex;
+}
+
+.block-script-title {
+  display: inline-block;
+  text-decoration: underline solid $color;
+
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+.block-script-content {
+  max-height: 50vh;
+  overflow-y: auto;
+  background: #fff;
+  padding: 10px 15px;
+  font-size: 14px;
+}

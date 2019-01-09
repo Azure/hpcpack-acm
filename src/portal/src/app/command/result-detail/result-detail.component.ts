@@ -62,7 +62,6 @@ export class ResultDetailComponent implements OnInit {
   public empty = true;
   private endId = -1;
 
-  public singleCmd: boolean;
   public scriptBlock: boolean = false;
 
   constructor(
@@ -117,7 +116,7 @@ export class ResultDetailComponent implements OnInit {
           }
           this.result.state = job.state;
           this.result.command = job.commandLine;
-          this.result.timeout = job.defaultTaskMaximumRuntimeSeconds;
+          this.result.timeout = job.maximumRuntimeSeconds;
           return true;
         },
         error: (err) => {
@@ -585,7 +584,7 @@ export class ResultDetailComponent implements OnInit {
       data: { command: this.result.command, timeout: this.result.timeout, isSingleCmd: this.isSingleCmd }
     });
     dialogRef.afterClosed().subscribe(params => {
-      if (params.command) {
+      if (params && params.command) {
         let names = this.result.nodes.map(node => node.name);
         this.api.command.create(params.command, names, params.timeout).subscribe(obj => {
           this.router.navigate([`/command/results/${obj.id}`]);
