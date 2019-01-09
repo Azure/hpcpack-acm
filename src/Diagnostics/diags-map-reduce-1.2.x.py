@@ -256,7 +256,9 @@ def parseStdin():
     taskResults = stdin.get('TaskResults')
     if tasks and taskResults:
         if len(tasks) != len(taskResults):
-            raise Exception('Task count {} is not equal to task result count {}'.format(len(tasks), len(taskResults)))
+            idInTasks = set([task['Id'] for task in tasks])
+            idInTaskResults = set([task['TaskId'] for task in taskResults])
+            raise Exception('Task count {} is not equal to task result count {}. Missing result of task(s): {}'.format(len(tasks), len(taskResults), ', '.join(map(str, idInTasks - idInTaskResults))))
         taskIdNodeNameInTasks = set(['{}:{}'.format(task['Id'], task['Node']) for task in tasks])
         taskIdNodeNameInTaskResults = set(['{}:{}'.format(task['TaskId'], task['NodeName']) for task in taskResults])
         difference = (taskIdNodeNameInTasks | taskIdNodeNameInTaskResults) - (taskIdNodeNameInTasks & taskIdNodeNameInTaskResults)
