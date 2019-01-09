@@ -345,8 +345,8 @@ def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
     tasks = mpiPingpongCreateTasksWindows(list(windowsNodes & rdmaNodes), True, 1, mpiInstallationLocationWindows, packetSize)
     tasks += mpiPingpongCreateTasksWindows(list(windowsNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationWindows, packetSize)
-    tasks += mpiPingpongCreateTasksLinux(list(linuxNodes & rdmaNodes), True, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize, None)
-    tasks += mpiPingpongCreateTasksLinux(list(linuxNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize, None)
+    tasks += mpiPingpongCreateTasksLinux(list(linuxNodes & rdmaNodes), True, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize)
+    tasks += mpiPingpongCreateTasksLinux(list(linuxNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize)
     return tasks
 
 def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
@@ -397,11 +397,11 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
         idByNodeNext = {}
         for nodepair in taskgroup:
             nodes = ','.join(nodepair)
-            command = commandMeasureTime.replace('[command]', commandRunInter).replace('[nodepair]', nodes)
+            command = commandMeasureTime.replace('[command]', commandRunInter)
             task = copy.deepcopy(taskTemplate)
             task['Id'] = id
             task['Node'] = nodepair[0]
-            task['CommandLine'] = '"{}" && powershell "{}"'.format(mpiEnvFile, command)
+            task['CommandLine'] = '"{}" && powershell "{}"'.format(mpiEnvFile, command).replace('[nodepair]', nodes)
             task['ParentIds'] = [idByNode[node] for node in nodepair if node in idByNode]
             task['CustomizedData'] = '{} {}'.format(taskLabel, nodes)
             task['MaximumRuntimeSeconds'] = 60
@@ -412,10 +412,16 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
         idByNode = idByNodeNext
     return tasks
 
-def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, log, debugCommand):
+def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, log):
     tasks = []
     if len(nodelist) == 0:
         return tasks
+
+    taskTemplate = {
+        'UserName':HPC_DIAG_USERNAME,
+        'Password':None,
+        'PrivateKey':SSH_PRIVATE_KEY,
+    }
 
     rdmaOption = ''
     taskLabel = '[Linux]'
@@ -423,128 +429,73 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
         rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0'
         taskLabel += '[RDMA]'
 
-    scriptLocation = 'diagtestscripts'
-    filterScriptDir = '/tmp/hpc_{}'.format(scriptLocation)
-    filterScriptName = 'MPI-Pingpong-filter.py'
-    filterScriptVersion = '#v0.12'
-    filterScriptPath = '{}/{}'.format(filterScriptDir, filterScriptName)
-    commandDownloadScript = 'if [ ! -f {0} ] || [ "`head -n1 {0}`" != "{1}" ]; then wget -P {2} ${{blobEndpoint}}{3}/{4} >stdout 2>stderr; fi && '.format(filterScriptPath, filterScriptVersion, filterScriptDir, scriptLocation, filterScriptName)
-    commandParseResult = " && cat stdout | [parseResult] >raw && cat raw | tail -n +2 | awk '{print [columns]}' | tr ' ' '\n' | [parseValue] >data"
-    commandGenerateOutput = " && cat data | head -n1 >output && cat data | tail -n1 >>output && cat timeResult >>output && cat raw >>output && cat output | python {}".format(filterScriptPath)
-    commandGenerateError = ' || (errorcode=$? && echo "MPI Pingpong task failed!" >error && cat stdout stderr >>error && cat error && exit $errorcode)'
-    commandLine = commandDownloadScript + "TIMEFORMAT='%3R' && (time timeout [timeout]s bash -c '[sshcommand] && source {0}/intel64/bin/mpivars.sh && [mpicommand]' >stdout 2>stderr) 2>timeResult".format(mpiLocation) + commandParseResult + commandGenerateOutput + commandGenerateError
-    
-    taskTemplateOrigin = {
-        "UserName":HPC_DIAG_USERNAME,
-        "Password":None,
-        "PrivateKey":SSH_PRIVATE_KEY,
-    }
+    sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
 
-    headingStartId = startId
-    headingNode2Id = {}
-    taskStartId = headingStartId + len(nodelist)
+    commandAddHost = 'host [pairednode] && ssh-keyscan [pairednode] >>~/.ssh/known_hosts'
+    commandClearHosts = 'rm -f ~/.ssh/known_hosts'
+    commandRunIntra = 'source {}/intel64/bin/mpivars.sh && mpirun -env I_MPI_SHM_LMT=shm {} -n 2 IMB-MPI1 pingpong'.format(mpiLocation, rdmaOption)    
+    commandRunInter = 'source {}/intel64/bin/mpivars.sh && mpirun -hosts [nodepair] {} -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(mpiLocation, rdmaOption, sampleOption)
+    commandMeasureTime = "TIMEFORMAT='Run time: %3R' && time timeout [timeout]s bash -c '[command]'".format(mpiLocation)
 
-    # Create task for every node to run Intel MPI Benchmark - PingPong between processors within each node.
-    # Ssh keys will also be created by these tasks for mutual trust which is necessary to run the following tasks
+    idByNode = {}
 
-    sshcommand = "rm -f ~/.ssh/known_hosts" # Clear ssh knownhosts
-    checkcore = 'bash -c "if [ `grep -c ^processor /proc/cpuinfo` -eq 1 ]; then exit -10; fi"' # MPI Ping Pong can not get result but return 0 if core number is less than 2, so check core number and fail mpicommand if there is no result
-    mpicommand = "mpirun -env I_MPI_SHM_LMT=shm {} -n 2 IMB-MPI1 pingpong && {}".format(rdmaOption, checkcore)
-    parseResult = "tail -n29 | head -n25"
-    columns = "$3,$4"
-    parseValue = "sed -n '1p;$p'"
-    timeout = "600"
-    taskTemplate = copy.deepcopy(taskTemplateOrigin)
-    taskTemplate["CommandLine"] = commandLine.replace("[sshcommand]", sshcommand).replace("[mpicommand]", mpicommand).replace("[columns]", columns).replace("[parseResult]", parseResult).replace("[parseValue]", parseValue).replace("[timeout]", timeout)
-    taskTemplate["MaximumRuntimeSeconds"] = 650
-    if debugCommand:
-        taskTemplate["CommandLine"] = debugCommand
-
-    id = headingStartId
+    id = startId
     for node in sorted(nodelist):
+        command = commandMeasureTime.replace('[timeout]', '600').replace('[command]', commandRunIntra)
         task = copy.deepcopy(taskTemplate)
-        task["Id"] = id
-        task["Node"] = node
-        task["CustomizedData"] = '{} {}'.format(taskLabel, node)
+        task['Id'] = id
+        task['Node'] = node
+        task['CommandLine'] = '{} && {}'.format(commandClearHosts, command)
+        task['CustomizedData'] = '{} {}'.format(taskLabel, node)
+        task['MaximumRuntimeSeconds'] = 650
         tasks.append(task)
-        headingNode2Id[node] = id
+        idByNode[node] = id
         id += 1
 
     if len(nodelist) < 2:
         return tasks
 
-    # Create tasks to run Intel MPI Benchmark - PingPong between all node pairs in selected nodes.
-
-    if -1 < log < 30:
-        sampleOption = "-msglog {}:{}".format(log, log + 1)
-        parseResult = "tail -n 8 | head -n 3"
-        parseValue = "tail -n2"
-        timeout = 20
-    else:
-        sampleOption = "-iter 10"
-        parseResult = "tail -n 29 | head -n 25"
-        parseValue = "sed -n '1p;$p'"
-        timeout = 20
-
-    sshcommand = "host [pairednode] && ssh-keyscan [pairednode] >>~/.ssh/known_hosts" # Add ssh knownhosts
-    mpicommand = "mpirun -hosts [dummynodes] {} -ppn 1 IMB-MPI1 -time 60 {} pingpong".format(rdmaOption, sampleOption)
-    columns = "$3,$4"
-
-    taskTemplate = copy.deepcopy(taskTemplateOrigin)
-    taskTemplate["CommandLine"] = commandLine.replace("[sshcommand]", sshcommand).replace("[mpicommand]", mpicommand).replace("[columns]", columns).replace("[parseResult]", parseResult).replace("[parseValue]", parseValue)
-    taskTemplate["MaximumRuntimeSeconds"] = 30
-
-    if mode == "Parallel".lower():
-        timeout *= 10
-        taskTemplate["MaximumRuntimeSeconds"] = 300
-
     if mode == 'Tournament'.lower():
         taskgroups = mpiPingpongGetGroups(nodelist)
-        id = taskStartId
-        firstGroup = True
         for taskgroup in taskgroups:
-            nodeToIdNext = {}
+            idByNodeNext = {}
             for nodepair in taskgroup:
-                task = copy.deepcopy(taskTemplate)
                 nodes = ','.join(nodepair)
-                task["Id"] = id
-                task["Node"] = nodepair[0]
-                task["ParentIds"] = [headingNode2Id[node] for node in nodepair] if firstGroup else [nodeToId[node] for node in nodepair if node in nodeToId]
-                task["CommandLine"] = task["CommandLine"].replace("[dummynodes]", nodes)
-                task["CommandLine"] = task["CommandLine"].replace("[pairednode]", nodepair[1])
-                task["CommandLine"] = task["CommandLine"].replace("[timeout]", str(timeout))
-                if debugCommand:
-                    task["CommandLine"] = debugCommand
-                task["CustomizedData"] = '{} {}'.format(taskLabel, nodes)
+                command = commandMeasureTime.replace('[timeout]', '20').replace('[command]', commandRunInter)
+                task = copy.deepcopy(taskTemplate)
+                task['Id'] = id
+                task['Node'] = nodepair[0]
+                task['ParentIds'] = [idByNode[node] for node in nodepair if node in idByNode]
+                task['CommandLine'] = '{} && {}'.format(commandAddHost, command).replace('[pairednode]', nodepair[1]).replace('[nodepair]', nodes)
+                task['CustomizedData'] = '{} {}'.format(taskLabel, nodes)
+                task['MaximumRuntimeSeconds'] = 30
                 tasks.append(task)
-                nodeToIdNext[nodepair[0]] = id
-                nodeToIdNext[nodepair[1]] = id
+                idByNodeNext[nodepair[0]] = id
+                idByNodeNext[nodepair[1]] = id
                 id += 1
-            firstGroup = False
-            nodeToId = nodeToIdNext
+            idByNode = idByNodeNext
     else:
-        id = taskStartId
         nodepairs = []
         for i in range(0, len(nodelist)):
             for j in range(i+1, len(nodelist)):
                 nodepairs.append([nodelist[i], nodelist[j]])
         for nodepair in nodepairs:
-            task = copy.deepcopy(taskTemplate)
-            task["Id"] = id
-            if mode == 'Parallel'.lower():
-                task["ParentIds"] = [headingNode2Id[node] for node in nodepair]
-            else:
-                task["ParentIds"] = [id-1]
-            id += 1
             nodes = ','.join(nodepair)
-            task["CommandLine"] = task["CommandLine"].replace("[dummynodes]", nodes)
-            task["CommandLine"] = task["CommandLine"].replace("[pairednode]", nodepair[1])
-            task["CommandLine"] = task["CommandLine"].replace("[timeout]", str(timeout))
-            if debugCommand:
-                task["CommandLine"] = debugCommand
-            task["Node"] = nodepair[0]
-            task["CustomizedData"] = '{} {}'.format(taskLabel, nodes)
+            task = copy.deepcopy(taskTemplate)
+            task['Id'] = id
+            task['Node'] = nodepair[0]
+            task['CustomizedData'] = '{} {}'.format(taskLabel, nodes)
+            if mode == 'Parallel'.lower():
+                command = commandMeasureTime.replace('[timeout]', '200').replace('[command]', commandRunInter)
+                task['ParentIds'] = [idByNode[node] for node in nodepair]
+                task['MaximumRuntimeSeconds'] = 230
+            else:
+                command = commandMeasureTime.replace('[timeout]', '20').replace('[command]', commandRunInter)
+                task['ParentIds'] = [id-1]
+                task['MaximumRuntimeSeconds'] = 30
+            task['CommandLine'] = '{} && {}'.format(commandAddHost, command).replace('[nodepair]', nodes).replace('[pairednode]', nodepair[1])
             tasks.append(task)
+            id += 1
     return tasks
 
 def mpiPingpongGetGroups(nodelist):
@@ -566,19 +517,13 @@ def mpiPingpongGetGroups(nodelist):
 
 def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
     startTime = time.time()
-    nodesNumber = len(allNodes)
 
-    # for debug
-    warnings = []
-    if len(tasks) != len(taskResults):
-        warnings.append('Task count {} is not equal to task result count {}.'.format(len(tasks), len(taskResults)))
-
-    defaultPacketSize = 2**22
     mpiVersion = arguments['Intel MPI version']    
     packetSize = 2**arguments['Packet size']
     mode = arguments['Mode'].lower()
     debug = arguments['Debug']
 
+    defaultPacketSize = 2**22
     isDefaultSize = not 2**-1 < packetSize < 2**30
 
     taskStateFinished = 3
@@ -636,20 +581,14 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
             exitCode = taskResult['ExitCode']
             if 'Message' in taskResult and taskResult['Message']:
                 output = taskResult['Message']
-                hasResult = False
-                try:
-                    if taskId in linuxTaskIds:
-                        message = json.loads(output)
-                        hasResult = message['Latency'] > 0 and message['Throughput'] > 0
+                message = None
+                if exitCode == 0:
+                    message = mpiPingpongParseOutput(output, isDefaultSize)
+                    if message:
                         taskRuntime[taskId] = message['Time']
-                    elif exitCode == 0:
-                        message = mpiPingpongParseOutput(output, isDefaultSize)
-                        hasResult = True if message else False
-                except:
-                    pass
-                if taskId in tasksForStatistics and hasResult:
-                    messages[taskId2nodePair[taskId]] = message
-                if exitCode != 0 or not hasResult:
+                        if taskId in tasksForStatistics:
+                            messages[taskId2nodePair[taskId]] = message
+                if exitCode != 0 or not message:
                     failedTask = {
                         'TaskId':taskId,
                         'NodeName':nodeName,
@@ -679,8 +618,6 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
     if goodNodes != set([node for pair in goodPairs for node in pair.split(',')]):
         printErrorAsJson('Should not get here!')
         return -1
-    if nodesNumber == 1 or nodesNumber == 2 and len(rdmaNodes) == 1:
-        goodNodes = [task['Node'] for task in tasks if task['State'] == taskStateFinished]
     badNodes = [node for node in allNodes if node not in goodNodes]
     goodNodes = list(goodNodes)
     failedReasons, failedReasonsByNode = mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs)
@@ -721,7 +658,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                 badPairs.sort(key=lambda x:x['Value'], reverse=True)
                 bestPairs = {'Pairs':[pair for pair in messages if messages[pair][item] == globalMin], 'Value':globalMin}
                 worstPairs = {'Pairs':[pair for pair in messages if messages[pair][item] == globalMax], 'Value':globalMax}
-                packet_size = 0 if packetSize == 2**-1 else packetSize
+                packet_size = 0 if isDefaultSize else packetSize
             else:
                 unit = 'MB/s'
                 threshold = throughputThreshold
@@ -729,7 +666,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                 badPairs.sort(key=lambda x:x['Value'])
                 bestPairs = {'Pairs':[pair for pair in messages if messages[pair][item] == globalMax], 'Value':globalMax}
                 worstPairs = {'Pairs':[pair for pair in messages if messages[pair][item] == globalMin], 'Value':globalMin}
-                packet_size = defaultPacketSize if packetSize == 2**-1 else packetSize
+                packet_size = defaultPacketSize if isDefaultSize else packetSize
 
             result[item]['Unit'] = unit
             result[item]['Threshold'] = threshold
@@ -786,7 +723,6 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
             'GoodNodesGroups':goodNodesGroups,
             'CanceledTasks':canceledTasks,
             'FailedTasksGroupByExitcode':failedTasksByExitcode,
-            'Warnings':warnings,
             'TaskRuntime':taskRuntime,
             }
         
@@ -794,29 +730,19 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
     return 0
 
 def mpiPingpongParseOutput(output, isDefaultSize):
-    lines = output.splitlines()
-    title = '#bytes #repetitions      t[usec]   Mbytes/sec'
-    hasResult = False
-    data = []
-    for line in lines:
-        if hasResult:
-            numbers = line.split()
-            if len(numbers) == 4:
-                data.append(numbers)
-            else:
-                break
-        elif title in line:
-            hasResult = True
-    if isDefaultSize and len(data) == 24:
-        return {
-            'Latency': float(data[0][2]),
-            'Throughput': float(data[-1][3])
-        }
-    if not isDefaultSize and len(data) == 3:
-        return {
-            'Latency': float(data[1][2]),
-            'Throughput': float(data[1][3])
-        }
+    try:
+        lines = [line for line in output.splitlines() if line]
+        latency = throughput = time = None
+        if lines[-1].startswith('Run time'):
+            return {
+                'Latency': float(lines[-26 if isDefaultSize else -4].split()[2]),
+                'Throughput': float(lines[-3 if isDefaultSize else -4].split()[3]),
+                'Time': float(lines[-1].split()[-1])
+            }
+        else:
+            return None
+    except:
+        return None
 
 def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
     reasonMpiNotInstalled = 'Intel MPI is not found.'
@@ -829,7 +755,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
     reasonFireWallProbably = 'The connection may be blocked by firewall.'
     solutionFireWall = 'Check and configure the firewall properly.'
 
-    reasonNodeSingleCore = 'MPI PingPong can not run inside a node with only 1 core.'
+    reasonNodeSingleCore = 'MPI PingPong can not run with only 1 process.'
     solutionNodeSingleCore = 'Ignore this failure.'
 
     reasonTaskTimeout = 'Task timeout.'
