@@ -1031,14 +1031,6 @@ paths:
         201:
           description: OK
 
-  /validation:
-    get:
-      summary: Validate user confidential for HTTP Basic Auth
-      operationId: validateUser
-      responses:
-        201:
-          description: OK
-
 host: localhost
 basePath: /v1
 schemes:
