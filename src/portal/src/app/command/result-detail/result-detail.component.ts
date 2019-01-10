@@ -116,6 +116,7 @@ export class ResultDetailComponent implements OnInit {
           }
           this.result.state = job.state;
           this.result.command = job.commandLine;
+          this.result.progress = job.progress;
           this.result.timeout = job.maximumRuntimeSeconds;
           return true;
         },

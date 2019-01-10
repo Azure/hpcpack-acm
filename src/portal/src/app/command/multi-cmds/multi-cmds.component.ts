@@ -133,6 +133,7 @@ export class MultiCmdsComponent implements OnInit {
           }
           this.result.state = job.state;
           this.result.command = job.commandLine;
+          this.result.progress =job.progress;
           this.tabs[this.selected.value].state = job.state;
           if (!this.tabs[this.selected.value].command) {
             this.tabs[this.selected.value].command = job.commandLine;

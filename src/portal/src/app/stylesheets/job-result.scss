@@ -13,6 +13,11 @@
     @include font-basic(1.2em, rgba($color: #000000, $alpha: 0.8));
     padding: 1em 0;
     word-break: break-word;
+    @include display-flex;
+  }
+
+  .job-info {
+    @include display-flex(center);
   }
 }
 
@@ -85,9 +90,28 @@ md-select,
 }
 
 .state-text {
-  display: inline-block;
+  width: 100%;
+}
+
+.job-progress {
+  @include display-flex(center, center, column);
   padding-right: .5em;
-  width: 5em;
+  width: 6em;
+}
+
+.progress {
+  @include display-flex(center, space-between);
+  font-size: .6em;
+  width: 100%;
+
+  .progress-bar {
+    flex: 2;
+    margin-right: 5px;
+  }
+
+  .progress-number {
+    flex: 1;
+  }
 }
 
 .cancel-job {

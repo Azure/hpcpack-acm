@@ -169,7 +169,8 @@ export class CommandApi extends Resource<CommandResult> {
       commandLine: result.commandLine,
       state: result.state,
       targetNodes: result.targetNodes,
-      maximumRuntimeSeconds: result.maximumRuntimeSeconds
+      maximumRuntimeSeconds: result.maximumRuntimeSeconds,
+      progress: result.progress
     } as CommandResult;
   }
 

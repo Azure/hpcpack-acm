@@ -37,10 +37,6 @@
   }
 }
 
-.cmd-name {
-  @include display-flex;
-}
-
 .block-script-title {
   display: inline-block;
   text-decoration: underline solid $color;

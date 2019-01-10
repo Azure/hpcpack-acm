@@ -1,14 +1,18 @@
 <div class="title main">
   <div class="job-state">
-    <mat-spinner *ngIf="!isOver" [diameter]="20"></mat-spinner>
-    <div class="name cmd-name">
-      <div class="state-text" [ngClass]="stateClass(result.state)">{{result.state}}</div>
-      <div *ngIf="isSingleCmd(result.command)"> {{id}} - {{result.command}} </div>
-      <div *ngIf="!isSingleCmd(result.command)"> {{id}} - <div class="block-script-title" (click)="toggleScriptBlock()">Scipt
+    <div class="name">
+      <div class="job-progress">
+        <div class="state-text" [ngClass]="stateClass(result.state)">{{result.state}}</div>
+        <div class="progress">
+          <mat-progress-bar mode="determinate" [value]="result.progress * 100" class="progress-bar"></mat-progress-bar>
+          <div class="progress-number">{{result.progress | percent}}</div>
+        </div>
+      </div>
+      <div *ngIf="isSingleCmd(result.command)" class="job-info"> {{id}} - {{result.command}} </div>
+      <div *ngIf="!isSingleCmd(result.command)" class="job-info"> {{id}} - <div class="block-script-title" (click)="toggleScriptBlock()">Scipt
           Block</div>
       </div>
     </div>
-
   </div>
   <div class="operations" *ngIf="!initializing">
     <div class="operation" (click)="newCommand()">
