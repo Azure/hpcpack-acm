@@ -255,13 +255,9 @@ def parseStdin():
     tasks = stdin.get('Tasks')
     taskResults = stdin.get('TaskResults')
     if tasks and taskResults:
-        if len(tasks) != len(taskResults):
-            idInTasks = set([task['Id'] for task in tasks])
-            idInTaskResults = set([task['TaskId'] for task in taskResults])
-            raise Exception('Task count {} is not equal to task result count {}. Missing result of task(s): {}'.format(len(tasks), len(taskResults), ', '.join(map(str, idInTasks - idInTaskResults))))
         taskIdNodeNameInTasks = set(['{}:{}'.format(task['Id'], task['Node']) for task in tasks])
         taskIdNodeNameInTaskResults = set(['{}:{}'.format(task['TaskId'], task['NodeName']) for task in taskResults])
-        difference = (taskIdNodeNameInTasks | taskIdNodeNameInTaskResults) - (taskIdNodeNameInTasks & taskIdNodeNameInTaskResults)
+        difference = taskIdNodeNameInTaskResults - taskIdNodeNameInTasks
         if difference:
             raise Exception('Task id and node name mismatch in "Tasks" and "TaskResults": {}'.format(', '.join(difference)))
         nodesInJob = set(targetNodes)
@@ -525,12 +521,11 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
     mode = arguments['Mode'].lower()
     debug = arguments['Debug']
 
+    TASK_STATE_FINISHED = 3
+    TASK_STATE_CANCELED = 5
+
     defaultPacketSize = 2**22
     isDefaultSize = not 2**-1 < packetSize < 2**30
-
-    taskStateFinished = 3
-    taskStateFailed = 4
-    taskStateCanceled = 5
 
     taskId2nodePair = {}
     tasksForStatistics = set()
@@ -540,28 +535,53 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
     canceledTasks = []
     canceledNodePairs = set()
     hasInterVmTask = False
+    messages = {}
+    failedTasks = []
+    taskRuntime = {}
     try:
+        taskId = None
+        resultByTaskId = {taskResult['TaskId']: taskResult for taskResult in taskResults}
         for task in tasks:
             taskId = task['Id']
+            nodeName = task['Node']
             state = task['State']
             taskLabel = task['CustomizedData']
             nodeOrPair = taskLabel.split()[-1]
+            taskId2nodePair[taskId] = nodeOrPair
             if '[Windows]' in taskLabel:
                 windowsTaskIds.add(taskId)
             if '[Linux]' in taskLabel:
                 linuxTaskIds.add(taskId)
             if '[RDMA]' in taskLabel and ',' not in taskLabel:
                 rdmaNodes.append(nodeOrPair)
-            taskId2nodePair[taskId] = nodeOrPair
+            isInterVmTask = False
             if ',' in nodeOrPair:
+                isInterVmTask = True
                 hasInterVmTask = True
-                if state == taskStateFinished:
-                    tasksForStatistics.add(taskId)
-            if state == taskStateCanceled:
+            if state == TASK_STATE_CANCELED:
                 canceledTasks.append(taskId)
                 canceledNodePairs.add(nodeOrPair)
+            exitCode = output = message = None
+            taskResult = resultByTaskId.get(taskId)
+            if taskResult:
+                exitCode = taskResult['ExitCode']
+                output = taskResult.get('Message')
+                if exitCode == 0:
+                    message = mpiPingpongParseOutput(output, isDefaultSize)
+                    if message:
+                        taskRuntime[taskId] = message['Time']
+                        if isInterVmTask and state == TASK_STATE_FINISHED:
+                            messages[nodeOrPair] = message
+            if not message:
+                failedTasks.append({
+                    'TaskId':taskId,
+                    'NodeName':nodeName,
+                    'NodeOrPair':nodeOrPair,
+                    'ExitCode':exitCode,
+                    'Output':output
+                    })
     except Exception as e:
-        printErrorAsJson('Failed to parse tasks. ' + str(e))
+        printErrorAsJson('Failed to parse task {}. {}'.format(taskId, e))
         return -1
 
     if len(windowsTaskIds) + len(linuxTaskIds) != len(tasks):
@@ -571,39 +591,6 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
     if not hasInterVmTask:
         printErrorAsJson('No inter VM test was executed. Please select more nodes.')
         return 0
-
-    messages = {}
-    failedTasks = []
-    taskRuntime = {}
-    try:
-        for taskResult in taskResults:
-            taskId = taskResult['TaskId']
-            nodeName = taskResult['NodeName']
-            nodePair = taskId2nodePair[taskId]
-            exitCode = taskResult['ExitCode']
-            if 'Message' in taskResult and taskResult['Message']:
-                output = taskResult['Message']
-                message = None
-                if exitCode == 0:
-                    message = mpiPingpongParseOutput(output, isDefaultSize)
-                    if message:
-                        taskRuntime[taskId] = message['Time']
-                        if taskId in tasksForStatistics:
-                            messages[taskId2nodePair[taskId]] = message
-                if exitCode != 0 or not message:
-                    failedTask = {
-                        'TaskId':taskId,
-                        'NodeName':nodeName,
-                        'NodeOrPair':nodePair,
-                        'ExitCode':exitCode,
-                        'Output':output
-                        }
-                    failedTasks.append(failedTask)
-            else:
-                raise Exception('No Message')
-    except Exception as e:
-        printErrorAsJson('Failed to parse task result. Task id: {}. {}'.format(taskId, e))
-        return -1
 
     latencyThreshold = packetSize//50 if packetSize > 2**20 else 10000
     throughputThreshold = packetSize//1000 if 2**-1 < packetSize < 2**20 else 50
@@ -765,9 +752,6 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
     reasonSampleTimeout = 'Pingpong test sample timeout.'
     reasonNoResult = 'No result.'
 
-    reasonWgetFailed = 'Failed to download filter script.'
-    solutionWgetFailed = 'Check accessibility of "$blobEndpoint/diagtestscripts/mpi-pingpong-filter.py" on nodes.'
-
     reasonAvSet = 'The nodes may not be in the same availability set.(CM ADDR ERROR)'
     solutionAvSet = 'Recreate the node(s) and ensure the nodes are in the same availability set.'
     
@@ -804,10 +788,6 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
         elif "Benchmark PingPong invalid for 1 processes" in output:
             reason = reasonNodeSingleCore
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionNodeSingleCore, 'Nodes':[]})['Nodes'].append(nodeName)
-        elif "wget" in output and exitCode == 4 or 'mpi-pingpong-filter.py' in output and exitCode == 8:
-            reason = reasonWgetFailed
-            failedPair['NodeOrPair'] = nodeName
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionWgetFailed, 'Nodes':set()})['Nodes'].add(nodeName)
         elif "CM ADDR ERROR" in output:
             reason = reasonAvSet
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionAvSet, 'NodePairs':[]})['NodePairs'].append(nodeOrPair)
@@ -825,14 +805,12 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
                 reason = reasonPingpongTimeout
             elif nodeOrPair in canceledNodePairs:
                 reason = reasonTaskTimeout
-            elif output.split('\n', 1)[0] == '[Message before filter]:':
+            elif exitcode is None or output is None:
                 reason = reasonNoResult
             failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(nodeOrPair)
         failedPair['Reason'] = reason
     if reasonMpiNotInstalled in failedReasons:
         failedReasons[reasonMpiNotInstalled]['Nodes'] = list(failedReasons[reasonMpiNotInstalled]['Nodes'])
-    if reasonWgetFailed in failedReasons:
-        failedReasons[reasonWgetFailed]['Nodes'] = list(failedReasons[reasonWgetFailed]['Nodes'])
     if reasonDapl in failedReasons:
         failedReasons[reasonDapl]['Nodes'] = list(failedReasons[reasonDapl]['Nodes'])
 
@@ -1317,7 +1295,7 @@ def mpiHplReduce(arguments, nodes, tasks, taskResults):
         hyperThreadingDescription = 'Optimal perfermance may not be achieved in this test because Hyper-Threading is enabled on the node(s): {}'.format(', '.join(hyperThreadingNodes)) if hyperThreadingNodes else ''
 
         # get result from result task and generate output
-        resultTask = taskDetail[len(taskDetail)]
+        resultTask = taskDetail[max(taskDetail.keys())]
         output = resultTask['Output']
         if '*.result: No such file or directory' in output:
             keyWord = '*.result:'
@@ -1473,13 +1451,13 @@ else
 def installIntelProductReduce(arguments, tasks, taskResults, product):
     version = arguments['Version']
 
-    taskStateCanceled = 5
+    TASK_STATE_CANCELED = 5
     canceledTasks = set()
     osTypeByNode = {}
     try:
         for task in tasks:
             osTypeByNode[task['Node']] = task['CustomizedData']
-            if task['State'] == taskStateCanceled:
+            if task['State'] == TASK_STATE_CANCELED:
                 canceledTasks.add(task['Id'])
     except Exception as e:
         printErrorAsJson('Failed to parse tasks. ' + str(e))
