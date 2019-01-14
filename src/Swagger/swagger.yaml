@@ -373,7 +373,8 @@ definitions:
           example: ComputeNode001
         description: Nodes on which the job runs
       progress:
-        type: integer # Better be float
+        type: number
+        format: double
         description: Job progress
       events:
         type: array
@@ -1040,6 +1041,7 @@ securityDefinitions:
   aad:
     type: oauth2
     flow: application
+    tokenUrl: http://localhost/tokenUrl
 
 security:
   - aad: []
