@@ -1,11 +1,11 @@
 ﻿{
     "DispatchScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.2.x.py"
+        "Name":"diags-map-reduce-1.3.x.py"
     },
     "AggregationScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.2.x.py"
+        "Name":"diags-map-reduce-1.3.x.py"
     },
     "TaskResultFilterScript":{
         "ContainerName":"diagtestscripts",
@@ -15,10 +15,10 @@
     "parameters":[
         {
             "name":"Packet size",
-            "description":"Specify the size(0-22, as exponent of 2) of transfer messages used in testing. Sizes from 2^0 to 2^22 bytes will be included in testing if the value is -1.",
+            "description":"Specify the size(as exponent of 2) of transfer messages used in testing. Sizes from 2^0 to 2^22 bytes will be included in testing if the value is -1.",
             "type":"number",
             "min":-1,
-            "max":22,
+            "max":29,
             "defaultValue":-1
         },
         {
