@@ -571,6 +571,8 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                     if message:
                         taskRuntime[taskId] = message['Time']
                         messages[nodeOrPair] = message
+            if not output:
+                output = ''
             if not message:
                 failedTasks.append({
                     'TaskId':taskId,
@@ -752,7 +754,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
     reasonTaskTimeout = 'Task timeout.'
     reasonPingpongTimeout = 'Pingpong test timeout.'
     reasonSampleTimeout = 'Pingpong test sample timeout.'
-    reasonNoResult = 'No result.'
+    reasonNoResult = 'No task result.'
 
     reasonAvSet = 'The nodes may not be in the same availability set.'
     solutionAvSet = 'Recreate the node(s) and ensure the nodes are in the same availability set.'
@@ -807,7 +809,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
                 reason = reasonPingpongTimeout
             elif nodeOrPair in canceledNodePairs:
                 reason = reasonTaskTimeout
-            elif exitcode is None or output is None:
+            elif exitCode is None or output == '':
                 reason = reasonNoResult
             failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(nodeOrPair)
         failedPair['Reason'] = reason
