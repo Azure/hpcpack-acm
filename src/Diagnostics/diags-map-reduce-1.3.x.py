@@ -142,7 +142,7 @@ def main():
         if isMap:
             generatedTasks = installIntelProductMap(arguments, windowsNodes, linuxNodes, product)
         else:
-            return installIntelProductReduce(arguments, tasks, taskResults, product)
+            return installIntelProductReduce(arguments, targetNodes, tasks, taskResults, product)
 
     if diagName == 'Standalone Benchmark-Linpack':
         arguments = {
@@ -1448,7 +1448,7 @@ else
 
     return tasks
 
-def installIntelProductReduce(arguments, tasks, taskResults, product):
+def installIntelProductReduce(arguments, targetNodes, tasks, taskResults, product):
     version = arguments['Version']
 
     TASK_STATE_CANCELED = 5
@@ -1481,14 +1481,17 @@ def installIntelProductReduce(arguments, tasks, taskResults, product):
         printErrorAsJson('Failed to parse task result. ' + str(e))
         return -1
 
+    lostNodes = set(targetNodes) - set(results.keys())
+
     description = 'This is the result of installing Intel {} {} on each node.'.format(product, version)
+    lostNodesDescription = 'The task result is lost for node(s): {}'.format(', '.join(lostNodes)) if lostNodes else ''
     mpiLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mpi-library">Intel MPI</a>'
     mklLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl">Intel MKL</a>'
 
     title = 'Intel {} Installation'.format(product)
     tableHeaders = ['Node', 'OS', 'Result']
     tableRows = [[node, osTypeByNode[node], results[node]] for node in sorted(results)]
-    descriptions = [description.replace('Intel MPI', mpiLink).replace('Intel MKL', mklLink)]
+    descriptions = [description.replace('Intel MPI', mpiLink).replace('Intel MKL', mklLink), lostNodesDescription]
     html = globalGenerateHtmlResult(title, tableHeaders, tableRows, None, descriptions)
 
     result = {
