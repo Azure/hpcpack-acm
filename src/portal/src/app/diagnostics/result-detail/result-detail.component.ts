@@ -5,7 +5,7 @@ import { TestResult } from '../../models/test-result';
 import { ApiService } from '../../services/api.service';
 import { PingPongReportComponent } from './diags/mpi/pingpong/pingpong-report/pingpong-report.component';
 import { RingReportComponent } from './diags/mpi/ring/ring-report/ring-report.component';
-import { CpuReportComponent } from './diags/benchmark/cpu/cpu-report/cpu-report.component';
+import { GeneralReportComponent } from './diags/general-template/general-report/general-report.component';
 import { switchMap } from 'rxjs/operators';
 
 @Component({
@@ -49,8 +49,7 @@ export class ResultDetailComponent implements OnInit {
     switch (name) {
       case 'Pingpong': comp = PingPongReportComponent; break;
       case 'Ring': comp = RingReportComponent; break;
-      case 'CPU': comp = CpuReportComponent; break;
-      default: comp = CpuReportComponent;
+      default: comp = GeneralReportComponent;
     }
     return comp;
 

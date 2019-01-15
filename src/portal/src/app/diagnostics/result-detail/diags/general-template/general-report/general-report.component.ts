@@ -1,16 +1,16 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
-import { ApiService, Loop } from '../../../../../../services/api.service';
-import { TableSettingsService } from '../../../../../../services/table-settings.service';
-import { TableDataService } from '../../../../../../services/table-data/table-data.service';
-import { DiagReportService } from '../../../../../../services/diag-report/diag-report.service';
+import { ApiService, Loop } from '../../../../../services/api.service';
+import { TableSettingsService } from '../../../../../services/table-settings.service';
+import { TableDataService } from '../../../../../services/table-data/table-data.service';
+import { DiagReportService } from '../../../../../services/diag-report/diag-report.service';
 
 @Component({
   selector: 'app-cpu-report',
-  templateUrl: './cpu-report.component.html',
-  styleUrls: ['./cpu-report.component.scss']
+  templateUrl: './general-report.component.html',
+  styleUrls: ['./general-report.component.scss']
 })
-export class CpuReportComponent implements OnInit {
+export class GeneralReportComponent implements OnInit {
 
   @Input() result: any;
 
@@ -52,8 +52,9 @@ export class CpuReportComponent implements OnInit {
 
   ngOnInit() {
     this.jobId = this.result.id;
-    if (this.result.aggregationResult !== undefined) {
-      this.aggregationResult = this.result.aggregationResult;
+    this.jobState = this.result.state;
+    if (this.jobFinished) {
+      this.getAggregationResult();
     }
     this.tasksLoop = this.getTasksInfo();
   }

@@ -1,13 +1,13 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, Input, ViewChild, Output, EventEmitter } from '@angular/core';
-import { CpuReportComponent } from './cpu-report.component';
+import { GeneralReportComponent } from './general-report.component';
 import { of } from 'rxjs/observable/of';
 import { OverviewResultComponent } from '../overview-result/overview-result.component';
-import { MaterialsModule } from '../../../../../../materials.module';
-import { ApiService } from '../../../../../../services/api.service';
-import { TableSettingsService } from '../../../../../../services/table-settings.service';
-import { TableDataService } from '../../../../../../services/table-data/table-data.service';
-import { DiagReportService } from '../../../../../../services/diag-report/diag-report.service';
+import { MaterialsModule } from '../../../../../materials.module';
+import { ApiService } from '../../../../../services/api.service';
+import { TableSettingsService } from '../../../../../services/table-settings.service';
+import { TableDataService } from '../../../../../services/table-data/table-data.service';
+import { DiagReportService } from '../../../../../services/diag-report/diag-report.service';
 
 @Component({ selector: 'app-result-layout', template: '' })
 class ResultLayoutComponent {
@@ -122,9 +122,9 @@ class DiagReportServiceStub {
   }
 }
 
-fdescribe('CpuReportComponent', () => {
-  let component: CpuReportComponent;
-  let fixture: ComponentFixture<CpuReportComponent>;
+fdescribe('GeneralReportComponent', () => {
+  let component: GeneralReportComponent;
+  let fixture: ComponentFixture<GeneralReportComponent>;
 
   let wrapperComponent: WrapperComponent;
   let wrapperFixture: ComponentFixture<WrapperComponent>;
@@ -132,7 +132,7 @@ fdescribe('CpuReportComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
-        CpuReportComponent,
+        GeneralReportComponent,
         ResultLayoutComponent,
         OverviewResultComponent,
         DiagTaskTableComponent,
@@ -152,7 +152,7 @@ fdescribe('CpuReportComponent', () => {
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(CpuReportComponent);
+    fixture = TestBed.createComponent(GeneralReportComponent);
     component = fixture.componentInstance;
 
     wrapperFixture = TestBed.createComponent(WrapperComponent);

@@ -3,12 +3,12 @@ import { ResultDetailComponent } from './result-detail.component';
 import { ReplaySubject, of } from 'rxjs';
 import { ParamMap, Params, convertToParamMap, ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
-import { CpuReportComponent } from './diags/benchmark/cpu/cpu-report/cpu-report.component';
+import { GeneralReportComponent } from './diags/general-template/general-report/general-report.component';
 import { RingReportComponent } from './diags/mpi/ring/ring-report/ring-report.component';
 import { PingPongReportComponent } from './diags/mpi/pingpong/pingpong-report/pingpong-report.component';
 import { ResultLayoutComponent } from './result-layout/result-layout.component';
 import { MaterialsModule } from '../../materials.module';
-import { OverviewResultComponent } from './diags/benchmark/cpu/overview-result/overview-result.component';
+import { OverviewResultComponent } from './diags/general-template/overview-result/overview-result.component';
 import { TaskDetailComponent } from './task/task-detail/task-detail.component';
 import { TaskTableComponent } from './task/task-table/task-table.component';
 import { NodesInfoComponent } from './diags/nodes-info/nodes-info.component';
@@ -111,7 +111,7 @@ const routerStub = {
     RingOverviewResultComponent,
     NodesInfoComponent,
     OverviewResultComponent,
-    CpuReportComponent,
+    GeneralReportComponent,
     FailedReasonsComponent,
     GoodNodesComponent,
     ScrollToTopComponent,
@@ -123,7 +123,7 @@ const routerStub = {
     MaterialsModule, ChartModule, CommonModule, FormsModule, ScrollingModule
   ],
   entryComponents: [
-    CpuReportComponent, RingReportComponent, PingPongReportComponent
+    GeneralReportComponent, RingReportComponent, PingPongReportComponent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

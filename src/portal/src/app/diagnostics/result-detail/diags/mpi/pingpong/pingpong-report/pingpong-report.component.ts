@@ -58,6 +58,10 @@ export class PingPongReportComponent implements OnInit {
 
   ngOnInit() {
     this.jobId = this.result.id;
+    this.jobState = this.result.state;
+    if (this.jobFinished) {
+      this.getAggregationResult();
+    }
     this.tasksLoop = this.getTasksInfo();
   }
 

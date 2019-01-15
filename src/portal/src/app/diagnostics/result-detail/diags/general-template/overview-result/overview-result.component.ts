@@ -2,7 +2,7 @@ import { Component, OnInit, Input, OnChanges, SimpleChange } from '@angular/core
 import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
-  selector: 'cpu-overview-result',
+  selector: 'general-overview-result',
   templateUrl: './overview-result.component.html',
   styleUrls: ['./overview-result.component.scss']
 })

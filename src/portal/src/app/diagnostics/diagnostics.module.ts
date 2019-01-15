@@ -17,8 +17,8 @@ import { RingReportComponent } from './result-detail/diags/mpi/ring/ring-report/
 import { RingOverviewResultComponent } from './result-detail/diags/mpi/ring/overview-result/overview-result.component';
 import { NodesInfoComponent } from './result-detail/diags/nodes-info/nodes-info.component';
 import { SharedModule } from '../shared.module';
-import { OverviewResultComponent } from './result-detail/diags/benchmark/cpu/overview-result/overview-result.component';
-import { CpuReportComponent } from './result-detail/diags/benchmark/cpu/cpu-report/cpu-report.component';
+import { OverviewResultComponent } from './result-detail/diags/general-template/overview-result/overview-result.component';
+import { GeneralReportComponent } from './result-detail/diags/general-template/general-report/general-report.component';
 import { FailedReasonsComponent } from './result-detail/diags/mpi/pingpong/failed-reasons/failed-reasons.component';
 import { GoodNodesComponent } from './result-detail/diags/mpi/pingpong/good-nodes/good-nodes.component';
 import { ScrollingModule } from '@angular/cdk/scrolling';
@@ -48,11 +48,11 @@ import { PerformanceComponent } from './result-detail/diags/mpi/performance/perf
     RingOverviewResultComponent,
     NodesInfoComponent,
     OverviewResultComponent,
-    CpuReportComponent,
+    GeneralReportComponent,
     FailedReasonsComponent,
     GoodNodesComponent,
     PerformanceComponent
   ],
-  entryComponents: [RingReportComponent, PingPongReportComponent, TaskDetailComponent, CpuReportComponent]
+  entryComponents: [RingReportComponent, PingPongReportComponent, TaskDetailComponent, GeneralReportComponent]
 })
 export class DiagnosticsModule { }
