@@ -427,7 +427,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
     if isRdma:
         rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0'
         taskLabel += '[RDMA]'
-        interVmTimeout = 2
+        interVmTimeout = 5
 
     sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
 
@@ -754,7 +754,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
     reasonSampleTimeout = 'Pingpong test sample timeout.'
     reasonNoResult = 'No result.'
 
-    reasonAvSet = 'The nodes may not be in the same availability set.(CM ADDR ERROR)'
+    reasonAvSet = 'The nodes may not be in the same availability set.'
     solutionAvSet = 'Recreate the node(s) and ensure the nodes are in the same availability set.'
     
     reasonDapl = 'MPI issue: "dapl fabric is not available and fallback fabric is not enabled"'
@@ -790,7 +790,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
         elif "Benchmark PingPong invalid for 1 processes" in output:
             reason = reasonNodeSingleCore
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionNodeSingleCore, 'Nodes':[]})['Nodes'].append(nodeName)
-        elif "CM ADDR ERROR" in output:
+        elif "dapl_cma_active: CM ADDR ERROR" in output:
             reason = reasonAvSet
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionAvSet, 'NodePairs':[]})['NodePairs'].append(nodeOrPair)
         elif "dapl fabric is not available and fallback fabric is not enabled" in output:
