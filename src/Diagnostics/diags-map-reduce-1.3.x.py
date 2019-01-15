@@ -1,4 +1,5 @@
-#v1.3.0
+# v1.3.0
+# python3
 
 import sys, json, copy, numpy, time, math, uuid
 from datetime import datetime, timedelta
@@ -523,7 +524,6 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
     mode = arguments['Mode'].lower()
     debug = arguments['Debug']
 
-    TASK_STATE_FINISHED = 3
     TASK_STATE_CANCELED = 5
 
     defaultPacketSize = 2**22
@@ -556,9 +556,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                 linuxTaskIds.add(taskId)
             if '[RDMA]' in taskLabel and ',' not in taskLabel:
                 rdmaNodes.append(nodeOrPair)
-            isInterVmTask = False
             if ',' in nodeOrPair:
-                isInterVmTask = True
                 hasInterVmTask = True
             if state == TASK_STATE_CANCELED:
                 canceledTasks.append(taskId)
@@ -572,8 +570,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                     message = mpiPingpongParseOutput(output, isDefaultSize)
                     if message:
                         taskRuntime[taskId] = message['Time']
-                        if isInterVmTask and state == TASK_STATE_FINISHED:
-                            messages[nodeOrPair] = message
+                        messages[nodeOrPair] = message
             if not message:
                 failedTasks.append({
                     'TaskId':taskId,
@@ -603,6 +600,8 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
         latencyThreshold = 1000000
         throughputThreshold = 0
 
+    connectivityTable = mpiPingpongGetConnectivityTable(allNodes, messages, throughputThreshold)
+    messages = {nodeOrPair: messages[nodeOrPair] for nodeOrPair in messages if ',' in nodeOrPair}
     goodPairs = [pair for pair in messages if messages[pair]['Throughput'] > throughputThreshold]
     goodNodesGroups = mpiPingpongGetGroupsOfFullConnectedNodes(goodPairs)
     goodNodes = set([node for group in goodNodesGroups for node in group])
@@ -614,6 +613,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
     failedReasons, failedReasonsByNode = mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs)
 
     result = {
+        'Connectivity':connectivityTable,
         'GoodNodesGroups':mpiPingpongGetLargestNonoverlappingGroups(goodNodesGroups),
         'GoodNodes':goodNodes,
         'FailedNodes':failedReasonsByNode,
@@ -894,6 +894,36 @@ def mpiPingpongGetVariability(data):
         return "Moderate"
     else:
         return "High"
+
+def mpiPingpongGetConnectivityTable(allNodes, messages, threshold):
+    table = []
+    node2index = {}
+    nodes = sorted(allNodes)
+    size = len(nodes)
+    for i in range(size):
+        node2index[nodes[i]] = i
+        table.append({nodes[i]: [{nodes[j]:None} for j in range(size - 1, i - 1, -1)]})
+    for nodeOrPair in messages:
+        nodes = nodeOrPair.split(',')
+        i, j = sorted([node2index[node] for node in nodes]) if len(nodes) > 1 else [node2index[nodes[0]]] * 2
+        j = size - 1 - j
+        result = messages[nodeOrPair]
+        item = next(iter(table[i].values()))[j]
+        key = next(iter(item.keys()))
+        item[key] = {
+            'Latency': '{} us'.format(result['Latency']),
+            'Throughput': '{} MB/s'.format(result['Throughput']),
+            'Runtime': '{} s'.format(result['Time']),
+            'Color': 'Green' if result['Throughput'] > threshold else 'Yellow'
+        }
+    for row in table:
+        for item in next(iter(row.values())):
+            key = next(iter(item.keys()))
+            if not item[key]:
+                item[key] = {
+                    'Color': 'Red'
+                }
+    return table
 
 def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
