@@ -423,9 +423,11 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
 
     rdmaOption = ''
     taskLabel = '[Linux]'
+    interVmTimeout = 20
     if isRdma:
         rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0'
         taskLabel += '[RDMA]'
+        interVmTimeout = 2
 
     sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
 
@@ -459,7 +461,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
             idByNodeNext = {}
             for nodepair in taskgroup:
                 nodes = ','.join(nodepair)
-                command = commandMeasureTime.replace('[timeout]', '20').replace('[command]', commandRunInter)
+                command = commandMeasureTime.replace('[timeout]', str(interVmTimeout)).replace('[command]', commandRunInter)
                 task = copy.deepcopy(taskTemplate)
                 task['Id'] = id
                 task['Node'] = nodepair[0]
@@ -488,7 +490,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
                 task['ParentIds'] = [idByNode[node] for node in nodepair]
                 task['MaximumRuntimeSeconds'] = 230
             else:
-                command = commandMeasureTime.replace('[timeout]', '20').replace('[command]', commandRunInter)
+                command = commandMeasureTime.replace('[timeout]', str(interVmTimeout)).replace('[command]', commandRunInter)
                 task['ParentIds'] = [id-1]
                 task['MaximumRuntimeSeconds'] = 30
             task['CommandLine'] = '{} && {}'.format(commandAddHost, command).replace('[nodepair]', nodes).replace('[pairednode]', nodepair[1])
