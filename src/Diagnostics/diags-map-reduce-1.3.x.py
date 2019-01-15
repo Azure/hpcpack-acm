@@ -435,7 +435,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
     commandClearHosts = 'rm -f ~/.ssh/known_hosts'
     commandRunIntra = 'source {}/intel64/bin/mpivars.sh && mpirun -env I_MPI_SHM_LMT=shm {} -n 2 IMB-MPI1 pingpong'.format(mpiLocation, rdmaOption)    
     commandRunInter = 'source {}/intel64/bin/mpivars.sh && mpirun -hosts [nodepair] {} -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(mpiLocation, rdmaOption, sampleOption)
-    commandMeasureTime = "TIMEFORMAT='Run time: %3R' && time timeout [timeout]s bash -c '[command]'".format(mpiLocation)
+    commandMeasureTime = "TIMEFORMAT='Run time: %3R' && time timeout [timeout]s bash -c '[command]'"
 
     idByNode = {}
 
@@ -937,8 +937,11 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     commandRunInterWindows = commandRunWindows.replace('[command]', commandRunInter)
 
     commandSource = 'source {0}/intel64/bin/mpivars.sh'.format(mpiInstallationLocationLinux)
-    commandRunIntraLinux = '{} && time mpirun -env I_MPI_SHM_LMT=shm {} -n `grep -c ^processor /proc/cpuinfo` IMB-MPI1 sendrecv'.format(commandSource, rdmaOption)
-    commandRunInterLinux = '{} && time mpirun -hosts {} {} -ppn 1 IMB-MPI1 -npmin {} sendrecv 2>/dev/null'.format(commandSource, nodes, rdmaOption, nodesCount)
+    commandRunIntra = '{} && time mpirun -env I_MPI_SHM_LMT=shm {} -n `grep -c ^processor /proc/cpuinfo` IMB-MPI1 sendrecv'.format(commandSource, rdmaOption)
+    commandRunInter = '{} && time mpirun -hosts {} {} -ppn 1 IMB-MPI1 -npmin {} sendrecv 2>/dev/null'.format(commandSource, nodes, rdmaOption, nodesCount)
+    commandMeasureTime = "TIMEFORMAT='Run time: %3R' && time timeout 30s bash -c '[command]'"
+    commandRunIntraLinux = commandMeasureTime.replace('[command]', commandRunIntra)
+    commandRunInterLinux = commandMeasureTime.replace('[command]', commandRunInter)
 
     taskId = 1
     tasks = []
