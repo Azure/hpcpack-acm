@@ -1,7 +1,11 @@
 <h2 mat-dialog-title>Run Command</h2>
 <mat-dialog-content>
-  <mat-form-field class="cmd-line">
-    <input [(ngModel)]="command" matInput placeholder="Your command here" value="" (keyup.enter)="runCmd()">
+  <mat-form-field class="cmd-line" *ngIf="isSingleCmd">
+    <input [(ngModel)]="command" matInput placeholder="Your command here, press enter to excute" value="" (keyup.enter)="runCmd()">
+  </mat-form-field>
+  <mat-form-field class="cmd-line" *ngIf="!isSingleCmd">
+    <textarea matInput cdkTextareaAutosize #autosize="cdkTextareaAutosize" cdkAutosizeMinRows="2" cdkAutosizeMaxRows="15"
+      placeholder="New script block here, press ctrl+enter to excute" [(ngModel)]='command' (keyup.control.Enter)="runCmd()"></textarea>
   </mat-form-field>
   <mat-form-field>
     <input [(ngModel)]="timeout" (keyup.enter)="runCmd()" matInput placeholder="command timeout" type="number">

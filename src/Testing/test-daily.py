@@ -8,7 +8,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 from email.utils import COMMASPACE, formatdate
 
-def main(cluster, runtime, mail, username, password):
+def main(cluster, runtime, mail, username, password, linux, windows):
     for script in ['test-functional.py', 'test-restapi-get.py']:
         if not os.path.isfile(script):
             print('{} is not in current work directory {}'.format(script, os.getcwd()))
@@ -18,24 +18,33 @@ def main(cluster, runtime, mail, username, password):
 
     commands = [
         [
-            'python test-functional.py {} --category diag-pingpong-tournament --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'python test-functional.py {} --category diag-pingpong-tournament --timeout 2000 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
         ],
         [
-            'python test-functional.py {} --category clusrun --command "pkill -f \'ping localhost\' ; echo -n Clear" --result "Clear" --timeout 20 --username {} --password {}'.format(cluster, username, password),
+            'python test-functional.py {} --platform Windows --category clusrun --command "taskkill /f /im ping.exe & echo Clear" --timeout 20 --username {} --password {}'.format(cluster, username, password) if windows else None,
+            'python test-functional.py {} --platform Linux --category clusrun --command "pkill -f \'ping localhost\'; echo Clear" --timeout 20 --username {} --password {}'.format(cluster, username, password) if linux else None,
         ],
         [
-            'python test-functional.py {} --category clusrun --command "ping localhost" --cancel 10 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
-            'python test-functional.py {} --category clusrun --command "ping localhost" --cancel 30 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
-            'python test-functional.py {} --category clusrun --command "ping localhost" --cancel 60 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'python test-functional.py {} --platform Windows --category clusrun --command "ping -t localhost" --cancel 10 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if windows else None,
+            'python test-functional.py {} --platform Windows --category clusrun --command "ping -t localhost" --cancel 30 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if windows else None,
+            'python test-functional.py {} --platform Windows --category clusrun --command "ping -t localhost" --cancel 60 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if windows else None,
+            'python test-functional.py {} --platform Linux --category clusrun --command "ping localhost" --cancel 10 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if linux else None,
+            'python test-functional.py {} --platform Linux --category clusrun --command "ping localhost" --cancel 30 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if linux else None,
+            'python test-functional.py {} --platform Linux --category clusrun --command "ping localhost" --cancel 60 --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if linux else None,
         ],
         [
-            'python test-functional.py {} --category clusrun --command "pgrep -f \'ping localhost\' || echo -n Clear" --result "Clear" --cancel 60 --timeout 200 --username {} --password {}'.format(cluster, username, password),
+            'python test-functional.py {} --platform Windows --category clusrun --command "tasklist /fi ""imagename eq ping.exe""" --result "INFO: No tasks are running which match the specified criteria.\\r\\n" --timeout 200 --username {} --password {}'.format(cluster, username, password) if windows else None,
+            'python test-functional.py {} --platform Linux --category clusrun --command "pgrep -f \'ping localhost\' || echo -n Clear" --result "Clear" --timeout 200 --username {} --password {}'.format(cluster, username, password) if linux else None,
         ],
         [
-            'python test-functional.py {} --category clusrun --command "sleep 10 && echo -n 10" --result "10" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
-            'python test-functional.py {} --category clusrun --command "sleep 30 && echo -n 30" --result "30" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
-            'python test-functional.py {} --category clusrun --command "sleep 60 && echo -n 60" --result "60" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
-            'python test-functional.py {} --category clusrun --command "echo -n test" --result "test" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password),
+            'python test-functional.py {} --platform Windows --category clusrun --command "ping -n 10 127.0.0.1 >nul && echo 10" --result "10 \\r\\n" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if windows else None,
+            'python test-functional.py {} --platform Windows --category clusrun --command "ping -n 30 127.0.0.1 >nul && echo 30" --result "30 \\r\\n" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if windows else None,
+            'python test-functional.py {} --platform Windows --category clusrun --command "ping -n 60 127.0.0.1 >nul && echo 60" --result "60 \\r\\n" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if windows else None,
+            'python test-functional.py {} --platform Windows --category clusrun --command "echo test" --result "test \\r\\n" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if windows else None,
+            'python test-functional.py {} --platform Linux --category clusrun --command "sleep 10 && echo -n 10" --result "10" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if linux else None,
+            'python test-functional.py {} --platform Linux --category clusrun --command "sleep 30 && echo -n 30" --result "30" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if linux else None,
+            'python test-functional.py {} --platform Linux --category clusrun --command "sleep 60 && echo -n 60" --result "60" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if linux else None,
+            'python test-functional.py {} --platform Linux --category clusrun --command "echo -n test" --result "test" --timeout 200 --continuous {} --username {} --password {}'.format(cluster, runtime, username, password) if linux else None,
             'python test-restapi-get.py {} --continuous {}'.format(cluster, runtime, username, password),
         ],
         # [
@@ -48,16 +57,9 @@ def main(cluster, runtime, mail, username, password):
         # ],
     ]
 
-    startTime = formatdate(localtime=True)
+    commands = [[command for command in batch if command] for batch in commands]
 
-    # adapt to different OS
-    runOnWindows = ''
-    runOnLinux = 'python '
-    if os.name == 'nt':
-        prefix = runOnWindows
-    else:
-        prefix = runOnLinux
-    commands = [[prefix + command for command in batch] for batch in commands]
+    startTime = formatdate(localtime=True)
 
     # create log directory
     logDir = '{}/test_logs/{}'.format(os.getcwd(), time.time())
@@ -122,6 +124,8 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--mail', type=argparse.FileType('r'), default=None, help='Specify the mail setting json file')
     parser.add_argument('-u', '--username', default='root', help='Specify the username of cluster admin')
     parser.add_argument('-p', '--password', default='Pass1word', help='Specify the password of cluster admin')
+    parser.add_argument('-l', '--Linux', action="store_true", help='Run tests for Linux nodes')
+    parser.add_argument('-w', '--Windows', action="store_true", help='Run tests for Windows nodes')
 
     args = parser.parse_args()
 
@@ -130,5 +134,5 @@ if __name__ == '__main__':
         with args.mail as f:
             mail = json.load(f)
 
-    main(args.cluster_uri, args.runtime, mail, args.username, args.password)
+    main(args.cluster_uri, args.runtime, mail, args.username, args.password, args.Linux, args.Windows)
     

@@ -23,7 +23,6 @@ namespace Microsoft.HpcAcm.Common.Dto
         public DateTimeOffset? LastHeartbeatTime { get; set; }
         public NodeState State { get; set; }
         public int RunningJobCount { get; set; }
-        public int EventCount { get; set; }
         public ComputeClusterRegistrationInformation NodeRegistrationInfo { get; set; }
     }
 }

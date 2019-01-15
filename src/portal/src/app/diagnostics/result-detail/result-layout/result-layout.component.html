@@ -1,11 +1,15 @@
 <div class="title main">
   <div class="job-state">
-    <mat-spinner *ngIf="!done" [diameter]="20"></mat-spinner>
     <div class="name">
-      <div class="state-text" [ngClass]="stateClass(result.state)">{{result.state}}</div>
-      {{result.id}} - {{result.name}}
+      <div class="job-progress">
+        <div class="state-text" [ngClass]="stateClass(result.state)">{{result.state}}</div>
+        <div class="progress">
+          <mat-progress-bar mode="determinate" [value]="result.progress * 100" class="progress-bar"></mat-progress-bar>
+          <div class="progress-number">{{result.progress | percent}}</div>
+        </div>
+      </div>
+      <div class="job-info"> {{result.id}} - {{result.name}}</div>
     </div>
-
   </div>
   <div class="operations">
     <div class="operation" (click)="rerunDiag()">

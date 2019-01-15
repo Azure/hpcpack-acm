@@ -21,6 +21,12 @@ export class AuthService {
     name: ''
   };
 
+  private auth = true;
+
+  get hasAuth() {
+    return this.auth;
+  }
+
   get username() {
     return this.user.name || sessionStorage.getItem('username');
   }
@@ -41,6 +47,7 @@ export class AuthService {
         if (error.status == 404) {
           this.user.name = 'Anonymous';
           this.loggedIn = true;
+          this.auth = false;
           sessionStorage.setItem('username', this.user.name);
         }
       }

@@ -65,14 +65,14 @@ export class ResultListComponent implements OnInit {
       {
         next: (result) => {
           this.empty = false;
-          if (this.endId != -1 && result[result.length - 1].id != this.endId) {
-            this.loading = false;
+          if (result.length > 0) {
+            this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
+            if (this.endId != -1 && result[result.length - 1].id != this.endId) {
+              this.loading = false;
+            }
           }
           if (this.reverse && result.length < this.maxPageSize) {
             this.loadFinished = true;
-          }
-          if (result.length > 0) {
-            this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
           }
           return this.getCommandRequest();
         }

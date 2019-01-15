@@ -62,6 +62,8 @@ export class ResultDetailComponent implements OnInit {
   public empty = true;
   private endId = -1;
 
+  public scriptBlock: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -93,6 +95,15 @@ export class ResultDetailComponent implements OnInit {
     return this.jobStateService.stateClass(state);
   }
 
+  get isSingleCmd() {
+    let match = /\r|\n/.exec(this.result.command);
+    return match ? false : true;
+  }
+
+  public toggleScriptBlock() {
+    this.scriptBlock = !this.scriptBlock;
+  }
+
   updateJob(id) {
     this.jobLoop = Loop.start(
       //observable:
@@ -105,7 +116,8 @@ export class ResultDetailComponent implements OnInit {
           }
           this.result.state = job.state;
           this.result.command = job.commandLine;
-          this.result.timeout = job.defaultTaskMaximumRuntimeSeconds;
+          this.result.progress = job.progress;
+          this.result.timeout = job.maximumRuntimeSeconds;
           return true;
         },
         error: (err) => {
@@ -132,12 +144,10 @@ export class ResultDetailComponent implements OnInit {
           this.empty = false;
           if (tasks.length > 0) {
             this.gotTasks = true;
-            // this.result.nodes = tasks;
             this.result.nodes = this.tableDataService.updateData(tasks, this.result.nodes, 'id');
-          }
-
-          if (this.endId != -1 && tasks[tasks.length - 1].id != this.endId) {
-            this.listLoading = false;
+            if (this.endId != -1 && tasks[tasks.length - 1].id != this.endId) {
+              this.listLoading = false;
+            }
           }
           if (this.reverse && tasks.length < this.maxPageSize) {
             this.loadFinished = true;
@@ -572,10 +582,10 @@ export class ResultDetailComponent implements OnInit {
   newCommand() {
     let dialogRef = this.dialog.open(CommandInputComponent, {
       width: '98%',
-      data: { command: this.result.command, timeout: this.result.timeout }
+      data: { command: this.result.command, timeout: this.result.timeout, isSingleCmd: this.isSingleCmd }
     });
     dialogRef.afterClosed().subscribe(params => {
-      if (params.command) {
+      if (params && params.command) {
         let names = this.result.nodes.map(node => node.name);
         this.api.command.create(params.command, names, params.timeout).subscribe(obj => {
           this.router.navigate([`/command/results/${obj.id}`]);
@@ -586,7 +596,7 @@ export class ResultDetailComponent implements OnInit {
 
   cancelCommand() {
     let dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      width: '90%',
+      width: '45%',
       data: {
         title: 'Cancel',
         message: 'Are you sure to cancel the current run of command?'
