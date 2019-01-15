@@ -11,7 +11,7 @@ PY3 = sys.version_info[0] >= 3
 REQUEST_TIMEOUT = 60
 REQUEST_HEADER = {'Authorization':'Basic cm9vdDpQYXNzMXdvcmQ='}
 
-def main(cluster, category, command, result, name, cancel, timeout, timeoutToCleanJob, pickRandom):    
+def main(cluster, category, command, result, name, cancel, timeout, timeoutToCleanJob, pickRandom, platform):    
     # format uri string
     while cluster[-1] == '/':
         cluster = cluster[:-1]
@@ -19,7 +19,7 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
 
     # check if the cluster is available for access
     try:
-        api = "{0}/v1/nodes".format(cluster)
+        api = "{0}/v1/nodes?count=1000".format(cluster)
         response = restGet(api)
     except Exception as e:
         print("[Fail]: Cluster is not available.")
@@ -27,23 +27,25 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
         time.sleep(60)
         return 'Fail'
 
-    # get healthy nodes in the cluster
+    # filter healthy nodes in the cluster
     nodes = response.json()
-    healthynodes = [node["id"] for node in nodes if node["health"] == "OK"]
-    if len(healthynodes) < 2:
-        print("[Warn]: Healthy nodes count is less than 2.")
+    if platform == 'Mixed':
+        platform = ''
+    healthyNodes = [node["id"] for node in nodes if node["health"] == "OK" and platform in node['nodeRegistrationInfo']['distroInfo']]
+    if not healthyNodes:
+        print("[Warn]: No healthy {} nodes.".format(platform))
         time.sleep(60)
         return 'Warn'
 
     selectedNodes = None
     if pickRandom:
         # pick nodes randomly
-        randomNodeCount = int(math.ceil(random.random()*len(healthynodes)))
+        randomNodeCount = int(math.ceil(random.random()*len(healthyNodes)))
         print('[Random Node Count]: {}'.format(randomNodeCount))
-        randomNodes = sample(healthynodes, randomNodeCount)
+        randomNodes = sample(healthyNodes, randomNodeCount)
         selectedNodes = randomNodes
     else:
-        selectedNodes = healthynodes
+        selectedNodes = healthyNodes
     print('[Allocated Nodes]: {}'.format(selectedNodes))
 
     # check clusrun or diagnostics job
@@ -363,6 +365,7 @@ if __name__ == '__main__':
     parser.add_argument('-u', '--username', default='root', help='Specify the username of cluster admin')
     parser.add_argument('-p', '--password', default='Pass1word', help='Specify the password of cluster admin')
     parser.add_argument('-d', '--random', action="store_true", help='Specify if pick random nodes to run the test')
+    parser.add_argument('-l', '--platform', choices=['Windows', 'Linux', 'Mixed'], default='Mixed', help='Specify the platform type of nodes that will be selected to run the test')
     args = parser.parse_args()
     
     credential = '{}:{}'.format(args.username, args.password)
@@ -374,7 +377,7 @@ if __name__ == '__main__':
     REQUEST_HEADER = {'Authorization':'Basic {}'.format(base64Str)}
     
     if args.result:
-        args.result = args.result.replace('\\n', '\n')
+        args.result = args.result.replace('\\n', '\n').replace('\\r', '\r')
         
     if args.continuous:
         startTime = time.time()
@@ -394,7 +397,7 @@ if __name__ == '__main__':
             print("[Test Number]: {0}".format(testResults['All']))
             testResults['All'] += 1
             try:
-                result = main(args.cluster_uri, args.category, args.command, args.result, args.name, args.cancel, args.timeout + time.time(), endTime, args.random)
+                result = main(args.cluster_uri, args.category, args.command, args.result, args.name, args.cancel, args.timeout + time.time(), endTime, args.random, args.platform)
                 testResults[result] += 1
             except Exception as e:
                 testResults['Exception'] += 1
@@ -406,4 +409,4 @@ if __name__ == '__main__':
             print('-'*60)
         print('{}/{} {} Runtime:[Avg: {:.0f}, Min: {:.0f}, Max: {:.0f}]'.format(testResults['Pass'], testResults['All'], testResults, sum(runTimes)/len(runTimes), min(runTimes), max(runTimes)))
     else:
-        main(args.cluster_uri, args.category, args.command, args.result, args.name, args.cancel, 0, 0, args.random)
+        main(args.cluster_uri, args.category, args.command, args.result, args.name, args.cancel, 0, 0, args.random, args.platform)

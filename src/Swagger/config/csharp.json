@@ -1,6 +1,5 @@
 {
   "packageName": "HPC.ACM",
   "packageVersion": "1.0.0",
-  "targetFramework": "v5.0",
-  "netCoreProjectFile": true
+  "clientPackage": "HPC.ACM.Client"
 }
