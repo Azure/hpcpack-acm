@@ -4,68 +4,71 @@
 import sys, json, copy, numpy, time, math, uuid
 from datetime import datetime, timedelta
 
-INTEL_PRODUCT_URL = {
-    'MPI': {
+PRODUCT_URL = {
+    'Intel MPI': {
         '2019 Update 1'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14879/l_mpi_2019.1.144.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14881/w_mpi_p_2019.1.144.exe'
-            },
+        },
         '2019'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13584/l_mpi_2019.0.117.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13586/w_mpi_p_2019.0.117.exe'
-            },
+        },
         '2018 Update 4'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13741/l_mpi_2018.4.274.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13653/w_mpi_p_2018.4.274.exe'
-            },
+        },
         '2018 Update 3'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13112/l_mpi_2018.3.222.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13065/w_mpi_p_2018.3.210.exe'
-            },
+        },
         '2018 Update 2'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12748/l_mpi_2018.2.199.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12745/w_mpi_p_2018.2.185.exe'
-            },
+        },
         '2018 Update 1'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12414/l_mpi_2018.1.163.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12443/w_mpi_p_2018.1.156.exe'
-            },
+        },
         '2018'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12120/l_mpi_2018.0.128.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12114/w_mpi_p_2018.0.124.exe'
-            }
-        },
-    'MKL': {
+        }
+    },
+    'Intel MKL': {
         '2019 Update 1'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14895/l_mkl_2019.1.144.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14893/w_mkl_2019.1.144.exe'
-            },
+        },
         '2019'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13575/l_mkl_2019.0.117.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13558/w_mkl_2019.0.117.exe'
-            },
+        },
         '2018 Update 4'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13725/l_mkl_2018.4.274.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13707/w_mkl_2018.4.274.exe'
-            },
+        },
         '2018 Update 3'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13005/l_mkl_2018.3.222.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13037/w_mkl_2018.3.210.exe'
-            },
+        },
         '2018 Update 2'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12725/l_mkl_2018.2.199.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12692/w_mkl_2018.2.185.exe'
-            },
+        },
         '2018 Update 1'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12414/l_mkl_2018.1.163.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12394/w_mkl_2018.1.156.exe'
-            },
+        },
         '2018'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12070/l_mkl_2018.0.128.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12079/w_mkl_2018.0.124.exe'
-            }
         }
+    },
+    'Microsoft MPI': {
+        '10.0'.lower(): 'https://github.com/Microsoft/Microsoft-MPI/releases/download/v10.0/msmpisetup.exe'
     }
+}
 
 HPC_DIAG_USERNAME = 'hpc_diagnostics'
 HPC_DIAG_PASSWORD = 'p@55word'
@@ -133,17 +136,22 @@ def main():
         else:
             return mpiHplReduce(arguments, targetNodes, tasks, taskResults)
 
-    if diagName.startswith('Prerequisite-Intel'):
+    if diagName.startswith('Prerequisite') and diagName.endswith('Installation'):
+        product = diagName.split('-')[-1][:-len(' Installation')]
+        version = None
+        if product == 'Microsoft MPI':
+            version = '10.0'
+        elif product.startswith('Intel'):
+            version = '2018 Update 4'
         arguments = {
-            'Version': '2018 Update 4',
+            'Version': version,
             'Max runtime': 1800
         }
         parseArgs(diagArgs, arguments)
-        product = 'MPI' if 'MPI' in diagName else 'MKL'
         if isMap:
-            generatedTasks = installIntelProductMap(arguments, windowsNodes, linuxNodes, product)
+            generatedTasks = installationMap(arguments, windowsNodes, linuxNodes, product)
         else:
-            return installIntelProductReduce(arguments, targetNodes, tasks, taskResults, product)
+            return installationReduce(arguments, targetNodes, tasks, taskResults, product)
 
     if diagName == 'Standalone Benchmark-Linpack':
         arguments = {
@@ -278,21 +286,26 @@ def parseArgs(diagArgsIn, diagArgsOut):
                 argType = type(diagArgsOut[key])
                 diagArgsOut[key] = argType(arg['value'])
 
-def globalCheckIntelProductVersion(product, version):
-    if product not in INTEL_PRODUCT_URL or version.lower() not in INTEL_PRODUCT_URL[product]:
-        raise Exception('Intel {} {} is not supported'.format(product, version))
+def globalCheckProductVersion(product, version):
+    if product not in PRODUCT_URL or version.lower() not in PRODUCT_URL[product]:
+        raise Exception('{} {} is not supported'.format(product, version))
 
-def globalGetDefaultInstallationLocationWindows(product, version):
-    versionNumber = INTEL_PRODUCT_URL[product][version.lower()]['Windows'].split('_')[-1][:-len(".exe")]
+def globalGetDefaultInstallationPathWindows(product, version):
+    if product == 'Microsoft MPI':
+        return r'C:\Program Files\Microsoft MPI'
+    else:
+        versionNumber = PRODUCT_URL[product][version.lower()]['Windows'].split('_')[-1][:-len(".exe")]
+        if versionNumber == '2018.4.274':
+            versionNumber = '2018.5.274'        
+        return r'C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_{}\windows\{}'.format(versionNumber, product.split()[-1].lower())
+
+def globalGetDefaultInstallationPathLinux(product, version):
+    if product == 'Microsoft MPI':
+        raise Exception('Can not get installation path of Microsoft MPI on Linux nodes')
+    versionNumber = PRODUCT_URL[product][version.lower()]['Linux'].split('_')[-1][:-len(".tgz")]
     if versionNumber == '2018.4.274':
         versionNumber = '2018.5.274'        
-    return 'C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_{}\windows\{}'.format(versionNumber, product.lower())
-
-def globalGetDefaultInstallationLocationLinux(product, version):
-    versionNumber = INTEL_PRODUCT_URL[product][version.lower()]['Linux'].split('_')[-1][:-len(".tgz")]
-    if versionNumber == '2018.4.274':
-        versionNumber = '2018.5.274'        
-    return '/opt/intel/compilers_and_libraries_{}/linux/{}'.format(versionNumber, product.lower())
+    return '/opt/intel/compilers_and_libraries_{}/linux/{}'.format(versionNumber, product.split()[-1].lower())
     
 def globalGetIntelProductAzureBlobUrl(originalUrl):
     fileName = originalUrl.split('/')[-1]
@@ -339,9 +352,9 @@ def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
     packetSize = arguments['Packet size']
     mode = arguments['Mode'].lower()
-    globalCheckIntelProductVersion('MPI', mpiVersion)
-    mpiInstallationLocationWindows = globalGetDefaultInstallationLocationWindows('MPI', mpiVersion)
-    mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
+    globalCheckProductVersion('Intel MPI', mpiVersion)
+    mpiInstallationLocationWindows = globalGetDefaultInstallationPathWindows('Intel MPI', mpiVersion)
+    mpiInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion)
     tasks = mpiPingpongCreateTasksWindows(list(windowsNodes & rdmaNodes), True, 1, mpiInstallationLocationWindows, packetSize)
     tasks += mpiPingpongCreateTasksWindows(list(windowsNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationWindows, packetSize)
     tasks += mpiPingpongCreateTasksLinux(list(linuxNodes & rdmaNodes), True, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize)
@@ -739,7 +752,7 @@ def mpiPingpongParseOutput(output, isDefaultSize):
 
 def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
     reasonMpiNotInstalled = 'Intel MPI is not found.'
-    solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location {} or {}. Run "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion, globalGetDefaultInstallationLocationLinux('MPI', mpiVersion), globalGetDefaultInstallationLocationWindows('MPI', mpiVersion))
+    solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location {} or {}. Run "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion, globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion), globalGetDefaultInstallationPathWindows('Intel MPI', mpiVersion))
 
     reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
@@ -929,9 +942,9 @@ def mpiPingpongGetConnectivityTable(allNodes, messages, threshold):
 
 def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
-    globalCheckIntelProductVersion('MPI', mpiVersion)
-    mpiInstallationLocationWindows = globalGetDefaultInstallationLocationWindows('MPI', mpiVersion)
-    mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
+    globalCheckProductVersion('Intel MPI', mpiVersion)
+    mpiInstallationLocationWindows = globalGetDefaultInstallationPathWindows('Intel MPI', mpiVersion)
+    mpiInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion)
 
     if windowsNodes and linuxNodes:
         raise Exception('Can not run this test among Linux nodes and Windows nodes')
@@ -1061,10 +1074,10 @@ def mpiHplMap(arguments, jobId, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNod
     mpiVersion = arguments['Intel MPI version']
     mklVersion = arguments['Intel MKL version']
     memoryPercentage = arguments['Memory limit']
-    globalCheckIntelProductVersion('MPI', mpiVersion)
-    globalCheckIntelProductVersion('MKL', mklVersion)
-    mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
-    mklInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', mklVersion)
+    globalCheckProductVersion('Intel MPI', mpiVersion)
+    globalCheckProductVersion('Intel MKL', mklVersion)
+    mpiInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion)
+    mklInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MKL', mklVersion)
 
     minCoreCount = min([nodeInfoByNode[node]['CoreCount'] for node in linuxNodes])
     if not minCoreCount:
@@ -1232,8 +1245,8 @@ HPL.out      output file name (if any)
 def mpiHplReduce(arguments, nodes, tasks, taskResults):
     mpiVersion = arguments['Intel MPI version']
     mklVersion = arguments['Intel MKL version']
-    mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
-    mklInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', mklVersion)
+    mpiInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion)
+    mklInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MKL', mklVersion)
 
     taskDetail = {}
     try:
@@ -1410,29 +1423,38 @@ def mpiHplReduce(arguments, nodes, tasks, taskResults):
     return resultCode
 
 
-def installIntelProductMap(arguments, windowsNodes, linuxNodes, product):
+def installationMap(arguments, windowsNodes, linuxNodes, product):
     version = arguments['Version'].lower()
     timeout = arguments['Max runtime']
-    globalCheckIntelProductVersion(product, version)
+    globalCheckProductVersion(product, version)
 
-    leastTime = 180 if product == 'MPI' else 600
+    leastTime = 180 if product.endswith('MPI') else 600
     timeout -= leastTime - 1
     if timeout <= 0:
         raise Exception('The Max runtime parameter should be equal or larger than {}'.format(leastTime))
             
     # command to install MPI/MKL on Linux node
-    url = globalGetIntelProductAzureBlobUrl(INTEL_PRODUCT_URL[product][version]['Linux'])
-    installDirectory = globalGetDefaultInstallationLocationLinux(product, version)
-    wgetOutput = 'wget.output'
-    commandCheckExist = "[ -d {0} ] && echo 'Already installed in {0}'".format(installDirectory)
-    commandShowOutput = r"cat {} | sed 's/.*\r//'".format(wgetOutput)
-    commandDownload = 'timeout {0}s wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 0 --progress=bar:force -O intel.tgz {1} 1>{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)'.format(timeout, url, wgetOutput, commandShowOutput)
-    commandInstall = "tar -zxf intel.tgz && cd l_{}_* && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg".format(product.lower())
-    commandLinux = '{} || ({} && {})'.format(commandCheckExist, commandDownload, commandInstall)
+    if product == 'Microsoft MPI':
+        commandLinux = 'echo Microsoft MPI is not supported on Linux node'
+    else:
+        url = globalGetIntelProductAzureBlobUrl(PRODUCT_URL[product][version]['Linux'])
+        installDirectory = globalGetDefaultInstallationPathLinux(product, version)
+        wgetOutput = 'wget.output'
+        commandCheckExist = "[ -d {0} ] && echo 'Already installed in {0}'".format(installDirectory)
+        commandShowOutput = r"cat {} | sed 's/.*\r//'".format(wgetOutput)
+        commandDownload = 'timeout {0}s wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 0 --progress=bar:force -O intel.tgz {1} 1>{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)'.format(timeout, url, wgetOutput, commandShowOutput)
+        commandInstall = "tar -zxf intel.tgz && cd l_{}_* && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg".format(product.split()[-1].lower())
+        commandLinux = '{} || ({} && {})'.format(commandCheckExist, commandDownload, commandInstall)
 
     # command to install MPI/MKL on Windows node
-    url = globalGetIntelProductAzureBlobUrl(INTEL_PRODUCT_URL[product][version]['Windows'])
-    installDirectory = globalGetDefaultInstallationLocationWindows(product, version)
+    installDirectory = globalGetDefaultInstallationPathWindows(product, version)
+    downloadDirectory = r'C:\tmp\hpc_diag_installation'
+    if product == 'Microsoft MPI':
+        url = PRODUCT_URL[product][version]
+        commandInstall = r"cmd /C '{}\product.exe -unattend -force -minimal -log %cd%\product.log'; type product.log -tail 10".format(downloadDirectory)
+    else:
+        url = globalGetIntelProductAzureBlobUrl(PRODUCT_URL[product][version]['Windows'])
+        commandInstall = r"cmd /C '{}\product.exe --silent --a install --eula=accept --output=%cd%\product.log & type product.log'".format(downloadDirectory)
     commandWindows = """powershell "
 if (Test-Path '[installDirectory]')
 {
@@ -1441,13 +1463,15 @@ if (Test-Path '[installDirectory]')
 }
 else
 {
-    rm -Force -ErrorAction SilentlyContinue [product].exe;
-    rm -Force -ErrorAction SilentlyContinue [product].log;
+    mkdir -force [downloadDirectory] | out-null;
+    rm -Force -ErrorAction SilentlyContinue [downloadDirectory]\product.exe;
+    rm -Force -ErrorAction SilentlyContinue product.log;
     date;
     $stopwatch = [system.diagnostics.stopwatch]::StartNew();
     'Start downloading';
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
     $client = new-object System.Net.WebClient;
-    $client.DownloadFile('[url]', '[product].exe');
+    $client.DownloadFile('[url]', '[downloadDirectory]\product.exe');
     date;
     'End downloading';
     if ($stopwatch.Elapsed.TotalSeconds -gt [timeout])
@@ -1457,10 +1481,10 @@ else
     }
     else
     {
-        cmd /C '.\[product].exe --silent --a install --eula=accept --output=%cd%\[product].log & type [product].log'
+        [command]
     }
 }"
-""".replace('[installDirectory]', installDirectory).replace('[url]', url).replace('[timeout]', str(timeout)).replace('[product]', product).replace('\n', '')
+""".replace('[installDirectory]', installDirectory).replace('[downloadDirectory]', downloadDirectory).replace('[url]', url).replace('[timeout]', str(timeout)).replace('[command]', commandInstall).replace('\n', '')
 
     tasks = []
     id = 1
@@ -1485,7 +1509,7 @@ else
 
     return tasks
 
-def installIntelProductReduce(arguments, targetNodes, tasks, taskResults, product):
+def installationReduce(arguments, targetNodes, tasks, taskResults, product):
     version = arguments['Version']
 
     TASK_STATE_CANCELED = 5
@@ -1509,7 +1533,9 @@ def installIntelProductReduce(arguments, targetNodes, tasks, taskResults, produc
             if taskResult['ExitCode'] == 0:
                 if 'Already installed' in message.split('\n', 1)[0]:
                     result = 'Already installed'
-                elif osTypeByNode[node].lower() == 'Linux'.lower() or 'installation was completed successfully' in message:
+                elif 'not supported' in message:
+                    result = 'Not supported'
+                elif osTypeByNode[node].lower() == 'Linux'.lower() or 'completed successfully' in message:
                     result = 'Installation succeeded'
             elif taskResult['ExitCode'] == 124 or taskResult['TaskId'] in canceledTasks:
                 result = 'Timeout'
@@ -1520,15 +1546,16 @@ def installIntelProductReduce(arguments, targetNodes, tasks, taskResults, produc
 
     lostNodes = set(targetNodes) - set(results.keys())
 
-    description = 'This is the result of installing Intel {} {} on each node.'.format(product, version)
+    description = 'This is the result of installing {} {} on each node.'.format(product, version)
     lostNodesDescription = 'The task result is lost for node(s): {}'.format(', '.join(lostNodes)) if lostNodes else ''
     mpiLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mpi-library">Intel MPI</a>'
     mklLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl">Intel MKL</a>'
+    msmpiLink = '<a target="_blank" rel="noopener noreferrer" href="https://github.com/Microsoft/Microsoft-MPI">Microsoft MPI</a>'
 
-    title = 'Intel {} Installation'.format(product)
+    title = '{} Installation'.format(product)
     tableHeaders = ['Node', 'OS', 'Result']
     tableRows = [[node, osTypeByNode[node], results[node]] for node in sorted(results)]
-    descriptions = [description.replace('Intel MPI', mpiLink).replace('Intel MKL', mklLink), lostNodesDescription]
+    descriptions = [description.replace('Intel MPI', mpiLink).replace('Intel MKL', mklLink).replace('Microsoft MPI', msmpiLink), lostNodesDescription]
     html = globalGenerateHtmlResult(title, tableHeaders, tableRows, None, descriptions)
 
     result = {
@@ -1544,9 +1571,9 @@ def installIntelProductReduce(arguments, targetNodes, tasks, taskResults, produc
 def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
     intelMklVersion = arguments['Intel MKL version'].lower()
     sizeLevel = arguments['Size level']
-    globalCheckIntelProductVersion('MKL', intelMklVersion)
-    mklInstallationLocationWindows = globalGetDefaultInstallationLocationWindows('MKL', intelMklVersion)
-    mklInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', intelMklVersion)
+    globalCheckProductVersion('Intel MKL', intelMklVersion)
+    mklInstallationLocationWindows = globalGetDefaultInstallationPathWindows('Intel MKL', intelMklVersion)
+    mklInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MKL', intelMklVersion)
 
     if not 1 <= sizeLevel <= 15:
         raise Exception('Parameter "Size level" should be in range 1 - 15')
@@ -1614,8 +1641,8 @@ def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
 
 def benchmarkLinpackReduce(arguments, tasks, taskResults):
     intelMklVersion = arguments['Intel MKL version'].lower()
-    intelMklLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', intelMklVersion)
-    intelMklLocationWindows = globalGetDefaultInstallationLocationWindows('MKL', intelMklVersion)
+    intelMklLocationLinux = globalGetDefaultInstallationPathLinux('Intel MKL', intelMklVersion)
+    intelMklLocationWindows = globalGetDefaultInstallationPathWindows('Intel MKL', intelMklVersion)
         
     taskDetail = {}
     try:
