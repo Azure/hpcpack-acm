@@ -106,7 +106,6 @@ def main():
             'Intel MPI version': '2018 Update 4',
             'Packet size': -1,
             'Mode': 'Tournament',
-            'Debug': False
         }
         parseArgs(diagArgs, arguments)
         if isMap:
@@ -535,21 +534,17 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
     mpiVersion = arguments['Intel MPI version']    
     packetSize = 2**arguments['Packet size']
     mode = arguments['Mode'].lower()
-    debug = arguments['Debug']
 
     TASK_STATE_CANCELED = 5
 
     defaultPacketSize = 2**22
     isDefaultSize = not 2**-1 < packetSize < 2**30
 
-    taskId2nodePair = {}
     tasksForStatistics = set()
     windowsTaskIds = set()
     linuxTaskIds = set()
     rdmaNodes = []
-    canceledTasks = []
-    canceledNodePairs = set()
-    hasInterVmTask = False
+    canceledTasks = set()
     messages = {}
     failedTasks = []
     taskRuntime = {}
@@ -562,18 +557,14 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
             state = task['State']
             taskLabel = task['CustomizedData']
             nodeOrPair = taskLabel.split()[-1]
-            taskId2nodePair[taskId] = nodeOrPair
             if '[Windows]' in taskLabel:
                 windowsTaskIds.add(taskId)
             if '[Linux]' in taskLabel:
                 linuxTaskIds.add(taskId)
             if '[RDMA]' in taskLabel and ',' not in taskLabel:
                 rdmaNodes.append(nodeOrPair)
-            if ',' in nodeOrPair:
-                hasInterVmTask = True
             if state == TASK_STATE_CANCELED:
-                canceledTasks.append(taskId)
-                canceledNodePairs.add(nodeOrPair)
+                canceledTasks.add(taskId)
             exitCode = output = message = None
             taskResult = resultByTaskId.get(taskId)
             if taskResult:
@@ -602,7 +593,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
         printErrorAsJson('Lost OS type information.')
         return -1
 
-    if not hasInterVmTask:
+    if len(tasks) <= len(allNodes):
         printErrorAsJson('No inter VM test was executed. Please select more nodes.')
         return 0
 
@@ -717,22 +708,20 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
 
     endTime = time.time()
     
-    if debug:
-        taskRuntime = {
-            'Max': numpy.amax(list(taskRuntime.values())),
-            'Ave': numpy.average(list(taskRuntime.values())),
-            'Sorted': sorted([{'runtime':taskRuntime[key], 'taskId':key, 'nodepair':taskId2nodePair[key]} for key in taskRuntime], key=lambda x:x['runtime'], reverse=True)
-            }
-        failedTasksByExitcode = {}
-        for task in failedTasks:
-            failedTasksByExitcode.setdefault(task['ExitCode'], []).append(task['TaskId'])
-        result['DebugInfo'] = {
-            'ReduceRuntime':endTime - startTime,
-            'GoodNodesGroups':goodNodesGroups,
-            'CanceledTasks':canceledTasks,
-            'FailedTasksGroupByExitcode':failedTasksByExitcode,
-            'TaskRuntime':taskRuntime,
-            }
+    taskRuntime = {
+        'Max': numpy.amax(list(taskRuntime.values())),
+        'Ave': numpy.average(list(taskRuntime.values())),
+        'Sorted': sorted([{'runtime':taskRuntime[key], 'taskId':key} for key in taskRuntime], key=lambda x:x['runtime'], reverse=True)
+        }
+    failedTasksByExitcode = {}
+    for task in failedTasks:
+        failedTasksByExitcode.setdefault(task['ExitCode'], []).append(task['TaskId'])
+    result['DebugInfo'] = {
+        'ReduceRuntime':endTime - startTime,
+        'CanceledTasks':sorted(list(canceledTasks)),
+        'FailedTasksByExitcode':failedTasksByExitcode,
+        'TaskRuntime':taskRuntime,
+        }
         
     print(json.dumps(result))
     return 0
@@ -752,7 +741,7 @@ def mpiPingpongParseOutput(output, isDefaultSize):
     except:
         return None
 
-def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
+def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
     reasonMpiNotInstalled = 'Intel MPI is not found.'
     solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location {} or {}. Run "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion, globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion), globalGetDefaultInstallationPathWindows('Intel MPI', mpiVersion))
 
@@ -780,6 +769,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
     failedReasons = {}
     for failedPair in failedTasks:
         reason = "Unknown"
+        taskId = failedPair['TaskId']
         nodeName = failedPair['NodeName']
         nodeOrPair = failedPair['NodeOrPair']
         output = failedPair['Output']
@@ -822,7 +812,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
                 reason = reasonSampleTimeout
             elif exitCode == 124:
                 reason = reasonPingpongTimeout
-            elif nodeOrPair in canceledNodePairs:
+            elif taskId in canceledTasks:
                 reason = reasonTaskTimeout
             elif exitCode is None or output == '':
                 reason = reasonNoResult
