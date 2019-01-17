@@ -929,14 +929,14 @@ def mpiPingpongGetConnectivityTable(allNodes, messages, threshold):
             'Latency': '{} us'.format(result['Latency']),
             'Throughput': '{} MB/s'.format(result['Throughput']),
             'Runtime': '{} s'.format(result['Time']),
-            'Color': 'Green' if result['Throughput'] > threshold else 'Yellow'
+            'Connectivity': 'Good' if result['Throughput'] > threshold else 'Warning'
         }
     for row in table:
         for item in next(iter(row.values())):
             key = next(iter(item.keys()))
             if not item[key]:
                 item[key] = {
-                    'Color': 'Red'
+                    'Connectivity': 'Bad'
                 }
     return table
 
