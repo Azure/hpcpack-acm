@@ -32,6 +32,7 @@ export class PingPongReportComponent implements OnInit {
   public throughputData: any;
   public goodGroups: Array<any>;
   public badNodes: Array<any>;
+  public connectivityData: Array<any>;
 
   public loading = false;
   public empty = true;
@@ -73,6 +74,7 @@ export class PingPongReportComponent implements OnInit {
       this.failedReasons = this.aggregationResult['FailedReasons'];
       this.goodGroups = this.aggregationResult['GoodNodesGroups'];
       this.badNodes = this.aggregationResult['BadNodes'];
+      this.connectivityData = this.aggregationResult['Connectivity'];
     }
   }
 

@@ -454,7 +454,8 @@ export class DiagApi extends Resource<any> {
         FailedReasons: res.FailedReasons,
         GoodNodesGroups: res.GoodNodesGroups,
         Latency: res.Latency,
-        Throughput: res.Throughput
+        Throughput: res.Throughput,
+        Connectivity: res.Connectivity
       } as AggregationResult;
     }
 

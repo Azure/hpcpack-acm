@@ -1,6 +1,12 @@
 <app-result-layout [result]="result">
   <ng-template #overview>
     <mat-tab-group>
+      <mat-tab label="Connectivity" *ngIf="!hasError">
+        <div class="overview-progress" *ngIf="!connectivityData">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        </div>
+        <pingpong-connectivity [nodes]="connectivityData" class="overview-data" *ngIf="connectivityData"></pingpong-connectivity>
+      </mat-tab>
       <mat-tab label="Error" *ngIf="hasError">
         <div class="error-message">
           {{aggregationResult.Error}}

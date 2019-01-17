@@ -23,6 +23,7 @@ import { FailedReasonsComponent } from './result-detail/diags/mpi/pingpong/faile
 import { GoodNodesComponent } from './result-detail/diags/mpi/pingpong/good-nodes/good-nodes.component';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { PerformanceComponent } from './result-detail/diags/mpi/performance/performance.component';
+import { ConnectivityComponent } from './result-detail/diags/mpi/pingpong/connectivity/connectivity.component';
 
 @NgModule({
   imports: [
@@ -51,7 +52,8 @@ import { PerformanceComponent } from './result-detail/diags/mpi/performance/perf
     GeneralReportComponent,
     FailedReasonsComponent,
     GoodNodesComponent,
-    PerformanceComponent
+    PerformanceComponent,
+    ConnectivityComponent
   ],
   entryComponents: [RingReportComponent, PingPongReportComponent, TaskDetailComponent, GeneralReportComponent]
 })

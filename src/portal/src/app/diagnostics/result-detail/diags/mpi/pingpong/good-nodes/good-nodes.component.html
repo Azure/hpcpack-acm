@@ -2,7 +2,7 @@
   <mat-expansion-panel *ngFor="let g of nodeGroups; index as i; trackBy: trackByFn" expanded=true>
     <mat-expansion-panel-header>
       <mat-panel-title>
-        <div>Full Connected Group {{i+1}}</div>
+        <div>Full Connected Nodes Group {{i+1}}</div>
       </mat-panel-title>
     </mat-expansion-panel-header>
     <app-nodes-info [nodes]="g">

@@ -1,0 +1,82 @@
+@import "../../../../../../stylesheets/mixin.scss";
+
+.selected-connectivity {
+  padding: 10px;
+  @include display-flex(center, space-between);
+  border-bottom: 1px solid rgba(0, 0, 0, .12);
+
+  .connectivity-item {
+    font-size: .9em;
+
+    .name {
+      color: $color;
+    }
+
+    .connectivity-value {
+      font-size: 13px;
+    }
+  }
+}
+
+.connectivity {
+  padding: 10px;
+  width: 100%;
+  max-height: 70vh;
+  padding-bottom: 0;
+  overflow: auto;
+}
+
+.connectivity-content {
+  @include display-flex(center);
+  //   flex-wrap: nowrap;
+  //   display: inline-block;
+  min-width: 100%;
+
+  .tile-area {
+    @include display-flex;
+  }
+
+  .tile {
+    min-width: 15px;
+    height: 15px;
+    margin: 2px;
+    cursor: pointer;
+  }
+
+  .tile:hover {
+    border: 1px solid #fff;
+  }
+
+  .tile:active {
+    border: 1px dashed #fff;
+  }
+
+  .tile:focus {
+    border: 1px dashed #fff;
+  }
+
+  .node-name {
+    min-width: 120px;
+    font-size: 13px;
+    @include ellipsis-text;
+    margin-right: 5px;
+    height: 15px
+  }
+}
+
+
+.good-connectivity {
+  background-color: #49a067;
+}
+
+.warning-connectivity {
+  background-color: #FF8F00;
+}
+
+.bad-connectivity {
+  background-color: gray;
+}
+
+::ng-deep .mat-tooltip {
+  white-space: pre;
+}
