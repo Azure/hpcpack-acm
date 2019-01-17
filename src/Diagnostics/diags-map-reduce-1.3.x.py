@@ -616,24 +616,26 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
         throughputThreshold = 0
 
     connectivityTable = mpiPingpongGetConnectivityTable(allNodes, messages, throughputThreshold)
+
     messages = {nodeOrPair: messages[nodeOrPair] for nodeOrPair in messages if ',' in nodeOrPair}
     goodPairs = [pair for pair in messages if messages[pair]['Throughput'] > throughputThreshold]
     goodNodesGroups = mpiPingpongGetGroupsOfFullConnectedNodes(goodPairs)
-    goodNodes = set([node for group in goodNodesGroups for node in group])
-    if goodNodes != set([node for pair in goodPairs for node in pair.split(',')]):
-        printErrorAsJson('Should not get here!')
+    goodNodes = [node for group in goodNodesGroups for node in group]
+    nodesInGoodPairs = [node for pair in goodPairs for node in pair.split(',')]
+    if goodNodes and set(goodNodes) != set(nodesInGoodPairs):
+        printErrorAsJson('Good nodes validation failed!')
         return -1
-    badNodes = [node for node in allNodes if node not in goodNodes]
-    goodNodes = list(goodNodes)
-    failedReasons, failedReasonsByNode = mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs)
+    
+    badNodes = list(set(allNodes) - set(goodNodes))
+    failedReasons, failedReasonsByNode = mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks)
 
     result = {
         'Connectivity':connectivityTable,
         'GoodNodesGroups':mpiPingpongGetLargestNonoverlappingGroups(goodNodesGroups),
-        'GoodNodes':goodNodes,
+        'GoodNodes':sorted(goodNodes),
         'FailedNodes':failedReasonsByNode,
-        'BadNodes':badNodes,
-        'RdmaNodes':rdmaNodes,
+        'BadNodes':sorted(badNodes),
+        'RdmaNodes':sorted(rdmaNodes),
         'FailedReasons':failedReasons,
         'Latency':{},
         'Throughput':{},
@@ -887,6 +889,8 @@ def mpiPingpongGetGroupsOfFullConnectedNodes(pairs):
             mpiPingpongAddToGroups(newGroups, newGroup)
         for group in newGroups:
             mpiPingpongAddToGroups(groups, group)
+        if len(groups) > 1000: # for limiting complexity
+            return []
     return [list(group) for group in groups]
 
 def mpiPingpongAddToGroups(groups, new):
