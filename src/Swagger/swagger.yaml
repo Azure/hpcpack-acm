@@ -561,46 +561,54 @@ parameters:
     description: Node id
     type: string
     required: true
+    x-ms-parameter-location: method
   jobId:
     in: path
     name: id
     description: Job id
     type: integer
     required: true
+    x-ms-parameter-location: method
   taskId:
     in: path
     name: taskId
     description: Task id
     type: integer
     required: true
+    x-ms-parameter-location: method
   resultKey:
     in: path
     name: key
     description: Result key of a task
     type: string
     required: true
+    x-ms-parameter-location: method
   count:
     in: query
     name: count
     description: Requested number of objects
     type: integer
     default: 1000
+    x-ms-parameter-location: method
   lastId:
     in: query
     name: lastId
     description: The object id since which(but not included) the objects are requested
     type: integer
+    x-ms-parameter-location: method
   reverse:
     in: query
     name: reverse
     description: Get the results in reverse order
     type: boolean
     default: false
+    x-ms-parameter-location: method
   requeueCount:
     in: query
     name: requeueCount
     type: integer
     description: The number of times a job/task is requeued
+    x-ms-parameter-location: method
 
 paths:
   /nodes:
@@ -608,7 +616,9 @@ paths:
       summary: Get a list of nodes
       operationId: getNodes
       parameters:
-        - $ref: '#/parameters/lastId'
+        - in: query
+          name: lastId
+          type: string
         - $ref: '#/parameters/count'
       responses:
         200:
