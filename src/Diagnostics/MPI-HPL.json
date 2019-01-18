@@ -19,7 +19,7 @@
         },
         {
             "name":"Intel MPI version",
-            "type":"string",
+            "type":"select",
             "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4"],
             "defaultValue":"2018 Update 4",
             "description":{
@@ -32,7 +32,7 @@
         },
         {
             "name":"Intel MKL version",
-            "type":"string",
+            "type":"select",
             "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4"],
             "defaultValue":"2018 Update 4",
             "description":{

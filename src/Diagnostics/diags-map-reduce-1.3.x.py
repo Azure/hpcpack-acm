@@ -106,6 +106,7 @@ def main():
             'Intel MPI version': '2018 Update 4',
             'Packet size': -1,
             'Mode': 'Tournament',
+            'Use Microsoft MPI': "Yes"
         }
         parseArgs(diagArgs, arguments)
         if isMap:
@@ -350,27 +351,30 @@ td, th {
 def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
     packetSize = arguments['Packet size']
+    useMsmpi = arguments['Use Microsoft MPI'].lower() == "Yes".lower()
     mode = arguments['Mode'].lower()
     globalCheckProductVersion('Intel MPI', mpiVersion)
-    mpiInstallationLocationWindows = globalGetDefaultInstallationPathWindows('Intel MPI', mpiVersion)
+    mpiInstallationLocationWindows = globalGetDefaultInstallationPathWindows('Microsoft MPI' if useMsmpi else 'Intel MPI', mpiVersion)
     mpiInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion)
-    tasks = mpiPingpongCreateTasksWindows(list(windowsNodes & rdmaNodes), True, 1, mpiInstallationLocationWindows, packetSize)
-    tasks += mpiPingpongCreateTasksWindows(list(windowsNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationWindows, packetSize)
+    tasks = mpiPingpongCreateTasksWindows(list(windowsNodes & rdmaNodes), True, 1, mpiInstallationLocationWindows, packetSize, useMsmpi)
+    tasks += mpiPingpongCreateTasksWindows(list(windowsNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationWindows, packetSize, useMsmpi)
     tasks += mpiPingpongCreateTasksLinux(list(linuxNodes & rdmaNodes), True, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize)
     tasks += mpiPingpongCreateTasksLinux(list(linuxNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize)
     return tasks
 
-def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
+def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, useMsmpi):
     tasks = []
     if len(nodelist) == 0:
         return tasks
 
-    mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiLocation)
+    sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
     rdmaOption = ''
     taskLabel = '[Windows]'
+    interVmTaskTimeout = 60
     if isRdma:
         rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0'
         taskLabel += '[RDMA]'
+        interVmTaskTimeout = 10
 
     taskTemplate = {
         'UserName': HPC_DIAG_USERNAME,
@@ -378,49 +382,83 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
         'EnvironmentVariables': {'CCP_ISADMIN': 1}
     }
 
-    sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
-    commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpi'.format(mpiLocation) # this way would only add one row in firewall rules
-    # commandSetFirewall = r'netsh advfirewall firewall add rule name="hpc_diagnostics_mpi" dir=in action=allow program="{}\intel64\bin\mpiexec.exe"'.format(mpiLocation) # this way would add multiple rows in firewall rules when it is executed multiple times
-    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -n 2 IMB-MPI1 pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption)
-    commandRunInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts [nodepair] -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption, sampleOption)
     commandMeasureTime = "$stopwatch = [system.diagnostics.stopwatch]::StartNew(); [command]; if($?) {'Run time: ' + $stopwatch.Elapsed.TotalSeconds}"
-
-    idByNode = {}
+    if useMsmpi:
+        commandSetFirewall = 'netsh firewall add allowedprogram "%MSMPI_BENCHMARKS%IMB-MPI1.exe" hpc_diagnostics_imb-mpi1'
+        commandStopHpcPackSmpd = 'net stop msmpi && type nul >hpcpacksmpdstopped'
+        commandStartHpcPackSmpd = 'if exist hpcpacksmpdstopped net start msmpi && del hpcpacksmpdstopped'
+        commandStartSmpd = 'type nul >smpdstartd && smpd -d || del smpdstartd'
+        commandStopSmpd = 'if exist smpdstartd taskkill /f /im smpd.exe'
+        commandCheckSmpd = 'tasklist /fi "imagename eq smpd.exe" | findstr smpd'
+        commandSetEnvs = "$env:CCP_TASKCONTEXT=''; $env:path='%MSMPI_BIN%'"
+        commandMpiIntra = "{}; mpiexec -hosts 1 %COMPUTERNAME% 2 '%MSMPI_BENCHMARKS%IMB-MPI1' {} pingpong".format(commandSetEnvs, sampleOption)
+        commandMpiInter = "{}; mpiexec -hosts 2 [nodeping] 1 [nodepong] 1 '%MSMPI_BENCHMARKS%IMB-MPI1' -time 60 {} pingpong".format(commandSetEnvs, sampleOption)
+        commandRunIntra = 'echo off && for /l %i in (1,1,30) do ({} && (powershell "{}" & exit) || ping -n 2 127.0.0.1 >nul)'.format(commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiIntra))
+        commandRunInter = '{} && powershell "{}"'.format(commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiInter))
+    else:
+        mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiLocation)
+        commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpiexec'.format(mpiLocation) # this way would only add one row in firewall rules
+        # commandSetFirewall = r'netsh advfirewall firewall add rule name="hpc_diagnostics_mpi" dir=in action=allow program="{}\intel64\bin\mpiexec.exe"'.format(mpiLocation) # this way would add multiple rows in firewall rules when it is executed multiple times
+        commandMpiIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -n 2 IMB-MPI1 {} pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption, sampleOption)
+        commandMpiInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts [nodepair] -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption, sampleOption)
+        commandRunIntra = '{} && "{}" && powershell "{}"'.format(commandSetFirewall, mpiEnvFile, commandMeasureTime.replace('[command]', commandMpiIntra))
+        commandRunInter = '"{}" && powershell "{}"'.format(mpiEnvFile, commandMeasureTime.replace('[command]', commandMpiInter))
 
     id = startId
+
+    if useMsmpi:
+        for node in nodelist:
+            task = copy.deepcopy(taskTemplate)
+            task['Id'] = id
+            task['Node'] = node
+            task['CommandLine'] = '{} && {} & {}'.format(commandSetFirewall, commandStopHpcPackSmpd, commandStartSmpd)
+            task['CustomizedData'] = '{} start smpd on {}'.format(taskLabel, node)
+            task['MaximumRuntimeSeconds'] = 36000
+            tasks.append(task)
+            id += 1
+
+    idByNode = {}
     for node in nodelist:
-        command = commandMeasureTime.replace('[command]', commandRunIntra)
         task = copy.deepcopy(taskTemplate)
         task['Id'] = id
         task['Node'] = node
-        task['CommandLine'] = '{} && "{}" && powershell "{}"'.format(commandSetFirewall, mpiEnvFile, command)
+        task['CommandLine'] = commandRunIntra
         task['CustomizedData'] = '{} {}'.format(taskLabel, node)
-        task['MaximumRuntimeSeconds'] = 30
+        task['MaximumRuntimeSeconds'] = 60
         tasks.append(task)
         idByNode[node] = id
         id += 1
-
-    if len(nodelist) < 2:
-        return tasks
 
     taskgroups = mpiPingpongGetGroups(nodelist)
     for taskgroup in taskgroups:
         idByNodeNext = {}
         for nodepair in taskgroup:
             nodes = ','.join(nodepair)
-            command = commandMeasureTime.replace('[command]', commandRunInter)
             task = copy.deepcopy(taskTemplate)
             task['Id'] = id
             task['Node'] = nodepair[0]
-            task['CommandLine'] = '"{}" && powershell "{}"'.format(mpiEnvFile, command).replace('[nodepair]', nodes)
+            task['CommandLine'] = commandRunInter.replace('[nodepair]', nodes).replace('[nodeping]', nodepair[0]).replace('[nodepong]', nodepair[1])
             task['ParentIds'] = [idByNode[node] for node in nodepair if node in idByNode]
             task['CustomizedData'] = '{} {}'.format(taskLabel, nodes)
-            task['MaximumRuntimeSeconds'] = 60
+            task['MaximumRuntimeSeconds'] = interVmTaskTimeout
             tasks.append(task)
             idByNodeNext[nodepair[0]] = id
             idByNodeNext[nodepair[1]] = id
             id += 1
         idByNode = idByNodeNext
+
+    if useMsmpi:
+        for node in nodelist:
+            task = copy.deepcopy(taskTemplate)
+            task['Id'] = id
+            task['Node'] = node
+            task['CommandLine'] = '{} & {}'.format(commandStopSmpd, commandStartHpcPackSmpd)
+            task['ParentIds'] = [idByNode[node] if node in idByNode else id - 1]
+            task['CustomizedData'] = '{} stop smpd on {}'.format(taskLabel, node)
+            task['MaximumRuntimeSeconds'] = 60
+            tasks.append(task)
+            id += 1        
+
     return tasks
 
 def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, log):
@@ -446,7 +484,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
 
     commandAddHost = 'host [pairednode] && ssh-keyscan [pairednode] >>~/.ssh/known_hosts'
     commandClearHosts = 'rm -f ~/.ssh/known_hosts'
-    commandRunIntra = 'source {}/intel64/bin/mpivars.sh && mpirun -env I_MPI_SHM_LMT=shm {} -n 2 IMB-MPI1 pingpong'.format(mpiLocation, rdmaOption)    
+    commandRunIntra = 'source {}/intel64/bin/mpivars.sh && mpirun -env I_MPI_SHM_LMT=shm {} -n 2 IMB-MPI1 {} pingpong'.format(mpiLocation, rdmaOption, sampleOption)    
     commandRunInter = 'source {}/intel64/bin/mpivars.sh && mpirun -hosts [nodepair] {} -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(mpiLocation, rdmaOption, sampleOption)
     commandMeasureTime = "TIMEFORMAT='Run time: %3R' && time timeout [timeout]s bash -c '[command]'"
 
@@ -464,9 +502,6 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
         tasks.append(task)
         idByNode[node] = id
         id += 1
-
-    if len(nodelist) < 2:
-        return tasks
 
     if mode == 'Tournament'.lower():
         taskgroups = mpiPingpongGetGroups(nodelist)
@@ -513,8 +548,10 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
 
 def mpiPingpongGetGroups(nodelist):
     n = len(nodelist)
-    if n <= 2:
-        return [[[nodelist[0], nodelist[-1]]]]
+    if n <= 1:
+        return []
+    if n == 2:
+        return [[nodelist]]
     groups = []
     if n%2 == 1:
         for j in range(0, n):
@@ -524,7 +561,7 @@ def mpiPingpongGetGroups(nodelist):
             groups.append(group)
     else:
         groups = mpiPingpongGetGroups(nodelist[1:])
-        for i in range(0, len(groups)):
+        for i in range(len(groups)):
             groups[i].append([nodelist[0], nodelist[i+1]])
     return groups
 
@@ -563,6 +600,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                 linuxTaskIds.add(taskId)
             if '[RDMA]' in taskLabel and ',' not in taskLabel:
                 rdmaNodes.append(nodeOrPair)
+            isSmpdTask = 'smpd on' in taskLabel
             if state == TASK_STATE_CANCELED:
                 canceledTasks.add(taskId)
             exitCode = output = message = None
@@ -577,7 +615,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                         messages[nodeOrPair] = message
             if not output:
                 output = ''
-            if not message:
+            if not message and not isSmpdTask:
                 failedTasks.append({
                     'TaskId':taskId,
                     'NodeName':nodeName,
