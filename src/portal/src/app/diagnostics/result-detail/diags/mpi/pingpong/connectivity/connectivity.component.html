@@ -1,13 +1,5 @@
 <div class="selected-connectivity">
-  <div class="connectivity-item">
-    <div class="name">
-      Selected Pair:
-    </div>
-    <div class="connectivity-value">
-      {{selectedConnectivity.nodes}}
-    </div>
-  </div>
-  <div class="connectivity-item">
+  <div class="connectivity-item fixed-width">
     <div class="name">
       Latency:
     </div>
@@ -15,7 +7,7 @@
       {{selectedConnectivity.latency}}
     </div>
   </div>
-  <div class="connectivity-item">
+  <div class="connectivity-item fixed-width">
     <div class="name">
       Throughput:
     </div>
@@ -23,12 +15,20 @@
       {{selectedConnectivity.throughput}}
     </div>
   </div>
-  <div class="connectivity-item">
+  <div class="connectivity-item fixed-width">
     <div class="name">
       Runtime:
     </div>
     <div class="connectivity-value">
       {{selectedConnectivity.runtime}}
+    </div>
+  </div>
+  <div class="connectivity-item">
+    <div class="name">
+      Selected Pair:
+    </div>
+    <div class="connectivity-value">
+      {{selectedConnectivity.nodes}}
     </div>
   </div>
 </div>

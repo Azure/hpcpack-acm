@@ -2,7 +2,7 @@
 
 .selected-connectivity {
   padding: 10px;
-  @include display-flex(center, space-between);
+  @include display-flex(center);
   border-bottom: 1px solid rgba(0, 0, 0, .12);
 
   .connectivity-item {
@@ -15,6 +15,10 @@
     .connectivity-value {
       font-size: 13px;
     }
+  }
+
+  .fixed-width {
+    width: 150px;
   }
 }
 
@@ -79,4 +83,6 @@
 
 ::ng-deep .mat-tooltip {
   white-space: pre;
+  font-size: 12px;
+  line-height: 20px;
 }
