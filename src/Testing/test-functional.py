@@ -18,9 +18,11 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
     print("[Target Uri]: {0}".format(cluster))
 
     # check if the cluster is available for access
+    nodes = None
     try:
         api = "{0}/v1/nodes?count=1000".format(cluster)
         response = restGet(api)
+        nodes = response.json()
     except Exception as e:
         print("[Fail]: Cluster is not available.")
         print(e)
@@ -28,7 +30,6 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
         return 'Fail'
 
     # filter healthy nodes in the cluster
-    nodes = response.json()
     if platform == 'Mixed':
         platform = ''
     healthyNodes = [node["id"] for node in nodes if node["health"] == "OK" and platform in node['nodeRegistrationInfo']['distroInfo']]

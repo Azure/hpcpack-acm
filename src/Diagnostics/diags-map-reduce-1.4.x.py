@@ -1,70 +1,74 @@
-#v1.3.0
+# v1.4.0
+# python3
 
 import sys, json, copy, numpy, time, math, uuid
 from datetime import datetime, timedelta
 
-INTEL_PRODUCT_URL = {
-    'MPI': {
+PRODUCT_URL = {
+    'Intel MPI': {
         '2019 Update 1'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14879/l_mpi_2019.1.144.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14881/w_mpi_p_2019.1.144.exe'
-            },
+        },
         '2019'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13584/l_mpi_2019.0.117.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13586/w_mpi_p_2019.0.117.exe'
-            },
+        },
         '2018 Update 4'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13741/l_mpi_2018.4.274.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13653/w_mpi_p_2018.4.274.exe'
-            },
+        },
         '2018 Update 3'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13112/l_mpi_2018.3.222.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13065/w_mpi_p_2018.3.210.exe'
-            },
+        },
         '2018 Update 2'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12748/l_mpi_2018.2.199.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12745/w_mpi_p_2018.2.185.exe'
-            },
+        },
         '2018 Update 1'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12414/l_mpi_2018.1.163.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12443/w_mpi_p_2018.1.156.exe'
-            },
+        },
         '2018'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12120/l_mpi_2018.0.128.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12114/w_mpi_p_2018.0.124.exe'
-            }
-        },
-    'MKL': {
+        }
+    },
+    'Intel MKL': {
         '2019 Update 1'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14895/l_mkl_2019.1.144.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/14893/w_mkl_2019.1.144.exe'
-            },
+        },
         '2019'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13575/l_mkl_2019.0.117.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13558/w_mkl_2019.0.117.exe'
-            },
+        },
         '2018 Update 4'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13725/l_mkl_2018.4.274.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13707/w_mkl_2018.4.274.exe'
-            },
+        },
         '2018 Update 3'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13005/l_mkl_2018.3.222.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/13037/w_mkl_2018.3.210.exe'
-            },
+        },
         '2018 Update 2'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12725/l_mkl_2018.2.199.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12692/w_mkl_2018.2.185.exe'
-            },
+        },
         '2018 Update 1'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12414/l_mkl_2018.1.163.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12394/w_mkl_2018.1.156.exe'
-            },
+        },
         '2018'.lower(): {
             'Linux': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12070/l_mkl_2018.0.128.tgz',
             'Windows': 'http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/12079/w_mkl_2018.0.124.exe'
-            }
         }
+    },
+    'Microsoft MPI': {
+        '10.0'.lower(): 'https://github.com/Microsoft/Microsoft-MPI/releases/download/v10.0/msmpisetup.exe'
     }
+}
 
 HPC_DIAG_USERNAME = 'hpc_diagnostics'
 HPC_DIAG_PASSWORD = 'p@55word'
@@ -102,7 +106,7 @@ def main():
             'Intel MPI version': '2018 Update 4',
             'Packet size': -1,
             'Mode': 'Tournament',
-            'Debug': False
+            'Use Microsoft MPI': "Yes"
         }
         parseArgs(diagArgs, arguments)
         if isMap:
@@ -132,17 +136,22 @@ def main():
         else:
             return mpiHplReduce(arguments, targetNodes, tasks, taskResults)
 
-    if diagName.startswith('Prerequisite-Intel'):
+    if diagName.startswith('Prerequisite') and diagName.endswith('Installation'):
+        product = diagName.split('-')[-1][:-len(' Installation')]
+        version = None
+        if product == 'Microsoft MPI':
+            version = '10.0'
+        elif product.startswith('Intel'):
+            version = '2018 Update 4'
         arguments = {
-            'Version': '2018 Update 4',
+            'Version': version,
             'Max runtime': 1800
         }
         parseArgs(diagArgs, arguments)
-        product = 'MPI' if 'MPI' in diagName else 'MKL'
         if isMap:
-            generatedTasks = installIntelProductMap(arguments, windowsNodes, linuxNodes, product)
+            generatedTasks = installationMap(arguments, windowsNodes, linuxNodes, product)
         else:
-            return installIntelProductReduce(arguments, tasks, taskResults, product)
+            return installationReduce(arguments, targetNodes, tasks, taskResults, product)
 
     if diagName == 'Standalone Benchmark-Linpack':
         arguments = {
@@ -277,21 +286,26 @@ def parseArgs(diagArgsIn, diagArgsOut):
                 argType = type(diagArgsOut[key])
                 diagArgsOut[key] = argType(arg['value'])
 
-def globalCheckIntelProductVersion(product, version):
-    if product not in INTEL_PRODUCT_URL or version.lower() not in INTEL_PRODUCT_URL[product]:
-        raise Exception('Intel {} {} is not supported'.format(product, version))
+def globalCheckProductVersion(product, version):
+    if product not in PRODUCT_URL or version.lower() not in PRODUCT_URL[product]:
+        raise Exception('{} {} is not supported'.format(product, version))
 
-def globalGetDefaultInstallationLocationWindows(product, version):
-    versionNumber = INTEL_PRODUCT_URL[product][version.lower()]['Windows'].split('_')[-1][:-len(".exe")]
+def globalGetDefaultInstallationPathWindows(product, version):
+    if product == 'Microsoft MPI':
+        return r'C:\Program Files\Microsoft MPI'
+    else:
+        versionNumber = PRODUCT_URL[product][version.lower()]['Windows'].split('_')[-1][:-len(".exe")]
+        if versionNumber == '2018.4.274':
+            versionNumber = '2018.5.274'        
+        return r'C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_{}\windows\{}'.format(versionNumber, product.split()[-1].lower())
+
+def globalGetDefaultInstallationPathLinux(product, version):
+    if product == 'Microsoft MPI':
+        raise Exception('Can not get installation path of Microsoft MPI on Linux nodes')
+    versionNumber = PRODUCT_URL[product][version.lower()]['Linux'].split('_')[-1][:-len(".tgz")]
     if versionNumber == '2018.4.274':
         versionNumber = '2018.5.274'        
-    return 'C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_{}\windows\{}'.format(versionNumber, product.lower())
-
-def globalGetDefaultInstallationLocationLinux(product, version):
-    versionNumber = INTEL_PRODUCT_URL[product][version.lower()]['Linux'].split('_')[-1][:-len(".tgz")]
-    if versionNumber == '2018.4.274':
-        versionNumber = '2018.5.274'        
-    return '/opt/intel/compilers_and_libraries_{}/linux/{}'.format(versionNumber, product.lower())
+    return '/opt/intel/compilers_and_libraries_{}/linux/{}'.format(versionNumber, product.split()[-1].lower())
     
 def globalGetIntelProductAzureBlobUrl(originalUrl):
     fileName = originalUrl.split('/')[-1]
@@ -337,27 +351,30 @@ td, th {
 def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
     packetSize = arguments['Packet size']
+    useMsmpi = arguments['Use Microsoft MPI'].lower() == "Yes".lower()
     mode = arguments['Mode'].lower()
-    globalCheckIntelProductVersion('MPI', mpiVersion)
-    mpiInstallationLocationWindows = globalGetDefaultInstallationLocationWindows('MPI', mpiVersion)
-    mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
-    tasks = mpiPingpongCreateTasksWindows(list(windowsNodes & rdmaNodes), True, 1, mpiInstallationLocationWindows, packetSize)
-    tasks += mpiPingpongCreateTasksWindows(list(windowsNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationWindows, packetSize)
+    globalCheckProductVersion('Intel MPI', mpiVersion)
+    mpiInstallationLocationWindows = globalGetDefaultInstallationPathWindows('Microsoft MPI' if useMsmpi else 'Intel MPI', mpiVersion)
+    mpiInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion)
+    tasks = mpiPingpongCreateTasksWindows(list(windowsNodes & rdmaNodes), True, 1, mpiInstallationLocationWindows, packetSize, useMsmpi)
+    tasks += mpiPingpongCreateTasksWindows(list(windowsNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationWindows, packetSize, useMsmpi)
     tasks += mpiPingpongCreateTasksLinux(list(linuxNodes & rdmaNodes), True, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize)
     tasks += mpiPingpongCreateTasksLinux(list(linuxNodes - rdmaNodes), False, len(tasks) + 1, mpiInstallationLocationLinux, mode, packetSize)
     return tasks
 
-def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
+def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, useMsmpi):
     tasks = []
     if len(nodelist) == 0:
         return tasks
 
-    mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiLocation)
+    sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
     rdmaOption = ''
     taskLabel = '[Windows]'
+    interVmTaskTimeout = 60
     if isRdma:
         rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0'
         taskLabel += '[RDMA]'
+        interVmTaskTimeout = 10
 
     taskTemplate = {
         'UserName': HPC_DIAG_USERNAME,
@@ -365,49 +382,83 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log):
         'EnvironmentVariables': {'CCP_ISADMIN': 1}
     }
 
-    sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
-    commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpi'.format(mpiLocation) # this way would only add one row in firewall rules
-    # commandSetFirewall = r'netsh advfirewall firewall add rule name="hpc_diagnostics_mpi" dir=in action=allow program="{}\intel64\bin\mpiexec.exe"'.format(mpiLocation) # this way would add multiple rows in firewall rules when it is executed multiple times
-    commandRunIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -n 2 IMB-MPI1 pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption)
-    commandRunInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts [nodepair] -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption, sampleOption)
     commandMeasureTime = "$stopwatch = [system.diagnostics.stopwatch]::StartNew(); [command]; if($?) {'Run time: ' + $stopwatch.Elapsed.TotalSeconds}"
-
-    idByNode = {}
+    if useMsmpi:
+        commandSetFirewall = 'netsh firewall add allowedprogram "%MSMPI_BENCHMARKS%IMB-MPI1.exe" hpc_diagnostics_imb-mpi1'
+        commandStopHpcPackSmpd = 'net stop msmpi && type nul >hpcpacksmpdstopped'
+        commandStartHpcPackSmpd = 'if exist hpcpacksmpdstopped net start msmpi && del hpcpacksmpdstopped'
+        commandStartSmpd = 'type nul >smpdstartd && smpd -d || del smpdstartd'
+        commandStopSmpd = 'if exist smpdstartd taskkill /f /im smpd.exe'
+        commandCheckSmpd = 'tasklist /fi "imagename eq smpd.exe" | findstr smpd'
+        commandSetEnvs = "$env:CCP_TASKCONTEXT=''; $env:path='%MSMPI_BIN%'"
+        commandMpiIntra = "{}; mpiexec -hosts 1 %COMPUTERNAME% 2 '%MSMPI_BENCHMARKS%IMB-MPI1' {} pingpong".format(commandSetEnvs, sampleOption)
+        commandMpiInter = "{}; mpiexec -hosts 2 [nodeping] 1 [nodepong] 1 '%MSMPI_BENCHMARKS%IMB-MPI1' -time 60 {} pingpong".format(commandSetEnvs, sampleOption)
+        commandRunIntra = 'echo off && for /l %i in (1,1,30) do ({} && (powershell "{}" & exit) || ping -n 2 127.0.0.1 >nul)'.format(commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiIntra))
+        commandRunInter = '{} && powershell "{}"'.format(commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiInter))
+    else:
+        mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiLocation)
+        commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpiexec'.format(mpiLocation) # this way would only add one row in firewall rules
+        # commandSetFirewall = r'netsh advfirewall firewall add rule name="hpc_diagnostics_mpi" dir=in action=allow program="{}\intel64\bin\mpiexec.exe"'.format(mpiLocation) # this way would add multiple rows in firewall rules when it is executed multiple times
+        commandMpiIntra = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -n 2 IMB-MPI1 {} pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption, sampleOption)
+        commandMpiInter = r'\\"%USERDOMAIN%\%USERNAME%`n{}\\" | mpiexec {} -hosts [nodepair] -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(HPC_DIAG_PASSWORD, rdmaOption, sampleOption)
+        commandRunIntra = '{} && "{}" && powershell "{}"'.format(commandSetFirewall, mpiEnvFile, commandMeasureTime.replace('[command]', commandMpiIntra))
+        commandRunInter = '"{}" && powershell "{}"'.format(mpiEnvFile, commandMeasureTime.replace('[command]', commandMpiInter))
 
     id = startId
+
+    if useMsmpi:
+        for node in nodelist:
+            task = copy.deepcopy(taskTemplate)
+            task['Id'] = id
+            task['Node'] = node
+            task['CommandLine'] = '{} && {} & {}'.format(commandSetFirewall, commandStopHpcPackSmpd, commandStartSmpd)
+            task['CustomizedData'] = '{} start smpd on {}'.format(taskLabel, node)
+            task['MaximumRuntimeSeconds'] = 36000
+            tasks.append(task)
+            id += 1
+
+    idByNode = {}
     for node in nodelist:
-        command = commandMeasureTime.replace('[command]', commandRunIntra)
         task = copy.deepcopy(taskTemplate)
         task['Id'] = id
         task['Node'] = node
-        task['CommandLine'] = '{} && "{}" && powershell "{}"'.format(commandSetFirewall, mpiEnvFile, command)
+        task['CommandLine'] = commandRunIntra
         task['CustomizedData'] = '{} {}'.format(taskLabel, node)
-        task['MaximumRuntimeSeconds'] = 30
+        task['MaximumRuntimeSeconds'] = 60
         tasks.append(task)
         idByNode[node] = id
         id += 1
-
-    if len(nodelist) < 2:
-        return tasks
 
     taskgroups = mpiPingpongGetGroups(nodelist)
     for taskgroup in taskgroups:
         idByNodeNext = {}
         for nodepair in taskgroup:
             nodes = ','.join(nodepair)
-            command = commandMeasureTime.replace('[command]', commandRunInter)
             task = copy.deepcopy(taskTemplate)
             task['Id'] = id
             task['Node'] = nodepair[0]
-            task['CommandLine'] = '"{}" && powershell "{}"'.format(mpiEnvFile, command).replace('[nodepair]', nodes)
+            task['CommandLine'] = commandRunInter.replace('[nodepair]', nodes).replace('[nodeping]', nodepair[0]).replace('[nodepong]', nodepair[1])
             task['ParentIds'] = [idByNode[node] for node in nodepair if node in idByNode]
             task['CustomizedData'] = '{} {}'.format(taskLabel, nodes)
-            task['MaximumRuntimeSeconds'] = 60
+            task['MaximumRuntimeSeconds'] = interVmTaskTimeout
             tasks.append(task)
             idByNodeNext[nodepair[0]] = id
             idByNodeNext[nodepair[1]] = id
             id += 1
         idByNode = idByNodeNext
+
+    if useMsmpi:
+        for node in nodelist:
+            task = copy.deepcopy(taskTemplate)
+            task['Id'] = id
+            task['Node'] = node
+            task['CommandLine'] = '{} & {}'.format(commandStopSmpd, commandStartHpcPackSmpd)
+            task['ParentIds'] = [idByNode[node] if node in idByNode else id - 1]
+            task['CustomizedData'] = '{} stop smpd on {}'.format(taskLabel, node)
+            task['MaximumRuntimeSeconds'] = 60
+            tasks.append(task)
+            id += 1        
+
     return tasks
 
 def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, log):
@@ -423,17 +474,19 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
 
     rdmaOption = ''
     taskLabel = '[Linux]'
+    interVmTimeout = 20
     if isRdma:
         rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0'
         taskLabel += '[RDMA]'
+        interVmTimeout = 5
 
     sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
 
     commandAddHost = 'host [pairednode] && ssh-keyscan [pairednode] >>~/.ssh/known_hosts'
     commandClearHosts = 'rm -f ~/.ssh/known_hosts'
-    commandRunIntra = 'source {}/intel64/bin/mpivars.sh && mpirun -env I_MPI_SHM_LMT=shm {} -n 2 IMB-MPI1 pingpong'.format(mpiLocation, rdmaOption)    
+    commandRunIntra = 'source {}/intel64/bin/mpivars.sh && mpirun -env I_MPI_SHM_LMT=shm {} -n 2 IMB-MPI1 {} pingpong'.format(mpiLocation, rdmaOption, sampleOption)    
     commandRunInter = 'source {}/intel64/bin/mpivars.sh && mpirun -hosts [nodepair] {} -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(mpiLocation, rdmaOption, sampleOption)
-    commandMeasureTime = "TIMEFORMAT='Run time: %3R' && time timeout [timeout]s bash -c '[command]'".format(mpiLocation)
+    commandMeasureTime = "TIMEFORMAT='Run time: %3R' && time timeout [timeout]s bash -c '[command]'"
 
     idByNode = {}
 
@@ -450,16 +503,13 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
         idByNode[node] = id
         id += 1
 
-    if len(nodelist) < 2:
-        return tasks
-
     if mode == 'Tournament'.lower():
         taskgroups = mpiPingpongGetGroups(nodelist)
         for taskgroup in taskgroups:
             idByNodeNext = {}
             for nodepair in taskgroup:
                 nodes = ','.join(nodepair)
-                command = commandMeasureTime.replace('[timeout]', '20').replace('[command]', commandRunInter)
+                command = commandMeasureTime.replace('[timeout]', str(interVmTimeout)).replace('[command]', commandRunInter)
                 task = copy.deepcopy(taskTemplate)
                 task['Id'] = id
                 task['Node'] = nodepair[0]
@@ -488,7 +538,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
                 task['ParentIds'] = [idByNode[node] for node in nodepair]
                 task['MaximumRuntimeSeconds'] = 230
             else:
-                command = commandMeasureTime.replace('[timeout]', '20').replace('[command]', commandRunInter)
+                command = commandMeasureTime.replace('[timeout]', str(interVmTimeout)).replace('[command]', commandRunInter)
                 task['ParentIds'] = [id-1]
                 task['MaximumRuntimeSeconds'] = 30
             task['CommandLine'] = '{} && {}'.format(commandAddHost, command).replace('[nodepair]', nodes).replace('[pairednode]', nodepair[1])
@@ -498,8 +548,10 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
 
 def mpiPingpongGetGroups(nodelist):
     n = len(nodelist)
-    if n <= 2:
-        return [[[nodelist[0], nodelist[-1]]]]
+    if n <= 1:
+        return []
+    if n == 2:
+        return [[nodelist]]
     groups = []
     if n%2 == 1:
         for j in range(0, n):
@@ -509,7 +561,7 @@ def mpiPingpongGetGroups(nodelist):
             groups.append(group)
     else:
         groups = mpiPingpongGetGroups(nodelist[1:])
-        for i in range(0, len(groups)):
+        for i in range(len(groups)):
             groups[i].append([nodelist[0], nodelist[i+1]])
     return groups
 
@@ -519,22 +571,17 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
     mpiVersion = arguments['Intel MPI version']    
     packetSize = 2**arguments['Packet size']
     mode = arguments['Mode'].lower()
-    debug = arguments['Debug']
 
-    TASK_STATE_FINISHED = 3
     TASK_STATE_CANCELED = 5
 
     defaultPacketSize = 2**22
     isDefaultSize = not 2**-1 < packetSize < 2**30
 
-    taskId2nodePair = {}
     tasksForStatistics = set()
     windowsTaskIds = set()
     linuxTaskIds = set()
     rdmaNodes = []
-    canceledTasks = []
-    canceledNodePairs = set()
-    hasInterVmTask = False
+    canceledTasks = set()
     messages = {}
     failedTasks = []
     taskRuntime = {}
@@ -547,20 +594,15 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
             state = task['State']
             taskLabel = task['CustomizedData']
             nodeOrPair = taskLabel.split()[-1]
-            taskId2nodePair[taskId] = nodeOrPair
             if '[Windows]' in taskLabel:
                 windowsTaskIds.add(taskId)
             if '[Linux]' in taskLabel:
                 linuxTaskIds.add(taskId)
             if '[RDMA]' in taskLabel and ',' not in taskLabel:
                 rdmaNodes.append(nodeOrPair)
-            isInterVmTask = False
-            if ',' in nodeOrPair:
-                isInterVmTask = True
-                hasInterVmTask = True
+            isSmpdTask = 'smpd on' in taskLabel
             if state == TASK_STATE_CANCELED:
-                canceledTasks.append(taskId)
-                canceledNodePairs.add(nodeOrPair)
+                canceledTasks.add(taskId)
             exitCode = output = message = None
             taskResult = resultByTaskId.get(taskId)
             if taskResult:
@@ -570,9 +612,10 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                     message = mpiPingpongParseOutput(output, isDefaultSize)
                     if message:
                         taskRuntime[taskId] = message['Time']
-                        if isInterVmTask and state == TASK_STATE_FINISHED:
-                            messages[nodeOrPair] = message
-            if not message:
+                        messages[nodeOrPair] = message
+            if not output:
+                output = ''
+            if not message and not isSmpdTask:
                 failedTasks.append({
                     'TaskId':taskId,
                     'NodeName':nodeName,
@@ -588,7 +631,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
         printErrorAsJson('Lost OS type information.')
         return -1
 
-    if not hasInterVmTask:
+    if len(tasks) <= len(allNodes):
         printErrorAsJson('No inter VM test was executed. Please select more nodes.')
         return 0
 
@@ -601,22 +644,27 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
         latencyThreshold = 1000000
         throughputThreshold = 0
 
+    connectivityTable = mpiPingpongGetConnectivityTable(allNodes, messages, throughputThreshold)
+
+    messages = {nodeOrPair: messages[nodeOrPair] for nodeOrPair in messages if ',' in nodeOrPair}
     goodPairs = [pair for pair in messages if messages[pair]['Throughput'] > throughputThreshold]
     goodNodesGroups = mpiPingpongGetGroupsOfFullConnectedNodes(goodPairs)
-    goodNodes = set([node for group in goodNodesGroups for node in group])
-    if goodNodes != set([node for pair in goodPairs for node in pair.split(',')]):
-        printErrorAsJson('Should not get here!')
+    goodNodes = [node for group in goodNodesGroups for node in group]
+    nodesInGoodPairs = [node for pair in goodPairs for node in pair.split(',')]
+    if goodNodes and set(goodNodes) != set(nodesInGoodPairs):
+        printErrorAsJson('Good nodes validation failed!')
         return -1
-    badNodes = [node for node in allNodes if node not in goodNodes]
-    goodNodes = list(goodNodes)
-    failedReasons, failedReasonsByNode = mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs)
+    
+    badNodes = list(set(allNodes) - set(goodNodes))
+    failedReasons, failedReasonsByNode = mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks)
 
     result = {
+        'Connectivity':connectivityTable,
         'GoodNodesGroups':mpiPingpongGetLargestNonoverlappingGroups(goodNodesGroups),
-        'GoodNodes':goodNodes,
+        'GoodNodes':sorted(goodNodes),
         'FailedNodes':failedReasonsByNode,
-        'BadNodes':badNodes,
-        'RdmaNodes':rdmaNodes,
+        'BadNodes':sorted(badNodes),
+        'RdmaNodes':sorted(rdmaNodes),
         'FailedReasons':failedReasons,
         'Latency':{},
         'Throughput':{},
@@ -698,22 +746,20 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
 
     endTime = time.time()
     
-    if debug:
-        taskRuntime = {
-            'Max': numpy.amax(list(taskRuntime.values())),
-            'Ave': numpy.average(list(taskRuntime.values())),
-            'Sorted': sorted([{'runtime':taskRuntime[key], 'taskId':key, 'nodepair':taskId2nodePair[key]} for key in taskRuntime], key=lambda x:x['runtime'], reverse=True)
-            }
-        failedTasksByExitcode = {}
-        for task in failedTasks:
-            failedTasksByExitcode.setdefault(task['ExitCode'], []).append(task['TaskId'])
-        result['DebugInfo'] = {
-            'ReduceRuntime':endTime - startTime,
-            'GoodNodesGroups':goodNodesGroups,
-            'CanceledTasks':canceledTasks,
-            'FailedTasksGroupByExitcode':failedTasksByExitcode,
-            'TaskRuntime':taskRuntime,
-            }
+    taskRuntime = {
+        'Max': numpy.amax(list(taskRuntime.values())),
+        'Ave': numpy.average(list(taskRuntime.values())),
+        'Sorted': sorted([{'runtime':taskRuntime[key], 'taskId':key} for key in taskRuntime], key=lambda x:x['runtime'], reverse=True)
+        }
+    failedTasksByExitcode = {}
+    for task in failedTasks:
+        failedTasksByExitcode.setdefault(task['ExitCode'], []).append(task['TaskId'])
+    result['DebugInfo'] = {
+        'ReduceRuntime':endTime - startTime,
+        'CanceledTasks':sorted(list(canceledTasks)),
+        'FailedTasksByExitcode':failedTasksByExitcode,
+        'TaskRuntime':taskRuntime,
+        }
         
     print(json.dumps(result))
     return 0
@@ -733,9 +779,9 @@ def mpiPingpongParseOutput(output, isDefaultSize):
     except:
         return None
 
-def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
+def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
     reasonMpiNotInstalled = 'Intel MPI is not found.'
-    solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location {} or {}. Run "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion, globalGetDefaultInstallationLocationLinux('MPI', mpiVersion), globalGetDefaultInstallationLocationWindows('MPI', mpiVersion))
+    solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location {} or {}. Run "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion, globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion), globalGetDefaultInstallationPathWindows('Intel MPI', mpiVersion))
 
     reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
@@ -750,9 +796,9 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
     reasonTaskTimeout = 'Task timeout.'
     reasonPingpongTimeout = 'Pingpong test timeout.'
     reasonSampleTimeout = 'Pingpong test sample timeout.'
-    reasonNoResult = 'No result.'
+    reasonNoResult = 'No task result.'
 
-    reasonAvSet = 'The nodes may not be in the same availability set.(CM ADDR ERROR)'
+    reasonAvSet = 'The nodes may not be in the same availability set.'
     solutionAvSet = 'Recreate the node(s) and ensure the nodes are in the same availability set.'
     
     reasonDapl = 'MPI issue: "dapl fabric is not available and fallback fabric is not enabled"'
@@ -761,6 +807,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
     failedReasons = {}
     for failedPair in failedTasks:
         reason = "Unknown"
+        taskId = failedPair['TaskId']
         nodeName = failedPair['NodeName']
         nodeOrPair = failedPair['NodeOrPair']
         output = failedPair['Output']
@@ -788,7 +835,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
         elif "Benchmark PingPong invalid for 1 processes" in output:
             reason = reasonNodeSingleCore
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionNodeSingleCore, 'Nodes':[]})['Nodes'].append(nodeName)
-        elif "CM ADDR ERROR" in output:
+        elif "dapl_cma_active: CM ADDR ERROR" in output:
             reason = reasonAvSet
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionAvSet, 'NodePairs':[]})['NodePairs'].append(nodeOrPair)
         elif "dapl fabric is not available and fallback fabric is not enabled" in output:
@@ -803,9 +850,9 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledNodePairs):
                 reason = reasonSampleTimeout
             elif exitCode == 124:
                 reason = reasonPingpongTimeout
-            elif nodeOrPair in canceledNodePairs:
+            elif taskId in canceledTasks:
                 reason = reasonTaskTimeout
-            elif exitcode is None or output is None:
+            elif exitCode is None or output == '':
                 reason = reasonNoResult
             failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(nodeOrPair)
         failedPair['Reason'] = reason
@@ -870,6 +917,8 @@ def mpiPingpongGetGroupsOfFullConnectedNodes(pairs):
             mpiPingpongAddToGroups(newGroups, newGroup)
         for group in newGroups:
             mpiPingpongAddToGroups(groups, group)
+        if len(groups) > 1000: # for limiting complexity
+            return []
     return [list(group) for group in groups]
 
 def mpiPingpongAddToGroups(groups, new):
@@ -893,11 +942,41 @@ def mpiPingpongGetVariability(data):
     else:
         return "High"
 
+def mpiPingpongGetConnectivityTable(allNodes, messages, threshold):
+    table = []
+    node2index = {}
+    nodes = sorted(allNodes)
+    size = len(nodes)
+    for i in range(size):
+        node2index[nodes[i]] = i
+        table.append({nodes[i]: [{nodes[j]:None} for j in range(size - 1, i - 1, -1)]})
+    for nodeOrPair in messages:
+        nodes = nodeOrPair.split(',')
+        i, j = sorted([node2index[node] for node in nodes]) if len(nodes) > 1 else [node2index[nodes[0]]] * 2
+        j = size - 1 - j
+        result = messages[nodeOrPair]
+        item = next(iter(table[i].values()))[j]
+        key = next(iter(item.keys()))
+        item[key] = {
+            'Latency': '{} us'.format(result['Latency']),
+            'Throughput': '{} MB/s'.format(result['Throughput']),
+            'Runtime': '{} s'.format(result['Time']),
+            'Connectivity': 'Good' if result['Throughput'] > threshold else 'Warning'
+        }
+    for row in table:
+        for item in next(iter(row.values())):
+            key = next(iter(item.keys()))
+            if not item[key]:
+                item[key] = {
+                    'Connectivity': 'Bad'
+                }
+    return table
+
 def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
-    globalCheckIntelProductVersion('MPI', mpiVersion)
-    mpiInstallationLocationWindows = globalGetDefaultInstallationLocationWindows('MPI', mpiVersion)
-    mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
+    globalCheckProductVersion('Intel MPI', mpiVersion)
+    mpiInstallationLocationWindows = globalGetDefaultInstallationPathWindows('Intel MPI', mpiVersion)
+    mpiInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion)
 
     if windowsNodes and linuxNodes:
         raise Exception('Can not run this test among Linux nodes and Windows nodes')
@@ -935,8 +1014,11 @@ def mpiRingMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     commandRunInterWindows = commandRunWindows.replace('[command]', commandRunInter)
 
     commandSource = 'source {0}/intel64/bin/mpivars.sh'.format(mpiInstallationLocationLinux)
-    commandRunIntraLinux = '{} && time mpirun -env I_MPI_SHM_LMT=shm {} -n `grep -c ^processor /proc/cpuinfo` IMB-MPI1 sendrecv'.format(commandSource, rdmaOption)
-    commandRunInterLinux = '{} && time mpirun -hosts {} {} -ppn 1 IMB-MPI1 -npmin {} sendrecv 2>/dev/null'.format(commandSource, nodes, rdmaOption, nodesCount)
+    commandRunIntra = '{} && time mpirun -env I_MPI_SHM_LMT=shm {} -n `grep -c ^processor /proc/cpuinfo` IMB-MPI1 sendrecv'.format(commandSource, rdmaOption)
+    commandRunInter = '{} && time mpirun -hosts {} {} -ppn 1 IMB-MPI1 -npmin {} sendrecv 2>/dev/null'.format(commandSource, nodes, rdmaOption, nodesCount)
+    commandMeasureTime = "TIMEFORMAT='Run time: %3R' && time timeout 30s bash -c '[command]'"
+    commandRunIntraLinux = commandMeasureTime.replace('[command]', commandRunIntra)
+    commandRunInterLinux = commandMeasureTime.replace('[command]', commandRunInter)
 
     taskId = 1
     tasks = []
@@ -1024,10 +1106,10 @@ def mpiHplMap(arguments, jobId, windowsNodes, linuxNodes, rdmaNodes, vmSizeByNod
     mpiVersion = arguments['Intel MPI version']
     mklVersion = arguments['Intel MKL version']
     memoryPercentage = arguments['Memory limit']
-    globalCheckIntelProductVersion('MPI', mpiVersion)
-    globalCheckIntelProductVersion('MKL', mklVersion)
-    mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
-    mklInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', mklVersion)
+    globalCheckProductVersion('Intel MPI', mpiVersion)
+    globalCheckProductVersion('Intel MKL', mklVersion)
+    mpiInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion)
+    mklInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MKL', mklVersion)
 
     minCoreCount = min([nodeInfoByNode[node]['CoreCount'] for node in linuxNodes])
     if not minCoreCount:
@@ -1195,8 +1277,8 @@ HPL.out      output file name (if any)
 def mpiHplReduce(arguments, nodes, tasks, taskResults):
     mpiVersion = arguments['Intel MPI version']
     mklVersion = arguments['Intel MKL version']
-    mpiInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MPI', mpiVersion)
-    mklInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', mklVersion)
+    mpiInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion)
+    mklInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MKL', mklVersion)
 
     taskDetail = {}
     try:
@@ -1373,29 +1455,38 @@ def mpiHplReduce(arguments, nodes, tasks, taskResults):
     return resultCode
 
 
-def installIntelProductMap(arguments, windowsNodes, linuxNodes, product):
+def installationMap(arguments, windowsNodes, linuxNodes, product):
     version = arguments['Version'].lower()
     timeout = arguments['Max runtime']
-    globalCheckIntelProductVersion(product, version)
+    globalCheckProductVersion(product, version)
 
-    leastTime = 180 if product == 'MPI' else 600
+    leastTime = 180 if product.endswith('MPI') else 600
     timeout -= leastTime - 1
     if timeout <= 0:
         raise Exception('The Max runtime parameter should be equal or larger than {}'.format(leastTime))
             
     # command to install MPI/MKL on Linux node
-    url = globalGetIntelProductAzureBlobUrl(INTEL_PRODUCT_URL[product][version]['Linux'])
-    installDirectory = globalGetDefaultInstallationLocationLinux(product, version)
-    wgetOutput = 'wget.output'
-    commandCheckExist = "[ -d {0} ] && echo 'Already installed in {0}'".format(installDirectory)
-    commandShowOutput = r"cat {} | sed 's/.*\r//'".format(wgetOutput)
-    commandDownload = 'timeout {0}s wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 0 --progress=bar:force -O intel.tgz {1} 1>{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)'.format(timeout, url, wgetOutput, commandShowOutput)
-    commandInstall = "tar -zxf intel.tgz && cd l_{}_* && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg".format(product.lower())
-    commandLinux = '{} || ({} && {})'.format(commandCheckExist, commandDownload, commandInstall)
+    if product == 'Microsoft MPI':
+        commandLinux = 'echo Microsoft MPI is not supported on Linux node'
+    else:
+        url = globalGetIntelProductAzureBlobUrl(PRODUCT_URL[product][version]['Linux'])
+        installDirectory = globalGetDefaultInstallationPathLinux(product, version)
+        wgetOutput = 'wget.output'
+        commandCheckExist = "[ -d {0} ] && echo 'Already installed in {0}'".format(installDirectory)
+        commandShowOutput = r"cat {} | sed 's/.*\r//'".format(wgetOutput)
+        commandDownload = 'timeout {0}s wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 0 --progress=bar:force -O intel.tgz {1} 1>{2} 2>&1 && {3} || (errorcode=$? && {3} && exit $errorcode)'.format(timeout, url, wgetOutput, commandShowOutput)
+        commandInstall = "tar -zxf intel.tgz && cd l_{}_* && sed -i -e 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' ./silent.cfg && ./install.sh --silent ./silent.cfg".format(product.split()[-1].lower())
+        commandLinux = '{} || ({} && {})'.format(commandCheckExist, commandDownload, commandInstall)
 
     # command to install MPI/MKL on Windows node
-    url = globalGetIntelProductAzureBlobUrl(INTEL_PRODUCT_URL[product][version]['Windows'])
-    installDirectory = globalGetDefaultInstallationLocationWindows(product, version)
+    installDirectory = globalGetDefaultInstallationPathWindows(product, version)
+    downloadDirectory = r'C:\tmp\hpc_diag_installation'
+    if product == 'Microsoft MPI':
+        url = PRODUCT_URL[product][version]
+        commandInstall = r"cmd /C '{}\product.exe -unattend -force -minimal -log %cd%\product.log'; type product.log -tail 10".format(downloadDirectory)
+    else:
+        url = globalGetIntelProductAzureBlobUrl(PRODUCT_URL[product][version]['Windows'])
+        commandInstall = r"cmd /C '{}\product.exe --silent --a install --eula=accept --output=%cd%\product.log & type product.log'".format(downloadDirectory)
     commandWindows = """powershell "
 if (Test-Path '[installDirectory]')
 {
@@ -1404,13 +1495,15 @@ if (Test-Path '[installDirectory]')
 }
 else
 {
-    rm -Force -ErrorAction SilentlyContinue [product].exe;
-    rm -Force -ErrorAction SilentlyContinue [product].log;
+    mkdir -force [downloadDirectory] | out-null;
+    rm -Force -ErrorAction SilentlyContinue [downloadDirectory]\product.exe;
+    rm -Force -ErrorAction SilentlyContinue product.log;
     date;
     $stopwatch = [system.diagnostics.stopwatch]::StartNew();
     'Start downloading';
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
     $client = new-object System.Net.WebClient;
-    $client.DownloadFile('[url]', '[product].exe');
+    $client.DownloadFile('[url]', '[downloadDirectory]\product.exe');
     date;
     'End downloading';
     if ($stopwatch.Elapsed.TotalSeconds -gt [timeout])
@@ -1420,10 +1513,10 @@ else
     }
     else
     {
-        cmd /C '.\[product].exe --silent --a install --eula=accept --output=%cd%\[product].log & type [product].log'
+        [command]
     }
 }"
-""".replace('[installDirectory]', installDirectory).replace('[url]', url).replace('[timeout]', str(timeout)).replace('[product]', product).replace('\n', '')
+""".replace('[installDirectory]', installDirectory).replace('[downloadDirectory]', downloadDirectory).replace('[url]', url).replace('[timeout]', str(timeout)).replace('[command]', commandInstall).replace('\n', '')
 
     tasks = []
     id = 1
@@ -1448,7 +1541,7 @@ else
 
     return tasks
 
-def installIntelProductReduce(arguments, tasks, taskResults, product):
+def installationReduce(arguments, targetNodes, tasks, taskResults, product):
     version = arguments['Version']
 
     TASK_STATE_CANCELED = 5
@@ -1472,7 +1565,9 @@ def installIntelProductReduce(arguments, tasks, taskResults, product):
             if taskResult['ExitCode'] == 0:
                 if 'Already installed' in message.split('\n', 1)[0]:
                     result = 'Already installed'
-                elif osTypeByNode[node].lower() == 'Linux'.lower() or 'installation was completed successfully' in message:
+                elif 'not supported' in message:
+                    result = 'Not supported'
+                elif osTypeByNode[node].lower() == 'Linux'.lower() or 'completed successfully' in message:
                     result = 'Installation succeeded'
             elif taskResult['ExitCode'] == 124 or taskResult['TaskId'] in canceledTasks:
                 result = 'Timeout'
@@ -1481,14 +1576,18 @@ def installIntelProductReduce(arguments, tasks, taskResults, product):
         printErrorAsJson('Failed to parse task result. ' + str(e))
         return -1
 
-    description = 'This is the result of installing Intel {} {} on each node.'.format(product, version)
+    lostNodes = set(targetNodes) - set(results.keys())
+
+    description = 'This is the result of installing {} {} on each node.'.format(product, version)
+    lostNodesDescription = 'The task result is lost for node(s): {}'.format(', '.join(lostNodes)) if lostNodes else ''
     mpiLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mpi-library">Intel MPI</a>'
     mklLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl">Intel MKL</a>'
+    msmpiLink = '<a target="_blank" rel="noopener noreferrer" href="https://github.com/Microsoft/Microsoft-MPI">Microsoft MPI</a>'
 
-    title = 'Intel {} Installation'.format(product)
+    title = '{} Installation'.format(product)
     tableHeaders = ['Node', 'OS', 'Result']
     tableRows = [[node, osTypeByNode[node], results[node]] for node in sorted(results)]
-    descriptions = [description.replace('Intel MPI', mpiLink).replace('Intel MKL', mklLink)]
+    descriptions = [description.replace('Intel MPI', mpiLink).replace('Intel MKL', mklLink).replace('Microsoft MPI', msmpiLink), lostNodesDescription]
     html = globalGenerateHtmlResult(title, tableHeaders, tableRows, None, descriptions)
 
     result = {
@@ -1504,9 +1603,9 @@ def installIntelProductReduce(arguments, tasks, taskResults, product):
 def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
     intelMklVersion = arguments['Intel MKL version'].lower()
     sizeLevel = arguments['Size level']
-    globalCheckIntelProductVersion('MKL', intelMklVersion)
-    mklInstallationLocationWindows = globalGetDefaultInstallationLocationWindows('MKL', intelMklVersion)
-    mklInstallationLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', intelMklVersion)
+    globalCheckProductVersion('Intel MKL', intelMklVersion)
+    mklInstallationLocationWindows = globalGetDefaultInstallationPathWindows('Intel MKL', intelMklVersion)
+    mklInstallationLocationLinux = globalGetDefaultInstallationPathLinux('Intel MKL', intelMklVersion)
 
     if not 1 <= sizeLevel <= 15:
         raise Exception('Parameter "Size level" should be in range 1 - 15')
@@ -1574,8 +1673,8 @@ def benchmarkLinpackMap(arguments, windowsNodes, linuxNodes, vmSizeByNode):
 
 def benchmarkLinpackReduce(arguments, tasks, taskResults):
     intelMklVersion = arguments['Intel MKL version'].lower()
-    intelMklLocationLinux = globalGetDefaultInstallationLocationLinux('MKL', intelMklVersion)
-    intelMklLocationWindows = globalGetDefaultInstallationLocationWindows('MKL', intelMklVersion)
+    intelMklLocationLinux = globalGetDefaultInstallationPathLinux('Intel MKL', intelMklVersion)
+    intelMklLocationWindows = globalGetDefaultInstallationPathWindows('Intel MKL', intelMklVersion)
         
     taskDetail = {}
     try:
