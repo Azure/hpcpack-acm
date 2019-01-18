@@ -1,11 +1,11 @@
 ﻿{
     "DispatchScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.3.x.py"
+        "Name":"diags-map-reduce-1.4.x.py"
     },
     "AggregationScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.3.x.py"
+        "Name":"diags-map-reduce-1.4.x.py"
     },
     "description":"Download and install Intel MPI(Message Passing Interface) on selected nodes.",
     "parameters":[
