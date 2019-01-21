@@ -268,15 +268,22 @@
         public async T.Task<IEnumerable<Event>> GetJobEventsAsync(
             int jobId,
             JobType type = JobType.ClusRun,
+            long lastId = 0,
+            int count = 100,
             CancellationToken token = default(CancellationToken))
         {
-            this.Logger.Information("Get {type} job event called. getting job {id}", type, jobId);
+            this.Logger.Information("Get {type} job event called. getting job {id}'s events", type, jobId);
 
             var jobPartitionKey = this.Utilities.GetJobPartitionKey(type, jobId);
-            var rowKey = this.Utilities.JobEntryKey;
 
-            var j = await this.jobsTable.RetrieveAsync<Job>(jobPartitionKey, rowKey, token);
-            return j.Events;
+            return await this.Utilities.GetEventsAsync(
+                this.jobsTable,
+                jobPartitionKey,
+                this.Utilities.GetEventsKey(lastId),
+                this.Utilities.GetEventsKey(DateTimeOffset.MaxValue.Ticks),
+                count,
+                false,
+                token);
         }
 
         public async T.Task<IEnumerable<Task>> GetTasksAsync(

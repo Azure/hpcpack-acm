@@ -233,6 +233,26 @@
             });
         }
 
+        public static async T.Task<IEnumerable<Event>> GetEventsAsync(
+            this CloudUtilities u,
+            CloudTable table,
+            string partitionKey,
+            string lowRowKey,
+            string highRowKey,
+            int count = 100,
+            bool reverse = false,
+            CancellationToken token = default(CancellationToken))
+        {
+            var q = TableQuery.CombineFilters(
+                u.GetPartitionQueryString(partitionKey),
+                TableOperators.And,
+                u.GetRowKeyRangeString(lowRowKey, highRowKey));
+
+            var results = await table.QueryAsync<Event>(q, count, token);
+            return results.Select(r => r.Item3);
+        }
+
+
         public static async T.Task<IEnumerable<Job>> GetJobsAsync(
             this CloudUtilities u,
             string lowPartitionKey,

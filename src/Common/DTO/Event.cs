@@ -19,6 +19,7 @@ namespace Microsoft.HpcAcm.Common.Dto
 
     public class Event
     {
+        public long Id { get => this.Time.Ticks; }
         public string Content { get; set; }
 
         public DateTimeOffset Time { get; set; } = DateTimeOffset.UtcNow;

@@ -47,6 +47,14 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return j == null ? (IActionResult)new NotFoundResult() : new OkObjectResult(j);
         }
 
+        // GET v1/diagnostics/5/events
+        [HttpGet("{jobid}/events")]
+        public async T.Task<IActionResult> GetJobEventsAsync(int jobId, long lastId = 0, int count = 100, CancellationToken token = default(CancellationToken))
+        {
+            var events = await this.provider.GetJobEventsAsync(jobId, JobType.Diagnostics, lastId, count, token);
+            return new OkObjectResult(events);
+        }
+
         // GET v1/diagnostics/5/aggregationresult
         [HttpGet("{jobid}/aggregationresult")]
         public async T.Task<IActionResult> GetJobAggregationResultAsync(
