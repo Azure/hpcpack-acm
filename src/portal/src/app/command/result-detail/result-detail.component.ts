@@ -246,8 +246,12 @@ export class ResultDetailComponent implements OnInit {
           return true;
         },
         error: (err) => {
-          if (err.status = 404 && !this.isOver) {
-            //return value is assigned to looper.ended in observer.err
+          if (err.status == 404 && !this.isNodeOver(node)) {
+            // return value is assigned to looper.ended in observer.err
+            // can't tell when to stop in 404. Job state and node state both can't indentify
+            return false;
+          }
+          else if (err.status == 404 && node.state == 'Finished') {
             return false;
           }
           else {

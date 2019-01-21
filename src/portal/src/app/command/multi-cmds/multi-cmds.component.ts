@@ -133,7 +133,7 @@ export class MultiCmdsComponent implements OnInit {
           }
           this.result.state = job.state;
           this.result.command = job.commandLine;
-          this.result.progress =job.progress;
+          this.result.progress = job.progress;
           this.tabs[this.selected.value].state = job.state;
           if (!this.tabs[this.selected.value].command) {
             this.tabs[this.selected.value].command = job.commandLine;
@@ -277,8 +277,12 @@ export class MultiCmdsComponent implements OnInit {
           return true;
         },
         error: (err) => {
-          if (err.status = 404 && !this.isOver) {
-            //return value is assigned to looper.ended in observer.err
+          if (err.status == 404 && !this.isNodeOver(node)) {
+            // return value is assigned to looper.ended in observer.err
+            // false means continue to query key result
+            return false;
+          }
+          else if (err.status == 404 && node.state == 'Finished') {
             return false;
           }
           else {
