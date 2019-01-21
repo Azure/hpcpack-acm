@@ -648,7 +648,9 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
 
     messages = {nodeOrPair: messages[nodeOrPair] for nodeOrPair in messages if ',' in nodeOrPair}
     goodPairs = [pair for pair in messages if messages[pair]['Throughput'] > throughputThreshold]
+    timePoint = time.time()
     goodNodesGroups = mpiPingpongGetGroupsOfFullConnectedNodes(goodPairs)
+    timeGetGroups = time.time() - timePoint
     goodNodes = [node for group in goodNodesGroups for node in group]
     nodesInGoodPairs = [node for pair in goodPairs for node in pair.split(',')]
     if goodNodes and set(goodNodes) != set(nodesInGoodPairs):
@@ -753,10 +755,15 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
         }
     failedTasksByExitcode = {}
     for task in failedTasks:
-        failedTasksByExitcode.setdefault(task['ExitCode'], []).append(task['TaskId'])
+        failedTasksByExitcode.setdefault(task['ExitCode'], []).append({
+            'TaskId':task['TaskId'],
+            'NodeOrPair':task['NodeOrPair']
+        })
     result['DebugInfo'] = {
-        'ReduceRuntime':endTime - startTime,
-        'CanceledTasks':sorted(list(canceledTasks)),
+        'ReduceRuntime':{
+            'Total':endTime - startTime,
+            'GetGroups':timeGetGroups
+        },
         'FailedTasksByExitcode':failedTasksByExitcode,
         'TaskRuntime':taskRuntime,
         }
@@ -854,7 +861,8 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
                 reason = reasonTaskTimeout
             elif exitCode is None or output == '':
                 reason = reasonNoResult
-            failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(nodeOrPair)
+            failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[], 'TaskIds':[]})['NodePairs'].append(nodeOrPair)
+            failedReasons[reason]['TaskIds'].append(taskId)
         failedPair['Reason'] = reason
     if reasonMpiNotInstalled in failedReasons:
         failedReasons[reasonMpiNotInstalled]['Nodes'] = list(failedReasons[reasonMpiNotInstalled]['Nodes'])
