@@ -68,12 +68,8 @@
                 if (job.FailJobOnTaskFailure && allTasks.Any(t => t.State == TaskState.Failed))
                 {
                     finalState = JobState.Failed;
-                    (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
-                    {
-                        Content = $"Fail the job because some tasks failed.",
-                        Source = EventSource.Job,
-                        Type = EventType.Alert
-                    });
+
+                    await this.Utilities.AddJobsEventAsync(job, $"Fail the job because some tasks failed.", EventType.Alert, token);
                 }
 
                 job.State = finalState;
@@ -90,9 +86,9 @@
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
                 j.State = job.State;
-                // TODO: separate the events.
-                j.Events = job.Events;
             }, token, this.Logger);
+
+            await this.Utilities.AddJobsEventAsync(job, $"Job ended to state {job.State}.", EventType.Information, token);
 
             this.Logger.Information("JobFinisher, job {0}, canceling tasks on nodes", job.Id);
 

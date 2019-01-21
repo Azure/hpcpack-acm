@@ -64,16 +64,11 @@
                 this.Logger.Error("The job {0} script doesn't generate any tasks", job.Id);
                 await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                 {
-                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                    {
-                        Content = $"The job {job.Id} script doesn't generate any tasks.",
-                        Source = EventSource.Job,
-                        Type = EventType.Alert,
-                    });
-
                     j.State = JobState.Failed;
                     j.TaskCount = 0;
                 }, token, this.Logger);
+
+                await this.Utilities.AddJobsEventAsync(job, $"The job {job.Id} script doesn't generate any tasks.", EventType.Alert, token);
 
                 return;
             }
@@ -104,16 +99,11 @@
             if (!success)
             {
                 this.Logger.Error(msg);
-                await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                {
-                    j.State = JobState.Failed;
-                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                    {
-                        Content = msg,
-                        Source = EventSource.Job,
-                        Type = EventType.Alert
-                    });
-                }, token, this.Logger);
+
+                await this.Utilities.FailJobWithEventAsync(
+                    job,
+                    msg,
+                    token);
 
                 return;
             }
@@ -179,16 +169,10 @@
 
             if (childIdsContent.Select(cid => cid.Id).Distinct().Count() != childIdsContent.Count)
             {
-                await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                {
-                    j.State = JobState.Failed;
-                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                    {
-                        Content = $"Duplicate task ids found.",
-                        Source = EventSource.Job,
-                        Type = EventType.Alert,
-                    });
-                }, token, this.Logger);
+                await this.Utilities.FailJobWithEventAsync(
+                    job,
+                    $"Duplicate task ids found.",
+                    token);
 
                 return;
             }
@@ -217,6 +201,8 @@
                 j.TaskCount = taskInstances.Count - 2;
                 j.MaximumRuntimeSeconds = dispatchResult.ModifiedJob.MaximumRuntimeSeconds;
             }, token, this.Logger);
+
+            await this.Utilities.AddJobsEventAsync(job, "Job started.", EventType.Information, token);
 
             var jobCancel = new JobEventMessage() { Id = job.Id, Type = job.Type, EventVerb = "cancel" };
             var jobEventQueue = this.Utilities.GetJobEventQueue();

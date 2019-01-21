@@ -86,31 +86,20 @@
                     {
                         this.Logger.Warning("No processors found for job type {0}, {1}, {2}", job.Type, job.Id, message.EventVerb);
 
-                        await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                        {
-                            j.State = JobState.Failed;
-                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                            {
-                                Content = $"No processors found for job type {j.Type}, event {message.EventVerb}",
-                                Source = EventSource.Job,
-                                Type = EventType.Alert,
-                            });
-                        }, token, this.Logger);
+                        await this.Utilities.FailJobWithEventAsync(
+                            job,
+                            $"No processors found for job type {job.Type}, event {message.EventVerb}",
+                            token);
                     }
                 }
                 catch (Exception ex)
                 {
                     this.Logger.Error("Exception occurred when process job {0}, {1}, {2}, {3}", job.Id, job.Type, message.EventVerb, ex);
-                    await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                    {
-                        j.State = JobState.Failed;
-                        (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                        {
-                            Content = $"Exception occurred when process job {job.Id} {job.Type} {message.EventVerb}. {ex}",
-                            Source = EventSource.Job,
-                            Type = EventType.Alert,
-                        });
-                    }, token, this.Logger);
+
+                    await this.Utilities.FailJobWithEventAsync(
+                        job,
+                        $"Exception occurred when process job {job.Id} {job.Type} {message.EventVerb}. {ex}",
+                        token);
                 }
 
                 return true;

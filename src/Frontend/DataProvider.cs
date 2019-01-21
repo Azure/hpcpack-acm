@@ -351,6 +351,7 @@
 
             if (state == JobState.Canceling)
             {
+                await this.Utilities.AddJobsEventAsync(job, "Job is requested to cancel", EventType.Information, token, this.Logger);
                 var jobEventQueue = this.Utilities.GetJobEventQueue();
                 var jobMsg = new JobEventMessage() { Id = job.Id, Type = job.Type, EventVerb = "cancel" };
                 await jobEventQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(jobMsg)), null, null, null, null, token);
