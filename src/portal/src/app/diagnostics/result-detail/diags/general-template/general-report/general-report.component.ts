@@ -88,6 +88,7 @@ export class GeneralReportComponent implements OnInit {
             this.getAggregationResult();
           }
           this.getJobInfo();
+          this.getEvents();
           return this.getTasksRequest();
         }
       },
@@ -111,9 +112,6 @@ export class GeneralReportComponent implements OnInit {
       this.jobState = res.state;
       this.result = res;
       this.nodes = res.targetNodes;
-      if (res.events !== undefined) {
-        this.events = res.events;
-      }
     });
   }
 
@@ -125,6 +123,12 @@ export class GeneralReportComponent implements OnInit {
       err => {
         this.aggregationResult = this.diagReportService.getErrorMsg(err);
       });
+  }
+
+  getEvents() {
+    this.api.diag.getJobEvents(this.result.id).subscribe(res => {
+      this.events = res;
+    });
   }
 
   getLink(node) {

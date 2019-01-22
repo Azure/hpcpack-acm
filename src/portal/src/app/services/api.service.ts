@@ -530,6 +530,11 @@ export class DiagApi extends Resource<any> {
       })
     }).pipe(this.errorHandler)
   }
+
+  getJobEvents(jobId: string) {
+    return this.httpGet(`${this.url}/${jobId}/events`);
+
+  }
 }
 
 export class DashboradApi extends Resource<any>{
