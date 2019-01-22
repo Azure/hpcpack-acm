@@ -6,7 +6,7 @@ import { TableDataService } from '../../../../../services/table-data/table-data.
 import { DiagReportService } from '../../../../../services/diag-report/diag-report.service';
 
 @Component({
-  selector: 'app-cpu-report',
+  selector: 'app-general-report',
   templateUrl: './general-report.component.html',
   styleUrls: ['./general-report.component.scss']
 })
@@ -31,8 +31,6 @@ export class GeneralReportComponent implements OnInit {
   public loading = false;
   public empty = true;
   private endId = -1;
-
-  public componentName = "cpuReport";
 
   public customizableColumns = [
     { name: 'node', displayed: true },
