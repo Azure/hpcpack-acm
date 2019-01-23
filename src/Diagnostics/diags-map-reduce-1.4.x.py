@@ -1222,7 +1222,7 @@ HPL.out      output file name (if any)
                                                                                         commandFailure)
     task['ParentIds'] = list(range(1, len(linuxNodes)+1))
     task['Node'] = masterNode
-    task['CustomizedData'] = vmSizeByNode[masterNode]
+    task['CustomizedData'] = 'Flag task'
     task['EnvironmentVariables'] = {'CCP_NODES': '{} {}'.format(nodesCount, ' '.join('{} 1'.format(node) for node in linuxNodes))} 
     task['MaximumRuntimeSeconds'] = 60
     tasks.append(task)
@@ -1252,7 +1252,7 @@ HPL.out      output file name (if any)
                 commandCheckFinish = '[ ! -f "{}" ]'.format(outputResult)
                 commandRun = '{} >{} 2>&1'.format(commandRunHpl.replace('[N]', str(N)).replace('[P]', str(P)).replace('[Q]', str(Q)).replace('[NB]', str(NB)), tempOutputFile)
                 commandSuccess = 'mv {} {} && cat {} | tail -n20'.format(tempOutputFile, outputResult, outputResult)
-                commandFailure = 'echo Test skiped. N={} NB={} P={} Q={}'.format(N, NB, P, Q)
+                commandFailure = 'echo Test skiped. N={}, NB={}, P={}, Q={}'.format(N, NB, P, Q)
                 task = copy.deepcopy(taskTemplateLinux)
                 task['Id'] = taskId
                 taskId += 1
@@ -1265,7 +1265,7 @@ HPL.out      output file name (if any)
                                                                                       commandFailure)
                 task['ParentIds'] = [task['Id'] - 1]
                 task['Node'] = masterNode
-                task['CustomizedData'] = vmSizeByNode[masterNode]
+                task['CustomizedData'] = 'N={}, NB={}, P={}, Q={}'.format(N, NB, P, Q)
                 task['MaximumRuntimeSeconds'] = N / 10
                 tasks.append(task)
     
@@ -1276,7 +1276,7 @@ HPL.out      output file name (if any)
     task['CommandLine'] = '{} && for file in $(ls {}/*.result); do cat $file | tail -n17 | head -n1; done'.format(commandCheckFlag, flagDir)
     task['ParentIds'] = [task['Id'] - 1]
     task['Node'] = masterNode
-    task['CustomizedData'] = vmSizeByNode[masterNode]
+    task['CustomizedData'] = 'Result'
     task['MaximumRuntimeSeconds'] = 60
     tasks.append(task)
 
@@ -1290,6 +1290,8 @@ def mpiHplReduce(arguments, nodes, tasks, taskResults):
 
     taskDetail = {}
     try:
+        taskId = None
+        TaskLabelByTaskId = {task['Id']: task['CustomizedData'] for task in tasks}
         for taskResult in taskResults:
             taskId = taskResult['TaskId']
             node = taskResult['NodeName']
@@ -1298,88 +1300,68 @@ def mpiHplReduce(arguments, nodes, tasks, taskResults):
             taskDetail[taskId] = {
                 'Node':node,
                 'Output':output,
-                'ExitCode':exitcode
+                'ExitCode':exitcode,
+                'Label':TaskLabelByTaskId[taskId]
             }
     except Exception as e:
-        printErrorAsJson('Failed to parse task results. ' + str(e))
+        printErrorAsJson('Failed to parse task {}. {}'.format(taskId, e))
         return -1
 
-    nodeCheckingTasks = [taskDetail[taskId] for taskId in range(1, len(nodes) + 1)]
-    flagTask = taskDetail[len(nodes) + 1]
+    nodeCheckingTasks = [taskDetail.get(taskId) for taskId in range(1, len(nodes) + 1)]
+    flagTask = taskDetail.get(len(nodes) + 1)
     intelHpl = 'Intel Distribution for LINPACK Benchmark'
     description = 'This is the result of running {} in the cluster.'.format(intelHpl)
     result = tableHeaders = tableRows = greenRowNumber = descriptions = None
     resultCode = -1
-    if flagTask['ExitCode'] == 0:
-        # get CPU info from node checking tasks
-        cpuFreqByNode = {}
-        cpuCoreByNode = {}
-        hyperThreadingNodes = []
-        for task in nodeCheckingTasks:
-            node = task['Node']
-            output = task['Output']
-            try:
-                for line in output.splitlines():
-                    if line.startswith('CPU'):
-                        coreCount = int(line.split()[-1])
-                        cpuCoreByNode[node] = coreCount
-                    elif line.startswith('Model name'):
-                        coreFreq = float([word for word in line.split() if word.endswith('GHz')][0][:-3])
-                        cpuFreqByNode[node] = coreFreq
-                    elif line.startswith('Thread(s) per core'):
-                        threads = int(line.split()[-1])
-                        if threads > 1:
-                            hyperThreadingNodes.append(node)
-            except:
-                pass
-
-        # get VM size info from task CustomizedData which is set in map script
+    if flagTask and flagTask['ExitCode'] == 0:
+        # get VM size info and CPU info from node checking tasks
         sizeByNode = {}
         cpuCoreBySize = {}
         cpuFreqBySize = {}
-        try:
-            for task in tasks:
+        hyperThreadingNodes = []
+        for task in nodeCheckingTasks:
+            if task:
                 node = task['Node']
-                size = task['CustomizedData']
-                if node not in sizeByNode and size:
-                    freq = cpuFreqByNode.get(node)
-                    if freq:
-                        size += '({}GHz)'.format(freq)
-                        cpuFreqBySize[size] = freq
-                    coreCount = cpuCoreByNode.get(node)
-                    if coreCount:
-                        cpuCoreBySize[size] = coreCount
+                output = task['Output']
+                try:
+                    for line in output.splitlines():
+                        if line.startswith('CPU'):
+                            coreCount = int(line.split()[-1])
+                        elif line.startswith('Model name'):
+                            coreFreq = float([word for word in line.split() if word.endswith('GHz')][0][:-3])
+                        elif line.startswith('Thread(s) per core'):
+                            threads = int(line.split()[-1])
+                            if threads > 1:
+                                hyperThreadingNodes.append(node)
+                    size = '{}({}GHz)'.format(task['Label'], coreFreq)
                     sizeByNode[node] = size
-        except Exception as e:
-            printErrorAsJson('Failed to parse tasks. ' + str(e))
-            return -1
-
-        if len(sizeByNode) != len(nodes):
-            printErrorAsJson('VM size info is missing.')
-            return -1
+                    cpuCoreBySize[size] = coreCount
+                    cpuFreqBySize[size] = coreFreq
+                except:
+                    pass
 
         # get theoretical peak performance of cluster
         defaultFlopsPerCycle = 16 # Use this default value because currently it seems that the Intel microarchitectures used in Azure VM are in "Intel Haswell/Broadwell/Skylake/Kaby Lake". Consider getting this value from test parameter in case new Azure VM sizes are introduced.
         theoreticalPerf = None
         theoreticalPerfExpr = None
-        theoreticalPerfDescription = "The theoretical peak performance of the cluster can not be calculated because CPU info is missing."
-        nodeSizes = set(sizeByNode.values())
-        if len(nodeSizes) > 1:
-            vmSizeDescription = 'The cluster is heterogeneous with VM sizes: {}. Optimal perfermance may not be achieved in this test.'.format(', '.join(nodeSizes))
-            sizes = [sizeByNode[node] for node in nodes]
-            theoreticalPerfExpr = " + ".join(["{} * {} * {} * {}".format(sizes.count(size), cpuCoreBySize.get(size), defaultFlopsPerCycle, cpuFreqBySize.get(size)) for size in nodeSizes])
-            if 'None' not in theoreticalPerfExpr:
-                theoreticalPerf = eval(theoreticalPerfExpr)
-                theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by summing the FLOPs of each node: SUM([core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]) = {}".format(theoreticalPerf, theoreticalPerfExpr)
-        elif len(nodeSizes) == 1:
-            size = list(nodeSizes)[0]
-            vmSizeDescription = 'The cluster is homogeneous with VM size: {}.'.format(size)
-            theoreticalPerfExpr = "{} * {} * {} * {}".format(len(nodes), cpuCoreBySize.get(size), defaultFlopsPerCycle, cpuFreqBySize.get(size))
-            if 'None' not in theoreticalPerfExpr:
-                theoreticalPerf = eval(theoreticalPerfExpr)
-                theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by: [node count] * [core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core] = {}".format(theoreticalPerf, theoreticalPerfExpr)
-        else:
-            vmSizeDescription = 'The VM size in the cluster is unknown.'
+        vmSizeDescription = 'The VM info is not integrate.'
+        theoreticalPerfDescription = "The theoretical peak performance of the cluster can not be calculated."
+        if len(sizeByNode) == len(nodes):
+            nodeSizes = set(sizeByNode.values())
+            if len(nodeSizes) > 1:
+                vmSizeDescription = 'The cluster is heterogeneous with VM sizes: {}. Optimal perfermance may not be achieved in this test.'.format(', '.join(nodeSizes))
+                sizes = [sizeByNode[node] for node in nodes]
+                theoreticalPerfExpr = " + ".join(["{} * {} * {} * {}".format(sizes.count(size), cpuCoreBySize.get(size), defaultFlopsPerCycle, cpuFreqBySize.get(size)) for size in nodeSizes])
+                if 'None' not in theoreticalPerfExpr:
+                    theoreticalPerf = eval(theoreticalPerfExpr)
+                    theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by summing the FLOPs of each node: SUM([core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]) = {}".format(theoreticalPerf, theoreticalPerfExpr)
+            elif len(nodeSizes) == 1:
+                size = list(nodeSizes)[0]
+                vmSizeDescription = 'The cluster is homogeneous with VM size: {}.'.format(size)
+                theoreticalPerfExpr = "{} * {} * {} * {}".format(len(nodes), cpuCoreBySize.get(size), defaultFlopsPerCycle, cpuFreqBySize.get(size))
+                if 'None' not in theoreticalPerfExpr:
+                    theoreticalPerf = eval(theoreticalPerfExpr)
+                    theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by: [node count] * [core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core] = {}".format(theoreticalPerf, theoreticalPerfExpr)
 
         # warning for Hyper-Threading
         hyperThreadingDescription = 'Optimal perfermance may not be achieved in this test because Hyper-Threading is enabled on the node(s): {}'.format(', '.join(hyperThreadingNodes)) if hyperThreadingNodes else ''
