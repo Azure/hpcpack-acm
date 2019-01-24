@@ -809,7 +809,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
     solutionAvSet = 'Recreate the node(s) and ensure the nodes are in the same availability set.'
     
     reasonDapl = 'MPI issue: "dapl fabric is not available and fallback fabric is not enabled"'
-    solutionDapl = 'Please re-create the VM.'
+    solutionDapl = 'Please check the RDMA driver availability and memory limit setting or re-create the VM.'
 
     failedReasons = {}
     for failedPair in failedTasks:
