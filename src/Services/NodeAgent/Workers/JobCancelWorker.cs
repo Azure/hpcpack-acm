@@ -72,16 +72,12 @@
             catch (Exception ex)
             {
                 this.Logger.Error("Exception occurred when process {0}, {1}, {2}, on node {3} {4}", message.EventVerb, message.JobId, message.Id, this.ServerOptions.HostName, ex);
-                await this.Utilities.UpdateJobAsync(message.JobType, message.JobId, j =>
-                {
-                    j.State = JobState.Failed;
-                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                    {
-                        Content = $"Exception occurred when process job {message.JobId} {message.JobType} {message.EventVerb}. {ex}",
-                        Source = EventSource.Job,
-                        Type = EventType.Alert,
-                    });
-                }, token, this.Logger);
+
+                await this.Utilities.FailJobWithEventAsync(
+                    message.JobType,
+                    message.JobId,
+                    $"Exception occurred when process job {message.JobId} {message.JobType} {message.EventVerb}. {ex}",
+                    token);
             }
 
             return true;

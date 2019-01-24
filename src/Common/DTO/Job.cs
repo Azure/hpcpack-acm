@@ -48,6 +48,5 @@ namespace Microsoft.HpcAcm.Common.Dto
         public DiagnosticsTest DiagnosticTest { get; set; }
         public string CommandLine { get; set; }
         public string[] TargetNodes { get; set; }
-        public List<Event> Events { get; set; }
     }
 }

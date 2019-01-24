@@ -26,18 +26,13 @@
                 return;
             }
 
+            if (job.State == JobState.Running)
+            {
+                await this.Utilities.AddJobsEventAsync(job, $"The job maximum execution time {job.MaximumRuntimeSeconds} seconds expired.", EventType.Alert, token);
+            }
+
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
             {
-                if (j.State == JobState.Running)
-                {
-                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                    {
-                        Content = $"The job maximum execution time {j.MaximumRuntimeSeconds} seconds expired.",
-                        Source = EventSource.Job,
-                        Type = EventType.Warning,
-                    });
-                }
-
                 j.State = j.State == JobState.Running ? JobState.Canceling : j.State;
             }, token, this.Logger);
 

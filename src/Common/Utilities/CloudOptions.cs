@@ -63,6 +63,7 @@ namespace Microsoft.HpcAcm.Common.Utilities
         public string DashboardTableName { get; set; } = "dashboardtable";
         public string JobsTableName { get; set; } = "jobstable";
         public string JobEntryKey { get; internal set; } = "jobentry";
+        public string EventsKeyPattern { get; internal set; } = "events-{0}";
         public string JobAggregationResultPattern { get; internal set; } = "aggregationresult-{0}";
         public string NodeTaskResultPattern { get; internal set; } = "nodejobresult-{0}-{1}";
         public string JobReversePartitionPattern { get; internal set; } = "jobreverse-{0}-{1}";

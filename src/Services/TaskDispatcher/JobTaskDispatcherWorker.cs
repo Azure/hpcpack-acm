@@ -158,17 +158,10 @@
             if (filteredResult.IsError)
             {
                 this.Logger.Error("There is an error in task filter script. {0}", filteredResult.ErrorMessage);
-                await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                {
-                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                    {
-                        Content = filteredResult.ErrorMessage,
-                        Source = EventSource.Job,
-                        Type = EventType.Alert,
-                    });
-
-                    j.State = JobState.Failed;
-                }, token, this.Logger);
+                await this.Utilities.FailJobWithEventAsync(
+                    job,
+                    filteredResult.ErrorMessage,
+                    token);
 
                 return true;
             }
@@ -178,7 +171,7 @@
 
         public async T.Task UpdateJobProgress(CancellationToken token)
         {
-            var completedCount = this.tasksDict.Count(t => t.Value.State == TaskState.Canceled || t.Value.State == TaskState.Finished || t.Value.State == TaskState.Failed);
+            var completedCount = this.tasksDict.Where(t => t.Key != 0 && t.Key != int.MaxValue).Count(t => t.Value.State == TaskState.Canceled || t.Value.State == TaskState.Finished || t.Value.State == TaskState.Failed);
             this.Logger.Information("Updating job {0} completed count to {1}", jobPartitionKey, completedCount);
 
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
@@ -341,15 +334,10 @@
                 await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
                 {
                     j.State = JobState.Failed;
-                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                    {
-                        Content = $"Fail the job because some tasks failed",
-                        Source = EventSource.Job,
-                        Type = EventType.Alert
-                    });
-
                     this.job = j;
                 }, token, this.Logger);
+
+                await this.Utilities.AddJobsEventAsync(job, $"Fail the job because some tasks failed", EventType.Alert, token);
 
                 return true;
             }

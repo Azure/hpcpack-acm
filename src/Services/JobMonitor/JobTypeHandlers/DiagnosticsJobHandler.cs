@@ -47,16 +47,11 @@
                 if (dispatchTasks.IsError)
                 {
                     this.Logger.Error("Generate tasks, job {0}, {1}", job.Id, dispatchTasks.ErrorMessage);
-                    await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                    {
-                        j.State = JobState.Failed;
-                        (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                        {
-                            Content = $"Dispatch script {dispatchTasks.ErrorMessage}",
-                            Source = EventSource.Job,
-                            Type = EventType.Alert
-                        });
-                    }, token, this.Logger);
+
+                    await this.Utilities.FailJobWithEventAsync(
+                        job,
+                        $"Dispatch script {dispatchTasks.ErrorMessage}",
+                        token);
 
                     return null;
                 }
@@ -67,16 +62,10 @@
             }
             else
             {
-                await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                {
-                    j.State = JobState.Failed;
-                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                    {
-                        Content = $"No diag test {job.DiagnosticTest.Category}/{job.DiagnosticTest.Name} found",
-                        Source = EventSource.Job,
-                        Type = EventType.Alert
-                    });
-                }, token, this.Logger);
+                await this.Utilities.FailJobWithEventAsync(
+                    job,
+                    $"No diag test {job.DiagnosticTest.Category}/{job.DiagnosticTest.Name} found",
+                    token);
 
                 this.Logger.Error("No diag test found");
                 return null;
@@ -104,25 +93,15 @@
                 if (aggregationResult.IsError)
                 {
                     this.Logger.Error("AggregateTasks, job {0}, {1}", job.Id, aggregationResult.ErrorMessage);
-                    (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
-                    {
-                        Content = $"Diag reduce script {aggregationResult.ErrorMessage}",
-                        Source = EventSource.Job,
-                        Type = EventType.Alert,
-                    });
 
                     job.State = JobState.Failed;
+                    await this.Utilities.AddJobsEventAsync(job, $"Diag reduce script {aggregationResult.ErrorMessage}", EventType.Alert, token);
                 }
             }
             else
             {
                 job.State = JobState.Failed;
-                (job.Events ?? (job.Events = new List<Event>())).Add(new Event()
-                {
-                    Content = $"No diag test {job.DiagnosticTest.Category}/{job.DiagnosticTest.Name} found",
-                    Source = EventSource.Job,
-                    Type = EventType.Alert
-                });
+                await this.Utilities.AddJobsEventAsync(job, $"No diag test {job.DiagnosticTest.Category}/{job.DiagnosticTest.Name} found", EventType.Alert, token);
             }
 
             return result;

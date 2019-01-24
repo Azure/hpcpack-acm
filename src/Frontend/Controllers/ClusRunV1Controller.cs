@@ -127,6 +127,14 @@ namespace Microsoft.HpcAcm.Frontend.Controllers
             return new CreatedResult($"/v1/clusrun/{job.Id}", job);
         }
 
+        // GET v1/clusrun/5/events
+        [HttpGet("{jobid}/events")]
+        public async T.Task<IActionResult> GetJobEventsAsync(int jobId, long lastId = 0, int count = 100, CancellationToken token = default(CancellationToken))
+        {
+            var events = await this.provider.GetJobEventsAsync(jobId, JobType.ClusRun, lastId, count, token);
+            return new OkObjectResult(events);
+        }
+
         // PATCH v1/clusrun/5
         [HttpPatch("{jobid}")]
         public async T.Task<IActionResult> PatchJobAsync(int jobId, [FromBody] Job job, CancellationToken token)

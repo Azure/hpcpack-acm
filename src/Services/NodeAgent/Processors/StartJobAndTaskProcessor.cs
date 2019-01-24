@@ -210,15 +210,7 @@
                 taskResult.EndTime = DateTimeOffset.UtcNow;
                 await this.PersistTaskResult(taskResultKey, taskResult, token);
                 await this.Utilities.UpdateTaskAsync(jobPartitionKey, taskKey, t => t.State = t.State == TaskState.Dispatching || t.State == TaskState.Running ? TaskState.Failed : t.State, token, this.logger);
-                await this.Utilities.UpdateJobAsync(jobType, jobId, j =>
-                {
-                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                    {
-                        Type = EventType.Warning,
-                        Source = EventSource.Job,
-                        Content = $"Task {taskId}, exception {ex}",
-                    });
-                }, token, this.logger);
+                await this.Utilities.AddJobsEventAsync(jobType, jobId, $"Task {taskId}, exception {ex}", EventType.Warning, token);
             }
             finally
             {

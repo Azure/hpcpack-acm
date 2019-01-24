@@ -73,15 +73,7 @@
             {
                 if (job != null)
                 {
-                    await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                    {
-                        (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                        {
-                            Type = EventType.Warning,
-                            Source = EventSource.Job,
-                            Content = $"Failed to end Job {job.Id}, exception {ex}",
-                        });
-                    }, token, this.Logger);
+                    await this.Utilities.AddJobsEventAsync(job, $"Failed to end Job {job.Id}, exception {ex}", EventType.Warning, token);
                 }
             }
 

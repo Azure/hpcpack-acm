@@ -114,6 +114,27 @@
         public static T.Task<bool> UpdateTaskAsync(this CloudUtilities u, string jobPartitionKey, string taskKey, Action<Task> action, CancellationToken token, ILogger logger = null) =>
             u.UpdateObjectAsync(u.GetJobsTable(), jobPartitionKey, taskKey, action, token, logger);
 
+        public static T.Task FailJobWithEventAsync(this CloudUtilities u, Job job, string message, CancellationToken token, ILogger logger = null)
+        {
+            return u.FailJobWithEventAsync(job.Type, job.Id, message, token, logger);
+        }
+
+        public static async T.Task FailJobWithEventAsync(this CloudUtilities u, JobType jobType, int jobId, string message, CancellationToken token, ILogger logger = null)
+        {
+            await T.Task.WhenAll(
+                u.AddJobsEventAsync(jobType, jobId, message, EventType.Alert, token, logger),
+                u.UpdateJobAsync(u.GetJobPartitionKey(jobType, jobId), j => j.State = JobState.Failed, token, logger));
+        }
+
+        public static T.Task AddJobsEventAsync(this CloudUtilities u, Job job, string message, EventType type = EventType.Information, CancellationToken token = default(CancellationToken), ILogger logger = null) =>
+            u.AddJobsEventAsync(job.Type, job.Id, message, type, token, logger);
+
+        public static T.Task AddJobsEventAsync(this CloudUtilities u, JobType jobType, int jobId, string message, EventType type = EventType.Information, CancellationToken token = default(CancellationToken), ILogger logger = null) =>
+            u.AddJobsEventAsync(jobType, jobId, new Event() { Content = message, Source = EventSource.Job, Type = type }, token, logger);
+
+        public static T.Task AddJobsEventAsync(this CloudUtilities u, JobType jobType, int jobId, Event e, CancellationToken token, ILogger logger = null) =>
+            u.GetJobsTable().InsertOrReplaceAsync(u.GetJobPartitionKey(jobType, jobId), IntegerKey.ToStringKey(e.Id), e, token);
+
         public static async T.Task<bool> UpdateJobAsync(this CloudUtilities u, JobType type, int jobId, Action<Job> action, CancellationToken token, ILogger logger = null)
         {
             var pKey = u.GetJobPartitionKey(type, jobId, true);
@@ -232,6 +253,26 @@
                 return node;
             });
         }
+
+        public static async T.Task<IEnumerable<Event>> GetEventsAsync(
+            this CloudUtilities u,
+            CloudTable table,
+            string partitionKey,
+            string lowRowKey,
+            string highRowKey,
+            int count = 100,
+            bool reverse = false,
+            CancellationToken token = default(CancellationToken))
+        {
+            var q = TableQuery.CombineFilters(
+                u.GetPartitionQueryString(partitionKey),
+                TableOperators.And,
+                u.GetRowKeyRangeString(lowRowKey, highRowKey));
+
+            var results = await table.QueryAsync<Event>(q, count, token);
+            return results.Select(r => r.Item3);
+        }
+
 
         public static async T.Task<IEnumerable<Job>> GetJobsAsync(
             this CloudUtilities u,

@@ -143,6 +143,7 @@
         public string GetHeartbeatKey(string nodeName) => string.Format(this.Option.HeartbeatPattern, nodeName);
         public string NodesPartitionKey { get => this.Option.NodesPartitionKey; }
         public string JobEntryKey { get => this.Option.JobEntryKey; }
+        public string GetEventsKey(long ticks) => string.Format(this.Option.EventsKeyPattern, IntegerKey.ToStringKey(ticks));
         public string MetricsValuesPartitionKey { get => this.Option.MetricsValuesPartitionKey; }
         public string MetricsCategoriesPartitionKey { get => this.Option.MetricsCategoriesPartitionKey; }
 

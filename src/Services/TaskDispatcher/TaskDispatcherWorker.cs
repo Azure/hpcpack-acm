@@ -68,17 +68,10 @@
             if (filteredResult.IsError)
             {
                 this.Logger.Error("There is an error in task filter script. {0}", filteredResult.ErrorMessage);
-                await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                {
-                    (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                    {
-                        Content = filteredResult.ErrorMessage,
-                        Source = EventSource.Job,
-                        Type = EventType.Alert,
-                    });
-
-                    j.State = JobState.Failed;
-                }, token, this.Logger);
+                await this.Utilities.FailJobWithEventAsync(
+                    job,
+                    filteredResult.ErrorMessage,
+                    token);
 
                 return true;
             }
@@ -173,16 +166,11 @@
                 if (job.FailJobOnTaskFailure && tasks.Any(t => t.ExitCode != 0))
                 {
                     this.Logger.Information("Fail the job because some tasks failed {0}", job.Id);
-                    await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                    {
-                        j.State = JobState.Failed;
-                        (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                        {
-                            Content = $"Fail the job because some tasks failed",
-                            Source = EventSource.Job,
-                            Type = EventType.Alert
-                        });
-                    }, token, this.Logger);
+
+                    await this.Utilities.FailJobWithEventAsync(
+                        job,
+                        $"Fail the job because some tasks failed",
+                        token);
 
                     return true;
                 }
@@ -244,17 +232,10 @@
                     }, token,
                     this.Logger))
                     {
-                        await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
-                        {
-                            j.State = JobState.Failed;
-                            // TODO: make event separate.
-                            (j.Events ?? (j.Events = new List<Event>())).Add(new Event()
-                            {
-                                Content = $"Unable to update task record {cid.ChildId}",
-                                Source = EventSource.Job,
-                                Type = EventType.Alert
-                            });
-                        }, token, this.Logger);
+                        await this.Utilities.FailJobWithEventAsync(
+                            job,
+                            $"Unable to update task record {cid.ChildId}",
+                            token);
 
                         return true;
                     }
