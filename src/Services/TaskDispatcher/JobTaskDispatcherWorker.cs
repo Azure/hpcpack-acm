@@ -171,7 +171,7 @@
 
         public async T.Task UpdateJobProgress(CancellationToken token)
         {
-            var completedCount = this.tasksDict.Count(t => t.Value.State == TaskState.Canceled || t.Value.State == TaskState.Finished || t.Value.State == TaskState.Failed);
+            var completedCount = this.tasksDict.Where(t => t.Key != 0 && t.Key != int.MaxValue).Count(t => t.Value.State == TaskState.Canceled || t.Value.State == TaskState.Finished || t.Value.State == TaskState.Failed);
             this.Logger.Information("Updating job {0} completed count to {1}", jobPartitionKey, completedCount);
 
             await this.Utilities.UpdateJobAsync(job.Type, job.Id, j =>
