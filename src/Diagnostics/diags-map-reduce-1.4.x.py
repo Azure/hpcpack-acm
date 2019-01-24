@@ -1727,7 +1727,10 @@ def benchmarkLinpackReduce(arguments, tasks, taskResults):
 
     intelLinpack = 'Intel Optimized LINPACK Benchmark'
     description = 'This is the result of running {} on each node.'.format(intelLinpack)
-    intelLinpackLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl-linux-developer-guide-intel-optimized-linpack-benchmark-for-linux">{}</a>'.format(intelLinpack)
+    intelLinpackLinkLinux = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl-linux-developer-guide-intel-optimized-linpack-benchmark-for-linux">{} for Linux</a>'.format(intelLinpack)
+    intelLinpackLinkWindows = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl-windows-developer-guide-intel-optimized-linpack-benchmark-for-windows">{} for Windows</a>'.format(intelLinpack)
+    nodeOs = set([task['OS'] for task in results])
+    intelLinpackLink = '{} and {}'.format(intelLinpackLinkLinux, intelLinpackLinkWindows) if len(nodeOs) > 1 else intelLinpackLinkLinux if 'Linux' in nodeOs else intelLinpackLinkWindows
     theoreticalPerfDescription = "The theoretical peak performance of each node is calculated by: [core count of node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]" if any([task['TheoreticalPerf'] for task in results]) else ''
     intelMklNotFoundLinux = 'Intel MKL {} is not found in <b>{}</b> on node(s): {}'.format(intelMklVersion, intelMklLocationLinux, ', '.join(nodesWithoutIntelMklInstalledLinux)) if nodesWithoutIntelMklInstalledLinux else ''
     intelMklNotFoundWindows = 'Intel MKL {} is not found in <b>{}</b> on node(s): {}'.format(intelMklVersion, intelMklLocationWindows, ', '.join(nodesWithoutIntelMklInstalledWindows)) if nodesWithoutIntelMklInstalledWindows else ''
