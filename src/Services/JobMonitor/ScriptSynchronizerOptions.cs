@@ -6,7 +6,7 @@
 
     class ScriptSynchronizerOptions
     {
-        public string GitHubApiBase { get; set; } = "https://api.github.com/repos/EvanCui/hpc-acm/git/trees/master";
-        public string GitHubContentBase { get; set; } = "https://raw.githubusercontent.com/EvanCui/hpc-acm/master";
+        public string GitHubApiBase { get; set; } = "https://api.github.com/repos/Azure/hpcpack-acm/git/trees/release/v1";
+        public string GitHubContentBase { get; set; } = "https://raw.githubusercontent.com/Azure/hpcpack-acm/release/v1";
     }
 }
