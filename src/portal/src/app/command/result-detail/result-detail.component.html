@@ -38,7 +38,7 @@
     <div class="row">
       <div class="col-md-3 selection">
         <node-selector [nodes]="result.nodes" [loadFinished]='loadFinished' [maxPageSize]="maxPageSize" (select)="selectNode($event)"
-          (updateLastIdEvent)="onUpdateLastIdEvent($event)" [nodeOutputs]="nodeOutputs" [empty]="empty">
+          (updateLastIdEvent)="onUpdateLastIdEvent($event)" [nodeOutputs]="nodeOutputs" [empty]="empty" #selector>
         </node-selector>
       </div>
 

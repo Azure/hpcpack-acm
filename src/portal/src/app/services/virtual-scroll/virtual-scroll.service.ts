@@ -64,7 +64,7 @@ export class VirtualScrollService {
     if ((end <= pivot || start < startIndex) && direction == 'up') {
       startIndex = (startIndex + 1 - increasedIndex) <= 0 ? 0 : (startIndex + 1 - increasedIndex);
       pivot = startIndex == 0 ? initialPivot : ((pivot - increasedIndex) < initialPivot) ? initialPivot : (pivot - increasedIndex);
-      lastId = startIndex == 0 ? 0 : dataSource[startIndex].id;
+      lastId = startIndex == 0 ? 0 : (dataSource[startIndex] ? dataSource[startIndex].id : 0);
     }
 
     return {
