@@ -72,9 +72,9 @@ fdescribe('NodeHeatmapComponent', () => {
   let getCategoriesSpy;
   let getNodesSpy;
   let heatmapService;
-  heatmapService = jasmine.createSpyObj('HeatmapService', ['getCategories', 'get']);
+  heatmapService = jasmine.createSpyObj('HeatmapService', ['getCategories', 'getMetricInfo']);
   getCategoriesSpy = heatmapService.getCategories.and.returnValue(of(categories));
-  getNodesSpy = heatmapService.get.and.returnValue(of(mockNodes));
+  getNodesSpy = heatmapService.getMetricInfo.and.returnValue(of(mockNodes));
 
   const apiServiceStub = {
     get heatmap(): any {

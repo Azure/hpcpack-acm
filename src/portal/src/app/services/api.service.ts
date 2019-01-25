@@ -302,12 +302,11 @@ export class HeatmapApi extends Resource<any> {
     return this.httpGet(url);
   }
 
-  get(category: string): Observable<any> {
-    let url = this.url + '/' + category;
+  getMetricInfo(category: string, pageSize: number): Observable<any> {
+    let url = `${this.url}/${category}?count=${pageSize}`;
     return this.httpGet(url, null, [
       map(e => this.normalize(e)),
     ]);
-    // return this.httpGet(url);
   }
 
   getMockData(category: string): Observable<any> {

@@ -17,6 +17,7 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
   private categoryWays = { cpu: ['By Node', 'By Core'] };
   public ways = [];
   public activeMode;
+  public pageSize = 10000;
 
   constructor(
     private api: ApiService
@@ -53,7 +54,7 @@ export class NodeHeatmapComponent implements OnInit, OnDestroy {
       //observable
       //If you want to emulate the get operation, please call the in-memory web api function below.
       //this.api.heatmap.getMockData(this.selectedCategory),
-      this.api.heatmap.get(this.selectedCategory),
+      this.api.heatmap.getMetricInfo(this.selectedCategory, this.pageSize),
       //observer
       {
         next: (result) => {
