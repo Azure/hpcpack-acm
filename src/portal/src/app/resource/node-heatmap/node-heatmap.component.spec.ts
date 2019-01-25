@@ -29,7 +29,17 @@ const routerStub = {
 }
 const activatedRouteStub = {}
 
-describe('NodeHeatmapComponent', () => {
+@Component({ selector: 'heatmap-cpu', template: '' })
+class CpuComponent {
+  @Input()
+  activeMode: string;
+
+  @Input()
+  nodes: Array<any>;
+}
+
+
+fdescribe('NodeHeatmapComponent', () => {
   let component: NodeHeatmapComponent;
   let fixture: ComponentFixture<NodeHeatmapComponent>;
 
@@ -78,6 +88,7 @@ describe('NodeHeatmapComponent', () => {
         NodeHeatmapComponent,
         RouterOutletStubComponent,
         RouterLinkDirectiveStub,
+        CpuComponent
       ],
       imports: [
         NoopAnimationsModule,
@@ -104,11 +115,11 @@ describe('NodeHeatmapComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  // it('should show select after component initilaized', () => {
-  //   fixture.detectChanges();
-    // const options = fixture.nativeElement.querySelector('mat-select-value-text');
-    //const select = fixture.nativeElement.querySelector('mat-select');
-    //fixture.detectChanges();
-    //expect(select.textContent).toEqual('Select Category');
-  // });
+  it('should show select after component initilaized', () => {
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelector('mat-select-value-text');
+    const select = fixture.nativeElement.querySelector('mat-select');
+    fixture.detectChanges();
+    expect(select.textContent).toEqual('Select Category');
+  });
 });

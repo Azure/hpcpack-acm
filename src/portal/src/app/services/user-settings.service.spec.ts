@@ -2,14 +2,19 @@ import { TestBed, inject } from '@angular/core/testing';
 
 import { UserSettingsService } from './user-settings.service';
 
-describe('UserSettingsService', () => {
+fdescribe('UserSettingsService', () => {
+  let userSettings: UserSettingsService;
+  let storageSpy;
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [UserSettingsService]
-    });
+    storageSpy = jasmine.createSpyObj('LocalStorageService', ['setItem', 'getItem']);
+    storageSpy.setItem.and.returnValue();
+    storageSpy.getItem.and.returnValue();
+    userSettings = new UserSettingsService(storageSpy);
   });
 
-  it('should be created', inject([UserSettingsService], (service: UserSettingsService) => {
-    expect(service).toBeTruthy();
-  }));
+  it('should be created', () => {
+    expect(userSettings).toBeTruthy();
+  });
+
+
 });

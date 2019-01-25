@@ -13,7 +13,6 @@ import { TaskDetailComponent } from './task/task-detail/task-detail.component';
 import { TaskTableComponent } from './task/task-table/task-table.component';
 import { NodesInfoComponent } from './diags/nodes-info/nodes-info.component';
 import { EventListComponent } from '../../widgets/event-list/event-list.component';
-import { RingOverviewResultComponent } from './diags/mpi/ring/overview-result/overview-result.component';
 import { PingPongOverviewResultComponent } from './diags/mpi/pingpong/overview-result/overview-result.component';
 import { GoodNodesComponent } from './diags/mpi/pingpong/good-nodes/good-nodes.component';
 import { FailedReasonsComponent } from './diags/mpi/pingpong/failed-reasons/failed-reasons.component';
@@ -71,7 +70,8 @@ class ApiServiceStub {
   diag = {
     getDiagJob: (id: any) => of(this.results),
     getDiagTasksByPage: () => of(this.taskResult),
-    getJobAggregationResult: (id: any) => of({ Error: "error message" })
+    getJobAggregationResult: (id: any) => of({ Error: "error message" }),
+    getJobEvents: (id: any) => of([])
   }
 }
 
@@ -108,7 +108,6 @@ const routerStub = {
     TaskTableComponent,
     ResultLayoutComponent,
     RingReportComponent,
-    RingOverviewResultComponent,
     NodesInfoComponent,
     OverviewResultComponent,
     GeneralReportComponent,
