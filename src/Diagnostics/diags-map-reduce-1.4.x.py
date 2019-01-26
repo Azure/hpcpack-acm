@@ -389,12 +389,13 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
         commandStartHpcPackSmpd = 'if exist hpcpacksmpdstopped net start msmpi && del hpcpacksmpdstopped'
         commandStartSmpd = 'type nul >smpdstartd && smpd -d || del smpdstartd'
         commandStopSmpd = 'if exist smpdstartd taskkill /f /im smpd.exe'
+        commandCheckMpi = 'not exist "%MSMPI_BIN%" (echo Microsoft MPI is not installed)'
         commandCheckSmpd = 'tasklist /fi "imagename eq smpd.exe" | findstr smpd'
         commandSetEnvs = "$env:CCP_TASKCONTEXT=''; $env:path='%MSMPI_BIN%'"
         commandMpiIntra = "{}; mpiexec -hosts 1 %COMPUTERNAME% 2 '%MSMPI_BENCHMARKS%IMB-MPI1' {} pingpong".format(commandSetEnvs, sampleOption)
         commandMpiInter = "{}; mpiexec -hosts 2 [nodeping] 1 [nodepong] 1 '%MSMPI_BENCHMARKS%IMB-MPI1' -time 60 {} pingpong".format(commandSetEnvs, sampleOption)
-        commandRunIntra = 'echo off && for /l %i in (1,1,30) do ({} && (powershell "{}" & exit) || ping -n 2 127.0.0.1 >nul)'.format(commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiIntra))
-        commandRunInter = '{} && powershell "{}"'.format(commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiInter))
+        commandRunIntra = 'if {} else echo off && for /l %i in (1,1,30) do ({} && (powershell "{}" & exit) || ping -n 2 127.0.0.1 >nul)'.format(commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiIntra))
+        commandRunInter = 'if {} else {} && powershell "{}"'.format(commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiInter))
     else:
         mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiLocation)
         commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpiexec'.format(mpiLocation) # this way would only add one row in firewall rules
@@ -748,11 +749,12 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
 
     endTime = time.time()
     
-    taskRuntime = {
-        'Max': numpy.amax(list(taskRuntime.values())),
-        'Ave': numpy.average(list(taskRuntime.values())),
-        'Sorted': sorted([{'runtime':taskRuntime[key], 'taskId':key} for key in taskRuntime], key=lambda x:x['runtime'], reverse=True)
-        }
+    if taskRuntime:
+        taskRuntime = {
+            'Max': numpy.amax(list(taskRuntime.values())),
+            'Ave': numpy.average(list(taskRuntime.values())),
+            'Sorted': sorted([{'runtime':taskRuntime[key], 'taskId':key} for key in taskRuntime], key=lambda x:x['runtime'], reverse=True)
+            }
     failedTasksByExitcode = {}
     for task in failedTasks:
         failedTasksByExitcode.setdefault(task['ExitCode'], []).append({
@@ -787,8 +789,11 @@ def mpiPingpongParseOutput(output, isDefaultSize):
         return None
 
 def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
-    reasonMpiNotInstalled = 'Intel MPI is not found.'
-    solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location {} or {}. Run "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion, globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion), globalGetDefaultInstallationPathWindows('Intel MPI', mpiVersion))
+    reasonIntelMpiNotInstalled = 'Intel MPI is not found.'
+    solutionIntelMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location {} or {}. Run "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion, globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion), globalGetDefaultInstallationPathWindows('Intel MPI', mpiVersion))
+
+    reasonMsmpiNotInstalled = 'Microsoft MPI is not found.'
+    solutionMsmpiNotInstalled = 'Please ensure Microsoft MPI is installed. Run "Prerequisite-Microsoft MPI Installation" on the Windows nodes if it is not installed on them.'
 
     reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
@@ -821,15 +826,20 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
         exitCode = failedPair['ExitCode']
         pairedNode = nodeOrPair.split(',')[-1]
         if "mpivars.sh: No such file or directory" in output or 'The system cannot find the path specified' in output:
-            reason = reasonMpiNotInstalled
+            reason = reasonIntelMpiNotInstalled
             failedNode = nodeName
             failedPair['NodeOrPair'] = failedNode
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionIntelMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)
         elif "linux/mpi/intel64/bin/pmi_proxy: No such file or directory" in output or 'pmi_proxy not found on {}. Set Intel MPI environment variables'.format(pairedNode) in output:
-            reason = reasonMpiNotInstalled
+            reason = reasonIntelMpiNotInstalled
             failedNode = pairedNode
             failedPair['NodeOrPair'] = failedNode
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)            
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionIntelMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)            
+        elif "Microsoft MPI is not installed" in output:
+            reason = reasonMsmpiNotInstalled
+            failedNode = nodeName
+            failedPair['NodeOrPair'] = failedNode
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMsmpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)
         elif "Host {} not found:".format(pairedNode) in output:
             reason = reasonHostNotFound
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHostNotFound, 'NodePairs':[]})['NodePairs'].append(nodeOrPair)
@@ -864,10 +874,10 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
             failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[], 'TaskIds':[]})['NodePairs'].append(nodeOrPair)
             failedReasons[reason]['TaskIds'].append(taskId)
         failedPair['Reason'] = reason
-    if reasonMpiNotInstalled in failedReasons:
-        failedReasons[reasonMpiNotInstalled]['Nodes'] = list(failedReasons[reasonMpiNotInstalled]['Nodes'])
-    if reasonDapl in failedReasons:
-        failedReasons[reasonDapl]['Nodes'] = list(failedReasons[reasonDapl]['Nodes'])
+    for value in failedReasons.values():
+        nodes = value.get('Nodes')
+        if nodes:
+            value['Nodes'] = sorted(list(nodes))
 
     failedReasonsByNode = {}
     for failedTask in failedTasks:
@@ -877,9 +887,12 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
             severity = failedReasonsByNode[node].setdefault('Severity', 0)
             failedReasonsByNode[node]['Severity'] = severity + 1
     for value in failedReasonsByNode.values():
-        nodesOrPairs = value.get(reasonMpiNotInstalled)
+        nodesOrPairs = value.get(reasonIntelMpiNotInstalled)
         if nodesOrPairs:
-            value[reasonMpiNotInstalled] = list(set(nodesOrPairs))
+            value[reasonIntelMpiNotInstalled] = list(set(nodesOrPairs))
+        nodesOrPairs = value.get(reasonMsmpiNotInstalled)
+        if nodesOrPairs:
+            value[reasonMsmpiNotInstalled] = list(set(nodesOrPairs))
     for key in failedReasonsByNode.keys():
         severity = failedReasonsByNode[key].pop('Severity')
         failedReasonsByNode["{} ({})".format(key, severity)] = failedReasonsByNode.pop(key)
