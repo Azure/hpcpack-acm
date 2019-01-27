@@ -387,8 +387,8 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
         commandSetFirewall = 'netsh firewall add allowedprogram "%MSMPI_BENCHMARKS%IMB-MPI1.exe" hpc_diagnostics_imb-mpi1'
         commandStopHpcPackSmpd = 'net stop msmpi && type nul >hpcpacksmpdstopped'
         commandStartHpcPackSmpd = 'if exist hpcpacksmpdstopped net start msmpi && del hpcpacksmpdstopped'
-        commandStartSmpd = 'type nul >smpdstartd && smpd -d || del smpdstartd'
-        commandStopSmpd = 'if exist smpdstartd taskkill /f /im smpd.exe'
+        commandStartSmpd = 'type nul >smpdstarted && smpd -d || del smpdstarted'
+        commandStopSmpd = 'if exist smpdstarted taskkill /f /im smpd.exe'
         commandCheckMpi = 'not exist "%MSMPI_BIN%" (echo Microsoft MPI is not installed)'
         commandCheckSmpd = 'tasklist /fi "imagename eq smpd.exe" | findstr smpd'
         commandSetEnvs = "$env:CCP_TASKCONTEXT=''; $env:path='%MSMPI_BIN%'"
@@ -408,18 +408,18 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
     id = startId
 
     if useMsmpi:
-        for node in nodelist:
+        for node in sorted(nodelist):
             task = copy.deepcopy(taskTemplate)
             task['Id'] = id
             task['Node'] = node
             task['CommandLine'] = '{} && {} & {}'.format(commandSetFirewall, commandStopHpcPackSmpd, commandStartSmpd)
             task['CustomizedData'] = '{} start smpd on {}'.format(taskLabel, node)
-            task['MaximumRuntimeSeconds'] = 36000
+            task['MaximumRuntimeSeconds'] = 20 * len(nodelist)
             tasks.append(task)
             id += 1
 
     idByNode = {}
-    for node in nodelist:
+    for node in sorted(nodelist):
         task = copy.deepcopy(taskTemplate)
         task['Id'] = id
         task['Node'] = node
@@ -449,7 +449,7 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
         idByNode = idByNodeNext
 
     if useMsmpi:
-        for node in nodelist:
+        for node in sorted(nodelist):
             task = copy.deepcopy(taskTemplate)
             task['Id'] = id
             task['Node'] = node
@@ -812,9 +812,12 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
 
     reasonAvSet = 'The nodes may not be in the same availability set.'
     solutionAvSet = 'Recreate the node(s) and ensure the nodes are in the same availability set.'
-    
-    reasonDapl = 'MPI issue: "dapl fabric is not available and fallback fabric is not enabled"'
+
+    reasonDapl = 'Error message: dapl fabric is not available and fallback fabric is not enabled'
     solutionDapl = 'Please check the RDMA driver availability and memory limit setting or re-create the VM.'
+
+    reasonWindowsError1 = 'Error message: Error connecting to the Service'
+    reasonWindowsError2 = 'Error message: The semaphore timeout period has expired'
 
     failedReasons = {}
     for failedPair in failedTasks:
@@ -865,6 +868,10 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
         else:
             if "Time limit (secs_per_sample * msg_sizes_list_len) is over;" in output:
                 reason = reasonSampleTimeout
+            elif 'Error connecting to the Service' in output:
+                reason = reasonWindowsError1
+            elif 'The semaphore timeout period has expired' in output:
+                reason = reasonWindowsError2
             elif exitCode == 124:
                 reason = reasonPingpongTimeout
             elif taskId in canceledTasks:
