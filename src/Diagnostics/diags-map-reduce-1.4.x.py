@@ -367,6 +367,7 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
     if len(nodelist) == 0:
         return tasks
 
+    hpcVmDriversExtensionPath = r'C:\Packages\Plugins\Microsoft.HpcCompute.HpcVmDrivers'
     sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
     rdmaOption = ''
     taskLabel = '[Windows]'
@@ -390,13 +391,15 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
         commandStartSmpd = 'type nul >smpdstarted && smpd -d || del smpdstarted'
         commandStopSmpd = 'if exist smpdstarted taskkill /f /im smpd.exe'
         commandCheckHost = 'nslookup [nodepong] 2>&1 | findstr /C:"can\'t find [nodepong]"'
-        commandCheckMpi = 'not exist "%MSMPI_BIN%" (echo Microsoft MPI is not installed)'
+        commandCheckMpi = 'if not exist "%MSMPI_BIN%" (echo Microsoft MPI is not installed)'
         commandCheckSmpd = 'tasklist /fi "imagename eq smpd.exe" | findstr smpd'
+        commandCheckRdma = 'if not exist {} (echo HpcVmDrivers is not installed)'.format(hpcVmDriversExtensionPath)
+        commandCheckRdmaAndMpi = '{} else {}'.format(commandCheckRdma, commandCheckMpi)
         commandSetEnvs = "$env:CCP_TASKCONTEXT=''; $env:path='%MSMPI_BIN%'"
         commandMpiIntra = "{}; mpiexec -hosts 1 %COMPUTERNAME% 2 '%MSMPI_BENCHMARKS%IMB-MPI1' {} pingpong".format(commandSetEnvs, sampleOption)
         commandMpiInter = "{}; mpiexec -hosts 2 [nodeping] 1 [nodepong] 1 '%MSMPI_BENCHMARKS%IMB-MPI1' -time 60 {} pingpong".format(commandSetEnvs, sampleOption)
-        commandRunIntra = 'if {} else echo off && for /l %i in (1,1,30) do ({} && (powershell "{}" & exit) || ping -n 2 127.0.0.1 >nul)'.format(commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiIntra))
-        commandRunInter = '{} || if {} else {} && powershell "{}"'.format(commandCheckHost, commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiInter))
+        commandRunIntra = '{} else echo off && for /l %i in (1,1,30) do ({} && (powershell "{}" & exit) || ping -n 2 127.0.0.1 >nul)'.format(commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiIntra))
+        commandRunInter = '{} || {} else {} && powershell "{}"'.format(commandCheckHost, commandCheckRdmaAndMpi if isRdma else commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiInter))
     else:
         mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiLocation)
         commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpiexec'.format(mpiLocation) # this way would only add one row in firewall rules
@@ -817,8 +820,11 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
     reasonDapl = 'Error message: dapl fabric is not available and fallback fabric is not enabled'
     solutionDapl = 'Please check the RDMA driver availability and memory limit setting or re-create the VM.'
 
-    reasonWindowsError1 = 'Error message: Error connecting to the Service'
-    reasonWindowsError2 = 'Error message: The semaphore timeout period has expired'
+    reasonHpcVmDriversNotInstalled = 'Windows network device drivers for RDMA connectivity is not installed.'
+    solutionHpcVmDriversNotInstalled = 'Install VM extension "HpcVmDrivers" on the node(s). More refer to https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-hpc.'
+
+    reasonWindowsError1 = 'Error message: Error connecting to the Service.'
+    reasonWindowsError2 = 'Error message: The semaphore timeout period has expired.'
 
     failedReasons = {}
     for failedPair in failedTasks:
@@ -839,6 +845,11 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
             failedNode = pairedNode
             failedPair['NodeOrPair'] = failedNode
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionIntelMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)            
+        elif "HpcVmDrivers is not installed" in output:
+            reason = reasonHpcVmDriversNotInstalled
+            failedNode = nodeName
+            failedPair['NodeOrPair'] = failedNode
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHpcVmDriversNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)            
         elif "Microsoft MPI is not installed" in output:
             reason = reasonMsmpiNotInstalled
             failedNode = nodeName
@@ -901,6 +912,9 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
         nodesOrPairs = value.get(reasonMsmpiNotInstalled)
         if nodesOrPairs:
             value[reasonMsmpiNotInstalled] = list(set(nodesOrPairs))
+        nodesOrPairs = value.get(reasonHpcVmDriversNotInstalled)
+        if nodesOrPairs:
+            value[reasonHpcVmDriversNotInstalled] = list(set(nodesOrPairs))
     for key in failedReasonsByNode.keys():
         severity = failedReasonsByNode[key].pop('Severity')
         failedReasonsByNode["{} ({})".format(key, severity)] = failedReasonsByNode.pop(key)
