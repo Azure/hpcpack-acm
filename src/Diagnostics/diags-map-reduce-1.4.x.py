@@ -389,13 +389,14 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
         commandStartHpcPackSmpd = 'if exist hpcpacksmpdstopped net start msmpi && del hpcpacksmpdstopped'
         commandStartSmpd = 'type nul >smpdstarted && smpd -d || del smpdstarted'
         commandStopSmpd = 'if exist smpdstarted taskkill /f /im smpd.exe'
+        commandCheckHost = 'nslookup [nodepong] 2>&1 | findstr /C:"can\'t find [nodepong]"'
         commandCheckMpi = 'not exist "%MSMPI_BIN%" (echo Microsoft MPI is not installed)'
         commandCheckSmpd = 'tasklist /fi "imagename eq smpd.exe" | findstr smpd'
         commandSetEnvs = "$env:CCP_TASKCONTEXT=''; $env:path='%MSMPI_BIN%'"
         commandMpiIntra = "{}; mpiexec -hosts 1 %COMPUTERNAME% 2 '%MSMPI_BENCHMARKS%IMB-MPI1' {} pingpong".format(commandSetEnvs, sampleOption)
         commandMpiInter = "{}; mpiexec -hosts 2 [nodeping] 1 [nodepong] 1 '%MSMPI_BENCHMARKS%IMB-MPI1' -time 60 {} pingpong".format(commandSetEnvs, sampleOption)
         commandRunIntra = 'if {} else echo off && for /l %i in (1,1,30) do ({} && (powershell "{}" & exit) || ping -n 2 127.0.0.1 >nul)'.format(commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiIntra))
-        commandRunInter = 'if {} else {} && powershell "{}"'.format(commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiInter))
+        commandRunInter = '{} || if {} else {} && powershell "{}"'.format(commandCheckHost, commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiInter))
     else:
         mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiLocation)
         commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpiexec'.format(mpiLocation) # this way would only add one row in firewall rules
@@ -414,7 +415,7 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
             task['Node'] = node
             task['CommandLine'] = '{} && {} & {}'.format(commandSetFirewall, commandStopHpcPackSmpd, commandStartSmpd)
             task['CustomizedData'] = '{} start smpd on {}'.format(taskLabel, node)
-            task['MaximumRuntimeSeconds'] = 20 * len(nodelist)
+            task['MaximumRuntimeSeconds'] = 60 # the smpd service (as well as any other commands like ping) could survive after task cancellation, we use this "feature" for now
             tasks.append(task)
             id += 1
 
@@ -795,7 +796,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
     reasonMsmpiNotInstalled = 'Microsoft MPI is not found.'
     solutionMsmpiNotInstalled = 'Please ensure Microsoft MPI is installed. Run "Prerequisite-Microsoft MPI Installation" on the Windows nodes if it is not installed on them.'
 
-    reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
+    reasonHostNotFound = 'The node pair may not be in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
 
     reasonFireWall = 'The connection was blocked by firewall.'
@@ -843,7 +844,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
             failedNode = nodeName
             failedPair['NodeOrPair'] = failedNode
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMsmpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)
-        elif "Host {} not found:".format(pairedNode) in output:
+        elif "Host {} not found:".format(pairedNode) in output or 'can\'t find {}: Non-existent domain'.format(pairedNode) in output:
             reason = reasonHostNotFound
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHostNotFound, 'NodePairs':[]})['NodePairs'].append(nodeOrPair)
         elif "check for firewalls!" in output:
