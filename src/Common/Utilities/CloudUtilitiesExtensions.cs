@@ -133,7 +133,7 @@
             u.AddJobsEventAsync(jobType, jobId, new Event() { Content = message, Source = EventSource.Job, Type = type }, token, logger);
 
         public static T.Task AddJobsEventAsync(this CloudUtilities u, JobType jobType, int jobId, Event e, CancellationToken token, ILogger logger = null) =>
-            u.GetJobsTable().InsertOrReplaceAsync(u.GetJobPartitionKey(jobType, jobId), IntegerKey.ToStringKey(e.Id), e, token);
+            u.GetJobsTable().InsertOrReplaceAsync(u.GetJobPartitionKey(jobType, jobId), u.GetEventsKey(e.Id), e, token);
 
         public static async T.Task<bool> UpdateJobAsync(this CloudUtilities u, JobType type, int jobId, Action<Job> action, CancellationToken token, ILogger logger = null)
         {
