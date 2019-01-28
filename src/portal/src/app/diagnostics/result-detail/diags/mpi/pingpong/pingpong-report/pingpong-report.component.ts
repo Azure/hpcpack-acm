@@ -109,6 +109,7 @@ export class PingPongReportComponent implements OnInit {
             this.getAggregationResult();
           }
           this.getJobInfo();
+          this.getEvents();
           return this.getTasksRequest();
         }
       },
@@ -132,9 +133,12 @@ export class PingPongReportComponent implements OnInit {
       this.jobState = res.state;
       this.result = res;
       this.nodes = res.targetNodes;
-      if (res.events !== undefined) {
-        this.events = res.events;
-      }
+    });
+  }
+
+  getEvents() {
+    this.api.diag.getJobEvents(this.result.id).subscribe(res => {
+      this.events = res;
     });
   }
 

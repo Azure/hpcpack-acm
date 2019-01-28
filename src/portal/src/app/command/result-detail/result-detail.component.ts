@@ -1,6 +1,6 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatTableDataSource, MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { Observable } from 'rxjs/Observable';
 import { ApiService, Loop } from '../../services/api.service';
@@ -19,6 +19,9 @@ import { TableDataService } from '../../services/table-data/table-data.service';
 export class ResultDetailComponent implements OnInit {
   @ViewChild('output')
   private output: CommandOutputComponent;
+
+  @ViewChild('selector')
+  private selector: NodeSelectorComponent;
 
   public id: string;
 
@@ -78,6 +81,9 @@ export class ResultDetailComponent implements OnInit {
       this.result = { state: 'unknown', command: '', nodes: [], timeout: 1800 };
       this.nodeOutputs = {};
       this.id = map.get('id');
+      this.lastId = 0;
+      this.loadFinished = false;
+      this.empty = true;
       this.updateJob(this.id);
       this.updateNodes(this.id);
     });
@@ -593,6 +599,7 @@ export class ResultDetailComponent implements OnInit {
         let names = this.result.nodes.map(node => node.name);
         this.api.command.create(params.command, names, params.timeout).subscribe(obj => {
           this.router.navigate([`/command/results/${obj.id}`]);
+          this.selector.scrolled = false;
         });
       }
     });

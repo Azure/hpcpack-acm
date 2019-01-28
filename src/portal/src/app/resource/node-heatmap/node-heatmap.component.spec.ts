@@ -29,7 +29,17 @@ const routerStub = {
 }
 const activatedRouteStub = {}
 
-describe('NodeHeatmapComponent', () => {
+@Component({ selector: 'heatmap-cpu', template: '' })
+class CpuComponent {
+  @Input()
+  activeMode: string;
+
+  @Input()
+  nodes: Array<any>;
+}
+
+
+fdescribe('NodeHeatmapComponent', () => {
   let component: NodeHeatmapComponent;
   let fixture: ComponentFixture<NodeHeatmapComponent>;
 
@@ -62,9 +72,9 @@ describe('NodeHeatmapComponent', () => {
   let getCategoriesSpy;
   let getNodesSpy;
   let heatmapService;
-  heatmapService = jasmine.createSpyObj('HeatmapService', ['getCategories', 'get']);
+  heatmapService = jasmine.createSpyObj('HeatmapService', ['getCategories', 'getMetricInfo']);
   getCategoriesSpy = heatmapService.getCategories.and.returnValue(of(categories));
-  getNodesSpy = heatmapService.get.and.returnValue(of(mockNodes));
+  getNodesSpy = heatmapService.getMetricInfo.and.returnValue(of(mockNodes));
 
   const apiServiceStub = {
     get heatmap(): any {
@@ -78,6 +88,7 @@ describe('NodeHeatmapComponent', () => {
         NodeHeatmapComponent,
         RouterOutletStubComponent,
         RouterLinkDirectiveStub,
+        CpuComponent
       ],
       imports: [
         NoopAnimationsModule,
@@ -104,11 +115,11 @@ describe('NodeHeatmapComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  // it('should show select after component initilaized', () => {
-  //   fixture.detectChanges();
-    // const options = fixture.nativeElement.querySelector('mat-select-value-text');
-    //const select = fixture.nativeElement.querySelector('mat-select');
-    //fixture.detectChanges();
-    //expect(select.textContent).toEqual('Select Category');
-  // });
+  it('should show select after component initilaized', () => {
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelector('mat-select-value-text');
+    const select = fixture.nativeElement.querySelector('mat-select');
+    fixture.detectChanges();
+    expect(select.textContent).toEqual('Select Category');
+  });
 });

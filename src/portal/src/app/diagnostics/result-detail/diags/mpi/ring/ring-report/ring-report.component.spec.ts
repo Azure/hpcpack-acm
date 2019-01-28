@@ -109,10 +109,13 @@ class ApiServiceStub {
     aggregationResult: { Error: "error message" }
   };
 
+  static events = [];
+
   diag = {
     getDiagTasksByPage: (id: any, lastId, count) => of(ApiServiceStub.taskResult),
     getDiagJob: (id: any) => of(ApiServiceStub.jobResult),
-    getJobAggregationResult: (id: any) => of({ Error: "error message" })
+    getJobAggregationResult: (id: any) => of({ Error: "error message" }),
+    getJobEvents: (id: any) => of(ApiServiceStub.events)
   }
 }
 

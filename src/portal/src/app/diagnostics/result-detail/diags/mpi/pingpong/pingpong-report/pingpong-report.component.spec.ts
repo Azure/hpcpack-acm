@@ -110,7 +110,8 @@ class ApiServiceStub {
   diag = {
     getDiagTasksByPage: (id: any, lastId, count) => of(ApiServiceStub.taskResult),
     getDiagJob: (id: any) => of(ApiServiceStub.jobResult),
-    getJobAggregationResult: (id: any) => of({ Error: "error message" })
+    getJobAggregationResult: (id: any) => of({ Error: "error message" }),
+    getJobEvents: (id: any) => of([])
   }
 }
 
@@ -121,8 +122,8 @@ const tableSettingsStub = {
 }
 
 class TableDataServiceStub {
-  updateDatasource(newData, dataSource, propertyName) {
-    return dataSource.data = newData;
+  updateData(newData, dataSource, propertyName) {
+    return newData;
   }
 }
 

@@ -5,7 +5,6 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
 import { MaterialsModule } from './materials.module';
 import { AppRoutingModule } from './app-routing.module';
-import { AuthGuardService } from './services/auth-guard.service';
 import { AuthService } from './services/auth.service';
 import { LoginGuardService } from './services/login-guard.service';
 import { ApiService } from './services/api.service';
@@ -41,7 +40,6 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
     ScrollingModule
   ],
   providers: [
-    AuthGuardService,
     AuthService,
     LoginGuardService,
     ApiService,

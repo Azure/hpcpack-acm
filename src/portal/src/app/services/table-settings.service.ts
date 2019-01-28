@@ -6,7 +6,7 @@ export class TableSettingsService {
 
   constructor(
     public settings: UserSettingsService
-  ) {}
+  ) { }
 
   save(key, columns): void {
     let selected = columns.filter(e => e.displayed).map(e => e.name);
@@ -14,7 +14,7 @@ export class TableSettingsService {
     this.settings.save();
   }
 
-  load(key, initColumns): void {
+  load(key, initColumns): Array<any> {
     let availableColumns = initColumns;
     let data = this.settings.get(key);
     let res;
@@ -32,7 +32,7 @@ export class TableSettingsService {
       res = selected.concat(options);
     }
     else {
-      res = availableColumns ;
+      res = availableColumns;
     }
     return res;
   }

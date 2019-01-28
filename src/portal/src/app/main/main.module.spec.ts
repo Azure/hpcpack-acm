@@ -1,6 +1,6 @@
 import { MainModule } from './main.module';
 
-describe('MainModule', () => {
+fdescribe('MainModule', () => {
   let mainModule: MainModule;
 
   beforeEach(() => {
