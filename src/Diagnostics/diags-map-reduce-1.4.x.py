@@ -489,6 +489,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
 
     commandAddHost = 'host [pairednode] && ssh-keyscan [pairednode] >>~/.ssh/known_hosts'
     commandClearHosts = 'rm -f ~/.ssh/known_hosts'
+    commandCheckRdma = 'cat /etc/waagent.conf | grep -q "^# OS.EnableRDMA=y" && echo RDMA is not enabled && exit'
     commandRunIntra = 'source {}/intel64/bin/mpivars.sh && mpirun -env I_MPI_SHM_LMT=shm {} -n 2 IMB-MPI1 {} pingpong'.format(mpiLocation, rdmaOption, sampleOption)    
     commandRunInter = 'source {}/intel64/bin/mpivars.sh && mpirun -hosts [nodepair] {} -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(mpiLocation, rdmaOption, sampleOption)
     commandMeasureTime = "TIMEFORMAT='Run time: %3R' && time timeout [timeout]s bash -c '[command]'"
@@ -549,6 +550,11 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
             task['CommandLine'] = '{} && {}'.format(commandAddHost, command).replace('[nodepair]', nodes).replace('[pairednode]', nodepair[1])
             tasks.append(task)
             id += 1
+
+    if isRdma:
+        for task in tasks:
+            task['CommandLine'] = '{} || {}'.format(commandCheckRdma, task['CommandLine'])
+
     return tasks
 
 def mpiPingpongGetGroups(nodelist):
@@ -818,11 +824,14 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
     reasonAvSet = 'The nodes may not be in the same availability set.'
     solutionAvSet = 'Recreate the node(s) and ensure the nodes are in the same availability set.'
 
-    reasonDapl = 'Error message: dapl fabric is not available and fallback fabric is not enabled'
+    reasonDapl = 'Error message: dapl fabric is not available and fallback fabric is not enabled.'
     solutionDapl = 'Please check the RDMA driver availability and memory limit setting or re-create the VM.'
 
     reasonHpcVmDriversNotInstalled = 'Windows network device drivers for RDMA connectivity is not installed.'
-    solutionHpcVmDriversNotInstalled = 'Install VM extension "HpcVmDrivers" on the node(s). More refer to https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-hpc.'
+    solutionHpcVmDriversNotInstalled = 'Install VM extension "HpcVmDrivers" on the node(s). More refer to https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-hpc'
+
+    reasonRdmaNotEnabled = 'RDMA is not enabled.'
+    solutionRdmaNotEnabled = 'Please check the config file "/etc/waagent.conf" on the node(s). More refer to https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-hpc'
 
     reasonWindowsError1 = 'Error message: Error connecting to the Service.'
     reasonWindowsError2 = 'Error message: The semaphore timeout period has expired.'
@@ -856,6 +865,11 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
             failedNode = nodeName
             failedPair['NodeOrPair'] = failedNode
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMsmpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)
+        elif output.startswith('RDMA is not enabled'):
+            reason = reasonRdmaNotEnabled
+            failedNode = nodeName
+            failedPair['NodeOrPair'] = failedNode
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionRdmaNotEnabled, 'Nodes':set()})['Nodes'].add(failedNode)
         elif "Host {} not found:".format(pairedNode) in output or 'can\'t find {}: Non-existent domain'.format(pairedNode) in output:
             reason = reasonHostNotFound
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHostNotFound, 'NodePairs':[]})['NodePairs'].append(nodeOrPair)
@@ -916,6 +930,9 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
         nodesOrPairs = value.get(reasonHpcVmDriversNotInstalled)
         if nodesOrPairs:
             value[reasonHpcVmDriversNotInstalled] = list(set(nodesOrPairs))
+        nodesOrPairs = value.get(reasonRdmaNotEnabled)
+        if nodesOrPairs:
+            value[reasonRdmaNotEnabled] = list(set(nodesOrPairs))
     for key in failedReasonsByNode.keys():
         severity = failedReasonsByNode[key].pop('Severity')
         failedReasonsByNode["{} ({})".format(key, severity)] = failedReasonsByNode.pop(key)
