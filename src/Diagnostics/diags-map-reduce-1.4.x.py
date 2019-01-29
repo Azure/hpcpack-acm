@@ -375,7 +375,7 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
     if isRdma:
         rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0'
         taskLabel += '[RDMA]'
-        interVmTaskTimeout = 10
+        interVmTaskTimeout = 5
 
     taskTemplate = {
         'UserName': HPC_DIAG_USERNAME,
@@ -417,7 +417,7 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
             task['Id'] = id
             task['Node'] = node
             task['CommandLine'] = '{} && {} & {}'.format(commandSetFirewall, commandStopHpcPackSmpd, commandStartSmpd)
-            task['CustomizedData'] = '{} start smpd on {}'.format(taskLabel, node)
+            task['CustomizedData'] = '{}[SMPD] start on {}'.format(taskLabel, node)
             task['MaximumRuntimeSeconds'] = 60 # the smpd service (as well as any other commands like ping) could survive after task cancellation, we use this "feature" for now
             tasks.append(task)
             id += 1
@@ -459,7 +459,7 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
             task['Node'] = node
             task['CommandLine'] = '{} & {}'.format(commandStopSmpd, commandStartHpcPackSmpd)
             task['ParentIds'] = [idByNode[node] if node in idByNode else id - 1]
-            task['CustomizedData'] = '{} stop smpd on {}'.format(taskLabel, node)
+            task['CustomizedData'] = '{}[SMPD] stop on {}'.format(taskLabel, node)
             task['MaximumRuntimeSeconds'] = 60
             tasks.append(task)
             id += 1        
@@ -603,9 +603,10 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                 windowsTaskIds.add(taskId)
             if '[Linux]' in taskLabel:
                 linuxTaskIds.add(taskId)
+            if '[SMPD]' in taskLabel:
+                continue
             if '[RDMA]' in taskLabel and ',' not in taskLabel:
                 rdmaNodes.append(nodeOrPair)
-            isSmpdTask = 'smpd on' in taskLabel
             if state == TASK_STATE_CANCELED:
                 canceledTasks.add(taskId)
             exitCode = output = message = None
@@ -620,7 +621,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                         messages[nodeOrPair] = message
             if not output:
                 output = ''
-            if not message and not isSmpdTask:
+            if not message:
                 failedTasks.append({
                     'TaskId':taskId,
                     'NodeName':nodeName,
