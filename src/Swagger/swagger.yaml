@@ -257,6 +257,9 @@ definitions:
   Event:
     type: object
     properties:
+      id:
+        type: integer
+        format: int64
       content:
         type: string
         example: Dummy node event.
@@ -376,11 +379,6 @@ definitions:
         type: number
         format: double
         description: Job progress
-      events:
-        type: array
-        items:
-          $ref: '#/definitions/Event'
-        description: Events happened in the job
       requeueCount:
         type: integer
         description: The number of times the job is requeued
@@ -792,6 +790,22 @@ paths:
         200:
           description: OK
 
+  /clusrun/{id}/events:
+    parameters:
+      - $ref: '#/parameters/jobId'
+      - $ref: '#/parameters/lastId'
+      - $ref: '#/parameters/count'
+    get:
+      summary: Get clusrun events
+      operationId: getClusrunEvents
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Event'
+
   /clusrun/{id}/aggregationResult:
     parameters:
       - $ref: '#/parameters/jobId'
@@ -936,6 +950,22 @@ paths:
       responses:
         200:
           description: OK
+
+  /diagnostics/{id}/events:
+    parameters:
+      - $ref: '#/parameters/jobId'
+      - $ref: '#/parameters/lastId'
+      - $ref: '#/parameters/count'
+    get:
+      summary: Get events of a diagnostic test run
+      operationId: getDiagnosticEvents
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Event'
 
   /diagnostics/{id}/aggregationResult:
     parameters:
