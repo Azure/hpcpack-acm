@@ -199,22 +199,23 @@ def main(cluster, category, command, result, name, cancel, timeout, timeoutToCle
             response = restGet(api)
             if response:
                 tasks = response.json()
-                if category == 'clusrun' and len(tasks) != len(selectedNodes):
-                    print('[Fail]: tasks count {0} is not correct, expecting {1}.'.format(len(tasks), validateTaskCount))
-                    return 'Fail'
                 nodes = set(selectedNodes)
-                for task in tasks:
-                    taskId = task["id"]
-                    taskState = task['state']
-                    if taskState == 'Canceled':
-                        print('[Warn]: task {0} state is {1}.'.format(taskId, taskState))
-                        return 'Warn'                        
-                    if taskState != 'Finished' and taskState != 'Failed':
-                        print('[Fail]: task {0} state {1} is not correct.'.format(taskId, taskState))
+                if category == 'clusrun':
+                    if len(tasks) != len(selectedNodes):
+                        print('[Fail]: tasks count {0} is not correct, expecting {1}.'.format(len(tasks), validateTaskCount))
                         return 'Fail'
-                    if task['node'] not in nodes:
-                        print('[Fail]: node {0} of task {1} is not in allocated nodes list.'.format(task['node'], taskId))
-                        return 'Fail'
+                    for task in tasks:
+                        taskId = task["id"]
+                        taskState = task['state']
+                        if taskState == 'Canceled':
+                            print('[Warn]: task {0} state is {1}.'.format(taskId, taskState))
+                            return 'Warn'
+                        if taskState != 'Finished' and taskState != 'Failed':
+                            print('[Fail]: task {0} state {1} is not correct.'.format(taskId, taskState))
+                            return 'Fail'
+                        if task['node'] not in nodes:
+                            print('[Fail]: node {0} of task {1} is not in allocated nodes list.'.format(task['node'], taskId))
+                            return 'Fail'
             else:
                 print('Get {}: {}'.format(api, response))
                 print('[Fail]: failed to get task info of job.')

@@ -1,17 +1,17 @@
 ﻿{
     "DispatchScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.4.x.py"
+        "Name":"diags-map-reduce-1.5.x.py"
     },
     "AggregationScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.4.x.py"
+        "Name":"diags-map-reduce-1.5.x.py"
     },
     "TaskResultFilterScript":{
         "ContainerName":"diagtestscripts",
         "Name":"MPI-Pingpong-filter.py"
     },
-    "description":"Run Intel MPI-1 Benchmark PingPong between all node pairs in selected nodes, on which Intel MPI or Microsoft MPI should be installed as prerequisite.",
+    "description":"Run Intel MPI Benchmark IMB-MPI1 Pingpong between all node pairs in the selected nodes, on which Intel MPI or Microsoft MPI (only available for Windows nodes) should be installed as prerequisite.",
     "parameters":[
         {
             "name":"Packet size",
@@ -27,21 +27,21 @@
             "options":["2018", "2018 Update 1", "2018 Update 2", "2018 Update 3", "2018 Update 4"],
             "defaultValue":"2018 Update 4",
             "description":{
-                "2018":"The Intel MPI 2018, installed in /opt/intel/impi/2018.0.128 or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.0.128, will be used to run Intel MPI-1 Benchmark PingPong.",
-                "2018 Update 1":"The Intel MPI 2018 Update 1, installed in /opt/intel/impi/2018.1.163 or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.1.156, will be used to run Intel MPI-1 Benchmark PingPong.",
-                "2018 Update 2":"The Intel MPI 2018 Update 2, installed in /opt/intel/impi/2018.2.199 or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.2.185, will be used to run Intel MPI-1 Benchmark PingPong.",
-                "2018 Update 3":"The Intel MPI 2018 Update 3, installed in /opt/intel/impi/2018.3.222 or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.3.210, will be used to run Intel MPI-1 Benchmark PingPong.",
-                "2018 Update 4":"The Intel MPI 2018 Update 4, installed in /opt/intel/impi/2018.4.274 or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.4.274, will be used to run Intel MPI-1 Benchmark PingPong."
+                "2018":"The Intel MPI 2018, installed in /opt/intel/impi/2018.0.128 or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.0.128, will be used to run Intel MPI Benchmark IMB-MPI1 Pingpong.",
+                "2018 Update 1":"The Intel MPI 2018 Update 1, installed in /opt/intel/impi/2018.1.163 or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.1.156, will be used to run Intel MPI Benchmark IMB-MPI1 Pingpong.",
+                "2018 Update 2":"The Intel MPI 2018 Update 2, installed in /opt/intel/impi/2018.2.199 or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.2.185, will be used to run Intel MPI Benchmark IMB-MPI1 Pingpong.",
+                "2018 Update 3":"The Intel MPI 2018 Update 3, installed in /opt/intel/impi/2018.3.222 or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.3.210, will be used to run Intel MPI Benchmark IMB-MPI1 Pingpong.",
+                "2018 Update 4":"The Intel MPI 2018 Update 4, installed in /opt/intel/impi/2018.4.274 or C:\\Program Files (x86)\\IntelSWTools\\mpi\\2018.4.274, will be used to run Intel MPI Benchmark IMB-MPI1 Pingpong."
             }
         },
         {
-            "name":"Use Microsoft MPI",
+            "name":"Use Microsoft MPI on Windows nodes",
             "type":"select",
             "options":["Yes", "No"],
             "defaultValue":"Yes",
             "description":{
-                "Yes":"Run Intel MPI-1 Benchmark PingPong by Microsoft MPI on Windows node(s)",
-                "No":"Run Intel MPI-1 Benchmark PingPong by Intel MPI on Windows node(s)"
+                "Yes":"Run Intel MPI Benchmark IMB-MPI1 Pingpong by Microsoft MPI on Windows nodes",
+                "No":"Run Intel MPI Benchmark IMB-MPI1 Pingpong by Intel MPI on Windows nodes"
             }
         },
         {
