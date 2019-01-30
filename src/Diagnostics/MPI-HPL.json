@@ -1,13 +1,13 @@
 ﻿{
     "DispatchScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.4.x.py"
+        "Name":"diags-map-reduce-1.5.x.py"
     },
     "AggregationScript":{
         "ContainerName":"diagtestscripts",
-        "Name":"diags-map-reduce-1.4.x.py"
+        "Name":"diags-map-reduce-1.5.x.py"
     },
-    "description":"Run Intel HPL(High Performance Linpack, Intel Distribution for LINPACK Benchmark) on each selected node, on which Intel MPI and Intel MKL shoule be installed as prerequisites.",
+    "description":"Run Intel Distribution for LINPACK Benchmark on the selected Linux node(s), on which Intel MPI and Intel MKL shoule be installed as prerequisites.",
     "parameters":[
 	    {
 	        "name":"Memory limit",
@@ -49,7 +49,7 @@
             "type":"number",
             "min":1,
             "max":10000000,
-            "defaultValue":86400
+            "defaultValue":864000
         }
     ]
 }
