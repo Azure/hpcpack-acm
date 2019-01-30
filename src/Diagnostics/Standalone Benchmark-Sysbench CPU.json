@@ -7,7 +7,7 @@
         "ContainerName":"diagtestscripts",
         "Name":"diags-map-reduce-1.4.x.py"
     },
-    "description":"Install and run sysbench on all selected nodes. Get the CPU benchmark of calculating prime number.",
+    "description":"Install and run sysbench on each selected Linux node. Get the CPU benchmark of calculating prime number.",
     "parameters":[
         {
             "name":"Max runtime",

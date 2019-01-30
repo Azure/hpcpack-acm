@@ -106,7 +106,7 @@ def main():
             'Intel MPI version': '2018 Update 4',
             'Packet size': -1,
             'Mode': 'Tournament',
-            'Use Microsoft MPI': "Yes"
+            'Use Microsoft MPI on Windows nodes': "Yes"
         }
         parseArgs(diagArgs, arguments)
         if isMap:
@@ -351,7 +351,7 @@ td, th {
 def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
     packetSize = arguments['Packet size']
-    useMsmpi = arguments['Use Microsoft MPI'].lower() == "Yes".lower()
+    useMsmpi = arguments['Use Microsoft MPI on Windows nodes'].lower() == "Yes".lower()
     mode = arguments['Mode'].lower()
     globalCheckProductVersion('Intel MPI', mpiVersion)
     mpiInstallationLocationWindows = globalGetDefaultInstallationPathWindows('Microsoft MPI' if useMsmpi else 'Intel MPI', mpiVersion)
@@ -371,11 +371,11 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
     sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
     rdmaOption = ''
     taskLabel = '[Windows]'
-    interVmTaskTimeout = 60
+    interVmTimeout = 30
     if isRdma:
         rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0'
         taskLabel += '[RDMA]'
-        interVmTaskTimeout = 5
+        interVmTimeout = 5
 
     taskTemplate = {
         'UserName': HPC_DIAG_USERNAME,
@@ -397,7 +397,7 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
         commandCheckRdmaAndMpi = '{} else {}'.format(commandCheckRdma, commandCheckMpi)
         commandSetEnvs = "$env:CCP_TASKCONTEXT=''; $env:path='%MSMPI_BIN%'"
         commandMpiIntra = "{}; mpiexec -hosts 1 %COMPUTERNAME% 2 '%MSMPI_BENCHMARKS%IMB-MPI1' {} pingpong".format(commandSetEnvs, sampleOption)
-        commandMpiInter = "{}; mpiexec -hosts 2 [nodeping] 1 [nodepong] 1 '%MSMPI_BENCHMARKS%IMB-MPI1' -time 60 {} pingpong".format(commandSetEnvs, sampleOption)
+        commandMpiInter = "{}; mpiexec -timeout {} -hosts 2 [nodeping] 1 [nodepong] 1 '%MSMPI_BENCHMARKS%IMB-MPI1' -time 60 {} pingpong".format(commandSetEnvs, interVmTimeout, sampleOption)
         commandRunIntra = '{} else echo off && for /l %i in (1,1,30) do ({} && (powershell "{}" & exit) || ping -n 2 127.0.0.1 >nul)'.format(commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiIntra))
         commandRunInter = '{} || {} else {} && powershell "{}"'.format(commandCheckHost, commandCheckRdmaAndMpi if isRdma else commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiInter))
     else:
@@ -445,7 +445,7 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
             task['CommandLine'] = commandRunInter.replace('[nodepair]', nodes).replace('[nodeping]', nodepair[0]).replace('[nodepong]', nodepair[1])
             task['ParentIds'] = [idByNode[node] for node in nodepair if node in idByNode]
             task['CustomizedData'] = '{} {}'.format(taskLabel, nodes)
-            task['MaximumRuntimeSeconds'] = interVmTaskTimeout
+            task['MaximumRuntimeSeconds'] = 60
             tasks.append(task)
             idByNodeNext[nodepair[0]] = id
             idByNodeNext[nodepair[1]] = id
@@ -899,7 +899,7 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
                 reason = reasonWindowsError1
             elif 'The semaphore timeout period has expired' in output:
                 reason = reasonWindowsError2
-            elif exitCode == 124:
+            elif exitCode == 124 or exitCode == 1 and 'Terminating job...' in output:
                 reason = reasonPingpongTimeout
             elif taskId in canceledTasks:
                 reason = reasonTaskTimeout

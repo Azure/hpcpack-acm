@@ -7,7 +7,7 @@
         "ContainerName":"diagtestscripts",
         "Name":"diags-map-reduce-1.4.x.py"
     },
-    "description":"Get the speed of copying file between local disk and Azure Storage CIFS server.",
+    "description":"Get the speed of copying file between local disk and Azure Storage CIFS server on each selected Linux node.",
     "parameters":[
         {
             "name":"Connect by",

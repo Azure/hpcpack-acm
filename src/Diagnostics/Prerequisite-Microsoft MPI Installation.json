@@ -7,7 +7,7 @@
         "ContainerName":"diagtestscripts",
         "Name":"diags-map-reduce-1.4.x.py"
     },
-    "description":"Download and install Microsoft MPI(Message Passing Interface) on selected nodes.",
+    "description":"Download and install Microsoft MPI(Message Passing Interface) on each selected Windows node.",
     "parameters":[
 	    {
 	        "name":"Version",
