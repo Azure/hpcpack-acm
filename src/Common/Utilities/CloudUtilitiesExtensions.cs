@@ -123,7 +123,7 @@
         {
             await T.Task.WhenAll(
                 u.AddJobsEventAsync(jobType, jobId, message, EventType.Alert, token, logger),
-                u.UpdateJobAsync(u.GetJobPartitionKey(jobType, jobId), j => j.State = JobState.Failed, token, logger));
+                u.UpdateJobAsync(jobType, jobId, j => j.State = JobState.Failed, token, logger));
         }
 
         public static T.Task AddJobsEventAsync(this CloudUtilities u, Job job, string message, EventType type = EventType.Information, CancellationToken token = default(CancellationToken), ILogger logger = null) =>
