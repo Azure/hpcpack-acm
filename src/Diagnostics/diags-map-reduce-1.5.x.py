@@ -106,7 +106,7 @@ def main():
             'Intel MPI version': '2018 Update 4',
             'Packet size': -1,
             'Mode': 'Tournament',
-            'Use Microsoft MPI': "Yes"
+            'Use Microsoft MPI on Windows nodes': "Yes"
         }
         parseArgs(diagArgs, arguments)
         if isMap:
@@ -351,7 +351,7 @@ td, th {
 def mpiPingpongMap(arguments, windowsNodes, linuxNodes, rdmaNodes):
     mpiVersion = arguments['Intel MPI version']
     packetSize = arguments['Packet size']
-    useMsmpi = arguments['Use Microsoft MPI'].lower() == "Yes".lower()
+    useMsmpi = arguments['Use Microsoft MPI on Windows nodes'].lower() == "Yes".lower()
     mode = arguments['Mode'].lower()
     globalCheckProductVersion('Intel MPI', mpiVersion)
     mpiInstallationLocationWindows = globalGetDefaultInstallationPathWindows('Microsoft MPI' if useMsmpi else 'Intel MPI', mpiVersion)
@@ -367,14 +367,15 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
     if len(nodelist) == 0:
         return tasks
 
+    hpcVmDriversExtensionPath = r'C:\Packages\Plugins\Microsoft.HpcCompute.HpcVmDrivers'
     sampleOption = '-msglog {}:{}'.format(log, log + 1) if -1 < log < 30 else '-iter 10'
     rdmaOption = ''
     taskLabel = '[Windows]'
-    interVmTaskTimeout = 60
+    interVmTimeout = 30
     if isRdma:
         rdmaOption = '-env I_MPI_FABRICS=shm:dapl -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0'
         taskLabel += '[RDMA]'
-        interVmTaskTimeout = 10
+        interVmTimeout = 5
 
     taskTemplate = {
         'UserName': HPC_DIAG_USERNAME,
@@ -387,14 +388,18 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
         commandSetFirewall = 'netsh firewall add allowedprogram "%MSMPI_BENCHMARKS%IMB-MPI1.exe" hpc_diagnostics_imb-mpi1'
         commandStopHpcPackSmpd = 'net stop msmpi && type nul >hpcpacksmpdstopped'
         commandStartHpcPackSmpd = 'if exist hpcpacksmpdstopped net start msmpi && del hpcpacksmpdstopped'
-        commandStartSmpd = 'type nul >smpdstartd && smpd -d || del smpdstartd'
-        commandStopSmpd = 'if exist smpdstartd taskkill /f /im smpd.exe'
+        commandStartSmpd = 'type nul >smpdstarted && smpd -d || del smpdstarted'
+        commandStopSmpd = 'if exist smpdstarted taskkill /f /im smpd.exe'
+        commandCheckHost = 'nslookup [nodepong] 2>&1 | findstr /C:"can\'t find [nodepong]"'
+        commandCheckMpi = 'if not exist "%MSMPI_BIN%" (echo Microsoft MPI is not installed)'
         commandCheckSmpd = 'tasklist /fi "imagename eq smpd.exe" | findstr smpd'
+        commandCheckRdma = 'if not exist {} (echo HpcVmDrivers is not installed)'.format(hpcVmDriversExtensionPath)
+        commandCheckRdmaAndMpi = '{} else {}'.format(commandCheckRdma, commandCheckMpi)
         commandSetEnvs = "$env:CCP_TASKCONTEXT=''; $env:path='%MSMPI_BIN%'"
         commandMpiIntra = "{}; mpiexec -hosts 1 %COMPUTERNAME% 2 '%MSMPI_BENCHMARKS%IMB-MPI1' {} pingpong".format(commandSetEnvs, sampleOption)
-        commandMpiInter = "{}; mpiexec -hosts 2 [nodeping] 1 [nodepong] 1 '%MSMPI_BENCHMARKS%IMB-MPI1' -time 60 {} pingpong".format(commandSetEnvs, sampleOption)
-        commandRunIntra = 'echo off && for /l %i in (1,1,30) do ({} && (powershell "{}" & exit) || ping -n 2 127.0.0.1 >nul)'.format(commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiIntra))
-        commandRunInter = '{} && powershell "{}"'.format(commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiInter))
+        commandMpiInter = "{}; mpiexec -timeout {} -hosts 2 [nodeping] 1 [nodepong] 1 '%MSMPI_BENCHMARKS%IMB-MPI1' -time 60 {} pingpong".format(commandSetEnvs, interVmTimeout, sampleOption)
+        commandRunIntra = '{} else echo off && for /l %i in (1,1,30) do ({} && (powershell "{}" & exit) || ping -n 2 127.0.0.1 >nul)'.format(commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiIntra))
+        commandRunInter = '{} || {} else {} && powershell "{}"'.format(commandCheckHost, commandCheckRdmaAndMpi if isRdma else commandCheckMpi, commandCheckSmpd, commandMeasureTime.replace('[command]', commandMpiInter))
     else:
         mpiEnvFile = r'{}\intel64\bin\mpivars.bat'.format(mpiLocation)
         commandSetFirewall = r'netsh firewall add allowedprogram "{}\intel64\bin\mpiexec.exe" hpc_diagnostics_mpiexec'.format(mpiLocation) # this way would only add one row in firewall rules
@@ -407,18 +412,18 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
     id = startId
 
     if useMsmpi:
-        for node in nodelist:
+        for node in sorted(nodelist):
             task = copy.deepcopy(taskTemplate)
             task['Id'] = id
             task['Node'] = node
             task['CommandLine'] = '{} && {} & {}'.format(commandSetFirewall, commandStopHpcPackSmpd, commandStartSmpd)
-            task['CustomizedData'] = '{} start smpd on {}'.format(taskLabel, node)
-            task['MaximumRuntimeSeconds'] = 36000
+            task['CustomizedData'] = '{}[SMPD] start on {}'.format(taskLabel, node)
+            task['MaximumRuntimeSeconds'] = 60 # the smpd service (as well as any other commands like ping) could survive after task cancellation, we use this "feature" for now
             tasks.append(task)
             id += 1
 
     idByNode = {}
-    for node in nodelist:
+    for node in sorted(nodelist):
         task = copy.deepcopy(taskTemplate)
         task['Id'] = id
         task['Node'] = node
@@ -440,7 +445,7 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
             task['CommandLine'] = commandRunInter.replace('[nodepair]', nodes).replace('[nodeping]', nodepair[0]).replace('[nodepong]', nodepair[1])
             task['ParentIds'] = [idByNode[node] for node in nodepair if node in idByNode]
             task['CustomizedData'] = '{} {}'.format(taskLabel, nodes)
-            task['MaximumRuntimeSeconds'] = interVmTaskTimeout
+            task['MaximumRuntimeSeconds'] = 60
             tasks.append(task)
             idByNodeNext[nodepair[0]] = id
             idByNodeNext[nodepair[1]] = id
@@ -448,13 +453,13 @@ def mpiPingpongCreateTasksWindows(nodelist, isRdma, startId, mpiLocation, log, u
         idByNode = idByNodeNext
 
     if useMsmpi:
-        for node in nodelist:
+        for node in sorted(nodelist):
             task = copy.deepcopy(taskTemplate)
             task['Id'] = id
             task['Node'] = node
             task['CommandLine'] = '{} & {}'.format(commandStopSmpd, commandStartHpcPackSmpd)
             task['ParentIds'] = [idByNode[node] if node in idByNode else id - 1]
-            task['CustomizedData'] = '{} stop smpd on {}'.format(taskLabel, node)
+            task['CustomizedData'] = '{}[SMPD] stop on {}'.format(taskLabel, node)
             task['MaximumRuntimeSeconds'] = 60
             tasks.append(task)
             id += 1        
@@ -484,6 +489,7 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
 
     commandAddHost = 'host [pairednode] && ssh-keyscan [pairednode] >>~/.ssh/known_hosts'
     commandClearHosts = 'rm -f ~/.ssh/known_hosts'
+    commandCheckRdma = 'cat /etc/waagent.conf | grep -q "^# OS.EnableRDMA=y" && echo RDMA is not enabled && exit'
     commandRunIntra = 'source {}/intel64/bin/mpivars.sh && mpirun -env I_MPI_SHM_LMT=shm {} -n 2 IMB-MPI1 {} pingpong'.format(mpiLocation, rdmaOption, sampleOption)    
     commandRunInter = 'source {}/intel64/bin/mpivars.sh && mpirun -hosts [nodepair] {} -ppn 1 IMB-MPI1 -time 60 {} pingpong'.format(mpiLocation, rdmaOption, sampleOption)
     commandMeasureTime = "TIMEFORMAT='Run time: %3R' && time timeout [timeout]s bash -c '[command]'"
@@ -544,6 +550,11 @@ def mpiPingpongCreateTasksLinux(nodelist, isRdma, startId, mpiLocation, mode, lo
             task['CommandLine'] = '{} && {}'.format(commandAddHost, command).replace('[nodepair]', nodes).replace('[pairednode]', nodepair[1])
             tasks.append(task)
             id += 1
+
+    if isRdma:
+        for task in tasks:
+            task['CommandLine'] = '{} || {}'.format(commandCheckRdma, task['CommandLine'])
+
     return tasks
 
 def mpiPingpongGetGroups(nodelist):
@@ -598,9 +609,10 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                 windowsTaskIds.add(taskId)
             if '[Linux]' in taskLabel:
                 linuxTaskIds.add(taskId)
+            if '[SMPD]' in taskLabel:
+                continue
             if '[RDMA]' in taskLabel and ',' not in taskLabel:
                 rdmaNodes.append(nodeOrPair)
-            isSmpdTask = 'smpd on' in taskLabel
             if state == TASK_STATE_CANCELED:
                 canceledTasks.add(taskId)
             exitCode = output = message = None
@@ -615,7 +627,7 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
                         messages[nodeOrPair] = message
             if not output:
                 output = ''
-            if not message and not isSmpdTask:
+            if not message:
                 failedTasks.append({
                     'TaskId':taskId,
                     'NodeName':nodeName,
@@ -648,7 +660,9 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
 
     messages = {nodeOrPair: messages[nodeOrPair] for nodeOrPair in messages if ',' in nodeOrPair}
     goodPairs = [pair for pair in messages if messages[pair]['Throughput'] > throughputThreshold]
+    timePoint = time.time()
     goodNodesGroups = mpiPingpongGetGroupsOfFullConnectedNodes(goodPairs)
+    timeGetGroups = time.time() - timePoint
     goodNodes = [node for group in goodNodesGroups for node in group]
     nodesInGoodPairs = [node for pair in goodPairs for node in pair.split(',')]
     if goodNodes and set(goodNodes) != set(nodesInGoodPairs):
@@ -746,17 +760,23 @@ def mpiPingpongReduce(arguments, allNodes, tasks, taskResults):
 
     endTime = time.time()
     
-    taskRuntime = {
-        'Max': numpy.amax(list(taskRuntime.values())),
-        'Ave': numpy.average(list(taskRuntime.values())),
-        'Sorted': sorted([{'runtime':taskRuntime[key], 'taskId':key} for key in taskRuntime], key=lambda x:x['runtime'], reverse=True)
-        }
+    if taskRuntime:
+        taskRuntime = {
+            'Max': numpy.amax(list(taskRuntime.values())),
+            'Ave': numpy.average(list(taskRuntime.values())),
+            'Sorted': sorted([{'runtime':taskRuntime[key], 'taskId':key} for key in taskRuntime], key=lambda x:x['runtime'], reverse=True)
+            }
     failedTasksByExitcode = {}
     for task in failedTasks:
-        failedTasksByExitcode.setdefault(task['ExitCode'], []).append(task['TaskId'])
+        failedTasksByExitcode.setdefault(task['ExitCode'], []).append({
+            'TaskId':task['TaskId'],
+            'NodeOrPair':task['NodeOrPair']
+        })
     result['DebugInfo'] = {
-        'ReduceRuntime':endTime - startTime,
-        'CanceledTasks':sorted(list(canceledTasks)),
+        'ReduceRuntime':{
+            'Total':endTime - startTime,
+            'GetGroups':timeGetGroups
+        },
         'FailedTasksByExitcode':failedTasksByExitcode,
         'TaskRuntime':taskRuntime,
         }
@@ -780,10 +800,13 @@ def mpiPingpongParseOutput(output, isDefaultSize):
         return None
 
 def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
-    reasonMpiNotInstalled = 'Intel MPI is not found.'
-    solutionMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location {} or {}. Run "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion, globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion), globalGetDefaultInstallationPathWindows('Intel MPI', mpiVersion))
+    reasonIntelMpiNotInstalled = 'Intel MPI is not found.'
+    solutionIntelMpiNotInstalled = 'Please ensure Intel MPI {} is installed on the default location {} or {}. Run "Prerequisite-Intel MPI Installation" on the nodes if it is not installed on them.'.format(mpiVersion, globalGetDefaultInstallationPathLinux('Intel MPI', mpiVersion), globalGetDefaultInstallationPathWindows('Intel MPI', mpiVersion))
 
-    reasonHostNotFound = 'The node pair may be not in the same network or there is issue when parsing host name.'
+    reasonMsmpiNotInstalled = 'Microsoft MPI is not found.'
+    solutionMsmpiNotInstalled = 'Please ensure Microsoft MPI is installed. Run "Prerequisite-Microsoft MPI Installation" on the Windows nodes if it is not installed on them.'
+
+    reasonHostNotFound = 'The node pair may not be in the same network or there is issue when parsing host name.'
     solutionHostNotFound = 'Check DNS server and ensure the node pair could translate the host name to address of each other.'
 
     reasonFireWall = 'The connection was blocked by firewall.'
@@ -800,9 +823,18 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
 
     reasonAvSet = 'The nodes may not be in the same availability set.'
     solutionAvSet = 'Recreate the node(s) and ensure the nodes are in the same availability set.'
-    
-    reasonDapl = 'MPI issue: "dapl fabric is not available and fallback fabric is not enabled"'
-    solutionDapl = 'Please re-create the VM.'
+
+    reasonDapl = 'Error message: dapl fabric is not available and fallback fabric is not enabled.'
+    solutionDapl = 'Please check the RDMA driver availability and memory limit setting or re-create the VM.'
+
+    reasonHpcVmDriversNotInstalled = 'Windows network device drivers for RDMA connectivity is not installed.'
+    solutionHpcVmDriversNotInstalled = 'Install VM extension "HpcVmDrivers" on the node(s). More refer to https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-hpc'
+
+    reasonRdmaNotEnabled = 'RDMA is not enabled.'
+    solutionRdmaNotEnabled = 'Please check the config file "/etc/waagent.conf" on the node(s). More refer to https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-hpc'
+
+    reasonWindowsError1 = 'Error message: Error connecting to the Service.'
+    reasonWindowsError2 = 'Error message: The semaphore timeout period has expired.'
 
     failedReasons = {}
     for failedPair in failedTasks:
@@ -814,16 +846,31 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
         exitCode = failedPair['ExitCode']
         pairedNode = nodeOrPair.split(',')[-1]
         if "mpivars.sh: No such file or directory" in output or 'The system cannot find the path specified' in output:
-            reason = reasonMpiNotInstalled
+            reason = reasonIntelMpiNotInstalled
             failedNode = nodeName
             failedPair['NodeOrPair'] = failedNode
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionIntelMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)
         elif "linux/mpi/intel64/bin/pmi_proxy: No such file or directory" in output or 'pmi_proxy not found on {}. Set Intel MPI environment variables'.format(pairedNode) in output:
-            reason = reasonMpiNotInstalled
+            reason = reasonIntelMpiNotInstalled
             failedNode = pairedNode
             failedPair['NodeOrPair'] = failedNode
-            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)            
-        elif "Host {} not found:".format(pairedNode) in output:
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionIntelMpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)            
+        elif "HpcVmDrivers is not installed" in output:
+            reason = reasonHpcVmDriversNotInstalled
+            failedNode = nodeName
+            failedPair['NodeOrPair'] = failedNode
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHpcVmDriversNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)            
+        elif "Microsoft MPI is not installed" in output:
+            reason = reasonMsmpiNotInstalled
+            failedNode = nodeName
+            failedPair['NodeOrPair'] = failedNode
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionMsmpiNotInstalled, 'Nodes':set()})['Nodes'].add(failedNode)
+        elif output.startswith('RDMA is not enabled'):
+            reason = reasonRdmaNotEnabled
+            failedNode = nodeName
+            failedPair['NodeOrPair'] = failedNode
+            failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionRdmaNotEnabled, 'Nodes':set()})['Nodes'].add(failedNode)
+        elif "Host {} not found:".format(pairedNode) in output or 'can\'t find {}: Non-existent domain'.format(pairedNode) in output:
             reason = reasonHostNotFound
             failedReasons.setdefault(reason, {'Reason':reason, 'Solution':solutionHostNotFound, 'NodePairs':[]})['NodePairs'].append(nodeOrPair)
         elif "check for firewalls!" in output:
@@ -848,18 +895,23 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
         else:
             if "Time limit (secs_per_sample * msg_sizes_list_len) is over;" in output:
                 reason = reasonSampleTimeout
-            elif exitCode == 124:
+            elif 'Error connecting to the Service' in output:
+                reason = reasonWindowsError1
+            elif 'The semaphore timeout period has expired' in output:
+                reason = reasonWindowsError2
+            elif exitCode == 124 or exitCode == 1 and 'Terminating job...' in output:
                 reason = reasonPingpongTimeout
             elif taskId in canceledTasks:
                 reason = reasonTaskTimeout
             elif exitCode is None or output == '':
                 reason = reasonNoResult
-            failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[]})['NodePairs'].append(nodeOrPair)
+            failedReasons.setdefault(reason, {'Reason':reason, 'NodePairs':[], 'TaskIds':[]})['NodePairs'].append(nodeOrPair)
+            failedReasons[reason]['TaskIds'].append(taskId)
         failedPair['Reason'] = reason
-    if reasonMpiNotInstalled in failedReasons:
-        failedReasons[reasonMpiNotInstalled]['Nodes'] = list(failedReasons[reasonMpiNotInstalled]['Nodes'])
-    if reasonDapl in failedReasons:
-        failedReasons[reasonDapl]['Nodes'] = list(failedReasons[reasonDapl]['Nodes'])
+    for value in failedReasons.values():
+        nodes = value.get('Nodes')
+        if nodes:
+            value['Nodes'] = sorted(list(nodes))
 
     failedReasonsByNode = {}
     for failedTask in failedTasks:
@@ -869,9 +921,18 @@ def mpiPingpongGetFailedReasons(failedTasks, mpiVersion, canceledTasks):
             severity = failedReasonsByNode[node].setdefault('Severity', 0)
             failedReasonsByNode[node]['Severity'] = severity + 1
     for value in failedReasonsByNode.values():
-        nodesOrPairs = value.get(reasonMpiNotInstalled)
+        nodesOrPairs = value.get(reasonIntelMpiNotInstalled)
         if nodesOrPairs:
-            value[reasonMpiNotInstalled] = list(set(nodesOrPairs))
+            value[reasonIntelMpiNotInstalled] = list(set(nodesOrPairs))
+        nodesOrPairs = value.get(reasonMsmpiNotInstalled)
+        if nodesOrPairs:
+            value[reasonMsmpiNotInstalled] = list(set(nodesOrPairs))
+        nodesOrPairs = value.get(reasonHpcVmDriversNotInstalled)
+        if nodesOrPairs:
+            value[reasonHpcVmDriversNotInstalled] = list(set(nodesOrPairs))
+        nodesOrPairs = value.get(reasonRdmaNotEnabled)
+        if nodesOrPairs:
+            value[reasonRdmaNotEnabled] = list(set(nodesOrPairs))
     for key in failedReasonsByNode.keys():
         severity = failedReasonsByNode[key].pop('Severity')
         failedReasonsByNode["{} ({})".format(key, severity)] = failedReasonsByNode.pop(key)
@@ -1214,7 +1275,7 @@ HPL.out      output file name (if any)
                                                                                         commandFailure)
     task['ParentIds'] = list(range(1, len(linuxNodes)+1))
     task['Node'] = masterNode
-    task['CustomizedData'] = vmSizeByNode[masterNode]
+    task['CustomizedData'] = 'Flag task'
     task['EnvironmentVariables'] = {'CCP_NODES': '{} {}'.format(nodesCount, ' '.join('{} 1'.format(node) for node in linuxNodes))} 
     task['MaximumRuntimeSeconds'] = 60
     tasks.append(task)
@@ -1244,7 +1305,7 @@ HPL.out      output file name (if any)
                 commandCheckFinish = '[ ! -f "{}" ]'.format(outputResult)
                 commandRun = '{} >{} 2>&1'.format(commandRunHpl.replace('[N]', str(N)).replace('[P]', str(P)).replace('[Q]', str(Q)).replace('[NB]', str(NB)), tempOutputFile)
                 commandSuccess = 'mv {} {} && cat {} | tail -n20'.format(tempOutputFile, outputResult, outputResult)
-                commandFailure = 'echo Test skiped. N={} NB={} P={} Q={}'.format(N, NB, P, Q)
+                commandFailure = 'echo Test skiped. N={}, NB={}, P={}, Q={}'.format(N, NB, P, Q)
                 task = copy.deepcopy(taskTemplateLinux)
                 task['Id'] = taskId
                 taskId += 1
@@ -1257,7 +1318,7 @@ HPL.out      output file name (if any)
                                                                                       commandFailure)
                 task['ParentIds'] = [task['Id'] - 1]
                 task['Node'] = masterNode
-                task['CustomizedData'] = vmSizeByNode[masterNode]
+                task['CustomizedData'] = 'N={}, NB={}, P={}, Q={}'.format(N, NB, P, Q)
                 task['MaximumRuntimeSeconds'] = N / 10
                 tasks.append(task)
     
@@ -1268,7 +1329,7 @@ HPL.out      output file name (if any)
     task['CommandLine'] = '{} && for file in $(ls {}/*.result); do cat $file | tail -n17 | head -n1; done'.format(commandCheckFlag, flagDir)
     task['ParentIds'] = [task['Id'] - 1]
     task['Node'] = masterNode
-    task['CustomizedData'] = vmSizeByNode[masterNode]
+    task['CustomizedData'] = 'Result'
     task['MaximumRuntimeSeconds'] = 60
     tasks.append(task)
 
@@ -1282,6 +1343,8 @@ def mpiHplReduce(arguments, nodes, tasks, taskResults):
 
     taskDetail = {}
     try:
+        taskId = None
+        TaskLabelByTaskId = {task['Id']: task['CustomizedData'] for task in tasks}
         for taskResult in taskResults:
             taskId = taskResult['TaskId']
             node = taskResult['NodeName']
@@ -1290,88 +1353,68 @@ def mpiHplReduce(arguments, nodes, tasks, taskResults):
             taskDetail[taskId] = {
                 'Node':node,
                 'Output':output,
-                'ExitCode':exitcode
+                'ExitCode':exitcode,
+                'Label':TaskLabelByTaskId[taskId]
             }
     except Exception as e:
-        printErrorAsJson('Failed to parse task results. ' + str(e))
+        printErrorAsJson('Failed to parse task {}. {}'.format(taskId, e))
         return -1
 
-    nodeCheckingTasks = [taskDetail[taskId] for taskId in range(1, len(nodes) + 1)]
-    flagTask = taskDetail[len(nodes) + 1]
+    nodeCheckingTasks = [taskDetail.get(taskId) for taskId in range(1, len(nodes) + 1)]
+    flagTask = taskDetail.get(len(nodes) + 1)
     intelHpl = 'Intel Distribution for LINPACK Benchmark'
     description = 'This is the result of running {} in the cluster.'.format(intelHpl)
     result = tableHeaders = tableRows = greenRowNumber = descriptions = None
     resultCode = -1
-    if flagTask['ExitCode'] == 0:
-        # get CPU info from node checking tasks
-        cpuFreqByNode = {}
-        cpuCoreByNode = {}
-        hyperThreadingNodes = []
-        for task in nodeCheckingTasks:
-            node = task['Node']
-            output = task['Output']
-            try:
-                for line in output.splitlines():
-                    if line.startswith('CPU'):
-                        coreCount = int(line.split()[-1])
-                        cpuCoreByNode[node] = coreCount
-                    elif line.startswith('Model name'):
-                        coreFreq = float([word for word in line.split() if word.endswith('GHz')][0][:-3])
-                        cpuFreqByNode[node] = coreFreq
-                    elif line.startswith('Thread(s) per core'):
-                        threads = int(line.split()[-1])
-                        if threads > 1:
-                            hyperThreadingNodes.append(node)
-            except:
-                pass
-
-        # get VM size info from task CustomizedData which is set in map script
+    if flagTask and flagTask['ExitCode'] == 0:
+        # get VM size info and CPU info from node checking tasks
         sizeByNode = {}
         cpuCoreBySize = {}
         cpuFreqBySize = {}
-        try:
-            for task in tasks:
+        hyperThreadingNodes = []
+        for task in nodeCheckingTasks:
+            if task:
                 node = task['Node']
-                size = task['CustomizedData']
-                if node not in sizeByNode and size:
-                    freq = cpuFreqByNode.get(node)
-                    if freq:
-                        size += '({}GHz)'.format(freq)
-                        cpuFreqBySize[size] = freq
-                    coreCount = cpuCoreByNode.get(node)
-                    if coreCount:
-                        cpuCoreBySize[size] = coreCount
+                output = task['Output']
+                try:
+                    for line in output.splitlines():
+                        if line.startswith('CPU'):
+                            coreCount = int(line.split()[-1])
+                        elif line.startswith('Model name'):
+                            coreFreq = float([word for word in line.split() if word.endswith('GHz')][0][:-3])
+                        elif line.startswith('Thread(s) per core'):
+                            threads = int(line.split()[-1])
+                            if threads > 1:
+                                hyperThreadingNodes.append(node)
+                    size = '{}({}GHz)'.format(task['Label'], coreFreq)
                     sizeByNode[node] = size
-        except Exception as e:
-            printErrorAsJson('Failed to parse tasks. ' + str(e))
-            return -1
-
-        if len(sizeByNode) != len(nodes):
-            printErrorAsJson('VM size info is missing.')
-            return -1
+                    cpuCoreBySize[size] = coreCount
+                    cpuFreqBySize[size] = coreFreq
+                except:
+                    pass
 
         # get theoretical peak performance of cluster
         defaultFlopsPerCycle = 16 # Use this default value because currently it seems that the Intel microarchitectures used in Azure VM are in "Intel Haswell/Broadwell/Skylake/Kaby Lake". Consider getting this value from test parameter in case new Azure VM sizes are introduced.
         theoreticalPerf = None
         theoreticalPerfExpr = None
-        theoreticalPerfDescription = "The theoretical peak performance of the cluster can not be calculated because CPU info is missing."
-        nodeSizes = set(sizeByNode.values())
-        if len(nodeSizes) > 1:
-            vmSizeDescription = 'The cluster is heterogeneous with VM sizes: {}. Optimal perfermance may not be achieved in this test.'.format(', '.join(nodeSizes))
-            sizes = [sizeByNode[node] for node in nodes]
-            theoreticalPerfExpr = " + ".join(["{} * {} * {} * {}".format(sizes.count(size), cpuCoreBySize.get(size), defaultFlopsPerCycle, cpuFreqBySize.get(size)) for size in nodeSizes])
-            if 'None' not in theoreticalPerfExpr:
-                theoreticalPerf = eval(theoreticalPerfExpr)
-                theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by summing the FLOPs of each node: SUM([core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]) = {}".format(theoreticalPerf, theoreticalPerfExpr)
-        elif len(nodeSizes) == 1:
-            size = list(nodeSizes)[0]
-            vmSizeDescription = 'The cluster is homogeneous with VM size: {}.'.format(size)
-            theoreticalPerfExpr = "{} * {} * {} * {}".format(len(nodes), cpuCoreBySize.get(size), defaultFlopsPerCycle, cpuFreqBySize.get(size))
-            if 'None' not in theoreticalPerfExpr:
-                theoreticalPerf = eval(theoreticalPerfExpr)
-                theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by: [node count] * [core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core] = {}".format(theoreticalPerf, theoreticalPerfExpr)
-        else:
-            vmSizeDescription = 'The VM size in the cluster is unknown.'
+        vmSizeDescription = 'The VM info is not integrate.'
+        theoreticalPerfDescription = "The theoretical peak performance of the cluster can not be calculated."
+        if len(sizeByNode) == len(nodes):
+            nodeSizes = set(sizeByNode.values())
+            if len(nodeSizes) > 1:
+                vmSizeDescription = 'The cluster is heterogeneous with VM sizes: {}. Optimal perfermance may not be achieved in this test.'.format(', '.join(nodeSizes))
+                sizes = [sizeByNode[node] for node in nodes]
+                theoreticalPerfExpr = " + ".join(["{} * {} * {} * {}".format(sizes.count(size), cpuCoreBySize.get(size), defaultFlopsPerCycle, cpuFreqBySize.get(size)) for size in nodeSizes])
+                if 'None' not in theoreticalPerfExpr:
+                    theoreticalPerf = eval(theoreticalPerfExpr)
+                    theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by summing the FLOPs of each node: SUM([core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]) = {}".format(theoreticalPerf, theoreticalPerfExpr)
+            elif len(nodeSizes) == 1:
+                size = list(nodeSizes)[0]
+                vmSizeDescription = 'The cluster is homogeneous with VM size: {}.'.format(size)
+                theoreticalPerfExpr = "{} * {} * {} * {}".format(len(nodes), cpuCoreBySize.get(size), defaultFlopsPerCycle, cpuFreqBySize.get(size))
+                if 'None' not in theoreticalPerfExpr:
+                    theoreticalPerf = eval(theoreticalPerfExpr)
+                    theoreticalPerfDescription = "The theoretical peak performance of the cluster is <b>{}</b> GFlop/s, which is calculated by: [node count] * [core count per node] * [(double-precision) floating-point operations per cycle] * [average frequency of core] = {}".format(theoreticalPerf, theoreticalPerfExpr)
 
         # warning for Hyper-Threading
         hyperThreadingDescription = 'Optimal perfermance may not be achieved in this test because Hyper-Threading is enabled on the node(s): {}'.format(', '.join(hyperThreadingNodes)) if hyperThreadingNodes else ''
@@ -1737,7 +1780,10 @@ def benchmarkLinpackReduce(arguments, tasks, taskResults):
 
     intelLinpack = 'Intel Optimized LINPACK Benchmark'
     description = 'This is the result of running {} on each node.'.format(intelLinpack)
-    intelLinpackLink = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl-linux-developer-guide-intel-optimized-linpack-benchmark-for-linux">{}</a>'.format(intelLinpack)
+    intelLinpackLinkLinux = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl-linux-developer-guide-intel-optimized-linpack-benchmark-for-linux">{} for Linux</a>'.format(intelLinpack)
+    intelLinpackLinkWindows = '<a target="_blank" rel="noopener noreferrer" href="https://software.intel.com/en-us/mkl-windows-developer-guide-intel-optimized-linpack-benchmark-for-windows">{} for Windows</a>'.format(intelLinpack)
+    nodeOs = set([task['OS'] for task in results])
+    intelLinpackLink = '{} and {}'.format(intelLinpackLinkLinux, intelLinpackLinkWindows) if len(nodeOs) > 1 else intelLinpackLinkLinux if 'Linux' in nodeOs else intelLinpackLinkWindows
     theoreticalPerfDescription = "The theoretical peak performance of each node is calculated by: [core count of node] * [(double-precision) floating-point operations per cycle] * [average frequency of core]" if any([task['TheoreticalPerf'] for task in results]) else ''
     intelMklNotFoundLinux = 'Intel MKL {} is not found in <b>{}</b> on node(s): {}'.format(intelMklVersion, intelMklLocationLinux, ', '.join(nodesWithoutIntelMklInstalledLinux)) if nodesWithoutIntelMklInstalledLinux else ''
     intelMklNotFoundWindows = 'Intel MKL {} is not found in <b>{}</b> on node(s): {}'.format(intelMklVersion, intelMklLocationWindows, ', '.join(nodesWithoutIntelMklInstalledWindows)) if nodesWithoutIntelMklInstalledWindows else ''
