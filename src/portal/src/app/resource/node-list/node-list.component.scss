@@ -34,7 +34,7 @@ nav {
 .node-coreCount,
 .node-memory,
 .node-eventCount {
-  justify-content: flex-end;
+  @include display-flex(center, flex-end);
 }
 
 .online {

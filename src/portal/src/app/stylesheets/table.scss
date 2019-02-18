@@ -13,21 +13,17 @@ mat-header-cell {
   font-size: .8em;
 }
 
-.mat-row:hover {}
+.mat-row .icon-cell {
+  padding: 0
+}
 
 .mat-row a {
   color: #3b46da;
 }
 
-.mat-cell,
-.mat-header-cell {
-  padding: 0 2px; // text-align: center;  
-}
-
 .mat-row,
 .mat-header-row {
   min-height: 40px;
-  padding: 0 10px;
 }
 
 .mat-column-select {
@@ -63,6 +59,7 @@ mat-header-cell {
 .table-progress {
   @include display-flex(center, center);
   width: 100%;
+  padding: 0 10px;
 
   .progress-bar {
     width: 75%;
@@ -77,6 +74,7 @@ mat-header-cell {
 .icon-cell {
   @include display-flex(center);
   min-width: 2em;
+  padding: 0 10px;
 }
 
 .cell-icon {
@@ -162,7 +160,7 @@ mat-header-cell {
   height: 40px;
   width: 100%;
   background: #ffffff;
-  padding: 5px 15px;
+  padding: 5px 0px;
   border-bottom: 1px solid rgba(0, 0, 0, .12);
 }
 
@@ -204,7 +202,7 @@ mat-header-cell {
 }
 
 .list-header .header {
-  display: flex;
+  padding: 0 10px;
 }
 
 

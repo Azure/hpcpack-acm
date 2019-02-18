@@ -34,7 +34,7 @@
 
 <div class="list-container">
   <div class="list-header">
-    <div class="node-checkbox">
+    <div class="header node-checkbox">
       <mat-checkbox color="primary" (change)="$event ? masterToggle() : null" [checked]="selectedNodes.length > 0 && isAllSelected()">
       </mat-checkbox>
     </div>
@@ -57,7 +57,8 @@
 
   <div class="list-content">
     <cdk-virtual-scroll-viewport itemSize="40" #content class="list-content" (scrolledIndexChange)="indexChanged($event)">
-      <div *cdkVirtualFor="let node of dataSource; templateCacheSize: 0; trackBy: trackByFn.bind(this)" class="list-item" (click)="updateSelectedNodes(node)">
+      <div *cdkVirtualFor="let node of dataSource; templateCacheSize: 0; trackBy: trackByFn.bind(this)" class="list-item"
+        (click)="updateSelectedNodes(node)">
         <div class="icon-cell node-checkbox">
           <mat-checkbox color="primary" (click)="$event.stopPropagation();" (change)="$event? updateSelectedNodes(node) : null"
             [checked]="isSelected(node)">
