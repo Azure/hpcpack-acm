@@ -1,5 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Directive, Input, Output, EventEmitter, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Directive, Input, Output, EventEmitter, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { FormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -10,6 +10,7 @@ import { JobStateService } from '../../services/job-state/job-state.service';
 import { ResultListComponent } from './result-list.component';
 import { TableDataService } from '../../services/table-data/table-data.service';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Directive({
   selector: '[routerLink]',
@@ -23,6 +24,9 @@ class RouterLinkDirectiveStub {
     this.navigatedTo = this.linkParams;
   }
 }
+
+const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+const activatedRouteSpy = jasmine.createSpyObj('ActivatedRoute', ['']);
 
 @Directive({
   selector: '[appWindowScroll]',
@@ -84,7 +88,9 @@ fdescribe('DiagResultListComponent', () => {
         { provide: ApiService, useClass: ApiServiceStub },
         { provide: JobStateService, useClass: JobStateServiceStub },
         { provide: TableSettingsService, useValue: tableSettingsStub },
-        { provide: TableDataService, useClass: TableDataServiceStub }
+        { provide: TableDataService, useClass: TableDataServiceStub },
+        { provide: Router, useValue: routerSpy },
+        { provide: ActivatedRoute, useValue: activatedRouteSpy }
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })

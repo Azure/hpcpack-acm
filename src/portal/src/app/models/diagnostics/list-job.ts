@@ -9,4 +9,6 @@ export class ListJob {
     state: string;
     progress: number;
     createdAt: string;
+    targetNodes: Array<String>;
+    targetNodesNum: number;
 }

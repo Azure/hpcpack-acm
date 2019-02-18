@@ -11,6 +11,7 @@ import { ResultListComponent } from './result-list.component';
 import { TableDataService } from '../../services/table-data/table-data.service';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { animationFrameScheduler } from 'rxjs';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Directive({
   selector: '[routerLink]',
@@ -25,15 +26,8 @@ class RouterLinkDirectiveStub {
   }
 }
 
-// @Directive({
-//   selector: '[appWindowScroll]',
-// })
-// class WindowScrollDirectiveStub {
-//   @Input() dataLength: number;
-//   @Input() pageSize: number;
-//   @Output() scrollEvent = new EventEmitter();
-// }
-
+const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+const activatedRouteSpy = jasmine.createSpyObj('ActivatedRoute', ['']);
 
 class ApiServiceStub {
   static results = [
@@ -105,7 +99,9 @@ fdescribe('ClusrunResultListComponent', () => {
         { provide: ApiService, useClass: ApiServiceStub },
         { provide: JobStateService, useClass: JobStateServiceStub },
         { provide: TableSettingsService, useValue: tableSettingsStub },
-        { provide: TableDataService, useClass: TableDataServiceStub }
+        { provide: TableDataService, useClass: TableDataServiceStub },
+        { provide: Router, useValue: routerSpy },
+        { provide: ActivatedRoute, useValue: activatedRouteSpy }
       ],
       schemas: [NO_ERRORS_SCHEMA]
     })

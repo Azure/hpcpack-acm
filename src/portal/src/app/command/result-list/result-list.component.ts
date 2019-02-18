@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { ApiService, Loop } from '../../services/api.service';
@@ -7,6 +7,8 @@ import { JobStateService } from '../../services/job-state/job-state.service';
 import { TableDataService } from '../../services/table-data/table-data.service';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { VirtualScrollService } from '../../services/virtual-scroll/virtual-scroll.service';
+import { Router, ActivatedRoute } from '@angular/router';
+import { ListJob } from '../../models/diagnostics/list-job';
 
 @Component({
   selector: 'app-result-list',
@@ -15,10 +17,12 @@ import { VirtualScrollService } from '../../services/virtual-scroll/virtual-scro
 })
 export class ResultListComponent implements OnInit {
   @ViewChild('content') cdkVirtualScrollViewport: CdkVirtualScrollViewport;
+  @ViewChild('nodes') nodes: ElementRef;
   public dataSource = [];
 
   static customizableColumns = [
     { name: 'createdAt', displayed: true, displayName: 'Created' },
+    { name: 'nodes', display: true, displayName: 'Nodes' },
     { name: 'command', displayed: true, displayName: 'Command' },
     { name: 'state', displayed: true, displayName: 'State' },
     { name: 'progress', displayed: true, displayName: 'Progress' },
@@ -47,8 +51,15 @@ export class ResultListComponent implements OnInit {
   public empty = true;
   private endId = -1;
 
+  public targetNodes: Array<ListJob>;
+  public showTargetNodes = false;
+  public selectedJobId = -1;
+  public windowTitle: string;
+
   constructor(
     private api: ApiService,
+    private router: Router,
+    private route: ActivatedRoute,
     private jobStateService: JobStateService,
     private tableDataService: TableDataService,
     private dialog: MatDialog,
@@ -142,6 +153,27 @@ export class ResultListComponent implements OnInit {
     }
     else {
       return { 'display': 'none' };
+    }
+  }
+
+  goDetailPage(id) {
+    this.router.navigate(['.', `${id}`], { relativeTo: this.route });
+  }
+
+  getTargetNodes(id, nodes) {
+    this.showTargetNodes = true;
+    if (this.nodes) {
+      this.nodes.nativeElement.scrollTop = 0;
+    }
+    this.selectedJobId = id;
+    this.windowTitle = `${nodes.length} Nodes`;
+    this.targetNodes = nodes;
+  }
+
+  onShowWnd(condition: boolean) {
+    this.showTargetNodes = condition;
+    if (!condition) {
+      this.selectedJobId = -1;
     }
   }
 

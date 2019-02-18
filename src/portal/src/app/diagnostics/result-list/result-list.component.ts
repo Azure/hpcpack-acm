@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { ApiService, Loop } from '../../services/api.service';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
@@ -7,6 +7,8 @@ import { JobStateService } from '../../services/job-state/job-state.service';
 import { TableDataService } from '../../services/table-data/table-data.service';
 import { VirtualScrollService } from '../../services/virtual-scroll/virtual-scroll.service';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { Router, ActivatedRoute } from '@angular/router';
+import { ListJob } from '../../models/diagnostics/list-job';
 
 @Component({
   selector: 'diagnostics-results',
@@ -15,9 +17,11 @@ import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 })
 export class ResultListComponent implements OnInit, OnDestroy {
   @ViewChild('content') cdkVirtualScrollViewport: CdkVirtualScrollViewport;
+  @ViewChild('nodes') nodes: ElementRef;
 
   static customizableColumns = [
     { name: 'createdAt', displayed: true, displayName: 'Created' },
+    { name: 'nodes', display: true, displayName: 'Nodes' },
     { name: 'category', displayed: true, displayName: 'Category' },
     { name: 'item', displayed: true, displayName: 'Item' },
     { name: 'name', displayed: true, displayName: 'Test Name' },
@@ -48,9 +52,15 @@ export class ResultListComponent implements OnInit, OnDestroy {
   public empty = true;
   private endId = -1;
 
+  public targetNodes: Array<ListJob>;
+  public showTargetNodes = false;
+  public selectedJobId = -1;
+  public windowTitle: string;
 
   constructor(
     private api: ApiService,
+    private router: Router,
+    private route: ActivatedRoute,
     private jobStateService: JobStateService,
     private tableDataService: TableDataService,
     private settings: TableSettingsService,
@@ -149,6 +159,26 @@ export class ResultListComponent implements OnInit, OnDestroy {
     }
   }
 
+  goDetailPage(id) {
+    this.router.navigate(['.', `${id}`], { relativeTo: this.route });
+  }
+
+  getTargetNodes(id, nodes) {
+    this.showTargetNodes = true;
+    if (this.nodes) {
+      this.nodes.nativeElement.scrollTop = 0;
+    }
+    this.selectedJobId = id;
+    this.windowTitle = `${nodes.length} Nodes`;
+    this.targetNodes = nodes;
+  }
+
+  onShowWnd(condition: boolean) {
+    this.showTargetNodes = condition;
+    if (!condition) {
+      this.selectedJobId = -1;
+    }
+  }
 
   indexChanged($event) {
     let result = this.virtualScrollService.indexChangedCalc(this.maxPageSize, this.pivot, this.cdkVirtualScrollViewport, this.dataSource, this.lastScrolled, this.startIndex);

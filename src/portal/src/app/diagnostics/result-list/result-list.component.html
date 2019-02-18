@@ -9,35 +9,38 @@
 
 <div class="list-container">
   <div class="list-header">
-    <div class="job-id" [ngStyle]="getColumnOrder('id')">
+    <div class="header job-id" [ngStyle]="getColumnOrder('id')">
       ID
     </div>
-    <div class="job-created" [ngStyle]="getColumnOrder('createdAt')">
+    <div class="header job-created" [ngStyle]="getColumnOrder('createdAt')">
       Created
     </div>
-    <div class="job-category" [ngStyle]="getColumnOrder('category')">
+    <div class="header job-category" [ngStyle]="getColumnOrder('category')">
       Category
     </div>
-    <div class="job-item" [ngStyle]="getColumnOrder('item')">
+    <div class="header job-item" [ngStyle]="getColumnOrder('item')">
       Item
     </div>
-    <div class="job-name" [ngStyle]="getColumnOrder('name')">
+    <div class="header job-name" [ngStyle]="getColumnOrder('name')">
       Name
     </div>
-    <div class="job-state" [ngStyle]="getColumnOrder('state')">
+    <div class="header job-state" [ngStyle]="getColumnOrder('state')">
       State
     </div>
-    <div class="job-progress" [ngStyle]="getColumnOrder('progress')">
+    <div class="header job-progress" [ngStyle]="getColumnOrder('progress')">
       Progress
     </div>
-    <div class="job-updated" [ngStyle]="getColumnOrder('updatedAt')">
+    <div class="header job-updated" [ngStyle]="getColumnOrder('updatedAt')">
       Last Changed
+    </div>
+    <div class="header job-nodes" [ngStyle]="getColumnOrder('nodes')">
+      Nodes Number
     </div>
   </div>
   <div class="list-content">
     <cdk-virtual-scroll-viewport itemSize="40" #content class="list-content" (scrolledIndexChange)="indexChanged($event)">
       <div *cdkVirtualFor="let job of dataSource; templateCacheSize: 0; trackBy: trackByFn.bind(this)" class="list-item">
-        <div class="icon-cell job-id" [ngStyle]="getColumnOrder('id')">
+        <div class="icon-cell job-id" [ngStyle]="getColumnOrder('id')" (click)="goDetailPage(job.id)">
           <i class="material-icons cell-icon color-icon">local_hospital</i>
           <a [routerLink]="job.id" class="cell-text">{{job.id}}</a>
         </div>
@@ -73,6 +76,12 @@
           <i class="material-icons cell-icon">access_alarm</i>
           <div class="cell-text"> {{job.updatedAt | date:'yyyy-MM-dd HH:mm:ss'}} </div>
         </div>
+
+        <div class="icon-cell job-nodes" [ngStyle]="getColumnOrder('nodes')" (click)="getTargetNodes(job.id,job.targetNodes)"
+          [ngClass]="{'active-job': selectedJobId == job.id}">
+          <i class="material-icons cell-icon">devices</i>
+          <div class="cell-text"> {{job.targetNodesNum}} </div>
+        </div>
       </div>
     </cdk-virtual-scroll-viewport>
 
@@ -85,3 +94,14 @@
 </div>
 
 <app-loading-progress-bar [loadFinished]="loadFinished" [hidden]="!loading || !scrolled" class="virtual-scroll-loading"></app-loading-progress-bar>
+
+<app-content-window side="right" [title]="windowTitle" width="20" *ngIf="showTargetNodes" (showWnd)="onShowWnd($event)" #contentWnd>
+  <ng-template #wndContent>
+    <div class="nodes" #nodes>
+      <div class="node icon-cell" *ngFor="let node of targetNodes">
+        <i class="material-icons cell-icon">desktop_windows</i>
+        <div class="cell-text">{{node}}</div>
+      </div>
+    </div>
+  </ng-template>
+</app-content-window>

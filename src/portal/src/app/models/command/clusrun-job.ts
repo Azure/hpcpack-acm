@@ -5,4 +5,6 @@ export class ClusrunJob {
     createdAt: number;
     updatedAt: number;
     progress: number;
+    targetNodes: Array<String>;
+    targetNodesNum: number;
 }

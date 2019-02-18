@@ -1,0 +1,11 @@
+<div [ngClass]="{ 'right-window-area' : side == 'right', 'left-window-area' : side =='left' }" [ngStyle]="{'width': width+'vw'}">
+  <div class="window-header">
+    <h3 class="title">
+      {{title}}
+    </h3>
+    <div class="close-btn" (click)="hideWnd()">
+      <i class="material-icons">close</i>
+    </div>
+  </div>
+  <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+</div>

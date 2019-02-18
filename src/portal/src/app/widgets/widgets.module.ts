@@ -8,13 +8,15 @@ import { EventListComponent } from './event-list/event-list.component';
 import { ScheduledEventsComponent } from './scheduled-events/scheduled-events.component'
 import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
 import { DragulaModule } from 'ng2-dragula';
+import { ContentWindowComponent } from './content-window/content-window.component';
 
 const components = [
   BackButtonComponent,
   TableOptionComponent,
   EventListComponent,
   ScheduledEventsComponent,
-  ConfirmDialogComponent
+  ConfirmDialogComponent,
+  ContentWindowComponent
 ];
 
 @NgModule({

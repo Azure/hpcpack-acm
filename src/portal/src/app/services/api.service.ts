@@ -182,6 +182,8 @@ export class CommandApi extends Resource<CommandResult> {
         state: item.state,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
+        targetNodes: item.targetNodes,
+        targetNodesNum: item.targetNodes.length,
         progress: item.progress
       } as ClusrunJob
     });
@@ -412,6 +414,8 @@ export class DiagApi extends Resource<any> {
         progress: item.progress,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
+        targetNodes: item.targetNodes,
+        targetNodesNum: item.targetNodes.length,
         diagnosticTest: {
           name: item.diagnosticTest.name,
           category: item.diagnosticTest.category
