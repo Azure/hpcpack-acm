@@ -6,5 +6,4 @@ export class ClusrunJob {
     updatedAt: number;
     progress: number;
     targetNodes: Array<String>;
-    targetNodesNum: number;
 }

@@ -10,5 +10,4 @@ export class ListJob {
     progress: number;
     createdAt: string;
     targetNodes: Array<String>;
-    targetNodesNum: number;
 }

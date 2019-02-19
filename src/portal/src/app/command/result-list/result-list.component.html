@@ -67,7 +67,7 @@
         <div class="icon-cell job-nodes" [ngStyle]="getColumnOrder('nodes')" (click)="getTargetNodes(job.id,job.targetNodes)"
           [ngClass]="{'active-job': selectedJobId == job.id}">
           <i class="material-icons cell-icon">devices</i>
-          <div class="cell-text"> {{job.targetNodesNum}} </div>
+          <div class="cell-text"> {{job.targetNodes.length}} </div>
         </div>
       </div>
     </cdk-virtual-scroll-viewport>
