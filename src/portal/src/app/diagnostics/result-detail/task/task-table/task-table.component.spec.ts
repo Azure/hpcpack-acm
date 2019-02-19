@@ -2,18 +2,18 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs/observable/of';
 import { TaskTableComponent } from './task-table.component';
 import { MaterialsModule } from '../../../../materials.module';
-import { TableSettingsService } from '../../../../services/table-settings.service';
 import { MatTableDataSource } from '@angular/material';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { JobStateService } from '../../../../services/job-state/job-state.service';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-import { TableDataService } from '../../../../services/table-data/table-data.service';
+import { TableService } from '../../../../services/table/table.service';
 
-const tableSettingsStub = {
-  load: (key, initVal) => initVal,
-
-  save: (key, val) => undefined
+const TableServiceStub = {
+  updateData: (newData, dataSource, propertyName) => newData,
+  loadSetting: (key, initVal) => initVal,
+  saveSetting: (key, val) => undefined,
+  isContentScrolled: () => false
 }
 
 class JobStateServiceStub {
@@ -22,12 +22,6 @@ class JobStateServiceStub {
   }
   stateIcon(state) {
     return 'done';
-  }
-}
-
-class TableDataServiceStub {
-  updateData(newData, dataSource, propertyName) {
-    return newData;
   }
 }
 
@@ -47,9 +41,8 @@ fdescribe('TaskTableComponent', () => {
         NoopAnimationsModule
       ],
       providers: [
-        { provide: TableSettingsService, useValue: tableSettingsStub },
         { provide: JobStateService, useClass: JobStateServiceStub },
-        { provide: TableDataService, useClass: TableDataServiceStub }
+        { provide: TableService, useValue: TableServiceStub }
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })

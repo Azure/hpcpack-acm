@@ -22,8 +22,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, Directive, Input, NgModule } from '@angular/cor
 import { ChartModule } from 'angular2-chartjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TableSettingsService } from '../../services/table-settings.service';
-import { TableDataService } from '../../services/table-data/table-data.service';
+import { TableService } from '../../services/table/table.service';
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ScrollingModule } from '@angular/cdk/scrolling';
@@ -75,16 +74,11 @@ class ApiServiceStub {
   }
 }
 
-const tableSettingsStub = {
-  load: (key, initVal) => initVal,
-
-  save: (key, val) => undefined
-}
-
-class TableDataServiceStub {
-  updateData(newData, dataSource, propertyName) {
-    return newData;
-  }
+const TableServiceStub = {
+  updateData: (newData, dataSource, propertyName) => newData,
+  loadSetting: (key, initVal) => initVal,
+  saveSetting: (key, val) => undefined,
+  isContentScrolled: () => false
 }
 
 class JobStateServiceStub {
@@ -139,8 +133,7 @@ fdescribe('DiagResultDetailComponent', () => {
       providers: [
         { provide: ActivatedRoute, useValue: activatedRoute },
         { provide: ApiService, useClass: ApiServiceStub },
-        { provide: TableSettingsService, useValue: tableSettingsStub },
-        { provide: TableDataService, useClass: TableDataServiceStub },
+        { provide: TableService, useValue: TableServiceStub },
         { provide: JobStateService, useClass: JobStateServiceStub },
         { provide: Router, useValue: routerStub }
       ],

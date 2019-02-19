@@ -33,7 +33,7 @@
 </div>
 
 <div class="list-container">
-  <div class="list-header">
+  <div class="list-header" [ngClass]="{'list-header-scrolled': showScrollBar}">
     <div class="header node-checkbox">
       <mat-checkbox color="primary" (change)="$event ? masterToggle() : null" [checked]="selectedNodes.length > 0 && isAllSelected()">
       </mat-checkbox>

@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { MaterialsModule } from '../../materials.module';
 import { ApiService } from '../../services/api.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { TableDataService } from '../../services/table-data/table-data.service';
+import { TableService } from '../../services/table/table.service';
 import { JobStateService } from '../../services/job-state/job-state.service';
 
 @Component({ selector: 'command-output', template: '' })
@@ -98,7 +98,7 @@ class JobStateServiceStub {
   }
 }
 
-class TableDataServiceStub {
+class TableServiceStub {
   updateData(newData, dataSource, propertyName) {
     return newData;
   }
@@ -124,7 +124,7 @@ fdescribe('MultiCmdsComponent', () => {
         { provide: ApiService, useClass: ApiServiceStub },
         { provide: JobStateService, useClass: JobStateServiceStub },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
-        { provide: TableDataService, useClass: TableDataServiceStub }
+        { provide: TableService, useClass: TableServiceStub }
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })

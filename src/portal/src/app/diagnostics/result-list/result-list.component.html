@@ -8,7 +8,7 @@
 </div>
 
 <div class="list-container">
-  <div class="list-header">
+  <div class="list-header" [ngClass]="{'list-header-scrolled': showScrollBar}">
     <div class="header job-id" [ngStyle]="getColumnOrder('id')">
       ID
     </div>
@@ -95,7 +95,8 @@
 
 <app-loading-progress-bar [loadFinished]="loadFinished" [hidden]="!loading || !scrolled" class="virtual-scroll-loading"></app-loading-progress-bar>
 
-<app-content-window side="right" [title]="windowTitle" width="20" *ngIf="showTargetNodes" (showWnd)="onShowWnd($event)" #contentWnd>
+<app-content-window side="right" [title]="windowTitle" width="20" *ngIf="showTargetNodes" (showWnd)="onShowWnd($event)"
+  #contentWnd>
   <ng-template #wndContent>
     <div class="nodes" #nodes>
       <div class="node icon-cell" *ngFor="let node of targetNodes">

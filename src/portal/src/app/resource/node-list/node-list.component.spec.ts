@@ -1,15 +1,14 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Directive, Input, Output, EventEmitter, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Directive, Input, Output, EventEmitter, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../services/api.service';
-import { TableSettingsService } from '../../services/table-settings.service';
 import { FormsModule } from '@angular/forms'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material';
 import { MaterialsModule } from '../../materials.module';
 import { NodeListComponent } from './node-list.component';
-import { TableDataService } from '../../services/table-data/table-data.service';
+import { TableService } from '../../services/table/table.service';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
 @Directive({
@@ -71,16 +70,11 @@ class ApiServiceStub {
   }
 }
 
-const tableSettingsStub = {
-  load: (key, initVal) => initVal,
-
-  save: (key, val) => undefined,
-}
-
-class TableDataServiceStub {
-  updateDatasource(newData, dataSource, propertyName) {
-    return dataSource.data = newData;
-  }
+const TableServiceStub = {
+  updateDatasource: (newData, dataSource, propertyName) => dataSource.data = newData,
+  loadSetting: (key, initVal) => initVal,
+  saveSetting: (key, val) => undefined,
+  isContentScrolled: () => false
 }
 
 fdescribe('NodeListComponent', () => {
@@ -103,10 +97,9 @@ fdescribe('NodeListComponent', () => {
       ],
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
-        { provide: TableDataService, useClass: TableDataServiceStub },
+        { provide: TableService, useValue: TableServiceStub },
         { provide: Router, useValue: routerStub },
-        { provide: ActivatedRoute, useValue: activatedRouteStub },
-        { provide: TableSettingsService, useValue: tableSettingsStub },
+        { provide: ActivatedRoute, useValue: activatedRouteStub }
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })

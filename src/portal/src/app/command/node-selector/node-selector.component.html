@@ -11,7 +11,7 @@
 </mat-form-field>
 
 <div class="list-container">
-  <div class="list-header">
+  <div class="list-header" [ngClass]="{'list-header-scrolled': showScrollBar}">
     <div class="header node-name">
       Name
     </div>

@@ -1,10 +1,9 @@
 import { Component, OnChanges, SimpleChanges, Input, Output, EventEmitter, ViewChild } from '@angular/core';
-import { MatTableDataSource } from '@angular/material';
 import { JobStateService } from '../../services/job-state/job-state.service';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { MatDialog } from '@angular/material';
 import { TaskErrorComponent } from './task-error/task-error.component';
 import { VirtualScrollService } from '../../services/virtual-scroll/virtual-scroll.service';
-import { TableDataService } from '../../services/table-data/table-data.service';
+import { TableService } from '../../services/table/table.service';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
 @Component({
@@ -65,7 +64,7 @@ export class NodeSelectorComponent implements OnChanges {
   constructor(
     private jobStateService: JobStateService,
     private dialog: MatDialog,
-    private tableDataService: TableDataService,
+    private tableService: TableService,
     private virtualScrollService: VirtualScrollService
   ) { }
 
@@ -117,7 +116,7 @@ export class NodeSelectorComponent implements OnChanges {
   }
 
   trackByFn(index, item) {
-    return this.tableDataService.trackByFn(item, this.displayedColumns);
+    return this.tableService.trackByFn(item, this.displayedColumns);
   }
 
   indexChanged($event) {
@@ -130,5 +129,9 @@ export class NodeSelectorComponent implements OnChanges {
     this.startIndex = result.startIndex;
     this.scrolled = result.scrolled;
     this.updateLastIdEvent.emit({ lastId: this.lastId, endId: this.endId });
+  }
+
+  get showScrollBar() {
+    return this.tableService.isContentScrolled(this.cdkVirtualScrollViewport.elementRef.nativeElement);
   }
 }

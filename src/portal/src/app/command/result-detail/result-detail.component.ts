@@ -9,7 +9,7 @@ import { CommandOutputComponent } from '../command-output/command-output.compone
 import { CommandInputComponent } from '../command-input/command-input.component';
 import { ConfirmDialogComponent } from '../../widgets/confirm-dialog/confirm-dialog.component';
 import { JobStateService } from '../../services/job-state/job-state.service';
-import { TableDataService } from '../../services/table-data/table-data.service';
+import { TableService } from '../../services/table/table.service';
 
 @Component({
   selector: 'app-result-detail',
@@ -73,7 +73,7 @@ export class ResultDetailComponent implements OnInit {
     private api: ApiService,
     private jobStateService: JobStateService,
     private dialog: MatDialog,
-    private tableDataService: TableDataService
+    private tableService: TableService
   ) { }
 
   ngOnInit() {
@@ -150,7 +150,7 @@ export class ResultDetailComponent implements OnInit {
           this.empty = false;
           if (tasks.length > 0) {
             this.gotTasks = true;
-            this.result.nodes = this.tableDataService.updateData(tasks, this.result.nodes, 'id');
+            this.result.nodes = this.tableService.updateData(tasks, this.result.nodes, 'id');
             if (this.endId != -1 && tasks[tasks.length - 1].id != this.endId) {
               this.listLoading = false;
             }

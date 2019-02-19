@@ -1,11 +1,10 @@
 import { Component, OnInit, ViewChild, Input, Output, EventEmitter, SimpleChanges } from '@angular/core';
 import { TableOptionComponent } from '../../../../widgets/table-option/table-option.component';
-import { TableSettingsService } from '../../../../services/table-settings.service';
 import { MatDialog } from '@angular/material';
 import { TaskDetailComponent } from '../task-detail/task-detail.component';
 import { JobStateService } from '../../../../services/job-state/job-state.service';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-import { TableDataService } from '../../../../services/table-data/table-data.service';
+import { TableService } from '../../../../services/table/table.service';
 import { VirtualScrollService } from '../../../../services/virtual-scroll/virtual-scroll.service';
 
 @Component({
@@ -60,9 +59,8 @@ export class TaskTableComponent implements OnInit {
 
   constructor(
     private dialog: MatDialog,
-    private settings: TableSettingsService,
     private jobStateService: JobStateService,
-    private tableDataService: TableDataService,
+    private tableService: TableService,
     private virtualScrollService: VirtualScrollService
   ) { }
 
@@ -109,16 +107,16 @@ export class TaskTableComponent implements OnInit {
   }
 
   saveSettings(): void {
-    this.settings.save(this.tableName, this.availableColumns);
+    this.tableService.saveSetting(this.tableName, this.availableColumns);
   }
 
   loadSettings(): void {
-    this.availableColumns = this.settings.load(this.tableName, this.customizableColumns);
+    this.availableColumns = this.tableService.loadSetting(this.tableName, this.customizableColumns);
   }
 
 
   trackByFn(index, item) {
-    return this.tableDataService.trackByFn(item, this.displayedColumns);
+    return this.tableService.trackByFn(item, this.displayedColumns);
   }
 
   getColumnOrder(col) {
@@ -146,5 +144,9 @@ export class TaskTableComponent implements OnInit {
     this.startIndex = result.startIndex;
     this.scrolled = result.scrolled;
     this.updateLastIdEvent.emit({ lastId: this.lastId, endId: this.endId });
+  }
+
+  get showScrollBar() {
+    return this.tableService.isContentScrolled(this.cdkVirtualScrollViewport.elementRef.nativeElement);
   }
 }

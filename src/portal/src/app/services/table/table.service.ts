@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
 import { isArray } from 'util';
+import { UserSettingsService } from '../user-settings.service';
 
 @Injectable()
-export class TableDataService {
+export class TableService {
 
-  constructor() { }
+  constructor(
+    public settings: UserSettingsService
+  ) { }
 
   hashCode(val) {
     let s = val.toString();
@@ -26,6 +29,15 @@ export class TableDataService {
       identity += item[displayedCols[i]];
     }
     return this.hashCode(identity);
+  }
+
+  isContentScrolled(tableEle) {
+    let clientHeight = tableEle.clientHeight;
+    let scrolledHeight = tableEle.scrollHeight;
+    if (clientHeight < scrolledHeight) {
+      return true;
+    }
+    return false;
   }
 
   updateDatasource(newData, dataSource, propertyName) {
@@ -107,4 +119,32 @@ export class TableDataService {
     return data;
   }
 
+  saveSetting(key, columns): void {
+    let selected = columns.filter(e => e.displayed).map(e => e.name);
+    this.settings.set(key, { selected });
+    this.settings.save();
+  }
+
+  loadSetting(key, initColumns): Array<any> {
+    let availableColumns = initColumns;
+    let data = this.settings.get(key);
+    let res;
+    if (data) {
+      //A column name may change between saving and loading, and thus the map
+      //result array may have null element.
+      let selected = data.selected
+        .map(name => availableColumns.find(col => col.name === name))
+        .filter(col => col);
+      selected.forEach(e => e.displayed = true);
+
+      //Non-selected options don't need ordering.
+      let options = availableColumns.filter(col => !data.selected.includes(col.name));
+      options.forEach(e => e.displayed = false);
+      res = selected.concat(options);
+    }
+    else {
+      res = availableColumns;
+    }
+    return res;
+  }
 }

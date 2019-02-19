@@ -2,13 +2,12 @@ import { async, ComponentFixture, TestBed, fakeAsync, flush } from '@angular/cor
 import { Component, Directive, Input, TrackByFunction, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs/observable/of';
 import { FormsModule } from '@angular/forms'
-import { NoopAnimationsModule, BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MaterialsModule } from '../../materials.module';
 import { ApiService } from '../../services/api.service';
-import { TableSettingsService } from '../../services/table-settings.service';
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { ResultListComponent } from './result-list.component';
-import { TableDataService } from '../../services/table-data/table-data.service';
+import { TableService } from '../../services/table/table.service';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { animationFrameScheduler } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -51,16 +50,11 @@ class JobStateServiceStub {
   }
 }
 
-const tableSettingsStub = {
-  load: (key, initVal) => initVal,
-
-  save: (key, val) => undefined,
-}
-
-class TableDataServiceStub {
-  updateData(newData, dataSource, propertyName) {
-    return newData;
-  }
+const TableServiceStub = {
+  updateData: (newData, dataSource, propertyName) => newData,
+  loadSetting: (key, initVal) => initVal,
+  saveSetting: (key, val) => undefined,
+  isContentScrolled: () => false
 }
 
 function finishInit(fixture: ComponentFixture<any>) {
@@ -98,8 +92,7 @@ fdescribe('ClusrunResultListComponent', () => {
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
         { provide: JobStateService, useClass: JobStateServiceStub },
-        { provide: TableSettingsService, useValue: tableSettingsStub },
-        { provide: TableDataService, useClass: TableDataServiceStub },
+        { provide: TableService, useValue: TableServiceStub },
         { provide: Router, useValue: routerSpy },
         { provide: ActivatedRoute, useValue: activatedRouteSpy }
       ],

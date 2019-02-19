@@ -9,7 +9,7 @@ import { CommandInputComponent } from '../command-input/command-input.component'
 import { ConfirmDialogComponent } from '../../widgets/confirm-dialog/confirm-dialog.component';
 import { JobStateService } from '../../services/job-state/job-state.service';
 import { FormControl } from '@angular/forms';
-import { TableDataService } from '../../services/table-data/table-data.service';
+import { TableService } from '../../services/table/table.service';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { take } from 'rxjs/operators';
 
@@ -85,7 +85,7 @@ export class MultiCmdsComponent implements OnInit {
     private api: ApiService,
     private jobStateService: JobStateService,
     private dialog: MatDialog,
-    private tableDataService: TableDataService,
+    private tableService: TableService,
     private ngZone: NgZone,
   ) { }
 
@@ -166,7 +166,7 @@ export class MultiCmdsComponent implements OnInit {
           this.empty = false;
           if (tasks.length > 0) {
             this.gotTasks = true;
-            this.result.nodes = this.tableDataService.updateData(tasks, this.result.nodes, 'id');
+            this.result.nodes = this.tableService.updateData(tasks, this.result.nodes, 'id');
             if (this.endId != -1 && tasks[tasks.length - 1].id != this.endId) {
               this.listLoading = false;
             }

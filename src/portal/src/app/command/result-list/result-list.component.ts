@@ -2,9 +2,8 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { ApiService, Loop } from '../../services/api.service';
-import { TableSettingsService } from '../../services/table-settings.service';
 import { JobStateService } from '../../services/job-state/job-state.service';
-import { TableDataService } from '../../services/table-data/table-data.service';
+import { TableService } from '../../services/table/table.service';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { VirtualScrollService } from '../../services/virtual-scroll/virtual-scroll.service';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -61,9 +60,8 @@ export class ResultListComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private jobStateService: JobStateService,
-    private tableDataService: TableDataService,
+    private tableService: TableService,
     private dialog: MatDialog,
-    private settings: TableSettingsService,
     private virtualScrollService: VirtualScrollService
   ) { }
 
@@ -77,7 +75,7 @@ export class ResultListComponent implements OnInit {
         next: (result) => {
           this.empty = false;
           if (result.length > 0) {
-            this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
+            this.dataSource = this.tableService.updateData(result, this.dataSource, 'id');
             if (this.endId != -1 && result[result.length - 1].id != this.endId) {
               this.loading = false;
             }
@@ -131,15 +129,15 @@ export class ResultListComponent implements OnInit {
   }
 
   saveSettings(): void {
-    this.settings.save('CommandList', this.availableColumns);
+    this.tableService.saveSetting('CommandList', this.availableColumns);
   }
 
   loadSettings(): void {
-    this.availableColumns = this.settings.load('CommandList', ResultListComponent.customizableColumns);
+    this.availableColumns = this.tableService.loadSetting('CommandList', ResultListComponent.customizableColumns);
   }
 
   trackByFn(index, item) {
-    return this.tableDataService.trackByFn(item, this.displayedColumns);
+    return this.tableService.trackByFn(item, this.displayedColumns);
   }
 
   getColumnOrder(col) {
@@ -188,4 +186,7 @@ export class ResultListComponent implements OnInit {
     this.scrolled = result.scrolled;
   }
 
+  get showScrollBar() {
+    return this.tableService.isContentScrolled(this.cdkVirtualScrollViewport.elementRef.nativeElement);
+  }
 }

@@ -7,8 +7,7 @@ import { NewDiagnosticsComponent } from '../new-diagnostics/new-diagnostics.comp
 import { NewCommandComponent } from '../new-command/new-command.component';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
 import { ApiService, Loop } from '../../services/api.service';
-import { TableSettingsService } from '../../services/table-settings.service';
-import { TableDataService } from '../../services/table-data/table-data.service';
+import { TableService } from '../../services/table/table.service';
 import { VirtualScrollService } from '../../services/virtual-scroll/virtual-scroll.service';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
@@ -63,8 +62,7 @@ export class NodeListComponent {
     private api: ApiService,
     private router: Router,
     private route: ActivatedRoute,
-    private settings: TableSettingsService,
-    private tableDataService: TableDataService,
+    private tableService: TableService,
     private virtualScrollService: VirtualScrollService
   ) { }
 
@@ -77,7 +75,7 @@ export class NodeListComponent {
         next: (result) => {
           this.empty = false;
           if (result.length > 0) {
-            this.tableDataService.updateDatasource(result, this.dataSource, 'id');
+            this.tableService.updateDatasource(result, this.dataSource, 'id');
             if (this.endId != -1 && result[result.length - 1].id != this.endId) {
               this.loading = false;
             }
@@ -219,15 +217,15 @@ export class NodeListComponent {
   }
 
   saveSettings(): void {
-    this.settings.save('NodeListComponent', this.availableColumns);
+    this.tableService.saveSetting('NodeListComponent', this.availableColumns);
   }
 
   loadSettings(): void {
-    this.availableColumns = this.settings.load('NodeListComponent', NodeListComponent.customizableColumns);
+    this.availableColumns = this.tableService.loadSetting('NodeListComponent', NodeListComponent.customizableColumns);
   }
 
   trackByFn(index, item) {
-    return this.tableDataService.trackByFn(item, this.displayedColumns);
+    return this.tableService.trackByFn(item, this.displayedColumns);
   }
 
   getColumnOrder(col) {
@@ -254,5 +252,9 @@ export class NodeListComponent {
     this.loading = result.loading;
     this.startIndex = result.startIndex;
     this.scrolled = result.scrolled;
+  }
+
+  get showScrollBar() {
+    return this.tableService.isContentScrolled(this.cdkVirtualScrollViewport.elementRef.nativeElement);
   }
 }

@@ -7,7 +7,7 @@ import { JobStateService } from '../../services/job-state/job-state.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SimpleChange, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-import { TableDataService } from '../../services/table-data/table-data.service';
+import { TableService } from '../../services/table/table.service';
 
 class JobStateServiceStub {
   stateClass(state) {
@@ -18,8 +18,12 @@ class JobStateServiceStub {
   }
 }
 
-class TableDataServiceStub {
+class TableServiceStub {
   trackByFn(item, colums) {
+    return false;
+  }
+
+  isContentScrolled(){
     return false;
   }
 }
@@ -40,7 +44,7 @@ fdescribe('NodeSelectorComponent', () => {
       ],
       providers: [
         { provide: JobStateService, useClass: JobStateServiceStub },
-        { provide: TableDataService, useClass: TableDataServiceStub }
+        { provide: TableService, useClass: TableServiceStub }
       ],
       schemas: [NO_ERRORS_SCHEMA]
     })

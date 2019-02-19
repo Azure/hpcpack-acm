@@ -5,8 +5,7 @@ import { of } from 'rxjs/observable/of';
 import { OverviewResultComponent } from '../overview-result/overview-result.component';
 import { MaterialsModule } from '../../../../../materials.module';
 import { ApiService } from '../../../../../services/api.service';
-import { TableSettingsService } from '../../../../../services/table-settings.service';
-import { TableDataService } from '../../../../../services/table-data/table-data.service';
+import { TableService } from '../../../../../services/table/table.service';
 import { DiagReportService } from '../../../../../services/diag-report/diag-report.service';
 
 @Component({ selector: 'app-result-layout', template: '' })
@@ -97,16 +96,10 @@ class ApiServiceStub {
   }
 }
 
-const tableSettingsStub = {
-  load: (key, initVal) => initVal,
-
-  save: (key, val) => undefined
-}
-
-class TableDataServiceStub {
-  updateData(newData, dataSource, propertyName) {
-    return newData;
-  }
+const TableServiceStub = {
+  updateData: (newData, dataSource, propertyName) => newData,
+  loadSetting: (key, initVal) => initVal,
+  saveSetting: (key, val) => undefined
 }
 
 class DiagReportServiceStub {
@@ -144,8 +137,7 @@ fdescribe('GeneralReportComponent', () => {
       imports: [MaterialsModule],
       providers: [
         { provide: ApiService, useClass: ApiServiceStub },
-        { provide: TableSettingsService, useValue: tableSettingsStub },
-        { provide: TableDataService, useClass: TableDataServiceStub },
+        { provide: TableService, useValue: TableServiceStub },
         { provide: DiagReportService, useClass: DiagReportServiceStub }
       ]
     })

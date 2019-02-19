@@ -10,7 +10,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MaterialsModule } from '../../materials.module';
 import { ResultDetailComponent } from './result-detail.component';
 import { JobStateService } from '../../services/job-state/job-state.service';
-import { TableDataService } from '../../services/table-data/table-data.service';
+import { TableService } from '../../services/table/table.service';
 
 @Component({ selector: 'command-output', template: '' })
 class CommandOutputStubComponent {
@@ -103,7 +103,7 @@ class JobStateServiceStub {
   }
 }
 
-class TableDataServiceStub {
+class TableServiceStub {
   updateData(newData, dataSource, propertyName) {
     return newData;
   }
@@ -130,7 +130,7 @@ fdescribe('ClusrunResultDetailComponent', () => {
         { provide: JobStateService, useClass: JobStateServiceStub },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
         { provide: Router, useValue: routerStub },
-        { provide: TableDataService, useClass: TableDataServiceStub }
+        { provide: TableService, useClass: TableServiceStub }
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })

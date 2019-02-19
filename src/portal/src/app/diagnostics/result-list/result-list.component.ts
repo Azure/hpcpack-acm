@@ -2,9 +2,8 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
 import { MatDialog } from '@angular/material';
 import { ApiService, Loop } from '../../services/api.service';
 import { TableOptionComponent } from '../../widgets/table-option/table-option.component';
-import { TableSettingsService } from '../../services/table-settings.service';
 import { JobStateService } from '../../services/job-state/job-state.service';
-import { TableDataService } from '../../services/table-data/table-data.service';
+import { TableService } from '../../services/table/table.service';
 import { VirtualScrollService } from '../../services/virtual-scroll/virtual-scroll.service';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -62,8 +61,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private jobStateService: JobStateService,
-    private tableDataService: TableDataService,
-    private settings: TableSettingsService,
+    private tableService: TableService,
     public dialog: MatDialog,
     private virtualScrollService: VirtualScrollService
   ) {
@@ -92,7 +90,7 @@ export class ResultListComponent implements OnInit, OnDestroy {
         next: (result) => {
           this.empty = false;
           if (result.length > 0) {
-            this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
+            this.dataSource = this.tableService.updateData(result, this.dataSource, 'id');
             if (this.endId != -1 && result[result.length - 1].id != this.endId) {
               this.loading = false;
             }
@@ -134,15 +132,15 @@ export class ResultListComponent implements OnInit, OnDestroy {
   }
 
   saveSettings(): void {
-    this.settings.save('DiagList', this.availableColumns);
+    this.tableService.saveSetting('DiagList', this.availableColumns);
   }
 
   loadSettings(): void {
-    this.availableColumns = this.settings.load('DiagList', ResultListComponent.customizableColumns);
+    this.availableColumns = this.tableService.loadSetting('DiagList', ResultListComponent.customizableColumns);
   }
 
   trackByFn(index, item) {
-    return this.tableDataService.trackByFn(item, this.displayedColumns);
+    return this.tableService.trackByFn(item, this.displayedColumns);
   }
 
   getColumnOrder(col) {
@@ -189,5 +187,9 @@ export class ResultListComponent implements OnInit, OnDestroy {
     this.loading = result.loading;
     this.startIndex = result.startIndex;
     this.scrolled = result.scrolled;
+  }
+
+  get showScrollBar() {
+    return this.tableService.isContentScrolled(this.cdkVirtualScrollViewport.elementRef.nativeElement);
   }
 }

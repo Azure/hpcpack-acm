@@ -1,8 +1,6 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { MatTableDataSource } from '@angular/material';
 import { ApiService, Loop } from '../../../../../../services/api.service';
-import { TableSettingsService } from '../../../../../../services/table-settings.service';
-import { TableDataService } from '../../../../../../services/table-data/table-data.service';
+import { TableService } from '../../../../../../services/table/table.service';
 import { DiagReportService } from '../../../../../../services/diag-report/diag-report.service';
 
 @Component({
@@ -50,8 +48,7 @@ export class PingPongReportComponent implements OnInit {
 
   constructor(
     private api: ApiService,
-    private settings: TableSettingsService,
-    private tableDataService: TableDataService,
+    private tableService: TableService,
     private diagReportService: DiagReportService
   ) {
     this.interval = 5000;
@@ -103,7 +100,7 @@ export class PingPongReportComponent implements OnInit {
             this.loadFinished = true;
           }
           if (result.length > 0) {
-            this.dataSource = this.tableDataService.updateData(result, this.dataSource, 'id');
+            this.dataSource = this.tableService.updateData(result, this.dataSource, 'id');
           }
           if (this.jobFinished) {
             this.getAggregationResult();

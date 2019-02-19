@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewChild, ViewContainerRef, ComponentFactoryResolver } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { TestResult } from '../../models/test-result';
 import { ApiService } from '../../services/api.service';
 import { PingPongReportComponent } from './diags/mpi/pingpong/pingpong-report/pingpong-report.component';
 import { RingReportComponent } from './diags/mpi/ring/ring-report/ring-report.component';
