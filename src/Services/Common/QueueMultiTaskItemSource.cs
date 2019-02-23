@@ -1,4 +1,4 @@
-﻿namespace Microsoft.HpcAcm.Services.Common
+namespace Microsoft.HpcAcm.Services.Common
 {
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Queue;
@@ -39,7 +39,7 @@
             if (isDisposing)
             {
                 this.cts?.Cancel();
-                this.FetchingTasks?.GetAwaiter().GetResult();
+                this.FetchingTasks?.Wait();
                 this.cts?.Dispose();
 
                 Parallel.ForEach(this.cacheQueue, item => item.Dispose());
@@ -50,56 +50,70 @@
             this.cacheQueue = null;
         }
 
+        private void StartFetchingTasks(CancellationToken token)
+        {
+            async Task GetMessage(int _)
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        this.Logger.Debug(" -------> Fetching task items from queue {0}", this.queue.Name);
+                        IEnumerable<CloudQueueMessage> messages = null;
+                        if (this.cacheQueue.Count < this.options.ThrottleMessageCount)
+                        {
+                            messages = await this.queue.GetMessagesAsync(32, TimeSpan.FromSeconds(this.options.VisibleTimeoutSeconds), null, null, token);
+                        }
+
+                        if (messages == null || messages.Count() == 0)
+                        {
+                            this.Logger.Debug(" -------> No tasks fetched. Sleep for {0} seconds", this.options.RetryIntervalSeconds);
+                            await Task.Delay(TimeSpan.FromSeconds(this.options.RetryIntervalSeconds), token);
+                        }
+                        else
+                        {
+                            foreach (var msg in messages)
+                            {
+                                this.cacheQueue.Enqueue(
+                                    new QueueTaskItem(
+                                        msg,
+                                        this.queue,
+                                        TimeSpan.FromSeconds(this.options.VisibleTimeoutSeconds),
+                                        TimeSpan.FromSeconds(this.options.ReturnInvisibleSeconds),
+                                        this.Logger,
+                                        token
+                                    )
+                                );
+                            }
+                        }
+                    }
+                    catch (StorageException ex) when (ex.IsCancellation())
+                    {
+                        continue;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        continue;
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Logger.Error(ex, " -------> Error happened in fetching message loop.");
+                    }
+                }
+
+                this.Logger.Information(" -------> Exiting fetching message loop");
+            }
+
+            this.FetchingTasks = Task.WhenAll(Enumerable.Range(0, 4).Select(GetMessage));
+        }
+
         public Task<TaskItem> FetchTaskItemAsync(CancellationToken token)
         {
             var t = CancellationTokenSource.CreateLinkedTokenSource(token, this.cts.Token).Token;
             if (Interlocked.Exchange(ref this.firstFetch, 0) == 1)
             {
                 // start the fetch process when first fetch, this is to use the token, and avoid unnecessary dequeue of the messages.
-                this.FetchingTasks = Task.WhenAll(Enumerable.Range(0, 4).Select(async d =>
-                {
-                    while (!t.IsCancellationRequested)
-                    {
-                        try
-                        {
-                            this.Logger.Debug(" -------> Fetching task items from queue {0}", this.queue.Name);
-                            var messages = this.cacheQueue.Count >= this.options.ThrottleMessageCount ? null : await this.queue.GetMessagesAsync(32, TimeSpan.FromSeconds(this.options.VisibleTimeoutSeconds), null, null, t);
-
-                            if (messages == null || messages.Count() == 0)
-                            {
-                                this.Logger.Debug(" -------> No tasks fetched. Sleep for {0} seconds", this.options.RetryIntervalSeconds);
-                                await Task.Delay(TimeSpan.FromSeconds(this.options.RetryIntervalSeconds), t);
-                            }
-                            else
-                            {
-                                foreach (var msg in messages)
-                                {
-                                    this.cacheQueue.Enqueue(new QueueTaskItem(
-                                        msg,
-                                        this.queue,
-                                        TimeSpan.FromSeconds(this.options.VisibleTimeoutSeconds),
-                                        TimeSpan.FromSeconds(this.options.ReturnInvisibleSeconds),
-                                        this.Logger,
-                                        t));
-                                }
-                            }
-                        }
-                        catch (StorageException ex) when (ex.IsCancellation())
-                        {
-                            continue;
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            continue;
-                        }
-                        catch (Exception ex)
-                        {
-                            this.Logger.Error(ex, " -------> Error happened in fetching message loop.");
-                        }
-                    }
-
-                    this.Logger.Information(" -------> Exiting fetching message loop");
-                }));
+                StartFetchingTasks(t);
             }
 
             List<QueueTaskItem> items = new List<QueueTaskItem>();
