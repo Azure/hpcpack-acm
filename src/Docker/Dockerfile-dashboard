@@ -1,4 +1,4 @@
-FROM evancui/hpcacm:latest as final
+FROM public/hpcpack/hpcacm:latest as final
 WORKDIR /app/Dashboard
 ENTRYPOINT ["dotnet", "Dashboard.dll"]
 
