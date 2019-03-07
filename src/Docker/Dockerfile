@@ -32,7 +32,7 @@ WORKDIR /src/portal
 RUN npm install
 RUN ng build --prod
 
-FROM evancui/hpcacm:runtime AS final
+FROM hpcacmbuild.azurecr.io/public/hpcpack/hpcacm/runtime AS final
 WORKDIR /app/scripts
 COPY Docker/scripts/* ./
 WORKDIR /app
