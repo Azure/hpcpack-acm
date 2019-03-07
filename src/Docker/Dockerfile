@@ -25,7 +25,7 @@ RUN dotnet publish -c Release -o /app/TaskDispatcher
 WORKDIR /src/Services/NodeAgent
 RUN dotnet publish -c Release -o /app/NodeAgent
 
-FROM evancui/angularbuild AS portalbuild
+FROM hpcacmbuild.azurecr.io/public/hpcpack/hpcacm/portal AS portalbuild
 WORKDIR /src
 COPY portal/ portal/
 WORKDIR /src/portal
