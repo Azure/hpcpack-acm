@@ -1277,7 +1277,7 @@ HPL.out      output file name (if any)
     task['Node'] = masterNode
     task['CustomizedData'] = 'Flag task'
     task['EnvironmentVariables'] = {'CCP_NODES': '{} {}'.format(nodesCount, ' '.join('{} 1'.format(node) for node in linuxNodes))} 
-    task['MaximumRuntimeSeconds'] = 60
+    task['MaximumRuntimeSeconds'] = 180
     tasks.append(task)
 
     # Create HPL tunning tasks
