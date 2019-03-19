@@ -1,5 +1,33 @@
+# The image of hpcacmbuild.azurecr.io/public/hpcpack/hpcacm:latest is built using src/Dcoker/Dockerfile,
+# it should be repalced by your own build image.
+
+# portal/dist is the directory that stores portal build result.
+# The portal code stores in https://github.com/Azure/hpcpack-acm-portal,
+# we recommend you put the build result under the directory of src/portal/dist,
+# or under other directoies which you should modify this dockerfile to get build result. 
+# You could also get portal build code using docker build environment, but it's not a good practise, then the frontend image docker file shows as below:
+# FROM ubuntu AS portal
+# RUN apt-get update \
+# && apt-get install -y gnupg2 \
+# apt-utils \
+# curl \
+# && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+# && apt-get install -y nodejs \
+# git \
+# && git clone https://github.com/Azure/hpcpack-acm-portal.git /app/portal
+# WORKDIR /app/portal
+# RUN npm install \
+# && npm install -g @angular/cli \
+# && ng build --prod 
+# FROM hpcacmbuild.azurecr.io/public/hpcpack/hpcacm:latest as final
+# EXPOSE 5000
+# WORKDIR /app/Frontend
+# COPY --from=portal /app/portal/dist /app/Frontend/wwwroot
+# ENTRYPOINT ["/bin/bash", "/app/scripts/start-frontend.sh"]
+
 FROM hpcacmbuild.azurecr.io/public/hpcpack/hpcacm:latest as final
 EXPOSE 5000
 WORKDIR /app/Frontend
+COPY portal/dist /app/Frontend/wwwroot
 ENTRYPOINT ["/bin/bash", "/app/scripts/start-frontend.sh"]
 
