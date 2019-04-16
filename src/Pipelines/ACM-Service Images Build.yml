@@ -1,0 +1,83 @@
+pool:
+  name: Hosted Ubuntu 1604
+steps:
+- task: Docker@1
+  displayName: 'Build jobmonitor image'
+  inputs:
+    azureSubscriptionEndpoint: 'BigCompS-Int2 (01b6a57a-5aef-40e2-8af7-562a2f81462e)'
+    azureContainerRegistry: hpcacmbuild.azurecr.io
+    dockerFile: 'src/Docker/Dockerfile-jobmonitor'
+    imageName: 'public/hpcpack/hpcacm/jobmonitor:$(Build.BuildId)'
+    includeLatestTag: true
+    useDefaultContext: false
+    buildContext: src
+
+- task: Docker@1
+  displayName: 'Push jobmonitor image'
+  inputs:
+    azureSubscriptionEndpoint: 'BigCompS-Int2 (01b6a57a-5aef-40e2-8af7-562a2f81462e)'
+    azureContainerRegistry: hpcacmbuild.azurecr.io
+    command: 'Push an image'
+    imageName: 'public/hpcpack/hpcacm/jobmonitor:$(Build.BuildId)'
+
+- task: Docker@1
+  displayName: 'Push jobmonitor image with latest tag'
+  inputs:
+    azureSubscriptionEndpoint: 'BigCompS-Int2 (01b6a57a-5aef-40e2-8af7-562a2f81462e)'
+    azureContainerRegistry: hpcacmbuild.azurecr.io
+    command: 'Push an image'
+    imageName: 'public/hpcpack/hpcacm/jobmonitor:latest'
+
+- task: Docker@1
+  displayName: 'Build taskdispatcher image'
+  inputs:
+    azureSubscriptionEndpoint: 'BigCompS-Int2 (01b6a57a-5aef-40e2-8af7-562a2f81462e)'
+    azureContainerRegistry: hpcacmbuild.azurecr.io
+    dockerFile: 'src/Docker/Dockerfile-taskdispatcher'
+    imageName: 'public/hpcpack/hpcacm/taskdispatcher:$(Build.BuildId)'
+    includeLatestTag: true
+    useDefaultContext: false
+    buildContext: src
+
+- task: Docker@1
+  displayName: 'Push taskdispatcher image'
+  inputs:
+    azureSubscriptionEndpoint: 'BigCompS-Int2 (01b6a57a-5aef-40e2-8af7-562a2f81462e)'
+    azureContainerRegistry: hpcacmbuild.azurecr.io
+    command: 'Push an image'
+    imageName: 'public/hpcpack/hpcacm/taskdispatcher:$(Build.BuildId)'
+
+- task: Docker@1
+  displayName: 'Push taskdispatcher image with latest tag'
+  inputs:
+    azureSubscriptionEndpoint: 'BigCompS-Int2 (01b6a57a-5aef-40e2-8af7-562a2f81462e)'
+    azureContainerRegistry: hpcacmbuild.azurecr.io
+    command: 'Push an image'
+    imageName: 'public/hpcpack/hpcacm/taskdispatcher:latest'
+
+- task: Docker@1
+  displayName: 'Build dashboard image'
+  inputs:
+    azureSubscriptionEndpoint: 'BigCompS-Int2 (01b6a57a-5aef-40e2-8af7-562a2f81462e)'
+    azureContainerRegistry: hpcacmbuild.azurecr.io
+    dockerFile: 'src/Docker/Dockerfile-dashboard'
+    imageName: 'public/hpcpack/hpcacm/dashboard:$(Build.BuildId)'
+    includeLatestTag: true
+    useDefaultContext: false
+    buildContext: src
+
+- task: Docker@1
+  displayName: 'Push dashboard image'
+  inputs:
+    azureSubscriptionEndpoint: 'BigCompS-Int2 (01b6a57a-5aef-40e2-8af7-562a2f81462e)'
+    azureContainerRegistry: hpcacmbuild.azurecr.io
+    command: 'Push an image'
+    imageName: 'public/hpcpack/hpcacm/dashboard:$(Build.BuildId)'
+
+- task: Docker@1
+  displayName: 'Push dashboard image with latest tag'
+  inputs:
+    azureSubscriptionEndpoint: 'BigCompS-Int2 (01b6a57a-5aef-40e2-8af7-562a2f81462e)'
+    azureContainerRegistry: hpcacmbuild.azurecr.io
+    command: 'Push an image'
+    imageName: 'public/hpcpack/hpcacm/dashboard:latest'
