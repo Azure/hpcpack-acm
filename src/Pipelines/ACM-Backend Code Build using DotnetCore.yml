@@ -1,0 +1,74 @@
+pool:
+  name: Hosted Ubuntu 1604
+steps:
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet publish Frontend'
+  inputs:
+    command: publish
+    publishWebProjects: false
+    projects: src/Frontend/Frontend.csproj
+    arguments: '-c Release -o $(System.DefaultWorkingDirectory)/src/allbuild/app/Frontend'
+    zipAfterPublish: false
+    modifyOutputPath: false
+    workingDirectory: src
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet publish Bootstrap'
+  inputs:
+    command: publish
+    publishWebProjects: false
+    projects: src/Bootstrap/Bootstrap.csproj
+    arguments: '-c Release -o $(System.DefaultWorkingDirectory)/src/allbuild/app/Bootstrap'
+    zipAfterPublish: false
+    modifyOutputPath: false
+    workingDirectory: src
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet publish Dashboard'
+  inputs:
+    command: publish
+    publishWebProjects: false
+    projects: src/Services/Dashboard/Dashboard.csproj
+    arguments: '-c Release -o $(System.DefaultWorkingDirectory)/src/allbuild/app/Dashboard'
+    zipAfterPublish: false
+    modifyOutputPath: false
+    workingDirectory: src
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet publish JobMonitor'
+  inputs:
+    command: publish
+    publishWebProjects: false
+    projects: src/Services/JobMonitor/JobMonitor.csproj
+    arguments: '-c Release -o $(System.DefaultWorkingDirectory)/src/allbuild/app/JobMonitor'
+    zipAfterPublish: false
+    modifyOutputPath: false
+    workingDirectory: src
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet publish TaskDispatcher'
+  inputs:
+    command: publish
+    publishWebProjects: false
+    projects: src/Services/TaskDispatcher/TaskDispatcher.csproj
+    arguments: '-c Release -o $(System.DefaultWorkingDirectory)/src/allbuild/app/TaskDispatcher'
+    zipAfterPublish: false
+    modifyOutputPath: false
+    workingDirectory: src
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet publish NodeAgent'
+  inputs:
+    command: publish
+    publishWebProjects: false
+    projects: src/Services/NodeAgent/NodeAgent.csproj
+    arguments: '-c Release -o $(System.DefaultWorkingDirectory)/src/allbuild/app/NodeAgent'
+    zipAfterPublish: false
+    modifyOutputPath: false
+    workingDirectory: src
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: app'
+  inputs:
+    PathtoPublish: src/allbuild/app
+    ArtifactName: app
