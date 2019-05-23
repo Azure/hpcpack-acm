@@ -167,6 +167,16 @@
             return node;
         }
 
+        public T.Task<IEnumerable<GroupWithNodes>> GetNodeGroupsAsync(CancellationToken token)
+        {
+            return this.Utilities.GetNodeGroupsAsync(token);
+        }
+
+        public T.Task<GroupWithNodes> GetNodeGroupAsync(int groupId, CancellationToken token)
+        {
+            return this.Utilities.GetNodeGroupAsync(groupId, token);
+        }
+
         public async T.Task<IEnumerable<Job>> GetNodeJobInfoAsync(string id, CancellationToken token)
         {
             id = id.ToLowerInvariant();

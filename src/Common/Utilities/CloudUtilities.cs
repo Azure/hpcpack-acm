@@ -142,6 +142,8 @@
         public string GetMaximumRegistrationKey() => string.Format(this.Option.RegistrationPattern, this.MaxString);
         public string GetHeartbeatKey(string nodeName) => string.Format(this.Option.HeartbeatPattern, nodeName);
         public string NodesPartitionKey { get => this.Option.NodesPartitionKey; }
+        public string GroupsPartitionKey { get => this.Option.GroupsPartitionKey; }
+        public string GetGroupKey(int groupId) => string.Format(this.Option.GroupPattern, IntegerKey.ToStringKey(groupId));
         public string JobEntryKey { get => this.Option.JobEntryKey; }
         public string GetEventsKey(long ticks) => string.Format(this.Option.EventsKeyPattern, IntegerKey.ToStringKey(ticks));
         public string MetricsValuesPartitionKey { get => this.Option.MetricsValuesPartitionKey; }

@@ -327,5 +327,20 @@
             var content = await childIdBlob.DownloadTextAsync(Encoding.UTF8, null, null, null, token);
             return JsonConvert.DeserializeObject<List<int>>(content);
         }
+
+        public static async T.Task<IEnumerable<GroupWithNodes>> GetNodeGroupsAsync(this CloudUtilities utilities, CancellationToken token)
+        {
+            var table = await utilities.GetOrCreateNodesTableAsync(token);
+            var query = TableQuery.GenerateFilterCondition(CloudUtilities.PartitionKeyName, QueryComparisons.Equal, utilities.GroupsPartitionKey);
+            var result = await table.QueryAsync<GroupWithNodes>(query, null, token);
+            return result.Select(e => e.Item3);
+        }
+
+        public static async T.Task<GroupWithNodes> GetNodeGroupAsync(this CloudUtilities utilities, int groupId, CancellationToken token)
+        {
+            var table = await utilities.GetOrCreateNodesTableAsync(token);
+            var result = await table.RetrieveAsync<GroupWithNodes>(utilities.GroupsPartitionKey, utilities.GetGroupKey(groupId), token);
+            return result;
+        }
     }
 }

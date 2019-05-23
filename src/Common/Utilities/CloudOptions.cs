@@ -50,6 +50,8 @@ namespace Microsoft.HpcAcm.Common.Utilities
         public string RegistrationPattern { get; set; } = "registration-{0}";
         public string HeartbeatPattern { get; internal set; } = "heartbeat-{0}";
         public string NodesPartitionKey { get; internal set; } = "nodes";
+        public string GroupsPartitionKey { get; internal set; } = "groups";
+        public string GroupPattern { get; set; } = "group-{0}";
 
         public int HeartbeatIntervalSeconds { get; set; } = 30;
         public int MaxMissedHeartbeats { get; set; } = 3;
