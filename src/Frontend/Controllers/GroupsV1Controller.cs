@@ -7,31 +7,19 @@
     using System.Linq;
     using System.Threading.Tasks;
 
-    class GroupWithNodes : Group
-    {
-        public HashSet<string> Nodes { get; set; } = new HashSet<string>();
 
-        public Group ToGroup()
-        {
-            return new Group() { Name = Name, Description = Description, Managed = Managed };
-        }
-}
-
-[Route("v1/groups")]
+    [Route("v1/groups")]
     public class GroupsV1Controller : Controller
     {
         private readonly DataProvider provider;
 
-        private List<GroupWithNodes> groups = new List<GroupWithNodes>();
+        private List<GroupWithNodes> groups { get => provider.Groups; }
 
-        private int nextId = 0;
+        private int nextId { get => provider.NextId; set => provider.NextId = value; }
 
         public GroupsV1Controller(DataProvider provider)
         {
             this.provider = provider;
-            groups.Add(new GroupWithNodes() { Id = nextId++, Name = "HeadNodes", Description = "The head nodes in the cluster", Managed = true });
-            groups.Add(new GroupWithNodes() { Id = nextId++, Name = "ComputeNodes", Description = "The compute nodes in the cluster", Managed = true });
-            groups.Add(new GroupWithNodes() { Id = nextId++, Name = "LinuxNodes", Description = "The linux nodes in the cluster", Managed = true });
         }
 
         [HttpGet()]

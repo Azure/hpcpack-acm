@@ -18,17 +18,37 @@
     using System.Threading;
     using T = System.Threading.Tasks;
 
+
+    public class GroupWithNodes : Group
+    {
+        public HashSet<string> Nodes { get; set; } = new HashSet<string>();
+
+        public Group ToGroup()
+        {
+            return new Group() { Id = Id, Name = Name, Description = Description, Managed = Managed };
+        }
+    }
+
     public class DataProvider : ServerObject
     {
         public const int MaxPageSize = 8192;
         private readonly CloudTable jobsTable;
         private readonly CloudTable nodesTable;
 
+        public List<GroupWithNodes> Groups = new List<GroupWithNodes>();
+
+        public int NextId = 0;
+
         public DataProvider(ServerObject so)
         {
             this.CopyFrom(so);
             this.jobsTable = this.Utilities.GetJobsTable();
             this.nodesTable = this.Utilities.GetNodesTable();
+
+            Groups.Add(new GroupWithNodes() { Id = NextId++, Name = "HeadNodes", Description = "The head nodes in the cluster", Managed = true });
+            Groups.Add(new GroupWithNodes() { Id = NextId++, Name = "ComputeNodes", Description = "The compute nodes in the cluster", Managed = true });
+            Groups.Add(new GroupWithNodes() { Id = NextId++, Name = "LinuxNodes", Description = "The linux nodes in the cluster", Managed = true });
+
         }
 
         private async T.Task<object> GetDashboardDataAsync(string partitionName, CancellationToken token)
