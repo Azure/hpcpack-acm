@@ -28,41 +28,90 @@
         [Route("{id}")]
         public async T.Task<ActionResult> GetGroupAsync(int id, CancellationToken token)
         {
-            return Ok(await this.provider.GetNodeGroupAsync(id, token));
+            var result = await this.provider.GetNodeGroupAsync(id, token);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
         }
 
         [HttpPost]
-        public ActionResult CreateGroup([FromBody] Group group)
+        public async T.Task<ActionResult> CreateGroupAsync([FromBody] Group group, CancellationToken token)
         {
-            return new OkObjectResult(new Group());
+            Group result;
+            try
+            {
+                result = await this.provider.CreateNodeGroupAsync(group, token);
+            }
+            catch (ArgumentException e)
+            {
+                return BadRequest(e.Message);
+            }
+            return Ok(result);
         }
 
         [HttpPut]
         [Route("{id}")]
-        public ActionResult UpdateGroup(int id, [FromBody] Group group)
+        public async T.Task<ActionResult> UpdateGroupAsync(int id, [FromBody] Group group, CancellationToken token)
         {
-            return new OkObjectResult(new Group());
+            Group result;
+            try
+            {
+                result = await provider.UpdateNodeGroupAsync(new Group() { Id = id, Name = group.Name, Description = group.Description }, token);
+            }
+            catch (ArgumentException e)
+            {
+                return BadRequest(e.Message);
+            }
+            return Ok(result);
         }
 
         [HttpDelete]
         [Route("{id}")]
-        public void DeleteGroup(int id)
+        public async T.Task<ActionResult> DeleteGroupAsync(int id, CancellationToken token)
         {
-
+            try
+            {
+                await provider.DeleteNodeGroupAsync(new Group() { Id = id }, token);
+            }
+            catch (ArgumentException e)
+            {
+                return BadRequest(e.Message);
+            }
+            return Ok();
         }
 
         [HttpPost]
         [Route("{id}/nodes")]
-        public ActionResult AddNodesToGroup(int id, [FromBody] string[] nodeNames)
+        public async T.Task<ActionResult> AddNodesToGroupAsync(int id, [FromBody] string[] nodeNames, CancellationToken token)
         {
-            return new OkObjectResult(new string[] { });
+            GroupWithNodes result;
+            try
+            {
+                result = await provider.AddNodesToGroup(new GroupWithNodes() { Id = id, Nodes = nodeNames }, token);
+            }
+            catch (ArgumentException e)
+            {
+                return BadRequest(e.Message);
+            }
+            return Ok(result.Nodes);
         }
 
         [HttpDelete]
         [Route("{id}/nodes")]
-        public ActionResult RemoveNodesFromGroup(int id, [FromBody] string[] nodeNames)
+        public async T.Task<ActionResult> RemoveNodesFromGroupAsync(int id, [FromBody] string[] nodeNames, CancellationToken token)
         {
-            return new OkObjectResult(new string[] { });
+            GroupWithNodes result;
+            try
+            {
+                result = await provider.RemoveNodesFromGroup(new GroupWithNodes() { Id = id, Nodes = nodeNames }, token);
+            }
+            catch (ArgumentException e)
+            {
+                return BadRequest(e.Message);
+            }
+            return Ok(result.Nodes);
         }
     }
 }

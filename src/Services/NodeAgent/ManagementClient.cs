@@ -5,6 +5,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using T = System.Threading.Tasks;
@@ -19,8 +20,11 @@
                 return $"HTTP code: {response.StatusCode} message: {body}";
             }
 
+            public HttpStatusCode StatusCode { get; private set; }
+
             public ApiError(HttpResponseMessage msg) : base(ErrorMessage(msg))
             {
+                StatusCode = msg.StatusCode;
             }
         }
 
@@ -48,23 +52,45 @@
             var response = await client.GetAsync("/api/node-groups");
             EnsureSuccess(response);
             var body = await response.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<IEnumerable<GroupWithNodes>>(body);
+            var result = JsonConvert.DeserializeObject<IEnumerable<Group>>(body);
+            return result;
+        }
+
+        public async T.Task<Group> GetGroupAsync(int groupId)
+        {
+            var response = await client.GetAsync($"/api/node-groups/{groupId}");
+            EnsureSuccess(response);
+            var body = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<Group>(body);
             return result;
         }
 
         public async T.Task<Group> CreateGroupAsync(Group group)
         {
-            return null;
+            var content = new StringContent(JsonConvert.SerializeObject(group));
+            content.Headers.ContentType = new MediaTypeWithQualityHeaderValue("application/json");
+            var response = await client.PostAsync("/api/node-groups", content);
+            EnsureSuccess(response);
+            var body = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<Group>(body);
+            return result;
         }
 
         public async T.Task<Group> UpdateGroupAsync(Group group)
         {
-            return null;
+            var content = new StringContent(JsonConvert.SerializeObject(group));
+            content.Headers.ContentType = new MediaTypeWithQualityHeaderValue("application/json");
+            var response = await client.PutAsync($"/api/node-groups/{group.Id}", content);
+            EnsureSuccess(response);
+            var body = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<Group>(body);
+            return result;
         }
 
         public async T.Task DeleteGroupAsync(int groupId)
         {
-
+            var response = await client.DeleteAsync($"/api/node-groups/{groupId}");
+            EnsureSuccess(response);
         }
 
         public async T.Task<IEnumerable<string>> GetNodesOfGroupAsync(int groupId)
@@ -75,14 +101,26 @@
             return result;
         }
 
-        public async T.Task<IEnumerable<string>> AddNodesToGroupAsync(int groupId, string[] nodeNames)
+        public async T.Task<IEnumerable<string>> AddNodesToGroupAsync(int groupId, IEnumerable<string> nodeNames)
         {
-            return null;
+            var content = new StringContent(JsonConvert.SerializeObject(nodeNames));
+            content.Headers.ContentType = new MediaTypeWithQualityHeaderValue("application/json");
+            var response = await client.PostAsync($"/api/node-groups/{groupId}/nodes", content);
+            EnsureSuccess(response);
+            var body = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<IEnumerable<string>>(body);
+            return result;
         }
 
-        public async T.Task<IEnumerable<string>> RemoveNodesFromGroupAsync(int groupId, string[] nodeNames)
+        public async T.Task<IEnumerable<string>> RemoveNodesFromGroupAsync(int groupId, IEnumerable<string> nodeNames)
         {
-            return null;
+            var content = new StringContent(JsonConvert.SerializeObject(nodeNames));
+            content.Headers.ContentType = new MediaTypeWithQualityHeaderValue("application/json");
+            var response = await client.PostAsync($"/api/node-groups/{groupId}/nodes/delete", content);
+            EnsureSuccess(response);
+            var body = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<IEnumerable<string>>(body);
+            return result;
         }
     }
 }

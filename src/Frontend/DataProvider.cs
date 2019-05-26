@@ -167,16 +167,6 @@
             return node;
         }
 
-        public T.Task<IEnumerable<GroupWithNodes>> GetNodeGroupsAsync(CancellationToken token)
-        {
-            return this.Utilities.GetNodeGroupsAsync(token);
-        }
-
-        public T.Task<GroupWithNodes> GetNodeGroupAsync(int groupId, CancellationToken token)
-        {
-            return this.Utilities.GetNodeGroupAsync(groupId, token);
-        }
-
         public async T.Task<IEnumerable<Job>> GetNodeJobInfoAsync(string id, CancellationToken token)
         {
             id = id.ToLowerInvariant();
@@ -413,5 +403,96 @@
 
             return new NoContentResult();
         }
+
+        public async T.Task<IEnumerable<GroupWithNodes>> GetNodeGroupsAsync(CancellationToken token)
+        {
+            return await this.Utilities.GetNodeGroupsAsync(token);
+        }
+
+        public async T.Task<GroupWithNodes> GetNodeGroupAsync(int groupId, CancellationToken token)
+        {
+            return await this.Utilities.GetNodeGroupAsync(groupId, token);
+        }
+
+        public async T.Task<GroupWithNodes> OperateNodeGroupAsync(GroupWithNodes argument, ManagementOperation operation, CancellationToken token)
+        {
+            var request = new ManagementRequest()
+            {
+                OperationId = Guid.NewGuid().ToString(),
+                Operation = operation,
+                Arguments = JsonConvert.SerializeObject(argument)
+            };
+            var table = await Utilities.GetOrCreateManagementOperationTableAsync(token);
+            await table.InsertAsync(request.OperationId, Utilities.Option.ManagementRequestRowKey, request, token);
+            var queue = await Utilities.GetOrCreateManagementRequestQueueAsync(token);
+            await queue.AddMessageAsync((ManagementRequestMessage)request, token);
+            var responseQueue = await Utilities.GetOrCreateManagementResponseQueueAsync(request.OperationId, token);
+
+            CloudQueueMessage message = null;
+            int count = 0;
+            while (!token.IsCancellationRequested && count++ < 30) //Wait at most around 30 seconds
+            {
+                message = await responseQueue.GetMessageAsync(null, null, null, token);
+                if (message == null)
+                {
+                    await T.Task.Delay(1000);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            if (message == null)
+            {
+                throw new TimeoutException();
+            }
+            var responseMsg = JsonConvert.DeserializeObject<ManagementResponseMessage>(message.AsString);
+            var response = await table.RetrieveAsync<ManagementResponse>(request.OperationId, Utilities.Option.ManagementResponseRowKey, token);
+            if (response.ErrorCode == 0)
+            {
+                if (!string.IsNullOrWhiteSpace(response.Result))
+                {
+                    return JsonConvert.DeserializeObject<GroupWithNodes>(response.Result);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else if (response.ErrorCode >= 400 && response.ErrorCode < 500)
+            {
+                throw new ArgumentException(response.Error);
+            }
+            else
+            {
+                throw new Exception(response.Error);
+            }
+        }
+
+        public async T.Task<Group> CreateNodeGroupAsync(Group group, CancellationToken token)
+        {
+            return await OperateNodeGroupAsync(new GroupWithNodes() { Name = group.Name, Description = group.Description }, ManagementOperation.CreateNodeGroup, token);
+        }
+
+        public async T.Task<Group> UpdateNodeGroupAsync(Group group, CancellationToken token)
+        {
+            return await OperateNodeGroupAsync(new GroupWithNodes() { Id = group.Id, Name = group.Name, Description = group.Description }, ManagementOperation.UpdateNodeGroup, token);
+        }
+
+        public async T.Task DeleteNodeGroupAsync(Group group, CancellationToken token)
+        {
+            await OperateNodeGroupAsync(new GroupWithNodes() { Id = group.Id }, ManagementOperation.DeleteNodeGroup, token);
+        }
+
+        public async T.Task<GroupWithNodes> AddNodesToGroup(GroupWithNodes group, CancellationToken token)
+        {
+            return await OperateNodeGroupAsync(group, ManagementOperation.AddNodesToGroup, token);
+        }
+
+        public async T.Task<GroupWithNodes> RemoveNodesFromGroup(GroupWithNodes group, CancellationToken token)
+        {
+            return await OperateNodeGroupAsync(group, ManagementOperation.RemoveNodesFromGroup, token);
+        }
+
     }
 }

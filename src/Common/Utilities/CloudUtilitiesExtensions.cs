@@ -103,6 +103,10 @@
 
         public static T.Task<CloudQueue> GetOrCreateNodeCancelQueueAsync(this CloudUtilities u, string nodeName, CancellationToken token) => u.GetOrCreateQueueAsync(string.Format(u.Option.NodeCancelQueuePattern, nodeName), token);
 
+        public static T.Task<CloudQueue> GetOrCreateManagementRequestQueueAsync(this CloudUtilities u, CancellationToken token) => u.GetOrCreateQueueAsync(u.Option.ManagementRequestQueue, token);
+
+        public static T.Task<CloudQueue> GetOrCreateManagementResponseQueueAsync(this CloudUtilities u, string Id, CancellationToken token) => u.GetOrCreateQueueAsync(string.Format(u.Option.ManagementResponseQueue, Id), token);
+
         public static CloudTable GetMetricsTable(this CloudUtilities u) => u.GetTable(u.Option.MetricsTableName);
 
         public static T.Task<CloudTable> GetOrCreateMetricsTableAsync(this CloudUtilities u, CancellationToken token) => u.GetOrCreateTableAsync(u.Option.MetricsTableName, token);
@@ -110,6 +114,8 @@
         public static CloudTable GetNodesTable(this CloudUtilities u) => u.GetTable(u.Option.NodesTableName);
 
         public static T.Task<CloudTable> GetOrCreateNodesTableAsync(this CloudUtilities u, CancellationToken token) => u.GetOrCreateTableAsync(u.Option.NodesTableName, token);
+
+        public static T.Task<CloudTable> GetOrCreateManagementOperationTableAsync(this CloudUtilities u, CancellationToken token) => u.GetOrCreateTableAsync(u.Option.ManagementOperataionTableName, token);
 
         public static T.Task<bool> UpdateTaskAsync(this CloudUtilities u, string jobPartitionKey, string taskKey, Action<Task> action, CancellationToken token, ILogger logger = null) =>
             u.UpdateObjectAsync(u.GetJobsTable(), jobPartitionKey, taskKey, action, token, logger);

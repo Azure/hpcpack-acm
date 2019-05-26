@@ -68,7 +68,7 @@
                     //TODO: Add the followings only on HPC Pack Head Node
                     svc.AddSingleton<ManagementClient>();
                     svc.AddSingleton<IWorker, ManagementSyncWorker>();
-                    //svc.AddSingleton<IWorker, ManagementOperationWorker>();
+                    svc.AddSingleton<IWorker, ManagementOperationWorker>();
                 });
 
         public static IWebHost BuildWebHost(string[] args, params object[] sharedServices) =>

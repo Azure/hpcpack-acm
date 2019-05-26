@@ -60,6 +60,14 @@ namespace Microsoft.HpcAcm.Common.Utilities
 
         #endregion
 
+        #region Management Operation table
+
+        public string ManagementOperataionTableName { get; set; } = "managementoperationtable";
+        public string ManagementRequestRowKey { get; internal set; } = "request";
+        public string ManagementResponseRowKey { get; internal set; } = "response";
+
+        #endregion
+
         #region Jobs table
 
         public string DashboardTableName { get; set; } = "dashboardtable";
@@ -93,6 +101,9 @@ namespace Microsoft.HpcAcm.Common.Utilities
         public string ScriptSyncQueueName { get; set; } = "scriptsyncqueue";
         public string NodeDispatchQueuePattern { get; set; } = "nodedispatchqueue-{0}";
         public string NodeCancelQueuePattern { get; set; } = "nodecancelqueue-{0}";
+        public string ManagementRequestQueue { get; set; } = "management-request";
+        public string ManagementResponseQueue { get; set; } = "management-response-{0}";
+
 
         #endregion
     }

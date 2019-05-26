@@ -3,12 +3,12 @@
     using Microsoft.HpcAcm.Services.Common;
     using Microsoft.HpcAcm.Common.Dto;
     using Microsoft.HpcAcm.Common.Utilities;
-    using Microsoft.HpcAcm.Common.Utilities.Entities;
     using Microsoft.WindowsAzure.Storage.Table;
     using System;
     using System.Threading;
     using System.Collections.Generic;
     using T = System.Threading.Tasks;
+    using System.Linq;
 
     public class ManagementSyncWorker : ServerObject, IWorker
     {
@@ -48,12 +48,23 @@
 
         private async T.Task Sync(CancellationToken token)
         {
+            var oldGroups = await Utilities.GetNodeGroupsAsync(token);
             var groups = await client.GetGroupsAsync();
+            //Create/Update groups
             foreach (var group in groups)
             {
                 var nodes = await client.GetNodesOfGroupAsync(group.Id);
                 var newGroup = new GroupWithNodes() { Id = group.Id, Name = group.Name, Description = group.Description, Managed = group.Managed, Nodes = nodes };
                 await nodesTable.InsertOrReplaceAsync(Utilities.GroupsPartitionKey, Utilities.GetGroupKey(group.Id), newGroup, token);
+            }
+            //Delete groups
+            var groupSet = new HashSet<int>(groups.Select(g => g.Id));
+            foreach (var group in oldGroups)
+            {
+                if (!groupSet.Contains(group.Id))
+                {
+                    await nodesTable.DeleteAsync(Utilities.GroupsPartitionKey, Utilities.GetGroupKey(group.Id), token);
+                }
             }
         }
     }
