@@ -54,6 +54,11 @@
             foreach (var group in groups)
             {
                 var nodes = await client.GetNodesOfGroupAsync(group.Id);
+                if (nodes != null)
+                {
+                    //Normalize node name to lower case, to be consistant with node name in "nodes" Partition.
+                    nodes = nodes.Select(n => n.ToLowerInvariant());
+                }
                 var newGroup = new GroupWithNodes() { Id = group.Id, Name = group.Name, Description = group.Description, Managed = group.Managed, Nodes = nodes };
                 await nodesTable.InsertOrReplaceAsync(Utilities.GroupsPartitionKey, Utilities.GetGroupKey(group.Id), newGroup, token);
             }

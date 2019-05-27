@@ -10,6 +10,7 @@
     using T = System.Threading.Tasks;
     using Microsoft.Extensions.Options;
     using Newtonsoft.Json;
+    using System.Linq;
 
     public class ManagementOperationWorker : TaskItemWorker, IWorker
     {
@@ -100,6 +101,11 @@
                 response = new ManagementResponse() { OperationId = request.OperationId, Operation = request.Operation, ErrorCode = 0 };
                 if (result != null)
                 {
+                    if (result.Nodes != null)
+                    {
+                        //Normalize node name to lower case, to be consistant with node name in "nodes" Partition.
+                        result.Nodes = result.Nodes.Select(n => n.ToLowerInvariant());
+                    }
                     response.Result = JsonConvert.SerializeObject(result);
                 }
                 await managmentTable.InsertAsync(request.OperationId, Utilities.Option.ManagementResponseRowKey, response, token);
@@ -123,6 +129,11 @@
             {
                 var group = await client.GetGroupAsync(groupId);
                 var nodes = await client.GetNodesOfGroupAsync(groupId);
+                if (nodes != null)
+                {
+                    //Normalize node name to lower case, to be consistant with node name in "nodes" Partition.
+                    nodes = nodes.Select(n => n.ToLowerInvariant());
+                }
                 var result = new GroupWithNodes() { Id = group.Id, Name = group.Name, Description = group.Description, Managed = group.Managed, Nodes = nodes };
                 await nodesTable.InsertOrReplaceAsync(Utilities.GroupsPartitionKey, Utilities.GetGroupKey(group.Id), result, token);
             }
