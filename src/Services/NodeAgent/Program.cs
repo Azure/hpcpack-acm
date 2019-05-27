@@ -65,10 +65,12 @@
                     svc.AddTransient<JobDispatchWorker>();
                     svc.AddTransient<StartJobAndTaskProcessor>();
                     svc.AddTransient<CancelJobOrTaskProcessor>();
-                    //TODO: Add the followings only on HPC Pack Head Node
-                    svc.AddSingleton<ManagementClient>();
-                    svc.AddSingleton<IWorker, ManagementSyncWorker>();
-                    svc.AddSingleton<IWorker, ManagementOperationWorker>();
+                    if (IsOnHpcHeadNode())
+                    {
+                        svc.AddSingleton<ManagementClient>();
+                        svc.AddSingleton<IWorker, ManagementSyncWorker>();
+                        svc.AddSingleton<IWorker, ManagementOperationWorker>();
+                    }
                 });
 
         public static IWebHost BuildWebHost(string[] args, params object[] sharedServices) =>
@@ -90,5 +92,10 @@
                 .UseUrls("http://*:8080", "http://*:5000")
                 .UseStartup<Startup>()
                 .Build();
+
+        public static bool IsOnHpcHeadNode()
+        {
+            return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("HPC_HN_LOGROOT"));
+        }
     }
 }
