@@ -69,7 +69,9 @@
                     {
                         svc.AddSingleton<ManagementClient>();
                         svc.AddSingleton<IWorker, ManagementSyncWorker>();
-                        svc.AddSingleton<IWorker, ManagementOperationWorker>();
+                        svc.Configure<ManagementOperationWorkerGroupOptions>(config.GetSection(nameof(ManagementOperationWorkerGroupOptions)));
+                        svc.AddSingleton<IWorker, ManagementOperationWorkerGroup>();
+                        svc.AddTransient<ManagementOperationWorker>();
                     }
                 });
 
